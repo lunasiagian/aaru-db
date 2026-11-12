@@ -3,6 +3,34 @@
  * Relies on session helpers defined in auth-session.gs.
  */
 
+const TABLE_SCHEMAS = {
+  Inventory: ['item_key', 'raw_count', 'last_updated'],
+  Roster: [
+    'char_key', 'owned', 'level', 'constellation', 'ascension',
+    'talent_auto', 'talent_skill', 'talent_burst',
+    'target_lvl', 'target_talents', 'status', 'priority_rank', 'notes'
+  ],
+  Weapons: [
+    'weapon_uid', 'weapon_key', 'level', 'ascension', 'refinement',
+    'location', 'target_lvl', 'status'
+  ],
+  Teams: [
+    'team_id', 'team_name', 'archetype', 'slot_1', 'slot_2', 'slot_3', 'slot_4',
+    'energy_comfort', 'rotation_notes'
+  ],
+  Tasks: ['task_id', 'frequency', 'task_name', 'completed', 'reset_day'],
+  Sections: ['section_key', 'json_value', 'last_updated']
+};
+
+function ensureUserSheet_(ss, user, table) {
+  const tabName = `${user}_${table}`;
+  const sheet = ss.getSheetByName(tabName) || ss.insertSheet(tabName);
+  if (sheet.getLastRow() === 0 && TABLE_SCHEMAS[table]) {
+    sheet.appendRow(TABLE_SCHEMAS[table]);
+  }
+  return sheet;
+}
+
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const profiles = ['almondeluna', 'vanbrohenheim'];
@@ -16,32 +44,9 @@ function setupDatabase() {
   }
 
   // 2. Per-Profile Flat Tables
-  const schemas = {
-    Inventory: ['item_key', 'raw_count', 'last_updated'],
-    Roster: [
-      'char_key', 'owned', 'level', 'constellation', 'ascension',
-      'talent_auto', 'talent_skill', 'talent_burst',
-      'target_lvl', 'target_talents', 'status', 'priority_rank', 'notes'
-    ],
-    Weapons: [
-      'weapon_uid', 'weapon_key', 'level', 'ascension', 'refinement',
-      'location', 'target_lvl', 'status'
-    ],
-    Teams: [
-      'team_id', 'team_name', 'archetype', 'slot_1', 'slot_2', 'slot_3', 'slot_4',
-      'energy_comfort', 'rotation_notes'
-    ],
-    Tasks: ['task_id', 'frequency', 'task_name', 'completed', 'reset_day'],
-    Sections: ['section_key', 'json_value', 'last_updated']
-  };
-
   profiles.forEach(user => {
-    Object.keys(schemas).forEach(table => {
-      const tabName = `${user}_${table}`;
-      const sheet = ss.getSheetByName(tabName) || ss.insertSheet(tabName);
-      if (sheet.getLastRow() === 0) {
-        sheet.appendRow(schemas[table]);
-      }
+    Object.keys(TABLE_SCHEMAS).forEach(table => {
+      ensureUserSheet_(ss, user, table);
     });
   });
 }
@@ -152,7 +157,7 @@ function doPost(e) {
       const good = payload.good || payload.data || {};
 
       if (good.materials) {
-        const invSheet = ss.getSheetByName(`${user}_Inventory`);
+        const invSheet = ensureUserSheet_(ss, user, 'Inventory');
         const existingInv = sheetToObjects(invSheet);
         const invMap = {};
         existingInv.forEach(r => { invMap[r.item_key] = r.raw_count; });
@@ -163,7 +168,7 @@ function doPost(e) {
       }
 
       if (Array.isArray(good.characters)) {
-        const rosSheet = ss.getSheetByName(`${user}_Roster`);
+        const rosSheet = ensureUserSheet_(ss, user, 'Roster');
         const existingRos = sheetToObjects(rosSheet);
         const metaMap = {};
         existingRos.forEach(r => { metaMap[r.char_key] = r; });
@@ -191,7 +196,7 @@ function doPost(e) {
       }
 
       if (Array.isArray(good.weapons)) {
-        const wepSheet = ss.getSheetByName(`${user}_Weapons`);
+        const wepSheet = ensureUserSheet_(ss, user, 'Weapons');
         const wepRows = good.weapons.map((w, idx) => [
           `${w.key}_${idx + 1}`,
           w.key,
@@ -211,7 +216,8 @@ function doPost(e) {
     // ACTION 2: Single Row Update (Live UI Edits)
     if (action === 'upsertRow') {
       const sheetName = payload.sheet || `${user}_${payload.table || 'Inventory'}`;
-      const sheet = ss.getSheetByName(sheetName);
+      const inferredTable = payload.table || (sheetName.startsWith(`${user}_`) ? sheetName.slice(user.length + 1) : '');
+      const sheet = ss.getSheetByName(sheetName) || (TABLE_SCHEMAS[inferredTable] ? ensureUserSheet_(ss, user, inferredTable) : null);
       if (!sheet) {
         return jsonResponse({ ok: false, error: 'Sheet not found: ' + sheetName });
       }

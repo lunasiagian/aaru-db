@@ -32,7 +32,8 @@ export function renderPrefarmTab(container, state, handlers) {
               ${allCharKeys
                 .map((k) => {
                   const m = getCharacterMeta(k);
-                  return `<option value="${k}">${m.name} (${m.element})</option>`;
+                  const label = m.name.includes(`(${m.element})`) ? m.name : `${m.name} (${m.element})`;
+                  return `<option value="${k}">${label}</option>`;
                 })
                 .join('')}
             </select>
