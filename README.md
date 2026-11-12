@@ -1,6 +1,6 @@
 # GENSHIN SHEET (FINAL) — Tactical Datasheet
 
-A multi-tab single-page web application (HTML, CSS, ES Modules) for tracking Genshin Impact accounts (`almondeluna` / Luna & `vanbrohenheim` / Sunny), hosted on GitHub Pages and synced with a Google Apps Script backend.
+A multi-tab single-page web application (HTML, CSS, ES Modules) for tracking dual Genshin Impact accounts, hosted as a static site and synced with a Google Apps Script backend.
 
 ## Features
 
@@ -10,7 +10,7 @@ A multi-tab single-page web application (HTML, CSS, ES Modules) for tracking Gen
    - `scripts/build-catalog.mjs` regenerates `data/catalog.json` via `genshin-db` every patch.
 
 2. **Dual-Account Partitioning & Partner Read-Only Toggle**
-   - Authenticates `almondeluna` (Luna) and `vanbrohenheim` (Sunny) via `GET ?action=login` with `sessionStorage` persistence.
+   - Authenticates configured accounts from `config.js` via `POST` (`action: "login"`) with temporary session tokens persisted in `sessionStorage`.
    - Top-bar **View Partner (Read-Only)** toggle locks edits and imports while inspecting the partner's sheet.
 
 3. **Irminsul GOOD v3 JSON Drag-and-Drop Importer**
@@ -24,7 +24,7 @@ A multi-tab single-page web application (HTML, CSS, ES Modules) for tracking Gen
    - **Team Comps & Test Lab**: 4-character squads grouped by archetype (`Hypercarry`, `Dual Carry`, `Chip Damage`), automatic Weapon Conflict Detector, and Miliastra Test Lab notes.
 
 5. **Offline / Mock Fallback**
-   - When `APPS_SCRIPT_URL` in `config.js` is empty (`""`), the app hydrates immediately with realistic sample data (including Luna's Lv.95 C5 triple-crowned Zhongli, Lv.90 Raiden, Venti, Ayato, Kazuha, 521 Hero's Wit, 385 Adventurer's Exp, and 13,221,000 Mora).
+   - When `APPS_SCRIPT_URL` in `config.js` is empty (`""`), the app hydrates immediately with realistic sample data for both demo profiles.
 
 ## Setup
 
