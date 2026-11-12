@@ -1,0 +1,1005 @@
+{
+  "meta": {
+    "generatedAt": "2026-11-12T00:00:00.000Z",
+    "source": "genshin-db-seed",
+    "patch": "6.x"
+  },
+  "characters": {
+    "Zhongli": {
+      "key": "Zhongli",
+      "name": "Zhongli",
+      "rarity": 5,
+      "element": "Geo",
+      "weaponType": "Polearm",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Zhongli.png",
+      "talentBook": "Gold",
+      "bossMat": "BasaltPillar",
+      "weeklyMat": "TuskOfMonocerosCaeli",
+      "localSpecialty": "CorLapis",
+      "commonMat": "Slime",
+      "gem": "PrithivaTopaz"
+    },
+    "RaidenShogun": {
+      "key": "RaidenShogun",
+      "name": "Raiden Shogun",
+      "rarity": 5,
+      "element": "Electro",
+      "weaponType": "Polearm",
+      "region": "Inazuma",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Shougun.png",
+      "talentBook": "Light",
+      "bossMat": "StormBeads",
+      "weeklyMat": "MoltenMoment",
+      "localSpecialty": "TenkumoFruit",
+      "commonMat": "Handguard",
+      "gem": "VajradaAmethyst"
+    },
+    "Venti": {
+      "key": "Venti",
+      "name": "Venti",
+      "rarity": 5,
+      "element": "Anemo",
+      "weaponType": "Bow",
+      "region": "Mondstadt",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Venti.png",
+      "talentBook": "Ballad",
+      "bossMat": "HurricaneSeed",
+      "weeklyMat": "TailOfBoreas",
+      "localSpecialty": "Cecilia",
+      "commonMat": "Slime",
+      "gem": "VayudaTurquoise"
+    },
+    "KamisatoAyato": {
+      "key": "KamisatoAyato",
+      "name": "Kamisato Ayato",
+      "rarity": 5,
+      "element": "Hydro",
+      "weaponType": "Sword",
+      "region": "Inazuma",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Ayato.png",
+      "talentBook": "Elegance",
+      "bossMat": "DewOfRepudiation",
+      "weeklyMat": "MudraOfTheMaleficGeneral",
+      "localSpecialty": "SakuraBloom",
+      "commonMat": "Handguard",
+      "gem": "VarunadaLazurite"
+    },
+    "KaedeharaKazuha": {
+      "key": "KaedeharaKazuha",
+      "name": "Kaedehara Kazuha",
+      "rarity": 5,
+      "element": "Anemo",
+      "weaponType": "Sword",
+      "region": "Inazuma",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Kazuha.png",
+      "talentBook": "Diligence",
+      "bossMat": "MarionetteCore",
+      "weeklyMat": "GildedScale",
+      "localSpecialty": "SeaGanoderma",
+      "commonMat": "TreasureHoarderInsignia",
+      "gem": "VayudaTurquoise"
+    },
+    "Furina": {
+      "key": "Furina",
+      "name": "Furina",
+      "rarity": 5,
+      "element": "Hydro",
+      "weaponType": "Sword",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Furina.png",
+      "talentBook": "Justice",
+      "bossMat": "WaterThatFailedToTranscend",
+      "weeklyMat": "LightlessMass",
+      "localSpecialty": "LakelightLily",
+      "commonMat": "WhopperflowerNectar",
+      "gem": "VarunadaLazurite"
+    },
+    "Neuvillette": {
+      "key": "Neuvillette",
+      "name": "Neuvillette",
+      "rarity": 5,
+      "element": "Hydro",
+      "weaponType": "Catalyst",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Neuvillette.png",
+      "talentBook": "Equity",
+      "bossMat": "FontemerUnihorn",
+      "weeklyMat": "Everamber",
+      "localSpecialty": "Lumitoile",
+      "commonMat": "FontemerAberrant",
+      "gem": "VarunadaLazurite"
+    },
+    "Nahida": {
+      "key": "Nahida",
+      "name": "Nahida",
+      "rarity": 5,
+      "element": "Dendro",
+      "weaponType": "Catalyst",
+      "region": "Sumeru",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Nahida.png",
+      "talentBook": "Ingenuity",
+      "bossMat": "QuelledCreeper",
+      "weeklyMat": "PuppetStrings",
+      "localSpecialty": "KalpalataLotus",
+      "commonMat": "FungalSpores",
+      "gem": "NagadusEmerald"
+    },
+    "Yelan": {
+      "key": "Yelan",
+      "name": "Yelan",
+      "rarity": 5,
+      "element": "Hydro",
+      "weaponType": "Bow",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Yelan.png",
+      "talentBook": "Prosperity",
+      "bossMat": "RunicFang",
+      "weeklyMat": "GildedScale",
+      "localSpecialty": "Starconch",
+      "commonMat": "FatuiInsignia",
+      "gem": "VarunadaLazurite"
+    },
+    "HuTao": {
+      "key": "HuTao",
+      "name": "Hu Tao",
+      "rarity": 5,
+      "element": "Pyro",
+      "weaponType": "Polearm",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Hutao.png",
+      "talentBook": "Diligence",
+      "bossMat": "JuvenileJade",
+      "weeklyMat": "ShardOfAFoulLegacy",
+      "localSpecialty": "SilkFlower",
+      "commonMat": "WhopperflowerNectar",
+      "gem": "AgnidusAgate"
+    },
+    "Arlecchino": {
+      "key": "Arlecchino",
+      "name": "Arlecchino",
+      "rarity": 5,
+      "element": "Pyro",
+      "weaponType": "Polearm",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Arlecchino.png",
+      "talentBook": "Order",
+      "bossMat": "FragmentOfAGoldenMelody",
+      "weeklyMat": "FadingCandle",
+      "localSpecialty": "RainbowRose",
+      "commonMat": "FatuiInsignia",
+      "gem": "AgnidusAgate"
+    },
+    "Mavuika": {
+      "key": "Mavuika",
+      "name": "Mavuika",
+      "rarity": 5,
+      "element": "Pyro",
+      "weaponType": "Claymore",
+      "region": "Natlan",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Mavuika.png",
+      "talentBook": "Contention",
+      "bossMat": "GoldInscribedSecretSourceCore",
+      "weeklyMat": "ErodedHorn",
+      "localSpecialty": "WitheringPurpurbloom",
+      "commonMat": "SaurianClaw",
+      "gem": "AgnidusAgate"
+    },
+    "Xilonen": {
+      "key": "Xilonen",
+      "name": "Xilonen",
+      "rarity": 5,
+      "element": "Geo",
+      "weaponType": "Sword",
+      "region": "Natlan",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Xilonen.png",
+      "talentBook": "Kindling",
+      "bossMat": "GoldInscribedSecretSourceCore",
+      "weeklyMat": "MirrorOfMushin",
+      "localSpecialty": "BrilliantChrysanthemum",
+      "commonMat": "SaurianClaw",
+      "gem": "PrithivaTopaz"
+    },
+    "Citlali": {
+      "key": "Citlali",
+      "name": "Citlali",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Catalyst",
+      "region": "Natlan",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Citlali.png",
+      "talentBook": "Kindling",
+      "bossMat": "TalismanOfTheEnigmaticLand",
+      "weeklyMat": "DenialAndJudgment",
+      "localSpecialty": "QuenepaBerry",
+      "commonMat": "SaurianClaw",
+      "gem": "ShivadaJade"
+    },
+    "Skirk": {
+      "key": "Skirk",
+      "name": "Skirk",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Sword",
+      "region": "Snezhnaya",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Skirk.png",
+      "talentBook": "Contention",
+      "bossMat": "TalismanOfTheEnigmaticLand",
+      "weeklyMat": "TheCornerstoneOfStarsAndFlames",
+      "localSpecialty": "QuenepaBerry",
+      "commonMat": "FatuiInsignia",
+      "gem": "ShivadaJade"
+    },
+    "Varka": {
+      "key": "Varka",
+      "name": "Varka",
+      "rarity": 5,
+      "element": "Anemo",
+      "weaponType": "Claymore",
+      "region": "Mondstadt",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Varka.png",
+      "talentBook": "Freedom",
+      "bossMat": "HurricaneSeed",
+      "weeklyMat": "TailOfBoreas",
+      "localSpecialty": "Wolfhook",
+      "commonMat": "HilichurlMask",
+      "gem": "VayudaTurquoise"
+    },
+    "Columbina": {
+      "key": "Columbina",
+      "name": "Columbina",
+      "rarity": 5,
+      "element": "Hydro",
+      "weaponType": "Catalyst",
+      "region": "Snezhnaya",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Columbina.png",
+      "talentBook": "Fortitude",
+      "bossMat": "WaterThatFailedToTranscend",
+      "weeklyMat": "FadingCandle",
+      "localSpecialty": "LakelightLily",
+      "commonMat": "FatuiInsignia",
+      "gem": "VarunadaLazurite"
+    },
+    "Bennett": {
+      "key": "Bennett",
+      "name": "Bennett",
+      "rarity": 4,
+      "element": "Pyro",
+      "weaponType": "Sword",
+      "region": "Mondstadt",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Bennett.png",
+      "talentBook": "Resistance",
+      "bossMat": "EverflameSeed",
+      "weeklyMat": "DvalinsPlume",
+      "localSpecialty": "WindwheelAster",
+      "commonMat": "TreasureHoarderInsignia",
+      "gem": "AgnidusAgate"
+    },
+    "Xiangling": {
+      "key": "Xiangling",
+      "name": "Xiangling",
+      "rarity": 4,
+      "element": "Pyro",
+      "weaponType": "Polearm",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Xiangling.png",
+      "talentBook": "Diligence",
+      "bossMat": "EverflameSeed",
+      "weeklyMat": "DvalinsClaw",
+      "localSpecialty": "JueyunChili",
+      "commonMat": "Slime",
+      "gem": "AgnidusAgate"
+    },
+    "Xingqiu": {
+      "key": "Xingqiu",
+      "name": "Xingqiu",
+      "rarity": 4,
+      "element": "Hydro",
+      "weaponType": "Sword",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Xingqiu.png",
+      "talentBook": "Gold",
+      "bossMat": "CleansingHeart",
+      "weeklyMat": "TailOfBoreas",
+      "localSpecialty": "SilkFlower",
+      "commonMat": "HilichurlMask",
+      "gem": "VarunadaLazurite"
+    },
+    "Fischl": {
+      "key": "Fischl",
+      "name": "Fischl",
+      "rarity": 4,
+      "element": "Electro",
+      "weaponType": "Bow",
+      "region": "Mondstadt",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Fischl.png",
+      "talentBook": "Ballad",
+      "bossMat": "LightningPrism",
+      "weeklyMat": "SpiritLocketOfBoreas",
+      "localSpecialty": "SmallLampGrass",
+      "commonMat": "HilichurlArrowhead",
+      "gem": "VajradaAmethyst"
+    },
+    "TravelerCryo": {
+      "key": "TravelerCryo",
+      "name": "Traveler (Cryo)",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Sword",
+      "region": "Snezhnaya",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_PlayerGirl.png",
+      "talentBook": "Fortitude",
+      "bossMat": "TalismanOfTheEnigmaticLand",
+      "weeklyMat": "ErodedHorn",
+      "localSpecialty": "WindwheelAster",
+      "commonMat": "HilichurlMask",
+      "gem": "ShivadaJade"
+    },
+    "Wriothesley": {
+      "key": "Wriothesley",
+      "name": "Wriothesley",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Catalyst",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Wriothesley.png",
+      "talentBook": "Order",
+      "bossMat": "TourbillonDevice",
+      "weeklyMat": "PrimordialGreenbloom",
+      "localSpecialty": "SubdetectionUnit",
+      "commonMat": "ClockworkGear",
+      "gem": "ShivadaJade"
+    },
+    "Clorinde": {
+      "key": "Clorinde",
+      "name": "Clorinde",
+      "rarity": 5,
+      "element": "Electro",
+      "weaponType": "Sword",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Clorinde.png",
+      "talentBook": "Justice",
+      "bossMat": "FontemerUnihorn",
+      "weeklyMat": "Everamber",
+      "localSpecialty": "Lumitoile",
+      "commonMat": "FontemerAberrant",
+      "gem": "VajradaAmethyst"
+    },
+    "Navia": {
+      "key": "Navia",
+      "name": "Navia",
+      "rarity": 5,
+      "element": "Geo",
+      "weaponType": "Claymore",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Navia.png",
+      "talentBook": "Equity",
+      "bossMat": "ArtificedSpareClockworkComponentCoppelius",
+      "weeklyMat": "LightlessSilkString",
+      "localSpecialty": "SpringOfTheFirstDewdrop",
+      "commonMat": "FontemerAberrant",
+      "gem": "PrithivaTopaz"
+    },
+    "Xiao": {
+      "key": "Xiao",
+      "name": "Xiao",
+      "rarity": 5,
+      "element": "Anemo",
+      "weaponType": "Polearm",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Xiao.png",
+      "talentBook": "Prosperity",
+      "bossMat": "JuvenileJade",
+      "weeklyMat": "ShadowOfTheWarrior",
+      "localSpecialty": "Qingxin",
+      "commonMat": "Slime",
+      "gem": "VayudaTurquoise"
+    },
+    "Ganyu": {
+      "key": "Ganyu",
+      "name": "Ganyu",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Bow",
+      "region": "Liyue",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Ganyu.png",
+      "talentBook": "Diligence",
+      "bossMat": "HoarfrostCore",
+      "weeklyMat": "ShadowOfTheWarrior",
+      "localSpecialty": "Qingxin",
+      "commonMat": "WhopperflowerNectar",
+      "gem": "ShivadaJade"
+    },
+    "Chevreuse": {
+      "key": "Chevreuse",
+      "name": "Chevreuse",
+      "rarity": 4,
+      "element": "Pyro",
+      "weaponType": "Polearm",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Chevreuse.png",
+      "talentBook": "Order",
+      "bossMat": "FontemerUnihorn",
+      "weeklyMat": "LightlessEyeOfTheMaelstrom",
+      "localSpecialty": "LumidouceBell",
+      "commonMat": "ClockworkGear",
+      "gem": "AgnidusAgate"
+    },
+    "Escoffier": {
+      "key": "Escoffier",
+      "name": "Escoffier",
+      "rarity": 5,
+      "element": "Cryo",
+      "weaponType": "Polearm",
+      "region": "Fontaine",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Escoffier.png",
+      "talentBook": "Justice",
+      "bossMat": "WaterThatFailedToTranscend",
+      "weeklyMat": "LightlessMass",
+      "localSpecialty": "LakelightLily",
+      "commonMat": "ClockworkGear",
+      "gem": "ShivadaJade"
+    },
+    "Sandrone": {
+      "key": "Sandrone",
+      "name": "Sandrone",
+      "rarity": 5,
+      "element": "Geo",
+      "weaponType": "Catalyst",
+      "region": "Snezhnaya",
+      "icon": "https://enka.network/ui/UI_AvatarIcon_Sandrone.png",
+      "talentBook": "Fortitude",
+      "bossMat": "BasaltPillar",
+      "weeklyMat": "FadingCandle",
+      "localSpecialty": "CorLapis",
+      "commonMat": "ClockworkGear",
+      "gem": "PrithivaTopaz"
+    }
+  },
+  "weapons": {
+    "StaffOfHoma": {
+      "key": "StaffOfHoma",
+      "name": "Staff of Homa",
+      "rarity": 5,
+      "weaponType": "Polearm",
+      "substat": "CRIT DMG",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_Homa.png"
+    },
+    "EngulfingLightning": {
+      "key": "EngulfingLightning",
+      "name": "Engulfing Lightning",
+      "rarity": 5,
+      "weaponType": "Polearm",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_Narukami.png"
+    },
+    "ElegyForTheEnd": {
+      "key": "ElegyForTheEnd",
+      "name": "Elegy for the End",
+      "rarity": 5,
+      "weaponType": "Bow",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Bow_Widsith.png"
+    },
+    "SacrificialSword": {
+      "key": "SacrificialSword",
+      "name": "Sacrificial Sword",
+      "rarity": 4,
+      "weaponType": "Sword",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Fossil.png"
+    },
+    "HaranGeppakuFutsu": {
+      "key": "HaranGeppakuFutsu",
+      "name": "Haran Geppaku Futsu",
+      "rarity": 5,
+      "weaponType": "Sword",
+      "substat": "CRIT Rate",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Amenoma.png"
+    },
+    "FavoniusLance": {
+      "key": "FavoniusLance",
+      "name": "Favonius Lance",
+      "rarity": 4,
+      "weaponType": "Polearm",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_Zephyrus.png"
+    },
+    "FavoniusSword": {
+      "key": "FavoniusSword",
+      "name": "Favonius Sword",
+      "rarity": 4,
+      "weaponType": "Sword",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Zephyrus.png"
+    },
+    "AquaSimulacra": {
+      "key": "AquaSimulacra",
+      "name": "Aqua Simulacra",
+      "rarity": 5,
+      "weaponType": "Bow",
+      "substat": "CRIT DMG",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Bow_Kirin.png"
+    },
+    "TomeOfTheEternalFlow": {
+      "key": "TomeOfTheEternalFlow",
+      "name": "Tome of the Eternal Flow",
+      "rarity": 5,
+      "weaponType": "Catalyst",
+      "substat": "CRIT DMG",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Catalyst_Iudex.png"
+    },
+    "SplendorOfTranquilWaters": {
+      "key": "SplendorOfTranquilWaters",
+      "name": "Splendor of Tranquil Waters",
+      "rarity": 5,
+      "weaponType": "Sword",
+      "substat": "CRIT DMG",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Regalis.png"
+    },
+    "AThousandFloatingDreams": {
+      "key": "AThousandFloatingDreams",
+      "name": "A Thousand Floating Dreams",
+      "rarity": 5,
+      "weaponType": "Catalyst",
+      "substat": "Elemental Mastery",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Catalyst_Ayus.png"
+    },
+    "CrimsonMoonsSemblance": {
+      "key": "CrimsonMoonsSemblance",
+      "name": "Crimson Moon's Semblance",
+      "rarity": 5,
+      "weaponType": "Polearm",
+      "substat": "CRIT Rate",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_BloodMoon.png"
+    },
+    "AThousandBlazingSuns": {
+      "key": "AThousandBlazingSuns",
+      "name": "A Thousand Blazing Suns",
+      "rarity": 5,
+      "weaponType": "Claymore",
+      "substat": "CRIT Rate",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Claymore_Radiance.png"
+    },
+    "PeakPatrolSong": {
+      "key": "PeakPatrolSong",
+      "name": "Peak Patrol Song",
+      "rarity": 5,
+      "weaponType": "Sword",
+      "substat": "DEF%",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Xilonen.png"
+    },
+    "TheCatch": {
+      "key": "TheCatch",
+      "name": "\"The Catch\"",
+      "rarity": 4,
+      "weaponType": "Polearm",
+      "substat": "Energy Recharge",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_Mori.png"
+    },
+    "AquilaFavonia": {
+      "key": "AquilaFavonia",
+      "name": "Aquila Favonia",
+      "rarity": 5,
+      "weaponType": "Sword",
+      "substat": "Physical DMG",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Sword_Falcon.png"
+    },
+    "PrimordialJadeWingedSpear": {
+      "key": "PrimordialJadeWingedSpear",
+      "name": "Primordial Jade Winged-Spear",
+      "rarity": 5,
+      "weaponType": "Polearm",
+      "substat": "CRIT Rate",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Pole_Morax.png"
+    },
+    "WolfsGravestone": {
+      "key": "WolfsGravestone",
+      "name": "Wolf's Gravestone",
+      "rarity": 5,
+      "weaponType": "Claymore",
+      "substat": "ATK%",
+      "icon": "https://enka.network/ui/UI_EquipIcon_Claymore_Wolfmound.png"
+    }
+  },
+  "materials": {
+    "Mora": {
+      "key": "Mora",
+      "name": "Mora",
+      "rarity": 3,
+      "category": "EXP & Currency",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_202.png"
+    },
+    "HerosWit": {
+      "key": "HerosWit",
+      "name": "Hero's Wit",
+      "rarity": 4,
+      "category": "EXP & Currency",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_104003.png"
+    },
+    "AdventurersExperience": {
+      "key": "AdventurersExperience",
+      "name": "Adventurer's Experience",
+      "rarity": 3,
+      "category": "EXP & Currency",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_104002.png"
+    },
+    "WanderersAdvice": {
+      "key": "WanderersAdvice",
+      "name": "Wanderer's Advice",
+      "rarity": 2,
+      "category": "EXP & Currency",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_104001.png"
+    },
+    "CrownOfInsight": {
+      "key": "CrownOfInsight",
+      "name": "Crown of Insight",
+      "rarity": 5,
+      "category": "Talent Books",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_104319.png"
+    },
+    "FragileResin": {
+      "key": "FragileResin",
+      "name": "Fragile Resin",
+      "rarity": 4,
+      "category": "EXP & Currency",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_107009.png"
+    },
+    "PhilosophiesOfGold": {
+      "key": "PhilosophiesOfGold",
+      "name": "Philosophies of Gold",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Wednesday", "Saturday", "Sunday"],
+      "dropDomain": "Taishan Mansion",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104318.png"
+    },
+    "GuideToGold": {
+      "key": "GuideToGold",
+      "name": "Guide to Gold",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Wednesday", "Saturday", "Sunday"],
+      "dropDomain": "Taishan Mansion",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104317.png"
+    },
+    "TeachingsOfGold": {
+      "key": "TeachingsOfGold",
+      "name": "Teachings of Gold",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Wednesday", "Saturday", "Sunday"],
+      "dropDomain": "Taishan Mansion",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104316.png"
+    },
+    "PhilosophiesOfJustice": {
+      "key": "PhilosophiesOfJustice",
+      "name": "Philosophies of Justice",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Pale Forgotten Glory",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104343.png"
+    },
+    "GuideToJustice": {
+      "key": "GuideToJustice",
+      "name": "Guide to Justice",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Pale Forgotten Glory",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104342.png"
+    },
+    "TeachingsOfJustice": {
+      "key": "TeachingsOfJustice",
+      "name": "Teachings of Justice",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Pale Forgotten Glory",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104341.png"
+    },
+    "PhilosophiesOfContention": {
+      "key": "PhilosophiesOfContention",
+      "name": "Philosophies of Contention",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Blazing Ruins",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104349.png"
+    },
+    "GuideToContention": {
+      "key": "GuideToContention",
+      "name": "Guide to Contention",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Blazing Ruins",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104348.png"
+    },
+    "TeachingsOfContention": {
+      "key": "TeachingsOfContention",
+      "name": "Teachings of Contention",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Blazing Ruins",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104347.png"
+    },
+    "PhilosophiesOfFortitude": {
+      "key": "PhilosophiesOfFortitude",
+      "name": "Philosophies of Fortitude",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Frozen Citadel",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104355.png"
+    },
+    "GuideToFortitude": {
+      "key": "GuideToFortitude",
+      "name": "Guide to Fortitude",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Frozen Citadel",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104354.png"
+    },
+    "TeachingsOfFortitude": {
+      "key": "TeachingsOfFortitude",
+      "name": "Teachings of Fortitude",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Frozen Citadel",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104353.png"
+    },
+    "PhilosophiesOfFreedom": {
+      "key": "PhilosophiesOfFreedom",
+      "name": "Philosophies of Freedom",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Forsaken Rift",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104303.png"
+    },
+    "GuideToFreedom": {
+      "key": "GuideToFreedom",
+      "name": "Guide to Freedom",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Forsaken Rift",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104302.png"
+    },
+    "TeachingsOfFreedom": {
+      "key": "TeachingsOfFreedom",
+      "name": "Teachings of Freedom",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Monday", "Thursday", "Sunday"],
+      "dropDomain": "Forsaken Rift",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104301.png"
+    },
+    "PhilosophiesOfElegance": {
+      "key": "PhilosophiesOfElegance",
+      "name": "Philosophies of Elegance",
+      "rarity": 4,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Violet Court",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104325.png"
+    },
+    "GuideToElegance": {
+      "key": "GuideToElegance",
+      "name": "Guide to Elegance",
+      "rarity": 3,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Violet Court",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104324.png"
+    },
+    "TeachingsOfElegance": {
+      "key": "TeachingsOfElegance",
+      "name": "Teachings of Elegance",
+      "rarity": 2,
+      "category": "Talent Books",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Violet Court",
+      "icon": "https://enka.network/ui/UI_ItemIcon_104323.png"
+    },
+    "BasaltPillar": {
+      "key": "BasaltPillar",
+      "name": "Basalt Pillar",
+      "rarity": 4,
+      "category": "Boss Drops",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113009.png"
+    },
+    "WaterThatFailedToTranscend": {
+      "key": "WaterThatFailedToTranscend",
+      "name": "Water That Failed to Transcend",
+      "rarity": 4,
+      "category": "Boss Drops",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113057.png"
+    },
+    "GoldInscribedSecretSourceCore": {
+      "key": "GoldInscribedSecretSourceCore",
+      "name": "Gold-Inscribed Secret Source Core",
+      "rarity": 4,
+      "category": "Boss Drops",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113066.png"
+    },
+    "TalismanOfTheEnigmaticLand": {
+      "key": "TalismanOfTheEnigmaticLand",
+      "name": "Talisman of the Enigmatic Land",
+      "rarity": 4,
+      "category": "Boss Drops",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113071.png"
+    },
+    "HurricaneSeed": {
+      "key": "HurricaneSeed",
+      "name": "Hurricane Seed",
+      "rarity": 4,
+      "category": "Boss Drops",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113001.png"
+    },
+    "ErodedHorn": {
+      "key": "ErodedHorn",
+      "name": "Eroded Horn",
+      "rarity": 5,
+      "category": "Weekly Boss",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113068.png"
+    },
+    "FadingCandle": {
+      "key": "FadingCandle",
+      "name": "Fading Candle",
+      "rarity": 5,
+      "category": "Weekly Boss",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113060.png"
+    },
+    "LightlessMass": {
+      "key": "LightlessMass",
+      "name": "Lightless Mass",
+      "rarity": 5,
+      "category": "Weekly Boss",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113056.png"
+    },
+    "TuskOfMonocerosCaeli": {
+      "key": "TuskOfMonocerosCaeli",
+      "name": "Tusk of Monoceros Caeli",
+      "rarity": 5,
+      "category": "Weekly Boss",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_113013.png"
+    },
+    "CorLapis": {
+      "key": "CorLapis",
+      "name": "Cor Lapis",
+      "rarity": 1,
+      "category": "Local Specialties",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_100058.png"
+    },
+    "LakelightLily": {
+      "key": "LakelightLily",
+      "name": "Lakelight Lily",
+      "rarity": 1,
+      "category": "Local Specialties",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_101238.png"
+    },
+    "WitheringPurpurbloom": {
+      "key": "WitheringPurpurbloom",
+      "name": "Withering Purpurbloom",
+      "rarity": 1,
+      "category": "Local Specialties",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_101253.png"
+    },
+    "QuenepaBerry": {
+      "key": "QuenepaBerry",
+      "name": "Quenepa Berry",
+      "rarity": 1,
+      "category": "Local Specialties",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_101249.png"
+    },
+    "Wolfhook": {
+      "key": "Wolfhook",
+      "name": "Wolfhook",
+      "rarity": 1,
+      "category": "Local Specialties",
+      "daysOfWeek": [],
+      "icon": "https://enka.network/ui/UI_ItemIcon_100021.png"
+    },
+    "UnblemishedLunarIron": {
+      "key": "UnblemishedLunarIron",
+      "name": "Unblemished Lunar Iron",
+      "rarity": 4,
+      "category": "Weapon Mats",
+      "daysOfWeek": ["Tuesday", "Friday", "Sunday"],
+      "dropDomain": "Frozen Citadel",
+      "icon": "https://enka.network/ui/UI_ItemIcon_114071.png"
+    }
+  },
+  "domainSchedule": {
+    "Monday": [
+      { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfContention", "name": "Contention" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFreedom", "name": "Freedom" }] }
+    ],
+    "Tuesday": [
+      { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfJustice", "name": "Justice" }] },
+      { "name": "Violet Court", "region": "Inazuma", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfElegance", "name": "Elegance" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+    ],
+    "Wednesday": [
+      { "name": "Taishan Mansion", "region": "Liyue", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfGold", "name": "Gold" }] }
+    ],
+    "Thursday": [
+      { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfContention", "name": "Contention" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFreedom", "name": "Freedom" }] }
+    ],
+    "Friday": [
+      { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfJustice", "name": "Justice" }] },
+      { "name": "Violet Court", "region": "Inazuma", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfElegance", "name": "Elegance" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+    ],
+    "Saturday": [
+      { "name": "Taishan Mansion", "region": "Liyue", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfGold", "name": "Gold" }] }
+    ],
+    "Sunday": [
+      { "name": "All Domains Open", "region": "Teyvat", "domainType": "All Talent & Weapon", "rewards": [
+        { "key": "PhilosophiesOfContention", "name": "Contention" },
+        { "key": "PhilosophiesOfFortitude", "name": "Fortitude" },
+        { "key": "PhilosophiesOfJustice", "name": "Justice" },
+        { "key": "PhilosophiesOfGold", "name": "Gold" }
+      ] }
+    ]
+  },
+  "costCurves": {
+    "characterExpByLevelCap": {
+      "20": { "mora": 24200, "wits": 6 },
+      "40": { "mora": 115800, "wits": 29 },
+      "50": { "mora": 232000, "wits": 58 },
+      "60": { "mora": 380000, "wits": 95 },
+      "70": { "mora": 590000, "wits": 148 },
+      "80": { "mora": 912000, "wits": 228 },
+      "90": { "mora": 1673400, "wits": 419 },
+      "95": { "mora": 2250000, "wits": 565 }
+    },
+    "ascensionByPhase": {
+      "1": { "mora": 20000, "boss": 0, "specialty": 3, "gemTier": 1, "gemCount": 1 },
+      "2": { "mora": 40000, "boss": 2, "specialty": 10, "gemTier": 2, "gemCount": 3 },
+      "3": { "mora": 60000, "boss": 4, "specialty": 20, "gemTier": 2, "gemCount": 6 },
+      "4": { "mora": 80000, "boss": 8, "specialty": 30, "gemTier": 3, "gemCount": 3 },
+      "5": { "mora": 100000, "boss": 12, "specialty": 45, "gemTier": 3, "gemCount": 6 },
+      "6": { "mora": 120000, "boss": 20, "specialty": 60, "gemTier": 4, "gemCount": 6 }
+    },
+    "talentByLevel": {
+      "2": { "mora": 12500, "bookTier": "Teachings", "bookCount": 3, "weekly": 0, "crown": 0 },
+      "3": { "mora": 17500, "bookTier": "Guide", "bookCount": 2, "weekly": 0, "crown": 0 },
+      "4": { "mora": 25000, "bookTier": "Guide", "bookCount": 4, "weekly": 0, "crown": 0 },
+      "5": { "mora": 30000, "bookTier": "Guide", "bookCount": 6, "weekly": 0, "crown": 0 },
+      "6": { "mora": 37500, "bookTier": "Guide", "bookCount": 9, "weekly": 0, "crown": 0 },
+      "7": { "mora": 120000, "bookTier": "Philosophies", "bookCount": 4, "weekly": 1, "crown": 0 },
+      "8": { "mora": 260000, "bookTier": "Philosophies", "bookCount": 6, "weekly": 1, "crown": 0 },
+      "9": { "mora": 450000, "bookTier": "Philosophies", "bookCount": 12, "weekly": 2, "crown": 0 },
+      "10": { "mora": 700000, "bookTier": "Philosophies", "bookCount": 16, "weekly": 2, "crown": 1 }
+    }
+  }
+}

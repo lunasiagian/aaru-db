@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GENSHIN SHEET (FINAL) — Tactical Datasheet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Login Screen -->
+  <main id="login-screen" class="login-screen">
+    <section class="login-card card">
+      <div class="eyebrow">GENSHIN SHEET (FINAL) / AUTHENTICATION</div>
+      <h1 class="login-title">Tactical Account Partition</h1>
+      <p class="login-subtitle">
+        Sign in as <strong>almondeluna (Luna)</strong> or <strong>vanbrohenheim (Sunny)</strong>.
+        Sessions persist in <code>sessionStorage</code>.
+      </p>
+
+      <div class="quick-accounts">
+        <button type="button" class="quick-account-btn" data-quick-user="almondeluna">
+          <span class="mono text-gold">almondeluna</span>
+          <strong>Luna</strong>
+          <span class="muted">Lv.95 C5 Zhongli • Raiden • Venti</span>
+        </button>
+        <button type="button" class="quick-account-btn" data-quick-user="vanbrohenheim">
+          <span class="mono text-mint">vanbrohenheim</span>
+          <strong>Sunny</strong>
+          <span class="muted">Lv.95 Neuvillette • Furina • Mavuika</span>
+        </button>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <label class="mini-field">
+          <span>ACCOUNT KEY</span>
+          <input id="login-username" type="text" placeholder="almondeluna or vanbrohenheim" required class="input-mono" />
+        </label>
+        <label class="mini-field">
+          <span>PASSPHRASE (OPTIONAL IN OFFLINE MODE)</span>
+          <input id="login-passphrase" type="password" placeholder="••••••••" class="input-mono" />
+        </label>
+        <div id="login-error" class="error-text"></div>
+        <button type="submit" class="btn btn-gold full-width">Initialize Datasheet</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- Main Application Shell -->
+  <div id="app-shell" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-brand">
+          <div class="eyebrow">GENSHIN SHEET (FINAL)</div>
+          <div class="brand-sub mono">
+            <span id="active-user-badge"></span>
+            <span id="sync-mode-badge" class="pill mono">OFFLINE / MOCK</span>
+          </div>
+        </div>
+
+        <nav class="topbar-nav" aria-label="Primary Views">
+          <button type="button" class="nav-tab active" data-tab-btn="hud">1. Central HUD</button>
+          <button type="button" class="nav-tab" data-tab-btn="vault">2. SSOT Vault</button>
+          <button type="button" class="nav-tab" data-tab-btn="prefarm">3. Prefarm Planner</button>
+          <button type="button" class="nav-tab" data-tab-btn="roster">4. Roster &amp; Armory</button>
+          <button type="button" class="nav-tab" data-tab-btn="teams">5. Team Comps</button>
+        </nav>
+
+        <div class="topbar-actions">
+          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">Import Irminsul JSON</button>
+          <button type="button" id="btn-partner-toggle" class="btn btn-outline btn-sm">View Partner (Read-Only)</button>
+          <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
+        </div>
+      </div>
+
+      <div id="readonly-banner" class="readonly-banner mono" hidden></div>
+    </header>
+
+    <main class="main-container">
+      <section class="tab-view active" data-tab="hud"></section>
+      <section class="tab-view" data-tab="vault" hidden></section>
+      <section class="tab-view" data-tab="prefarm" hidden></section>
+      <section class="tab-view" data-tab="roster" hidden></section>
+      <section class="tab-view" data-tab="teams" hidden></section>
+    </main>
+  </div>
+
+  <!-- Irminsul GOOD v3 JSON Importer Modal -->
+  <div id="import-modal" class="modal-backdrop" hidden>
+    <div class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">IRMINSUL GOOD V3 IMPORTER</div>
+          <h2 id="import-modal-title" class="card-title">Drag &amp; Drop GOOD v3 JSON Export</h2>
+        </div>
+        <button type="button" id="btn-close-import" class="btn btn-ghost btn-xs">✕</button>
+      </div>
+
+      <div id="good-dropzone" class="dropzone">
+        <div class="mono text-gold">DROP IRMINSUL .JSON FILE HERE</div>
+        <div class="muted">or click to browse (supports <code>format: "GOOD", version: 3</code>)</div>
+        <input id="good-file-input" type="file" accept=".json,application/json" hidden />
+      </div>
+
+      <label class="mini-field">
+        <span>OR PASTE RAW GOOD V3 JSON</span>
+        <textarea id="good-paste-input" rows="4" class="textarea-lab mono" placeholder='{"format":"GOOD","version":3,"source":"Irminsul",...}'></textarea>
+      </label>
+
+      <div id="good-diff-preview" class="diff-preview"></div>
+
+      <div class="modal-foot">
+        <button type="button" id="btn-commit-import" class="btn btn-gold" disabled>Confirm &amp; Sync to Sheet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

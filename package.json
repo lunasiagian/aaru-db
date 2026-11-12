@@ -1,0 +1,13 @@
+{
+  "name": "genshin-datasheet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-tab Genshin Datasheet SPA synced with Google Apps Script and Irminsul GOOD v3 exports.",
+  "scripts": {
+    "build:catalog": "node scripts/build-catalog.mjs"
+  },
+  "devDependencies": {
+    "genshin-db": "^5.2.0"
+  }
+}
