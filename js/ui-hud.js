@@ -181,29 +181,40 @@ export function renderHudTab(container, state, handlers) {
           </div>
         </div>
 
-        <div class="domain-list">
-          ${domainsToday.length
-            ? domainsToday
-                .map((dom) => {
-                  const matchesPriority = (dom.rewards || []).some((r) => topBookBases.has(r.name));
-                  return `
-                  <div class="domain-card ${matchesPriority ? 'domain-highlight' : ''}">
-                    <div class="domain-top">
-                      <span class="domain-name">${dom.name}</span>
-                      <span class="pill ${matchesPriority ? 'pill-gold' : ''}">${dom.region} • ${dom.domainType}</span>
-                    </div>
-                    <div class="domain-rewards">
-                      ${(dom.rewards || [])
-                        .map(
-                          (r) => `<span class="reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')} ${r.name}</span>`
-                        )
-                        .join('')}
-                    </div>
-                  </div>`;
-                })
-                .join('')
-            : '<div class="empty-state">No scheduled domains found for this day.</div>'}
-        </div>
+        ${(() => {
+          const talentDomains = domainsToday.filter((d) => d.domainType === 'Talent');
+          const weaponDomains = domainsToday.filter((d) => d.domainType === 'Weapon');
+          const renderGroup = (title, list) => `
+            <div class="domain-group">
+              <div class="card-eyebrow">${title} (${list.length})</div>
+              <div class="domain-list">
+                ${list.length
+                  ? list
+                      .map((dom) => {
+                        const matchesPriority = (dom.rewards || []).some((r) => topBookBases.has(r.name));
+                        return `
+                        <div class="domain-card ${matchesPriority ? 'domain-highlight' : ''}">
+                          <div class="domain-top">
+                            <span class="domain-name">${dom.name}</span>
+                            <span class="pill ${matchesPriority ? 'pill-gold' : ''}">${dom.region}</span>
+                          </div>
+                          <div class="domain-rewards">
+                            ${(dom.rewards || [])
+                              .map(
+                                (r) => `<span class="reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')} ${r.name}</span>`
+                              )
+                              .join('')}
+                          </div>
+                        </div>`;
+                      })
+                      .join('')
+                  : '<div class="empty-state">No domains scheduled.</div>'}
+              </div>
+            </div>`;
+          return domainsToday.length
+            ? `<div class="domain-split">${renderGroup('TALENT DOMAINS', talentDomains)}${renderGroup('WEAPON DOMAINS', weaponDomains)}</div>`
+            : '<div class="empty-state">No scheduled domains found for this day.</div>';
+        })()}
       </article>
     </div>
 

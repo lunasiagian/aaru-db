@@ -622,6 +622,23 @@ textarea:focus {
   font-size: 12px;
 }
 
+.domain-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.domain-group {
+  padding: 10px;
+  border: 1px solid var(--border-slate);
+  border-radius: 8px;
+  background: rgba(10, 16, 28, 0.35);
+}
+
+.domain-group > .card-eyebrow {
+  margin-bottom: 8px;
+}
+
 .domain-list {
   display: flex;
   flex-direction: column;
