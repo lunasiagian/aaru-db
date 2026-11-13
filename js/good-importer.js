@@ -27,6 +27,7 @@ export function computeGoodImportDiff(account, good) {
     const prev = existingChars.get(gc.key);
     const nextChar = {
       key: gc.key,
+      owned: true,
       level: Number(gc.level) || 1,
       constellation: Number(gc.constellation) || 0,
       ascension: Number(gc.ascension) || 0,

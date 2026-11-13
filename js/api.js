@@ -98,6 +98,65 @@ export function saveLocalMock(username, data) {
   }
 }
 
+function normalizeSheetRowCharacter(r) {
+  const level = Number(r.level) || 1;
+  return {
+    key: r.key || r.char_key,
+    owned: r.owned === undefined ? true : Boolean(r.owned),
+    level,
+    constellation: Number(r.constellation) || 0,
+    ascension: Number(r.ascension) || 0,
+    talent: r.talent || {
+      auto: Number(r.talent_auto) || 1,
+      skill: Number(r.talent_skill) || 1,
+      burst: Number(r.talent_burst) || 1
+    },
+    targetLevel: Number(r.targetLevel ?? r.target_lvl) || 90,
+    targetTalents: r.targetTalents || r.target_talents || '9/9/9',
+    status: r.status || (level >= 90 ? 'Built' : level >= 70 ? 'In Progress' : 'Bench'),
+    priorityRank: r.priorityRank ?? r.priority_rank ?? '',
+    swapTag: r.swapTag || '',
+    notes: r.notes || ''
+  };
+}
+
+function normalizeAccount(raw) {
+  if (!raw || typeof raw !== 'object') return raw;
+
+  const rosterRows = Array.isArray(raw.roster) ? raw.roster.map(normalizeSheetRowCharacter).filter((c) => c.key) : [];
+  const sectionChars = Array.isArray(raw.characters) ? raw.characters.map(normalizeSheetRowCharacter).filter((c) => c.key) : [];
+
+  let characters = sectionChars;
+  if (sectionChars.length === 0 && rosterRows.length > 0) {
+    characters = rosterRows;
+  } else if (rosterRows.length > 0 && sectionChars.length > 0) {
+    const byKey = new Map(sectionChars.map((c) => [c.key, c]));
+    for (const r of rosterRows) {
+      const prev = byKey.get(r.key);
+      byKey.set(r.key, prev ? { ...r, status: prev.status || r.status, swapTag: prev.swapTag || r.swapTag } : r);
+    }
+    characters = Array.from(byKey.values());
+  }
+
+  const weapons = (Array.isArray(raw.weapons) ? raw.weapons : [])
+    .map((w, idx) => ({
+      id: w.id || w.weapon_uid || `w-${idx + 1}`,
+      key: w.key || w.weapon_key,
+      level: Number(w.level) || 1,
+      ascension: Number(w.ascension) || 0,
+      refinement: Number(w.refinement) || 1,
+      location: w.location || '',
+      lock: Boolean(w.lock)
+    }))
+    .filter((w) => Boolean(w.key));
+
+  return {
+    ...raw,
+    characters,
+    weapons
+  };
+}
+
 /**
  * Authenticates user via POST (action: "login") so passphrase stays out of URLs,
  * stores the returned temporary session token, and returns the account payload.
@@ -140,7 +199,7 @@ export async function loginAccount(username, passphrase = '') {
   return {
     ok: true,
     mode: 'live',
-    account: json.account || json.data || loadLocalMock(normalized)
+    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized)
   };
 }
 
@@ -176,7 +235,7 @@ export async function restoreAccountSession(username) {
   return {
     ok: true,
     mode: 'live',
-    account: json.account || json.data || loadLocalMock(normalized)
+    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized)
   };
 }
 
@@ -213,7 +272,7 @@ export async function fetchPartnerAccount(partnerUsername) {
     },
     'Failed to fetch partner sheet'
   );
-  return json.account || json.data;
+  return normalizeAccount(json.account || json.data);
 }
 
 /**
