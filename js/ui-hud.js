@@ -21,7 +21,7 @@ export function renderHudTab(container, state, handlers) {
   const purse = calcCoinPurse(wallet);
   const wits = calcEffectiveHerosWit(account.inventory);
   const gauges = calcCompletionGauges(account);
-  const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {});
+  const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {}, account.wallet);
 
   const todayName = state.hudDayOverride || WEEKDAYS[new Date().getDay()];
   const domainsToday = getDomainScheduleForDay(todayName);

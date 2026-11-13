@@ -21,11 +21,11 @@ export function getAssetUrl(type, pascalKey) {
 export function getFallbackAssetUrl(type, pascalKey) {
   const catalog = getCatalog();
   if (!pascalKey) return '';
-  const bucket = catalog?.[type] || {};
-  if (bucket[pascalKey]?.icon) return bucket[pascalKey].icon;
-
   const live = getLiveAssetEntry(type, pascalKey);
   if (live?.icon) return live.icon;
+
+  const bucket = catalog?.[type] || {};
+  if (bucket[pascalKey]?.icon) return bucket[pascalKey].icon;
 
   // Handle Traveler variants (TravelerCryo -> Traveler or TravelerAnemo)
   if (type === 'characters' && pascalKey.startsWith('Traveler')) {

@@ -1,5 +1,5 @@
 import { renderAssetIcon } from './assets.js';
-import { getCatalog, getCharacterMeta, getWeaponMeta } from './catalog.js';
+import { getAllCharacterKeys, getCharacterMeta, getWeaponMeta } from './catalog.js';
 
 const STATUS_PILLS = ['All', 'Active Work', 'Combat Ready', 'Swap Flagged'];
 const ELEMENT_PILLS = ['All', 'Pyro', 'Hydro', 'Anemo', 'Electro', 'Dendro', 'Cryo', 'Geo'];
@@ -190,7 +190,6 @@ function renderInspectorDrawer(c, isReadOnly) {
 
 export function renderRosterTab(container, state, handlers) {
   const { account, isReadOnly, rosterFilter } = state;
-  const catalog = getCatalog();
   const ownedMap = new Map((account.characters || []).map((c) => [c.key, c]));
   const prefarmSet = new Set((account.prefarmQueue || []).map((p) => p.characterKey));
 
@@ -201,7 +200,7 @@ export function renderRosterTab(container, state, handlers) {
 
   const allKeys = new Set([
     ...ownedMap.keys(),
-    ...Object.keys(catalog?.characters || {})
+    ...getAllCharacterKeys()
   ]);
 
   const combinedChars = Array.from(allKeys).map((key) => {

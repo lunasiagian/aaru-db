@@ -1,11 +1,10 @@
 import { renderAssetIcon } from './assets.js';
-import { getCatalog, getCharacterMeta } from './catalog.js';
+import { getAllCharacterKeys, getCharacterMeta } from './catalog.js';
 import { calculatePrefarmRequirements } from './calculations.js';
 
 export function renderPrefarmTab(container, state, handlers) {
   const { account, isReadOnly } = state;
-  const catalog = getCatalog();
-  const allCharKeys = Object.keys(catalog?.characters || {}).sort();
+  const allCharKeys = getAllCharacterKeys();
   const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
   const disabledAttr = isReadOnly ? 'disabled' : '';
 
@@ -69,7 +68,7 @@ export function renderPrefarmTab(container, state, handlers) {
         ? queue
             .map((target, idx) => {
               const charMeta = getCharacterMeta(target.characterKey);
-              const reqRows = calculatePrefarmRequirements(target, account.inventory || {});
+              const reqRows = calculatePrefarmRequirements(target, account.inventory || {}, account.wallet);
               const deficitCount = reqRows.filter((r) => r.deficit > 0).length;
 
               return `

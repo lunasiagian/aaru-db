@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v2';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v3';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -132,7 +132,9 @@ async function fetchYattaCatalog() {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon) continue;
         const upg = avatarUpgradeByNorm.get(norm);
+        const pascalKey = String(item.name || '').replace(/[^a-zA-Z0-9]/g, '');
         slim.characters[norm] = {
+          pascalKey,
           name: item.name,
           rarity: Number(item.rank) || 5,
           element: ELEMENT_MAP[item.element] || item.element || 'Unknown',
@@ -280,4 +282,19 @@ export function getMaterialMeta(key) {
 export function getDomainScheduleForDay(dayName) {
   const catalog = getCatalog();
   return catalog?.domainSchedule?.[dayName] || [];
+}
+
+export function getAllCharacterKeys() {
+  const catalog = getCatalog();
+  const byNorm = new Map();
+  for (const key of Object.keys(catalog?.characters || {})) {
+    byNorm.set(normalizeAssetKey(key), key);
+  }
+  for (const [norm, entry] of yattaMaps.characters.entries()) {
+    if (norm === 'traveler') continue;
+    if (!byNorm.has(norm)) {
+      byNorm.set(norm, entry.pascalKey || entry.name.replace(/[^a-zA-Z0-9]/g, ''));
+    }
+  }
+  return Array.from(byNorm.values()).sort((a, b) => a.localeCompare(b));
 }

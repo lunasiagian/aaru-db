@@ -98,7 +98,7 @@ function ascensionPhaseForLevel(level) {
  * Calculates exact material requirements & deficits for a single prefarm target
  * against catalog.json recipes and current inventory.
  */
-export function calculatePrefarmRequirements(target, inventory = {}) {
+export function calculatePrefarmRequirements(target, inventory = {}, wallet = null) {
   const catalog = getCatalog();
   const curves = catalog?.costCurves || {};
   const charMeta = getCharacterMeta(target.characterKey);
@@ -170,7 +170,12 @@ export function calculatePrefarmRequirements(target, inventory = {}) {
   // Compare against inventory
   const effectiveWits = calcEffectiveHerosWit(inventory).effectiveTotal;
   const rows = Object.entries(req).map(([matKey, needed]) => {
-    const owned = matKey === 'HerosWit' ? Math.floor(effectiveWits) : Number(inventory[matKey]?.count ?? 0);
+    const owned =
+      matKey === 'HerosWit'
+        ? Math.floor(effectiveWits)
+        : matKey === 'Mora'
+          ? Number(wallet?.mora ?? inventory[matKey]?.count ?? 0)
+          : Number(inventory[matKey]?.count ?? 0);
     const delta = owned - needed;
     const meta = getMaterialMeta(matKey);
     return {
@@ -198,12 +203,12 @@ export function calculatePrefarmRequirements(target, inventory = {}) {
 /**
  * Aggregates shared resource pool for Priority #1 & #2 targets.
  */
-export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}) {
+export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, wallet = null) {
   const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank).slice(0, 2);
   const pool = {};
 
   for (const target of sorted) {
-    const rows = calculatePrefarmRequirements(target, inventory);
+    const rows = calculatePrefarmRequirements(target, inventory, wallet);
     for (const r of rows) {
       if (!pool[r.key]) {
         pool[r.key] = {
