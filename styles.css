@@ -1958,6 +1958,37 @@ textarea:focus {
   border-radius: 10px;
   background: rgba(12, 20, 31, 0.72);
   border: 1px solid var(--border-slate);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+}
+
+.cmd-intent-pill:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-1px);
+}
+
+.cmd-intent-pill.is-focused {
+  background: rgba(18, 30, 46, 0.95);
+}
+
+.cmd-intent-pill.c0.is-focused { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 6px 18px rgba(56, 189, 248, 0.15); }
+.cmd-intent-pill.c1.is-focused { box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.5), 0 6px 18px rgba(45, 212, 191, 0.15); }
+.cmd-intent-pill.c2.is-focused { box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.5), 0 6px 18px rgba(192, 132, 252, 0.15); }
+.cmd-intent-pill.c3.is-focused { box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.5), 0 6px 18px rgba(245, 196, 81, 0.15); }
+
+.cmd-intent-pill.is-dimmed,
+.cmd-card.is-dimmed,
+.cmd-today-tile.is-dimmed,
+.cmd-surplus-badge.is-dimmed {
+  opacity: 0.25;
+}
+
+.cmd-card.is-focused {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(18, 30, 46, 0.94);
 }
 
 .cmd-intent-pill.c0 { border-left: 3px solid #38bdf8; }
@@ -2040,6 +2071,7 @@ textarea:focus {
   border-radius: 10px;
   background: rgba(13, 22, 34, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .cmd-card-head {

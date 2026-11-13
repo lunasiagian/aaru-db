@@ -193,7 +193,7 @@ export function renderHudTab(container, state, handlers) {
             return `<span class="cmd-today-icons" title="Bottlenecks farmable today">
               ${farmTodayItems
                 .map(
-                  (i) => `<span class="cmd-today-tile rarity-frame-${i.rarity || 3}" title="${i.name} (-${i.deficit.toLocaleString()} NET)">
+                  (i) => `<span class="cmd-today-tile rarity-frame-${i.rarity || 3}" data-char-keys="${(i.alloc?.targets || []).map((t) => t.characterKey).join(',')}" title="${i.name} (-${i.deficit.toLocaleString()} NET)">
                     ${renderAssetIcon('materials', i.key, i.name, 'icon-xs')}
                   </span>`
                 )
@@ -214,7 +214,7 @@ export function renderHudTab(container, state, handlers) {
                   const divider = idx > 0 ? '<div class="cmd-intent-divider" aria-hidden="true"></div>' : '';
                   return `
                   ${divider}
-                  <div class="cmd-intent-pill ${rankCls}">
+                  <button type="button" class="cmd-intent-pill ${rankCls}" data-focus-char="${t.characterKey}" title="Hover or click to highlight ${cm.name}'s resources">
                     <span class="cmd-rank-tag mono ${rankCls}">${t.tierLabel}</span>
                     ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-sm')}
                     <div class="cmd-intent-body">
@@ -229,7 +229,7 @@ export function renderHudTab(container, state, handlers) {
                         <span class="cmd-intent-pct mono">${pct}%</span>
                       </div>
                     </div>
-                  </div>`;
+                  </button>`;
                 })
                 .join('')}
             </div>`
@@ -301,8 +301,9 @@ export function renderHudTab(container, state, handlers) {
               </div>`
             : '';
 
+          const charKeysAttr = (item.alloc?.targets || []).map((t) => t.characterKey).join(',');
           return `
-          <div class="cmd-card">
+          <div class="cmd-card" data-char-keys="${charKeysAttr}">
             <div class="cmd-card-head">
               <div class="cmd-icon-frame rarity-frame-${rarity}">
                 ${renderAssetIcon('materials', item.key, item.name, 'icon-48')}
@@ -337,7 +338,7 @@ export function renderHudTab(container, state, handlers) {
                 ${surplusItems
                   .map(
                     (item) => `
-                  <div class="cmd-surplus-badge" title="${item.name}: ${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()} (+${item.surplus.toLocaleString()})">
+                  <div class="cmd-surplus-badge" data-char-keys="${(item.alloc?.targets || []).map((t) => t.characterKey).join(',')}" title="${item.name}: ${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()} (+${item.surplus.toLocaleString()})">
                     ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
                     <span class="mono">+${formatCompactSurplus(item.surplus)}</span>
                   </div>`
@@ -641,6 +642,44 @@ export function renderHudTab(container, state, handlers) {
   // Bind HUD events
   container.querySelector('[data-open-server-modal]')?.addEventListener('click', () => {
     handlers.onOpenServerModal?.();
+  });
+
+  // Character focus highlight (hover + click pin) on Command Deck
+  let pinnedCharKey = state.hudPinnedChar || null;
+  const applyCharFocus = (activeKey) => {
+    container.querySelectorAll('[data-focus-char]').forEach((btn) => {
+      const key = btn.dataset.focusChar;
+      btn.classList.toggle('is-focused', Boolean(activeKey) && key === activeKey);
+      btn.classList.toggle('is-dimmed', Boolean(activeKey) && key !== activeKey);
+      btn.setAttribute('aria-pressed', pinnedCharKey === key ? 'true' : 'false');
+    });
+    container.querySelectorAll('.cmd-card[data-char-keys], .cmd-today-tile[data-char-keys], .cmd-surplus-badge[data-char-keys]').forEach((el) => {
+      if (!activeKey) {
+        el.classList.remove('is-focused', 'is-dimmed');
+        return;
+      }
+      const keys = (el.dataset.charKeys || '').split(',').filter(Boolean);
+      const match = keys.includes(activeKey);
+      el.classList.toggle('is-focused', match);
+      el.classList.toggle('is-dimmed', !match);
+    });
+  };
+
+  if (pinnedCharKey) applyCharFocus(pinnedCharKey);
+
+  container.querySelectorAll('[data-focus-char]').forEach((btn) => {
+    const charKey = btn.dataset.focusChar;
+    btn.addEventListener('mouseenter', () => {
+      if (!pinnedCharKey) applyCharFocus(charKey);
+    });
+    btn.addEventListener('mouseleave', () => {
+      if (!pinnedCharKey) applyCharFocus(null);
+    });
+    btn.addEventListener('click', () => {
+      pinnedCharKey = pinnedCharKey === charKey ? null : charKey;
+      state.hudPinnedChar = pinnedCharKey;
+      applyCharFocus(pinnedCharKey);
+    });
   });
 
   // Live server reset countdown updater
