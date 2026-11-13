@@ -943,13 +943,15 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfAdmonition", "name": "Admonition" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfEquity", "name": "Equity" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfContention", "name": "Contention" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfMoonlight", "name": "Moonlight" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfCharity", "name": "Charity" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "ScatteredPieceOfDecarabiansDream", "name": "Decarabian" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "DivineBodyFromGuyun", "name": "Guyun" }] },
       { "name": "Court of Flowing Sand", "region": "Inazuma", "domainType": "Weapon", "rewards": [{ "key": "GoldenBranchOfADistantSea", "name": "Distant Sea" }] },
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "GoldenTalismanOfTheForestDew", "name": "Forest Dew" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Tuesday": [
@@ -959,6 +961,7 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfIngenuity", "name": "Ingenuity" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfJustice", "name": "Justice" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfKindling", "name": "Kindling" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfElysium", "name": "Elysium" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "BorealWolfsNostalgia", "name": "Boreal Wolf" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "MistVeiledPrimoElixir", "name": "Mist Veiled" }] },
@@ -966,6 +969,7 @@
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "OasisGardensTruth", "name": "Oasis Garden" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Wednesday": [
@@ -975,13 +979,15 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfPraxis", "name": "Praxis" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfOrder", "name": "Order" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfConflict", "name": "Conflict" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfVagrancy", "name": "Vagrancy" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfGlory", "name": "Glory" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "DreamOfTheDandelionGladiator", "name": "Dandelion Gladiator" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "ChunkOfAerosiderite", "name": "Aerosiderite" }] },
       { "name": "Court of Flowing Sand", "region": "Inazuma", "domainType": "Weapon", "rewards": [{ "key": "MaskOfTheKijin", "name": "Mask" }] },
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "OldenDaysOfScorchingMight", "name": "Scorching Might" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Thursday": [
@@ -991,13 +997,15 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfAdmonition", "name": "Admonition" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfEquity", "name": "Equity" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfContention", "name": "Contention" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfMoonlight", "name": "Moonlight" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfCharity", "name": "Charity" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "ScatteredPieceOfDecarabiansDream", "name": "Decarabian" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "DivineBodyFromGuyun", "name": "Guyun" }] },
       { "name": "Court of Flowing Sand", "region": "Inazuma", "domainType": "Weapon", "rewards": [{ "key": "GoldenBranchOfADistantSea", "name": "Distant Sea" }] },
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "GoldenTalismanOfTheForestDew", "name": "Forest Dew" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Friday": [
@@ -1007,6 +1015,7 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfIngenuity", "name": "Ingenuity" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfJustice", "name": "Justice" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfKindling", "name": "Kindling" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfElysium", "name": "Elysium" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "BorealWolfsNostalgia", "name": "Boreal Wolf" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "MistVeiledPrimoElixir", "name": "Mist Veiled" }] },
@@ -1014,6 +1023,7 @@
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "OasisGardensTruth", "name": "Oasis Garden" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Saturday": [
@@ -1023,13 +1033,15 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfPraxis", "name": "Praxis" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfOrder", "name": "Order" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfConflict", "name": "Conflict" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfVagrancy", "name": "Vagrancy" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfGlory", "name": "Glory" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "DreamOfTheDandelionGladiator", "name": "Dandelion Gladiator" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "ChunkOfAerosiderite", "name": "Aerosiderite" }] },
       { "name": "Court of Flowing Sand", "region": "Inazuma", "domainType": "Weapon", "rewards": [{ "key": "MaskOfTheKijin", "name": "Mask" }] },
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "OldenDaysOfScorchingMight", "name": "Scorching Might" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ],
     "Sunday": [
@@ -1039,13 +1051,15 @@
       { "name": "Steeple of Ignorance", "region": "Sumeru", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfAdmonition", "name": "Admonition" }, { "key": "PhilosophiesOfIngenuity", "name": "Ingenuity" }, { "key": "PhilosophiesOfPraxis", "name": "Praxis" }] },
       { "name": "Pale Forgotten Glory", "region": "Fontaine", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfEquity", "name": "Equity" }, { "key": "PhilosophiesOfJustice", "name": "Justice" }, { "key": "PhilosophiesOfOrder", "name": "Order" }] },
       { "name": "Blazing Ruins", "region": "Natlan", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfContention", "name": "Contention" }, { "key": "PhilosophiesOfKindling", "name": "Kindling" }, { "key": "PhilosophiesOfConflict", "name": "Conflict" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFortitude", "name": "Fortitude" }] },
+      { "name": "Lightless Capital", "region": "Nod-Krai", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfMoonlight", "name": "Moonlight" }, { "key": "PhilosophiesOfElysium", "name": "Elysium" }, { "key": "PhilosophiesOfVagrancy", "name": "Vagrancy" }] },
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfCharity", "name": "Charity" }, { "key": "PhilosophiesOfFortitude", "name": "Fortitude" }, { "key": "PhilosophiesOfGlory", "name": "Glory" }] },
       { "name": "Cecilia Garden", "region": "Mondstadt", "domainType": "Weapon", "rewards": [{ "key": "ScatteredPieceOfDecarabiansDream", "name": "Decarabian" }, { "key": "BorealWolfsNostalgia", "name": "Boreal Wolf" }, { "key": "DreamOfTheDandelionGladiator", "name": "Dandelion Gladiator" }] },
       { "name": "Hidden Palace of Lianshan Formula", "region": "Liyue", "domainType": "Weapon", "rewards": [{ "key": "DivineBodyFromGuyun", "name": "Guyun" }, { "key": "MistVeiledPrimoElixir", "name": "Mist Veiled" }, { "key": "ChunkOfAerosiderite", "name": "Aerosiderite" }] },
       { "name": "Court of Flowing Sand", "region": "Inazuma", "domainType": "Weapon", "rewards": [{ "key": "GoldenBranchOfADistantSea", "name": "Distant Sea" }, { "key": "NarukamisValor", "name": "Narukami" }, { "key": "MaskOfTheKijin", "name": "Mask" }] },
       { "name": "Tower of Abject Pride", "region": "Sumeru", "domainType": "Weapon", "rewards": [{ "key": "GoldenTalismanOfTheForestDew", "name": "Forest Dew" }, { "key": "OasisGardensTruth", "name": "Oasis Garden" }, { "key": "OldenDaysOfScorchingMight", "name": "Scorching Might" }] },
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }, { "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }, { "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }, { "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }, { "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
+      { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }, { "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }, { "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
       { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
     ]
   },
