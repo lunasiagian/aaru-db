@@ -43,11 +43,11 @@ export function renderPrefarmTab(container, state, handlers) {
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">GENSHIN SHEET (FINAL) / PREFARM PLANNER</div>
-        <h1 class="section-title">Ascension &amp; Talent Deficit Calculator</h1>
+        <div class="eyebrow">AARUDB / PREFARM</div>
+        <h1 class="section-title">Prefarm Queue</h1>
       </div>
       <div class="header-meta mono">
-        TARGETS: <span class="text-gold">${queue.length}</span> • TIER #1 &amp; #2 FEED CENTRAL HUD POOL
+        TARGETS: <span class="text-gold">${queue.length}</span> • #1 &amp; #2 FEED HUD
       </div>
     </div>
 
@@ -133,7 +133,7 @@ export function renderPrefarmTab(container, state, handlers) {
                 <div class="prefarm-head">
                   <div class="prefarm-char">
                     <span class="rank-badge mono ${target.tier <= 2 ? 'rank-top' : ''}">${target.tierLabel}</span>
-                    ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-md')}
+                    ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-lg')}
                     <div>
                       <div class="item-name">${charMeta.name} <span class="pill">${charMeta.element}</span></div>
                       <div class="item-meta mono">
@@ -144,9 +144,9 @@ export function renderPrefarmTab(container, state, handlers) {
                       ${
                         bossMeta?.bossName
                           ? `<div class="item-meta mono" style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
-                              ${bossMeta.bossIcon ? `<img src="${bossMeta.bossIcon}" alt="${bossMeta.bossName}" referrerpolicy="no-referrer" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" />` : ''}
-                              <span>Ascension Boss: ${bossMeta.bossName}</span>
-                              ${bossMeta.bossUnreleased ? '<span class="pill pill-coral mono">Overworld Boss Unreleased as of 7.2</span>' : ''}
+                              ${bossMeta.bossIcon ? `<img src="${bossMeta.bossIcon}" alt="${bossMeta.bossName}" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:4px;object-fit:cover;" />` : ''}
+                              <span>Boss: ${bossMeta.bossName}</span>
+                              ${bossMeta.bossUnreleased ? '<span class="pill pill-coral mono">Unreleased (7.2)</span>' : ''}
                             </div>`
                           : ''
                       }
@@ -225,7 +225,7 @@ export function renderPrefarmTab(container, state, handlers) {
                       const isDef = r.deficit > 0;
                       return `
                       <div class="req-chip ${isDef ? 'row-deficit' : 'row-surplus'}">
-                        ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
+                        ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
                         <div class="req-chip-body">
                           <div class="req-name">${r.name}</div>
                           <div class="req-nums mono">

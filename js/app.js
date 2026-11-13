@@ -374,7 +374,7 @@ async function handleLogin(username, passphrase = '') {
   const passInput = document.getElementById('login-passphrase');
   if (errEl) errEl.textContent = '';
 
-  const origLabel = submitBtn?.textContent || 'Initialize Datasheet';
+  const origLabel = submitBtn?.textContent || 'Enter AaruDB';
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="btn-spinner"></span> Authenticating...';

@@ -15,8 +15,8 @@ export function renderTeamsTab(container, state, handlers) {
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">GENSHIN SHEET (FINAL) / TEAM COMPS &amp; TEST LAB</div>
-        <h1 class="section-title">Squads, Weapon Conflicts &amp; Miliastra Test Lab</h1>
+        <div class="eyebrow">AARUDB / TEAMS</div>
+        <h1 class="section-title">Team Comps</h1>
       </div>
       <div class="header-meta mono">
         SQUADS: <span class="text-gold">${teams.length}</span> •
@@ -35,18 +35,14 @@ export function renderTeamsTab(container, state, handlers) {
               const wm = getWeaponMeta(c.weaponKey);
               const details = c.usages.map((u) => `${u.teamName} (${getCharacterMeta(u.characterKey).name})`).join(' vs ');
               return `<div class="conflict-item">
-                ${renderAssetIcon('weapons', c.weaponKey, wm.name, 'icon-xs')}
+                ${renderAssetIcon('weapons', c.weaponKey, wm.name, 'icon-sm')}
                 <span><strong>${wm.name}</strong> <span class="mono muted">[${c.instanceKey}]</span> shared across: ${details}</span>
               </div>`;
             })
             .join('')}
         </div>
       </article>`
-        : `
-      <article class="card conflict-clear">
-        <div class="card-eyebrow text-mint">✓ WEAPON CONFLICT DETECTOR</div>
-        <div class="kpi-sub">Zero weapon instance collisions across all active squads.</div>
-      </article>`
+        : ''
     }
 
     ${ARCHETYPES.map((arch) => {
@@ -86,14 +82,14 @@ export function renderTeamsTab(container, state, handlers) {
                       return `
                       <div class="squad-slot ${hasConflict ? 'slot-conflict' : ''}">
                         <div class="slot-char">
-                          ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-sm')}
+                          ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
                           <div>
                             <div class="item-name">${cm.name}</div>
                             <div class="item-meta mono">${m.role || cm.element}</div>
                           </div>
                         </div>
                         <div class="slot-weapon">
-                          ${renderAssetIcon('weapons', m.weaponKey, wm.name, 'icon-xs')}
+                          ${renderAssetIcon('weapons', m.weaponKey, wm.name, 'icon-sm')}
                           <select class="select-xs mono" data-team-weapon="${team.id}" data-member-idx="${idx}" ${disabledAttr}>
                             ${weapons
                               .map(

@@ -3,24 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GENSHIN SHEET (FINAL) — Tactical Datasheet</title>
+  <title>AaruDB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261113j" />
+  <link rel="stylesheet" href="./styles.css?v=20261113k" />
 </head>
 <body>
   <!-- Login Screen -->
   <main id="login-screen" class="login-screen">
     <section class="login-card card">
-      <div class="eyebrow">GENSHIN SHEET (FINAL) / AUTHENTICATION</div>
-      <h1 class="login-title">Tactical Account Partition</h1>
+      <div class="eyebrow">AARUDB / AUTHENTICATION</div>
+      <h1 class="login-title">Sign In</h1>
       <p class="login-subtitle">
-        Enter your account key and passphrase to unlock your datasheet.
-        Sessions persist in <code>sessionStorage</code>.
+        Enter your account key and passphrase.
       </p>
 
       <form id="login-form" class="login-form">
@@ -33,7 +32,7 @@
           <input id="login-passphrase" type="password" autocomplete="current-password" placeholder="••••••••" class="input-mono" />
         </label>
         <div id="login-error" class="error-text"></div>
-        <button id="login-submit-btn" type="submit" class="btn btn-gold full-width">Initialize Datasheet</button>
+        <button id="login-submit-btn" type="submit" class="btn btn-gold full-width">Enter AaruDB</button>
       </form>
     </section>
   </main>
@@ -41,10 +40,10 @@
   <!-- Session Restore Loading Screen -->
   <main id="session-restore-screen" class="login-screen" hidden>
     <section class="login-card card" style="text-align: center;">
-      <div class="eyebrow">GENSHIN SHEET (FINAL) / SESSION</div>
-      <h1 class="login-title" style="margin-top: 8px;">Restoring Datasheet</h1>
+      <div class="eyebrow">AARUDB / SESSION</div>
+      <h1 class="login-title" style="margin-top: 8px;">Restoring Session</h1>
       <p class="login-subtitle" style="margin-bottom: 0;">
-        <span class="btn-spinner"></span> Syncing your account from Google Sheets...
+        <span class="btn-spinner"></span> Syncing your account...
       </p>
     </section>
   </main>
@@ -54,7 +53,7 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand">
-          <div class="eyebrow">GENSHIN SHEET (FINAL)</div>
+          <div class="brand-title">AaruDB</div>
           <div class="brand-sub mono">
             <span id="active-user-badge"></span>
             <span id="sync-mode-badge" class="pill mono">OFFLINE / MOCK</span>
@@ -62,16 +61,16 @@
         </div>
 
         <nav class="topbar-nav" aria-label="Primary Views">
-          <button type="button" class="nav-tab active" data-tab-btn="hud">1. Central HUD</button>
-          <button type="button" class="nav-tab" data-tab-btn="vault">2. SSOT Vault</button>
-          <button type="button" class="nav-tab" data-tab-btn="prefarm">3. Prefarm Planner</button>
-          <button type="button" class="nav-tab" data-tab-btn="roster">4. Roster &amp; Armory</button>
-          <button type="button" class="nav-tab" data-tab-btn="teams">5. Team Comps</button>
+          <button type="button" class="nav-tab active" data-tab-btn="hud">Central HUD</button>
+          <button type="button" class="nav-tab" data-tab-btn="vault">Vault</button>
+          <button type="button" class="nav-tab" data-tab-btn="prefarm">Prefarm</button>
+          <button type="button" class="nav-tab" data-tab-btn="roster">Roster</button>
+          <button type="button" class="nav-tab" data-tab-btn="teams">Teams</button>
         </nav>
 
         <div class="topbar-actions">
-          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">Import Irminsul JSON</button>
-          <button type="button" id="btn-partner-toggle" class="btn btn-outline btn-sm">View Partner (Read-Only)</button>
+          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">Import JSON</button>
+          <button type="button" id="btn-partner-toggle" class="btn btn-outline btn-sm">Partner View</button>
           <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
           <button type="button" id="btn-system-drawer" class="btn btn-ghost btn-sm icon-menu-btn" aria-label="System & Data Menu" title="Version &amp; Data Sync">☰</button>
         </div>
@@ -143,6 +142,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261113j"></script>
+  <script type="module" src="./js/app.js?v=20261113k"></script>
 </body>
 </html>

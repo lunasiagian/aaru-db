@@ -286,8 +286,8 @@ export function renderRosterTab(container, state, handlers) {
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">GENSHIN SHEET (FINAL) / ROSTER &amp; ARMORY</div>
-        <h1 class="section-title">Character Roster &amp; Weapon Armory</h1>
+        <div class="eyebrow">AARUDB / ROSTER</div>
+        <h1 class="section-title">Roster &amp; Armory</h1>
       </div>
       <div class="header-meta mono">
         OWNED: <span class="text-gold">${combinedChars.filter((c) => c.owned).length}</span> CHARS • <span class="text-mint">${(account.weapons || []).length}</span> WEAPONS

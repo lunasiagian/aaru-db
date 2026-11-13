@@ -54,29 +54,26 @@ export function renderVaultTab(container, state, handlers) {
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">GENSHIN SHEET (FINAL) / THE SSOT VAULT</div>
-        <h1 class="section-title">Single Source of Truth Inventory</h1>
+        <div class="eyebrow">AARUDB / VAULT</div>
+        <h1 class="section-title">Inventory Vault</h1>
       </div>
       <div class="header-meta mono">
-        SHEET: <span class="text-gold">${account.user}_Inventory</span>
+        ACCOUNT: <span class="text-gold">${account.user}</span>
       </div>
     </div>
 
     <div class="vault-kpi-grid">
       <article class="card">
-        <div class="card-eyebrow">TRACKED ENTRIES</div>
+        <div class="card-eyebrow">TRACKED</div>
         <div class="kpi-hero mono">${allEntries.length}</div>
-        <div class="kpi-sub">Synced materials &amp; currencies</div>
       </article>
       <article class="card">
-        <div class="card-eyebrow">LOW-STOCK MATERIALS</div>
+        <div class="card-eyebrow">LOW STOCK</div>
         <div class="kpi-hero mono text-coral">${lowStockCount}</div>
-        <div class="kpi-sub">Below target threshold</div>
       </article>
       <article class="card">
-        <div class="card-eyebrow">AVAILABLE TODAY (${todayName.toUpperCase()})</div>
+        <div class="card-eyebrow">TODAY (${todayName.toUpperCase()})</div>
         <div class="kpi-hero mono text-mint">${availableTodayCount}</div>
-        <div class="kpi-sub">Farmable in today's domains</div>
       </article>
     </div>
 

@@ -57,8 +57,8 @@ export function renderHudTab(container, state, handlers) {
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">GENSHIN SHEET (FINAL) / CENTRAL HUD</div>
-        <h1 class="section-title">Command &amp; Resource Telemetry</h1>
+        <div class="eyebrow">AARUDB / CENTRAL HUD</div>
+        <h1 class="section-title">Central HUD</h1>
       </div>
       <div class="header-meta mono">
         ACTIVE: <span class="text-gold">${account.displayName.toUpperCase()}</span>
@@ -69,10 +69,9 @@ export function renderHudTab(container, state, handlers) {
     <div class="hud-kpi-grid">
       <!-- Coin Purse -->
       <article class="card">
-        <div class="card-eyebrow">COIN PURSE / WISH RESERVES</div>
+        <div class="card-eyebrow">WISH RESERVES</div>
         <div class="kpi-hero mono text-gold">${purse.totalPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
         <div class="kpi-sub">${purse.limitedPulls.toLocaleString()} Limited (${purse.primoPulls} Primo + ${purse.intertwinedFates} Pink) • ${purse.acquaintFates} Blue</div>
-        <div class="kpi-sub muted">Primos &amp; Acquaint Fates are manual (not in Irminsul exports)</div>
         <div class="inline-edit-grid">
           <label class="mini-field">
             <span>PRIMOS</span>
@@ -96,7 +95,6 @@ export function renderHudTab(container, state, handlers) {
           ${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-md')}
           <div class="kpi-hero mono">${Number(wallet.mora ?? 0).toLocaleString()}</div>
         </div>
-        <div class="kpi-sub">Manual entry — Irminsul GOOD v3 omits Mora, Primos &amp; Resin</div>
         <div class="inline-edit-grid single">
           <label class="mini-field">
             <span>MORA BALANCE</span>
@@ -113,7 +111,7 @@ export function renderHudTab(container, state, handlers) {
           <div class="kpi-hero mono text-mint">${wits.effectiveTotal.toLocaleString()} <span class="kpi-unit">EQ.</span></div>
         </div>
         <div class="kpi-sub mono">4★ ${wits.wits4} + 0.25×3★ ${wits.exp3} + 0.05×2★ ${wits.adv2}</div>
-        <div class="formula-note">Formula: 4★ + 0.25×3★ + 0.05×2★ • Lv.1→90 ≈ 419 | Lv.1→95 ≈ 565</div>
+        <div class="formula-note">1 Wit = 4× 3★ = 20× 2★ • Lv.90 ≈ 419 | Lv.95 ≈ 565</div>
       </article>
 
       <!-- Account Completion Gauges -->
@@ -209,7 +207,7 @@ export function renderHudTab(container, state, handlers) {
               <div class="pool-card row-deficit ${item.isToday ? 'pool-card-today' : ''}">
                 <div class="pool-card-top">
                   <div class="pool-item-info">
-                    ${renderAssetIcon('materials', item.key, item.name, 'icon-sm')}
+                    ${renderAssetIcon('materials', item.key, item.name, 'icon-md')}
                     <div>
                       <div class="item-name">
                         ${item.name}
