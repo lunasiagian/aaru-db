@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v8';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v9';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -91,7 +91,7 @@ async function fetchYattaCatalog() {
     if (materialRes.status === 'fulfilled' && materialRes.value?.data?.items) {
       for (const [id, item] of Object.entries(materialRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
-        if (norm) matNormById.set(String(id), { norm, name: item.name });
+        if (norm) matNormById.set(String(id), { norm, name: item.name, rank: Number(item.rank) || 2 });
         if (!norm || !item.icon) continue;
         slim.materials[norm] = {
           name: item.name,
@@ -108,17 +108,20 @@ async function fetchYattaCatalog() {
       for (const item of Object.values(upgradeRes.value.data.avatar || {})) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.items) continue;
+        const upg = {};
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
           if (!mat) continue;
-          if (mat.name.startsWith('Philosophies of ') || domainRewardNormSet.has(mat.norm)) {
-            avatarUpgradeByNorm.set(norm, {
-              domainMatKey: mat.norm,
-              talentBook: mat.name.replace(/^Philosophies of\s+/i, '')
-            });
-            break;
+          if (!upg.talentBook && (mat.name.startsWith('Philosophies of ') || domainRewardNormSet.has(mat.norm))) {
+            upg.domainMatKey = mat.norm;
+            upg.talentBook = mat.name.replace(/^Philosophies of\s+/i, '');
+          } else if (/^113\d+$/.test(String(matId))) {
+            const pascalMat = String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '');
+            if (mat.rank === 4 && !upg.bossMat) upg.bossMat = pascalMat;
+            else if (mat.rank === 5 && !upg.weeklyMat) upg.weeklyMat = pascalMat;
           }
         }
+        if (Object.keys(upg).length) avatarUpgradeByNorm.set(norm, upg);
       }
       for (const item of Object.values(upgradeRes.value.data.weapon || {})) {
         const norm = normalizeAssetKey(item.name);
@@ -208,7 +211,7 @@ async function fetchYattaCatalog() {
                 icon: `https://api.lunaris.moe/data/assets/items/${item.icon}.webp`
               };
             }
-            if (/^113\d+$/.test(String(id)) && Array.isArray(item.sourceMonsters) && slim.materials[norm]) {
+            if (/^113\d+$/.test(String(id)) && Array.isArray(item.sourceMonsters) && slim.materials[norm]?.rarity === 4) {
               const monId = String(item.sourceMonsters?.[0]?.[0] || '');
               const mon = monId ? lunarisMonsters[monId] : null;
               if (mon?.enName) {
@@ -339,7 +342,16 @@ export function getCharacterMeta(key) {
   const base = catalog?.characters?.[key];
   const live = getLiveAssetEntry('characters', key);
   if (base) {
-    return live ? { ...live, ...base, domainMatKey: base.domainMatKey || live.domainMatKey, talentBook: base.talentBook || live.talentBook } : base;
+    return live
+      ? {
+          ...live,
+          ...base,
+          domainMatKey: base.domainMatKey || live.domainMatKey,
+          talentBook: base.talentBook || live.talentBook,
+          bossMat: base.bossMat || live.bossMat,
+          weeklyMat: base.weeklyMat || live.weeklyMat
+        }
+      : base;
   }
   return (
     (live ? { key, ...live } : null) || {
