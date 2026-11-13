@@ -364,6 +364,14 @@ function setupGoodImportModal() {
     try {
       const { raw, diff } = state.pendingGoodImport;
       await commitGoodImport(state.sessionUser, raw, diff.mergedAccount);
+      const mats = raw?.materials || {};
+      if (
+        typeof mats.Mora === 'number' ||
+        typeof mats.IntertwinedFate === 'number' ||
+        typeof mats.AcquaintFate === 'number'
+      ) {
+        await saveAccountSection(state.sessionUser, 'wallet', diff.mergedAccount.wallet);
+      }
       state.ownAccount = diff.mergedAccount;
       closeModal();
       renderActiveTab();

@@ -43,6 +43,7 @@ export function renderHudTab(container, state, handlers) {
         <div class="card-eyebrow">COIN PURSE / WISH RESERVES</div>
         <div class="kpi-hero mono text-gold">${purse.totalPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
         <div class="kpi-sub">${purse.limitedPulls.toLocaleString()} Limited (${purse.primoPulls} Primo + ${purse.intertwinedFates} Pink) • ${purse.acquaintFates} Blue</div>
+        <div class="kpi-sub muted">Primos &amp; Acquaint Fates are manual (not in Irminsul exports)</div>
         <div class="inline-edit-grid">
           <label class="mini-field">
             <span>PRIMOS</span>
@@ -66,7 +67,7 @@ export function renderHudTab(container, state, handlers) {
           ${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-md')}
           <div class="kpi-hero mono">${Number(wallet.mora ?? 0).toLocaleString()}</div>
         </div>
-        <div class="kpi-sub">Synced with SSOT Vault &amp; Irminsul GOOD v3</div>
+        <div class="kpi-sub">Manual entry — Irminsul GOOD v3 omits Mora, Primos &amp; Resin</div>
         <div class="inline-edit-grid single">
           <label class="mini-field">
             <span>MORA BALANCE</span>

@@ -110,6 +110,12 @@ export function computeGoodImportDiff(account, good) {
   if (typeof good.materials?.Mora === 'number') {
     nextWallet.mora = good.materials.Mora;
   }
+  if (typeof good.materials?.IntertwinedFate === 'number') {
+    nextWallet.intertwinedFates = good.materials.IntertwinedFate;
+  }
+  if (typeof good.materials?.AcquaintFate === 'number') {
+    nextWallet.acquaintFates = good.materials.AcquaintFate;
+  }
 
   const mergedAccount = {
     ...account,
