@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261113g';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261113h';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★

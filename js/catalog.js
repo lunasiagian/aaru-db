@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v9';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v10';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -452,7 +452,9 @@ export async function ensureCharacterMaterials(pascalKey) {
         }
       }
 
-      const lastAsc = Array.isArray(detail?.ascension) ? detail.ascension[detail.ascension.length - 1] : null;
+      const lastAsc = Array.isArray(detail?.ascension)
+        ? detail.ascension[detail.ascension.length - 1]
+        : detail?.ascension || null;
       const bossId = lastAsc?.elitemonster ? Object.keys(lastAsc.elitemonster)[0] : null;
       if (bossId && lookup[bossId]) entry.bossMat = toPascal(lookup[bossId]);
 

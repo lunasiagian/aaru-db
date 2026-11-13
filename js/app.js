@@ -1,4 +1,4 @@
-import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113g';
+import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113h';
 import { sortAndLabelPrefarmQueue } from './calculations.js?v=20261113f';
 import {
   fetchPartnerAccount,
