@@ -414,15 +414,19 @@ const pendingDetailFetches = new Map();
 export async function ensureCharacterMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.characters.get(norm);
-  if (!entry || (entry.talentBook && entry.bossMat) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || (entry.talentBook && entry.bossMat) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingDetailFetches.has(norm)) return pendingDetailFetches.get(norm);
 
   const task = (async () => {
     try {
       const url = `https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/en/char/${encodeURIComponent(entry.lunarisId)}.json`;
       const res = await fetch(url);
-      if (!res.ok) return false;
+      if (!res.ok) {
+        entry._hydrated = true;
+        return false;
+      }
       const detail = await res.json();
+      entry._hydrated = true;
       const lookup = yattaMaps.matIdLookup || {};
       const toPascal = (s) => String(s || '').replace(/[^a-zA-Z0-9]/g, '');
 
@@ -474,15 +478,19 @@ const pendingWeaponFetches = new Map();
 export async function ensureWeaponMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.weapons.get(norm);
-  if (!entry || entry.domainMatExactKey || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || entry.domainMatExactKey || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingWeaponFetches.has(norm)) return pendingWeaponFetches.get(norm);
 
   const task = (async () => {
     try {
       const url = `https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/en/weapon/${encodeURIComponent(entry.lunarisId)}.json`;
       const res = await fetch(url);
-      if (!res.ok) return false;
+      if (!res.ok) {
+        entry._hydrated = true;
+        return false;
+      }
       const detail = await res.json();
+      entry._hydrated = true;
       const lookup = yattaMaps.matIdLookup || {};
       const toPascal = (s) => String(s || '').replace(/[^a-zA-Z0-9]/g, '');
 

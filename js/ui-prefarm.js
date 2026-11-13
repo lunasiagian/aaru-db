@@ -7,7 +7,7 @@ import {
   getCharacterMeta,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261113c';
+} from './catalog.js?v=20261113d';
 import { calculateWaterfallPrefarm } from './calculations.js';
 
 export function renderPrefarmTab(container, state, handlers) {
@@ -19,9 +19,13 @@ export function renderPrefarmTab(container, state, handlers) {
   // Hydrate unreleased Lunaris character & weapon materials on demand and re-render if updated
   const missingChars = queue.filter((t) => {
     const cm = getCharacterMeta(t.characterKey);
-    return !cm.talentBook || !cm.bossMat;
+    return !cm._hydrated && (!cm.talentBook || !cm.bossMat);
   });
-  const missingWeps = queue.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatExactKey);
+  const missingWeps = queue.filter((t) => {
+    if (!t.weaponKey) return false;
+    const wm = getWeaponMeta(t.weaponKey);
+    return !wm._hydrated && !wm.domainMatExactKey;
+  });
   if (missingChars.length || missingWeps.length) {
     Promise.all([
       ...missingChars.map((t) => ensureCharacterMaterials(t.characterKey)),

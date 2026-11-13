@@ -1,5 +1,5 @@
 import { renderAssetIcon } from './assets.js';
-import { getAllCharacterKeys, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261113c';
+import { getAllCharacterKeys, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261113d';
 
 const STATUS_PILLS = ['All', 'Active Work', 'Combat Ready', 'Swap Flagged'];
 const ELEMENT_PILLS = ['All', 'Pyro', 'Hydro', 'Anemo', 'Electro', 'Dendro', 'Cryo', 'Geo'];

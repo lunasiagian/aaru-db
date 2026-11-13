@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261113c';
+} from './catalog.js?v=20261113d';
 import {
   calcCoinPurse,
   calcCompletionGauges,
@@ -31,9 +31,13 @@ export function renderHudTab(container, state, handlers) {
   const queueForHydration = account.prefarmQueue || [];
   const missingChars = queueForHydration.filter((t) => {
     const cm = getCharacterMeta(t.characterKey);
-    return !cm.talentBook || !cm.bossMat;
+    return !cm._hydrated && (!cm.talentBook || !cm.bossMat);
   });
-  const missingWeps = queueForHydration.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatKey);
+  const missingWeps = queueForHydration.filter((t) => {
+    if (!t.weaponKey) return false;
+    const wm = getWeaponMeta(t.weaponKey);
+    return !wm._hydrated && !wm.domainMatKey;
+  });
   if (missingChars.length || missingWeps.length) {
     Promise.all([
       ...missingChars.map((t) => ensureCharacterMaterials(t.characterKey)),

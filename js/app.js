@@ -1,4 +1,4 @@
-import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113c';
+import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113d';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -13,9 +13,9 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113b';
+import { renderHudTab } from './ui-hud.js?v=20261113d';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261113b';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261113d';
 import { renderRosterTab } from './ui-roster.js';
 import { renderTeamsTab } from './ui-teams.js';
 
