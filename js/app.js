@@ -14,7 +14,7 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113r';
+import { renderHudTab } from './ui-hud.js?v=20261113s';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261113k';
 import { renderRosterTab } from './ui-roster.js';
@@ -144,6 +144,12 @@ function renderActiveTab(options = {}) {
         await saveAccountSection(state.sessionUser, 'wallet', state.ownAccount.wallet);
         renderActiveTab();
         showToast(`Updated ${field}`, 'mint');
+      },
+      onUpdateWalletPatch: async (patch, toastMsg = 'Updated Resin') => {
+        state.ownAccount.wallet = { ...(state.ownAccount.wallet || {}), ...patch };
+        await saveAccountSection(state.sessionUser, 'wallet', state.ownAccount.wallet);
+        renderActiveTab();
+        showToast(toastMsg, 'mint');
       },
       onToggleChecklist: async (group, id, done) => {
         const list = state.ownAccount.checklist?.[group] || [];

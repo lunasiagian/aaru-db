@@ -218,21 +218,44 @@ export function renderHudTab(container, state, handlers) {
                   const pct = calcTargetReadinessPct(waterfallMap.get(t.id) || []);
                   const rankCls = `c${Math.min(idx, 3)}`;
                   const divider = idx > 0 ? '<div class="cmd-intent-divider" aria-hidden="true"></div>' : '';
+                  const ringRadius = 24;
+                  const ringCirc = 2 * Math.PI * ringRadius;
+                  const ringOffset = ringCirc * (1 - pct / 100);
+
+                  let estResin = 0;
+                  for (const item of sharedPool) {
+                    if (item.deficit > 0 && item.farmingCost?.resin) {
+                      const at = (item.alloc?.targets || []).find((x) => x.characterKey === t.characterKey);
+                      if (at && at.pct < 100) {
+                        const totalUnfunded = (item.alloc?.targets || []).reduce((acc, x) => acc + Math.max(0, x.needed - x.funded), 0);
+                        const myUnfunded = Math.max(0, at.needed - at.funded);
+                        if (totalUnfunded > 0) {
+                          estResin += item.farmingCost.resin * (myUnfunded / totalUnfunded);
+                        }
+                      }
+                    }
+                  }
+                  const estDays = estResin > 0 ? Math.max(1, Math.ceil(estResin / 180)) : 0;
+
                   return `
                   ${divider}
                   <button type="button" class="cmd-intent-pill ${rankCls}" data-focus-char="${t.characterKey}" title="Hover or click to highlight ${cm.name}'s resources">
                     <span class="cmd-rank-tag mono ${rankCls}">${t.tierLabel}</span>
-                    ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-sm')}
+                    <div class="cmd-ring-wrap">
+                      <svg class="cmd-ring-svg ${rankCls}" viewBox="0 0 56 56" aria-hidden="true">
+                        <circle class="cmd-ring-bg" cx="28" cy="28" r="${ringRadius}" />
+                        <circle class="cmd-ring-fg" cx="28" cy="28" r="${ringRadius}" stroke-dasharray="${ringCirc.toFixed(2)}" stroke-dashoffset="${ringOffset.toFixed(2)}" />
+                      </svg>
+                      ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-ring-img')}
+                    </div>
                     <div class="cmd-intent-body">
                       <div class="cmd-intent-top">
                         <span class="cmd-intent-name">${cm.name}</span>
                         <span class="cmd-intent-specs mono">Lv.${t.currentLevel}→${t.targetLevel} · ${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}</span>
                       </div>
-                      <div class="cmd-intent-bar-row">
-                        <div class="cmd-intent-track">
-                          <div class="cmd-intent-fill ${rankCls}" style="width:${pct}%"></div>
-                        </div>
-                        <span class="cmd-intent-pct mono">${pct}%</span>
+                      <div class="cmd-intent-meta mono">
+                        <span class="cmd-intent-pct">${pct}% READY</span>
+                        ${estDays > 0 ? `<span class="cmd-intent-days">~${estDays}d</span>` : '<span class="cmd-intent-days is-done">READY</span>'}
                       </div>
                     </div>
                   </button>`;
@@ -421,18 +444,55 @@ export function renderHudTab(container, state, handlers) {
           </div>
         </div>
 
-        <div class="resin-bar">
-          <div class="resin-stat">
-            <span class="mono label">ORIGINAL RESIN</span>
-            <input type="number" min="0" max="200" class="input-mono sm" data-wallet-field="resin" value="${Number(wallet.resin ?? 160)}" ${disabledAttr} />
-            <span class="mono muted">/ 200</span>
-          </div>
-          <div class="resin-stat">
-            <span class="mono label">CONDENSED</span>
-            <input type="number" min="0" max="5" class="input-mono sm" data-wallet-field="condensedResin" value="${Number(wallet.condensedResin ?? 0)}" ${disabledAttr} />
-            <span class="mono muted">/ 5</span>
-          </div>
-        </div>
+        ${(() => {
+          const curResin = Math.max(0, Math.min(200, Number(wallet.resin ?? 160)));
+          const curCondensed = Math.max(0, Math.min(5, Number(wallet.condensedResin ?? 0)));
+          const resinPct = Math.round((curResin / 200) * 100);
+          const dialR = 26;
+          const dialCirc = 2 * Math.PI * dialR;
+          const dialOffset = dialCirc * (1 - curResin / 200);
+          const missingResin = Math.max(0, 200 - curResin);
+          const minsToFull = missingResin * 8;
+          const fullH = Math.floor(minsToFull / 60);
+          const fullM = minsToFull % 60;
+          const regenText = missingResin === 0 ? 'CAPPED' : `Full in ${fullH}h ${String(fullM).padStart(2, '0')}m`;
+
+          return `
+          <div class="resin-gizmo">
+            <div class="resin-dial-wrap">
+              <svg class="resin-dial-svg" viewBox="0 0 64 64" aria-hidden="true">
+                <circle class="resin-dial-bg" cx="32" cy="32" r="${dialR}" />
+                <circle class="resin-dial-fg ${resinPct >= 90 ? 'is-high' : ''}" cx="32" cy="32" r="${dialR}" stroke-dasharray="${dialCirc.toFixed(2)}" stroke-dashoffset="${dialOffset.toFixed(2)}" />
+              </svg>
+              <div class="resin-dial-val mono">${curResin}</div>
+            </div>
+
+            <div class="resin-gizmo-info">
+              <div class="resin-gizmo-inputs">
+                <div class="resin-stat">
+                  <span class="mono label">RESIN</span>
+                  <input type="number" min="0" max="200" class="input-mono sm" data-wallet-field="resin" value="${curResin}" ${disabledAttr} />
+                  <span class="mono muted">/ 200</span>
+                </div>
+                <div class="resin-stat">
+                  <span class="mono label">CONDENSED</span>
+                  <input type="number" min="0" max="5" class="input-mono sm" data-wallet-field="condensedResin" value="${curCondensed}" ${disabledAttr} />
+                  <span class="mono muted">/ 5</span>
+                </div>
+              </div>
+              <div class="resin-gizmo-actions">
+                <span class="resin-regen-pill mono ${missingResin === 0 ? 'is-capped' : ''}">${regenText}</span>
+                ${
+                  !isReadOnly
+                    ? `<button type="button" class="btn btn-ghost btn-xs mono" data-resin-spend="20" ${curResin < 20 ? 'disabled' : ''}>-20 Domain</button>
+                       <button type="button" class="btn btn-ghost btn-xs mono" data-resin-spend="40" ${curResin < 40 ? 'disabled' : ''}>-40 Boss</button>
+                       <button type="button" class="btn btn-outline btn-xs mono" data-resin-condense ${curResin < 40 || curCondensed >= 5 ? 'disabled' : ''}>Condense</button>`
+                    : ''
+                }
+              </div>
+            </div>
+          </div>`;
+        })()}
 
         ${(() => {
           const prefarmQueue = labeledQueue;
@@ -758,7 +818,42 @@ export function renderHudTab(container, state, handlers) {
     handlers.onToggleAllDomains?.();
   });
 
+  // Interactive 3D tilt + cursor spotlight on Command Deck cards
+  container.querySelectorAll('.cmd-card').forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const rx = (((y / rect.height) - 0.5) * -4.5).toFixed(2);
+      const ry = (((x / rect.width) - 0.5) * 4.5).toFixed(2);
+      card.style.setProperty('--mx', `${x.toFixed(1)}px`);
+      card.style.setProperty('--my', `${y.toFixed(1)}px`);
+      card.style.setProperty('--rx', `${rx}deg`);
+      card.style.setProperty('--ry', `${ry}deg`);
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    });
+  });
+
   if (!isReadOnly) {
+    container.querySelectorAll('[data-resin-spend]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cost = Number(btn.dataset.resinSpend) || 20;
+        const cur = Math.max(0, Number(wallet.resin ?? 160));
+        const next = Math.max(0, cur - cost);
+        handlers.onUpdateWallet('resin', next);
+      });
+    });
+
+    container.querySelector('[data-resin-condense]')?.addEventListener('click', () => {
+      const curR = Math.max(0, Number(wallet.resin ?? 160));
+      const curC = Math.max(0, Number(wallet.condensedResin ?? 0));
+      if (curR < 40 || curC >= 5) return;
+      handlers.onUpdateWalletPatch?.({ resin: curR - 40, condensedResin: curC + 1 }, 'Condensed 1 Resin (+1)');
+    });
+
     container.querySelectorAll('[data-wallet-field]').forEach((input) => {
       input.addEventListener('change', (e) => {
         handlers.onUpdateWallet(e.target.dataset.walletField, Number(e.target.value) || 0);

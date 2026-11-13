@@ -27,11 +27,12 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: var(--bg-blueprint);
+  background-color: #06080c;
   background-image:
-    linear-gradient(to right, rgba(42, 63, 85, 0.28) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(42, 63, 85, 0.28) 1px, transparent 1px);
-  background-size: 24px 24px;
+    radial-gradient(ellipse 80% 45% at 50% -10%, rgba(56, 189, 248, 0.12), transparent 65%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -64,12 +65,15 @@ body {
 
 /* Cards & Typography */
 .card {
-  background: linear-gradient(180deg, rgba(18, 22, 31, 0.98), rgba(11, 14, 20, 0.99));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(18, 23, 33, 0.84), rgba(10, 13, 20, 0.94));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 4px;
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   padding: 20px 22px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 18px 40px rgba(0, 0, 0, 0.65);
 }
 
 .eyebrow,
@@ -2066,6 +2070,7 @@ textarea:focus {
 }
 
 .cmd-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -2073,9 +2078,198 @@ textarea:focus {
   padding: 14px 16px;
   border-radius: 2px;
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  background: #0d1016;
+  background: linear-gradient(180deg, rgba(18, 23, 33, 0.9), rgba(10, 13, 19, 0.96));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.5);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: opacity 0.18s ease, border-color 0.18s ease, transform 0.14s ease-out, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+
+.cmd-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(56, 189, 248, 0.12), transparent 72%);
+  transition: opacity 0.2s ease;
+}
+
+.cmd-card:hover::before {
+  opacity: 1;
+}
+
+.cmd-card:hover {
+  border-color: rgba(56, 189, 248, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 16px 32px rgba(0, 0, 0, 0.68);
+}
+
+/* Radial Readiness Rings on Priority Character Pills */
+.cmd-ring-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cmd-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.cmd-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 3.5;
+}
+
+.cmd-ring-fg {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s ease;
+}
+
+.cmd-ring-svg.c0 .cmd-ring-fg { stroke: #38bdf8; filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.45)); }
+.cmd-ring-svg.c1 .cmd-ring-fg { stroke: #2dd4bf; filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.45)); }
+.cmd-ring-svg.c2 .cmd-ring-fg { stroke: #c084fc; filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.45)); }
+.cmd-ring-svg.c3 .cmd-ring-fg { stroke: #f59e0b; filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.45)); }
+
+.icon-ring-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: none;
+}
+
+.cmd-intent-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 11.5px;
+}
+
+.cmd-intent-days {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.cmd-intent-days.is-done {
+  color: var(--accent-mint);
+  border-color: rgba(124, 224, 195, 0.35);
+}
+
+/* Live SVG Resin Dial & Gizmos */
+.resin-gizmo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  background: rgba(7, 10, 16, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65);
+  flex-wrap: wrap;
+}
+
+.resin-dial-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resin-dial-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.resin-dial-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 5;
+}
+
+.resin-dial-fg {
+  fill: none;
+  stroke: var(--accent-electric);
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.45));
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.resin-dial-fg.is-high {
+  stroke: var(--accent-gold);
+  filter: drop-shadow(0 0 6px rgba(245, 196, 81, 0.55));
+}
+
+.resin-dial-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.resin-gizmo-info {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resin-gizmo-inputs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.resin-gizmo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.resin-regen-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--accent-electric);
+}
+
+.resin-regen-pill.is-capped {
+  background: rgba(245, 196, 81, 0.14);
+  border-color: rgba(245, 196, 81, 0.45);
+  color: var(--accent-gold);
 }
 
 /* Single-item middle progress meter for uniform visual density */
@@ -2085,8 +2279,9 @@ textarea:focus {
   gap: 7px;
   padding: 12px 12px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(5, 7, 11, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.72);
 }
 
 .cmd-single-meter-top {
@@ -2276,7 +2471,8 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
-  transition: opacity 0.15s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.72), 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .cmd-item-tile.is-complete {
