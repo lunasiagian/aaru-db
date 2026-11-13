@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v6';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v7';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -171,12 +171,13 @@ async function fetchYattaCatalog() {
       }
     }
 
-    // Merge unreleased/datamine characters & materials from api.lunaris.moe
+    // Merge unreleased/datamine characters, weapons & materials from api.lunaris.moe
     const lunarisVer = lunarisVerRes.status === 'fulfilled' ? lunarisVerRes.value?.version : null;
     if (lunarisVer) {
       try {
-        const [lCharRes, lMatRes] = await Promise.allSettled([
+        const [lCharRes, lWepRes, lMatRes] = await Promise.allSettled([
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/charlist.json`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/weaponlist.json`).then((r) => (r.ok ? r.json() : null)),
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/materiallist.json`).then((r) => (r.ok ? r.json() : null))
         ]);
 
@@ -218,6 +219,22 @@ async function fetchYattaCatalog() {
               weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
               region: 'Teyvat',
               icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : ''
+            };
+          }
+        }
+
+        if (lWepRes.status === 'fulfilled' && lWepRes.value) {
+          for (const [wepId, item] of Object.entries(lWepRes.value)) {
+            const name = item?.enName;
+            const norm = normalizeAssetKey(name);
+            if (!norm || slim.weapons[norm]) continue;
+            slim.weapons[norm] = {
+              lunarisId: wepId,
+              pascalKey: String(name).replace(/[^a-zA-Z0-9]/g, ''),
+              name,
+              rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : item.qualityType === 'QUALITY_PURPLE' ? 4 : 3,
+              weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
+              icon: item.weaponIcon ? `https://api.lunaris.moe/data/assets/weaponicon/${item.weaponIcon}.webp` : ''
             };
           }
         }
@@ -421,6 +438,55 @@ export async function ensureCharacterMaterials(pascalKey) {
   })();
 
   pendingDetailFetches.set(norm, task);
+  return task;
+}
+
+const pendingWeaponFetches = new Map();
+
+export async function ensureWeaponMaterials(pascalKey) {
+  const norm = normalizeAssetKey(pascalKey);
+  const entry = yattaMaps.weapons.get(norm);
+  if (!entry || entry.domainMatExactKey || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (pendingWeaponFetches.has(norm)) return pendingWeaponFetches.get(norm);
+
+  const task = (async () => {
+    try {
+      const url = `https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/en/weapon/${encodeURIComponent(entry.lunarisId)}.json`;
+      const res = await fetch(url);
+      if (!res.ok) return false;
+      const detail = await res.json();
+      const lookup = yattaMaps.matIdLookup || {};
+      const toPascal = (s) => String(s || '').replace(/[^a-zA-Z0-9]/g, '');
+
+      const asc = Array.isArray(detail?.ascension) ? detail.ascension : [];
+      // Weapon domain mats have IDs 114xxx; pick the highest tier (last 114xxx entry)
+      const domainMats = asc
+        .map((a) => String(a?.icon || '').replace(/^UI_ItemIcon_/, ''))
+        .filter((id) => /^114\d+$/.test(id));
+      const goldId = domainMats[domainMats.length - 1];
+      if (goldId && lookup[goldId]) {
+        entry.domainMatExactKey = toPascal(lookup[goldId]);
+        entry.domainMatKey = normalizeAssetKey(lookup[goldId]);
+      }
+
+      try {
+        const cached = JSON.parse(localStorage.getItem(YATTA_CACHE_KEY) || '{}');
+        if (cached?.data?.weapons?.[norm]) {
+          cached.data.weapons[norm] = entry;
+          localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify(cached));
+        }
+      } catch {
+        // Ignore storage errors
+      }
+      return Boolean(entry.domainMatExactKey);
+    } catch {
+      return false;
+    } finally {
+      pendingWeaponFetches.delete(norm);
+    }
+  })();
+
+  pendingWeaponFetches.set(norm, task);
   return task;
 }
 

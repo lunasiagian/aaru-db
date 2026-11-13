@@ -1,6 +1,7 @@
 import { renderAssetIcon } from './assets.js';
 import {
   ensureCharacterMaterials,
+  ensureWeaponMaterials,
   getAllCharacterKeys,
   getAllWeaponKeys,
   getCharacterMeta,
@@ -14,10 +15,14 @@ export function renderPrefarmTab(container, state, handlers) {
   const allWeaponKeys = getAllWeaponKeys();
   const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
 
-  // Hydrate unreleased Lunaris character materials on demand and re-render if updated
-  const missing = queue.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
-  if (missing.length) {
-    Promise.all(missing.map((t) => ensureCharacterMaterials(t.characterKey))).then((results) => {
+  // Hydrate unreleased Lunaris character & weapon materials on demand and re-render if updated
+  const missingChars = queue.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
+  const missingWeps = queue.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatExactKey);
+  if (missingChars.length || missingWeps.length) {
+    Promise.all([
+      ...missingChars.map((t) => ensureCharacterMaterials(t.characterKey)),
+      ...missingWeps.map((t) => ensureWeaponMaterials(t.weaponKey))
+    ]).then((results) => {
       if (results.some(Boolean)) {
         renderPrefarmTab(container, state, handlers);
       }
