@@ -40,17 +40,17 @@ export function getFallbackAssetUrl(type, pascalKey) {
 export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-icon') {
   const customSrc = getAssetUrl(type, pascalKey);
   const fallbackSrc = getFallbackAssetUrl(type, pascalKey);
+  const primarySrc = fallbackSrc || customSrc;
   const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
   const safeAlt = (alt || pascalKey || '').replace(/"/g, '&quot;');
 
   return `<span class="asset-wrap ${className}" data-key="${safeAlt}">
     <img
-      src="${customSrc}"
+      src="${primarySrc}"
       alt="${safeAlt}"
-      class="asset-img is-custom-pixel"
-      loading="lazy"
-      data-fallback="${fallbackSrc}"
-      onerror="if(this.dataset.triedFallback!=='1'&&this.dataset.fallback){this.dataset.triedFallback='1';this.classList.remove('is-custom-pixel');this.src=this.dataset.fallback;}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+      class="asset-img${fallbackSrc ? '' : ' is-custom-pixel'}"
+      referrerpolicy="no-referrer"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;
