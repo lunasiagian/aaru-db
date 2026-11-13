@@ -36,6 +36,12 @@ function formatCompactSurplus(n) {
   return n.toLocaleString();
 }
 
+function formatCompactNum(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  if (n >= 100_000) return `${(n / 1_000).toFixed(0)}K`;
+  return Math.round(n).toLocaleString();
+}
+
 function getSourceBadgeHtml(item, todayName) {
   if (item.bossUnreleased) {
     return '<span class="pill pill-coral mono">Unreleased 7.2</span>';
@@ -240,14 +246,21 @@ export function renderHudTab(container, state, handlers) {
         if (!sharedPool.length) {
           return '<div class="empty-state">Add targets in Prefarm to populate the Command Deck.</div>';
         }
-        const actionItems = sharedPool.filter((i) => i.deficit > 0);
+        const pinnedKey = state.hudPinnedChar || null;
+        const allActionItems = sharedPool.filter((i) => i.deficit > 0);
+        const actionItems = pinnedKey
+          ? allActionItems.filter((i) => (i.alloc?.targets || []).some((t) => t.characterKey === pinnedKey))
+          : allActionItems;
+        const hiddenActionItems = pinnedKey
+          ? allActionItems.filter((i) => !(i.alloc?.targets || []).some((t) => t.characterKey === pinnedKey))
+          : [];
         const surplusItems = sharedPool.filter((i) => i.deficit <= 0);
 
         const renderDeckCard = (item) => {
           const rarity = item.rarity || 3;
-          let tierTilesHtml = '';
+          let middleHtml = '';
           if (item.tiers) {
-            tierTilesHtml = `
+            middleHtml = `
               <div class="cmd-item-tiles">
                 ${item.tiers
                   .map((t) => {
@@ -268,7 +281,7 @@ export function renderHudTab(container, state, handlers) {
               { key: 'AdventurersExperience', name: "Adventurer's Experience", r: 3, val: `${item.expBreakdown.exp3}`, complete: false },
               { key: 'HerosWit', name: "Hero's Wit", r: 4, val: `${item.owned}/${item.neededTotal}`, complete: item.deficit === 0 }
             ];
-            tierTilesHtml = `
+            middleHtml = `
               <div class="cmd-item-tiles">
                 ${expTiles
                   .map(
@@ -280,28 +293,50 @@ export function renderHudTab(container, state, handlers) {
                   )
                   .join('')}
               </div>`;
+          } else {
+            const pct = item.neededTotal > 0 ? Math.min(100, Math.round((item.owned / item.neededTotal) * 100)) : 100;
+            middleHtml = `
+              <div class="cmd-single-meter">
+                <div class="cmd-single-meter-top mono">
+                  <span class="cmd-single-frac">${formatCompactNum(item.owned)} / ${formatCompactNum(item.neededTotal)}</span>
+                  <span class="cmd-single-pct">${pct}%</span>
+                </div>
+                <div class="cmd-single-track tick-bar">
+                  <div class="cmd-single-fill" style="width:${pct}%"></div>
+                </div>
+              </div>`;
           }
 
           const allocTargets = item.alloc?.targets || [];
-          const allocHtml = allocTargets.length
+          const lockedTarget = pinnedKey ? allocTargets.find((t) => t.characterKey === pinnedKey) : null;
+          const allocHtml = lockedTarget
             ? `<div class="cmd-alloc">
-                <div class="alloc-track">
-                  ${allocTargets
-                    .map((at) => `<div class="alloc-seg alloc-c${Math.min(at.slotIndex ?? 0, 3)}" style="width:${at.widthPct}%"></div>`)
-                    .join('')}
+                <div class="alloc-track tick-bar">
+                  <div class="alloc-seg alloc-c${Math.min(lockedTarget.slotIndex ?? 0, 3)}" style="width:${lockedTarget.pct}%"></div>
                 </div>
                 <div class="alloc-labels mono">
-                  ${allocTargets
-                    .map(
-                      (at) =>
-                        `<span class="alloc-lbl"><i class="alloc-dot c${Math.min(at.slotIndex ?? 0, 3)}"></i>${at.labelPrefix || ''}${at.name} <strong>${at.pct}%</strong></span>`
-                    )
-                    .join('')}
+                  <span class="alloc-lbl"><i class="alloc-dot c${Math.min(lockedTarget.slotIndex ?? 0, 3)}"></i>${lockedTarget.name}: <strong>${lockedTarget.pct}%</strong> · ${formatCompactNum(lockedTarget.funded)}/${formatCompactNum(lockedTarget.needed)}</span>
                 </div>
               </div>`
-            : '';
+            : allocTargets.length
+              ? `<div class="cmd-alloc">
+                  <div class="alloc-track tick-bar">
+                    ${allocTargets
+                      .map((at) => `<div class="alloc-seg alloc-c${Math.min(at.slotIndex ?? 0, 3)}" style="width:${at.widthPct}%"></div>`)
+                      .join('')}
+                  </div>
+                  <div class="alloc-labels mono">
+                    ${allocTargets
+                      .map(
+                        (at) =>
+                          `<span class="alloc-lbl"><i class="alloc-dot c${Math.min(at.slotIndex ?? 0, 3)}"></i>${at.labelPrefix || ''}${at.name} <strong>${at.pct}%</strong></span>`
+                      )
+                      .join('')}
+                  </div>
+                </div>`
+              : '';
 
-          const charKeysAttr = (item.alloc?.targets || []).map((t) => t.characterKey).join(',');
+          const charKeysAttr = allocTargets.map((t) => t.characterKey).join(',');
           return `
           <div class="cmd-card" data-char-keys="${charKeysAttr}">
             <div class="cmd-card-head">
@@ -317,7 +352,7 @@ export function renderHudTab(container, state, handlers) {
               </div>
             </div>
 
-            ${tierTilesHtml}
+            ${middleHtml}
             ${allocHtml}
 
             <div class="cmd-card-foot mono">
@@ -330,6 +365,22 @@ export function renderHudTab(container, state, handlers) {
         const gridHtml = actionItems.length
           ? `<div class="cmd-deck-grid">${actionItems.map(renderDeckCard).join('')}</div>`
           : '<div class="empty-state">All #1 &amp; #2 materials are fully funded!</div>';
+
+        const collapsedOthersHtml = hiddenActionItems.length
+          ? `<div class="cmd-collapsed-row">
+              <span class="cmd-collapsed-lbl mono">OTHER BOTTLENECKS (${hiddenActionItems.length})</span>
+              <div class="cmd-collapsed-icons">
+                ${hiddenActionItems
+                  .map(
+                    (i) => `<span class="cmd-collapsed-chip" title="${i.name}: -${i.deficit.toLocaleString()} NET">
+                      ${renderAssetIcon('materials', i.key, i.name, 'icon-xs')}
+                    </span>`
+                  )
+                  .join('')}
+              </div>
+              <button type="button" class="btn btn-ghost btn-xs mono" data-clear-char-focus>Show All</button>
+            </div>`
+          : '';
 
         const surplusHtml = surplusItems.length
           ? `<div class="cmd-surplus-strip">
@@ -348,7 +399,7 @@ export function renderHudTab(container, state, handlers) {
             </div>`
           : '';
 
-        return gridHtml + surplusHtml;
+        return gridHtml + collapsedOthersHtml + surplusHtml;
       })()}
     </article>
 
@@ -678,8 +729,13 @@ export function renderHudTab(container, state, handlers) {
     btn.addEventListener('click', () => {
       pinnedCharKey = pinnedCharKey === charKey ? null : charKey;
       state.hudPinnedChar = pinnedCharKey;
-      applyCharFocus(pinnedCharKey);
+      renderHudTab(container, state, handlers);
     });
+  });
+
+  container.querySelector('[data-clear-char-focus]')?.addEventListener('click', () => {
+    state.hudPinnedChar = null;
+    renderHudTab(container, state, handlers);
   });
 
   // Live server reset countdown updater

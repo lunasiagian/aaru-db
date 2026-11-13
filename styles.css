@@ -1,12 +1,13 @@
 :root {
-  --bg-blueprint: #0F1A26;
-  --bg-card: #162434;
-  --bg-card-alt: #121E2C;
-  --border-slate: #2A3F55;
-  --border-bright: #3B5674;
+  --bg-blueprint: #0a0c10;
+  --bg-card: #10141c;
+  --bg-card-alt: #0d1118;
+  --border-slate: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(56, 189, 248, 0.45);
   --text-primary: #E8F0F8;
   --text-muted: #8BA2BA;
   --accent-gold: #F5C451;
+  --accent-electric: #38bdf8;
   --accent-coral: #E86F5C;
   --accent-mint: #7CE0C3;
   --bg-deficit: rgba(232, 111, 92, 0.13);
@@ -63,11 +64,12 @@ body {
 
 /* Cards & Typography */
 .card {
-  background: linear-gradient(180deg, rgba(24, 39, 56, 0.96), rgba(18, 30, 44, 0.98));
-  border: 1px solid var(--border-slate);
-  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(18, 22, 31, 0.98), rgba(11, 14, 20, 0.99));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   padding: 20px 22px;
-  box-shadow: 0 12px 30px rgba(4, 9, 16, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
 }
 
 .eyebrow,
@@ -2066,12 +2068,112 @@ textarea:focus {
 .cmd-card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 10px;
-  background: rgba(13, 22, 34, 0.82);
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  background: #0d1016;
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+/* Single-item middle progress meter for uniform visual density */
+.cmd-single-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cmd-single-meter-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cmd-single-frac {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cmd-single-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-electric);
+}
+
+.cmd-single-track {
+  height: 8px;
+  border-radius: 2px;
+  background: #07090d;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cmd-single-fill {
+  height: 100%;
+  background: var(--accent-electric);
+}
+
+/* Segmented tick-style overlay for hyper-modern progress bars */
+.tick-bar {
+  position: relative;
+}
+
+.tick-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(10% - 1px),
+    rgba(10, 12, 16, 0.72) calc(10% - 1px),
+    rgba(10, 12, 16, 0.72) 10%
+  );
+}
+
+/* Collapsed other bottlenecks row when locked onto one character */
+.cmd-collapsed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+}
+
+.cmd-collapsed-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.cmd-collapsed-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.cmd-collapsed-chip {
+  display: inline-flex;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.cmd-collapsed-chip:hover {
+  opacity: 1;
 }
 
 .cmd-card-head {
@@ -2147,14 +2249,14 @@ textarea:focus {
 }
 
 .cmd-day-pip.is-today {
-  box-shadow: 0 0 0 1.5px var(--accent-gold);
-  color: var(--accent-gold);
+  box-shadow: 0 0 0 1.5px var(--accent-electric);
+  color: var(--accent-electric);
 }
 
 .cmd-day-pip.is-farmable.is-today {
-  background: rgba(245, 196, 81, 0.22);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+  background: rgba(56, 189, 248, 0.24);
+  border-color: var(--accent-electric);
+  color: var(--accent-electric);
 }
 
 /* In-Game Rarity Icon Tiles */
