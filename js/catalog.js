@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v4';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v5';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -121,7 +121,10 @@ async function fetchYattaCatalog() {
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
           if (mat && domainRewardNormSet.has(mat.norm)) {
-            weaponUpgradeByNorm.set(norm, { domainMatKey: mat.norm });
+            weaponUpgradeByNorm.set(norm, {
+              domainMatKey: mat.norm,
+              domainMatExactKey: String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '')
+            });
             break;
           }
         }
@@ -152,7 +155,9 @@ async function fetchYattaCatalog() {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon) continue;
         const upg = weaponUpgradeByNorm.get(norm);
+        const pascalKey = String(item.name || '').replace(/[^a-zA-Z0-9]/g, '');
         slim.weapons[norm] = {
+          pascalKey,
           name: item.name,
           rarity: Number(item.rank) || 4,
           weaponType: WEAPON_TYPE_MAP[item.type] || 'Sword',
@@ -321,6 +326,21 @@ export function getAllCharacterKeys() {
   }
   for (const [norm, entry] of yattaMaps.characters.entries()) {
     if (norm === 'traveler') continue;
+    if (!byNorm.has(norm)) {
+      byNorm.set(norm, entry.pascalKey || entry.name.replace(/[^a-zA-Z0-9]/g, ''));
+    }
+  }
+  return Array.from(byNorm.values()).sort((a, b) => a.localeCompare(b));
+}
+
+export function getAllWeaponKeys() {
+  const catalog = getCatalog();
+  const byNorm = new Map();
+  for (const key of Object.keys(catalog?.weapons || {})) {
+    byNorm.set(normalizeAssetKey(key), key);
+  }
+  for (const [norm, entry] of yattaMaps.weapons.entries()) {
+    if ((Number(entry.rarity) || 4) < 3) continue;
     if (!byNorm.has(norm)) {
       byNorm.set(norm, entry.pascalKey || entry.name.replace(/[^a-zA-Z0-9]/g, ''));
     }

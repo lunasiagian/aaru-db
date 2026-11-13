@@ -1,11 +1,13 @@
 import { renderAssetIcon } from './assets.js';
-import { getAllCharacterKeys, getCharacterMeta } from './catalog.js';
-import { calculatePrefarmRequirements } from './calculations.js';
+import { getAllCharacterKeys, getAllWeaponKeys, getCharacterMeta, getWeaponMeta } from './catalog.js';
+import { calculateWaterfallPrefarm } from './calculations.js';
 
 export function renderPrefarmTab(container, state, handlers) {
   const { account, isReadOnly } = state;
   const allCharKeys = getAllCharacterKeys();
+  const allWeaponKeys = getAllWeaponKeys();
   const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+  const waterfallMap = calculateWaterfallPrefarm(queue, account.inventory || {}, account.wallet);
   const disabledAttr = isReadOnly ? 'disabled' : '';
 
   container.innerHTML = `
@@ -57,6 +59,15 @@ export function renderPrefarmTab(container, state, handlers) {
             <span>TARGET Q</span>
             <input type="number" name="tBurst" min="1" max="10" value="9" class="input-mono sm" />
           </label>
+          <label class="mini-field">
+            <span>WEAPON (OPTIONAL)</span>
+            <select name="weaponKey" class="select-sm">
+              <option value="">— None —</option>
+              ${allWeaponKeys
+                .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)
+                .join('')}
+            </select>
+          </label>
           <button type="submit" class="btn btn-gold">+ Add Target</button>
         </form>
       </article>`
@@ -68,7 +79,8 @@ export function renderPrefarmTab(container, state, handlers) {
         ? queue
             .map((target, idx) => {
               const charMeta = getCharacterMeta(target.characterKey);
-              const reqRows = calculatePrefarmRequirements(target, account.inventory || {}, account.wallet);
+              const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
+              const reqRows = waterfallMap.get(target.id) || [];
               const deficitCount = reqRows.filter((r) => r.deficit > 0).length;
 
               return `
@@ -82,7 +94,7 @@ export function renderPrefarmTab(container, state, handlers) {
                       <div class="item-meta mono">
                         Lv.${target.currentLevel} → Lv.${target.targetLevel} •
                         Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} →
-                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}
+                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` • ${weaponMeta.name} (${target.weaponCurrentLevel || 1}→${target.weaponTargetLevel || 90})` : ''}
                       </div>
                     </div>
                   </div>
@@ -123,6 +135,27 @@ export function renderPrefarmTab(container, state, handlers) {
                     <span>TGT Q</span>
                     <input type="number" min="1" max="10" class="input-mono sm" data-pf-edit="tBurst" data-pf-id="${target.id}" value="${target.targetTalent.burst}" ${disabledAttr} />
                   </label>
+                  <label class="mini-field">
+                    <span>WEAPON</span>
+                    <select class="select-sm" data-pf-edit="weaponKey" data-pf-id="${target.id}" ${disabledAttr}>
+                      <option value="">— None —</option>
+                      ${allWeaponKeys
+                        .map((wk) => `<option value="${wk}" ${target.weaponKey === wk ? 'selected' : ''}>${getWeaponMeta(wk).name}</option>`)
+                        .join('')}
+                    </select>
+                  </label>
+                  ${
+                    target.weaponKey
+                      ? `<label class="mini-field">
+                          <span>WPN CUR</span>
+                          <input type="number" min="1" max="90" class="input-mono sm" data-pf-edit="weaponCurrentLevel" data-pf-id="${target.id}" value="${target.weaponCurrentLevel || 1}" ${disabledAttr} />
+                        </label>
+                        <label class="mini-field">
+                          <span>WPN TGT</span>
+                          <input type="number" min="1" max="90" class="input-mono sm" data-pf-edit="weaponTargetLevel" data-pf-id="${target.id}" value="${target.weaponTargetLevel || 90}" ${disabledAttr} />
+                        </label>`
+                      : ''
+                  }
                 </div>
 
                 <div class="req-grid">
@@ -162,6 +195,7 @@ export function renderPrefarmTab(container, state, handlers) {
       try {
         const fd = new FormData(e.target);
         const characterKey = fd.get('characterKey');
+        const weaponKey = String(fd.get('weaponKey') || '');
         const existingChar = (account.characters || []).find((c) => c.key === characterKey);
         await handlers.onAddPrefarmTarget({
           characterKey,
@@ -172,7 +206,10 @@ export function renderPrefarmTab(container, state, handlers) {
             auto: Number(fd.get('tAuto')) || 6,
             skill: Number(fd.get('tSkill')) || 9,
             burst: Number(fd.get('tBurst')) || 9
-          }
+          },
+          weaponKey,
+          weaponCurrentLevel: 1,
+          weaponTargetLevel: 90
         });
       } finally {
         if (submitBtn) {
@@ -199,7 +236,9 @@ export function renderPrefarmTab(container, state, handlers) {
 
     container.querySelectorAll('[data-pf-edit]').forEach((input) => {
       input.addEventListener('change', (e) => {
-        handlers.onEditPrefarmTarget(e.target.dataset.pfId, e.target.dataset.pfEdit, Number(e.target.value) || 1);
+        const field = e.target.dataset.pfEdit;
+        const val = field === 'weaponKey' ? e.target.value : (Number(e.target.value) || 1);
+        handlers.onEditPrefarmTarget(e.target.dataset.pfId, field, val);
       });
     });
   }

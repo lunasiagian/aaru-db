@@ -211,6 +211,14 @@ function renderActiveTab(options = {}) {
         else if (field === 'tAuto') target.targetTalent.auto = Math.min(10, Math.max(1, val));
         else if (field === 'tSkill') target.targetTalent.skill = Math.min(10, Math.max(1, val));
         else if (field === 'tBurst') target.targetTalent.burst = Math.min(10, Math.max(1, val));
+        else if (field === 'weaponKey') {
+          target.weaponKey = val || '';
+          if (target.weaponKey && !target.weaponTargetLevel) {
+            target.weaponCurrentLevel = 1;
+            target.weaponTargetLevel = 90;
+          }
+        } else if (field === 'weaponCurrentLevel') target.weaponCurrentLevel = Math.min(90, Math.max(1, val));
+        else if (field === 'weaponTargetLevel') target.weaponTargetLevel = Math.min(90, Math.max(1, val));
         await saveAccountSection(state.sessionUser, 'prefarmQueue', state.ownAccount.prefarmQueue);
         renderActiveTab();
       }

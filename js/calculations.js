@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta } from './catalog.js';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -94,11 +94,43 @@ function ascensionPhaseForLevel(level) {
   return 6;
 }
 
-/**
- * Calculates exact material requirements & deficits for a single prefarm target
- * against catalog.json recipes and current inventory.
- */
-export function calculatePrefarmRequirements(target, inventory = {}, wallet = null) {
+function addWeaponRequirements(addReq, weaponKey, curLvlRaw, tgtLvlRaw) {
+  if (!weaponKey) return;
+  const curLvl = Math.max(1, Math.min(90, Number(curLvlRaw) || 1));
+  const tgtLvl = Math.max(curLvl, Math.min(90, Number(tgtLvlRaw) || 90));
+  if (tgtLvl <= curLvl) return;
+
+  const wm = getWeaponMeta(weaponKey);
+  const rarity = Number(wm.rarity) || 5;
+  const is5Star = rarity >= 5;
+
+  // Total 1->90 EXP & ores: 5-star ~907 Mystic Ores / 906,400 Mora; 4-star ~605 Ores / 604,300 Mora
+  const maxOres = is5Star ? 907 : rarity === 4 ? 605 : 403;
+  const maxExpMora = is5Star ? 906400 : rarity === 4 ? 604300 : 402800;
+  const ratio = (tgtLvl - curLvl) / 89;
+  addReq('MysticEnhancementOre', Math.ceil(maxOres * ratio));
+  addReq('Mora', Math.round(maxExpMora * ratio));
+
+  const ascCaps = [20, 40, 50, 60, 70, 80];
+  const ascMora = is5Star
+    ? [10000, 20000, 30000, 45000, 55000, 65000]
+    : [5000, 15000, 20000, 30000, 35000, 45000];
+  const curPhase = ascCaps.filter((c) => curLvl > c).length;
+  const tgtPhase = ascCaps.filter((c) => tgtLvl > c).length;
+  for (let p = curPhase; p < tgtPhase; p++) {
+    addReq('Mora', ascMora[p] || 0);
+  }
+  if (wm.domainMatExactKey && tgtPhase > curPhase) {
+    const goldPerPhase = is5Star ? [0, 0, 0, 0, 2, 4] : [0, 0, 0, 0, 1, 3];
+    let goldCount = 0;
+    for (let p = curPhase; p < tgtPhase; p++) {
+      goldCount += goldPerPhase[p] || 0;
+    }
+    if (goldCount > 0) addReq(wm.domainMatExactKey, goldCount);
+  }
+}
+
+function computeRawTargetRequirements(target) {
   const catalog = getCatalog();
   const curves = catalog?.costCurves || {};
   const charMeta = getCharacterMeta(target.characterKey);
@@ -167,15 +199,17 @@ export function calculatePrefarmRequirements(target, inventory = {}, wallet = nu
     }
   }
 
-  // Compare against inventory
-  const effectiveWits = calcEffectiveHerosWit(inventory).effectiveTotal;
+  // 4. Optional paired Weapon target
+  if (target.weaponKey) {
+    addWeaponRequirements(addReq, target.weaponKey, target.weaponCurrentLevel, target.weaponTargetLevel);
+  }
+
+  return req;
+}
+
+function formatRequirementRows(req, getOwnedForMat) {
   const rows = Object.entries(req).map(([matKey, needed]) => {
-    const owned =
-      matKey === 'HerosWit'
-        ? Math.floor(effectiveWits)
-        : matKey === 'Mora'
-          ? Number(wallet?.mora ?? inventory[matKey]?.count ?? 0)
-          : Number(inventory[matKey]?.count ?? 0);
+    const owned = getOwnedForMat(matKey);
     const delta = owned - needed;
     const meta = getMaterialMeta(matKey);
     return {
@@ -198,6 +232,56 @@ export function calculatePrefarmRequirements(target, inventory = {}, wallet = nu
   });
 
   return rows;
+}
+
+/**
+ * Calculates exact material requirements & deficits for a single prefarm target
+ * against catalog.json recipes and current inventory.
+ */
+export function calculatePrefarmRequirements(target, inventory = {}, wallet = null) {
+  const req = computeRawTargetRequirements(target);
+  const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
+  return formatRequirementRows(req, (matKey) =>
+    matKey === 'HerosWit'
+      ? effectiveWits
+      : matKey === 'Mora'
+        ? Number(wallet?.mora ?? inventory[matKey]?.count ?? 0)
+        : Number(inventory[matKey]?.count ?? 0)
+  );
+}
+
+/**
+ * Waterfall allocation across the ranked prefarmQueue (#1 -> #2 -> #3 ...).
+ * Higher-priority targets consume shared resources (Mora, Hero's Wit, Crowns, Books, Weapon mats)
+ * first, and only the remaining surplus flows down to lower-priority targets.
+ */
+export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wallet = null) {
+  const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank);
+  const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
+  const pool = new Map();
+
+  const getPool = (matKey) => {
+    if (pool.has(matKey)) return pool.get(matKey);
+    const initial =
+      matKey === 'HerosWit'
+        ? effectiveWits
+        : matKey === 'Mora'
+          ? Number(wallet?.mora ?? inventory[matKey]?.count ?? 0)
+          : Number(inventory[matKey]?.count ?? 0);
+    pool.set(matKey, initial);
+    return initial;
+  };
+
+  const results = new Map();
+  for (const target of sorted) {
+    const req = computeRawTargetRequirements(target);
+    const rows = formatRequirementRows(req, (matKey) => getPool(matKey));
+    for (const [matKey, needed] of Object.entries(req)) {
+      pool.set(matKey, Math.max(0, getPool(matKey) - needed));
+    }
+    results.set(target.id, rows);
+  }
+  return results;
 }
 
 /**
