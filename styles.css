@@ -1748,6 +1748,16 @@ textarea:focus {
   text-decoration: underline;
 }
 
+.app-footer p {
+  margin: 0;
+}
+
+.app-footer .footer-disclaimer {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
 .icon-menu-btn {
   font-size: 16px;
   line-height: 1;
