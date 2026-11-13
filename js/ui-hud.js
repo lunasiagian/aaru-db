@@ -17,7 +17,7 @@ import {
   calculateWaterfallPrefarm,
   getServerResetInfo,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261113k';
+} from './calculations.js?v=20261113p';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const PIP_DAYS = [
@@ -210,7 +210,7 @@ export function renderHudTab(container, state, handlers) {
                 .map((t, idx) => {
                   const cm = getCharacterMeta(t.characterKey);
                   const pct = calcTargetReadinessPct(waterfallMap.get(t.id) || []);
-                  const rankCls = t.tier === 1 ? 'p1' : 'p2';
+                  const rankCls = `c${Math.min(idx, 3)}`;
                   const divider = idx > 0 ? '<div class="cmd-intent-divider" aria-hidden="true"></div>' : '';
                   return `
                   ${divider}
@@ -283,17 +283,20 @@ export function renderHudTab(container, state, handlers) {
           }
 
           const allocTargets = item.alloc?.targets || [];
-          const t1 = allocTargets.find((t) => t.rank === 1) || allocTargets[0];
-          const t2 = allocTargets.find((t) => t.rank === 2) || (allocTargets.length > 1 ? allocTargets[1] : null);
           const allocHtml = allocTargets.length
             ? `<div class="cmd-alloc">
                 <div class="alloc-track">
-                  ${t1 ? `<div class="alloc-seg alloc-p1" style="width:${t1.widthPct}%"></div>` : ''}
-                  ${t2 ? `<div class="alloc-seg alloc-p2" style="width:${t2.widthPct}%"></div>` : ''}
+                  ${allocTargets
+                    .map((at) => `<div class="alloc-seg alloc-c${Math.min(at.slotIndex ?? 0, 3)}" style="width:${at.widthPct}%"></div>`)
+                    .join('')}
                 </div>
                 <div class="alloc-labels mono">
-                  ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>${t1.labelPrefix || ''}${t1.name} <strong>${t1.pct}%</strong></span>` : ''}
-                  ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>${t2.labelPrefix || ''}${t2.name} <strong>${t2.pct}%</strong></span>` : ''}
+                  ${allocTargets
+                    .map(
+                      (at) =>
+                        `<span class="alloc-lbl"><i class="alloc-dot c${Math.min(at.slotIndex ?? 0, 3)}"></i>${at.labelPrefix || ''}${at.name} <strong>${at.pct}%</strong></span>`
+                    )
+                    .join('')}
                 </div>
               </div>`
             : '';

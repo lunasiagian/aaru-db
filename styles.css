@@ -1960,8 +1960,10 @@ textarea:focus {
   border: 1px solid var(--border-slate);
 }
 
-.cmd-intent-pill.p1 { border-left: 3px solid #38bdf8; }
-.cmd-intent-pill.p2 { border-left: 3px solid #c084fc; }
+.cmd-intent-pill.c0 { border-left: 3px solid #38bdf8; }
+.cmd-intent-pill.c1 { border-left: 3px solid #2dd4bf; }
+.cmd-intent-pill.c2 { border-left: 3px solid #c084fc; }
+.cmd-intent-pill.c3 { border-left: 3px solid #f59e0b; }
 
 .cmd-rank-tag {
   font-size: 12px;
@@ -1970,8 +1972,10 @@ textarea:focus {
   border-radius: 5px;
 }
 
-.cmd-rank-tag.p1 { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
-.cmd-rank-tag.p2 { background: rgba(192, 132, 252, 0.16); color: #c084fc; }
+.cmd-rank-tag.c0 { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
+.cmd-rank-tag.c1 { background: rgba(45, 212, 191, 0.16); color: #2dd4bf; }
+.cmd-rank-tag.c2 { background: rgba(192, 132, 252, 0.16); color: #c084fc; }
+.cmd-rank-tag.c3 { background: rgba(245, 196, 81, 0.16); color: #f59e0b; }
 
 .cmd-intent-body {
   flex: 1;
@@ -2011,8 +2015,10 @@ textarea:focus {
   overflow: hidden;
 }
 
-.cmd-intent-fill.p1 { height: 100%; background: #38bdf8; }
-.cmd-intent-fill.p2 { height: 100%; background: #c084fc; }
+.cmd-intent-fill.c0 { height: 100%; background: #38bdf8; }
+.cmd-intent-fill.c1 { height: 100%; background: #2dd4bf; }
+.cmd-intent-fill.c2 { height: 100%; background: #c084fc; }
+.cmd-intent-fill.c3 { height: 100%; background: #f59e0b; }
 
 .cmd-intent-pct {
   font-size: 11.5px;
@@ -2193,8 +2199,10 @@ textarea:focus {
   overflow: hidden;
 }
 
-.cmd-alloc .alloc-p1, .alloc-dot.p1 { background: #38bdf8; }
-.cmd-alloc .alloc-p2, .alloc-dot.p2 { background: #c084fc; }
+.cmd-alloc .alloc-c0, .alloc-dot.c0 { background: #38bdf8; }
+.cmd-alloc .alloc-c1, .alloc-dot.c1 { background: #2dd4bf; }
+.cmd-alloc .alloc-c2, .alloc-dot.c2 { background: #c084fc; }
+.cmd-alloc .alloc-c3, .alloc-dot.c3 { background: #f59e0b; }
 
 .cmd-card-foot {
   display: flex;

@@ -501,32 +501,25 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     const fundedTotal = Math.max(0, totalNeedEquiv - netDeficitEquiv);
     let remaining = fundedTotal;
     const targets = [];
-    for (const tierNum of activeTiers) {
-      const tierItems = targetReqs.filter((x) => x.target.tier === tierNum);
-      let tierNeed = 0;
-      const tierNames = [];
-      for (const { target, charMeta } of tierItems) {
-        const n = needByRankEquiv.get(target.rank) || 0;
-        if (n > 0) {
-          tierNeed += n;
-          tierNames.push(charMeta.name || target.characterKey);
-        }
-      }
-      if (tierNeed <= 0) continue;
-      const funded = Math.min(tierNeed, remaining);
+    targetReqs.forEach(({ target, charMeta }, idx) => {
+      const charNeed = needByRankEquiv.get(target.rank) || 0;
+      if (charNeed <= 0) return;
+      const funded = Math.min(charNeed, remaining);
       remaining = Math.max(0, remaining - funded);
       targets.push({
         rank: targets.length + 1,
-        tier: tierNum,
-        count: tierNames.length,
-        name: tierNames.length === 1 ? tierNames[0] : `Tier #${tierNum} (${tierNames.length})`,
-        labelPrefix: tierNames.length === 1 ? `#${tierNum} ` : '',
-        needed: tierNeed,
+        slotIndex: idx,
+        tier: target.tier,
+        tierLabel: target.tierLabel,
+        characterKey: target.characterKey,
+        name: charMeta.name || target.characterKey,
+        labelPrefix: `${target.tierLabel} `,
+        needed: charNeed,
         funded,
-        pct: Math.round((funded / tierNeed) * 100),
+        pct: Math.round((funded / charNeed) * 100),
         widthPct: totalNeedEquiv > 0 ? Number(((funded / totalNeedEquiv) * 100).toFixed(2)) : 0
       });
-    }
+    });
     return { targets };
   };
 
