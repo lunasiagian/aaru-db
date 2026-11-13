@@ -1,4 +1,4 @@
-import { loadCatalog } from './catalog.js';
+import { getCharacterMeta, loadCatalog } from './catalog.js';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -161,12 +161,18 @@ function renderActiveTab(options = {}) {
     renderPrefarmTab(container, viewState, {
       onAddPrefarmTarget: async (target) => {
         const queue = state.ownAccount.prefarmQueue || [];
+        const charName = getCharacterMeta(target.characterKey).name || target.characterKey;
+        if (queue.some((t) => t.characterKey === target.characterKey)) {
+          showToast(`You've already added ${charName} to the Prefarm Queue.`, 'coral');
+          return;
+        }
         const nextRank = queue.length + 1;
-        queue.push({ id: `pf-${Date.now()}`, rank: nextRank, ...target });
-        state.ownAccount.prefarmQueue = queue;
-        await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
+        const uid = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const nextQueue = [...queue, { id: uid, rank: nextRank, ...target }];
+        state.ownAccount.prefarmQueue = nextQueue;
+        await saveAccountSection(state.sessionUser, 'prefarmQueue', nextQueue);
         renderActiveTab();
-        showToast(`Added ${target.characterKey} to Prefarm Queue`, 'mint');
+        showToast(`Added ${charName} to Prefarm Queue`, 'mint');
       },
       onMovePrefarmTarget: async (id, dir) => {
         const queue = [...(state.ownAccount.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
@@ -181,13 +187,15 @@ function renderActiveTab(options = {}) {
         renderActiveTab();
       },
       onRemovePrefarmTarget: async (id) => {
-        const queue = (state.ownAccount.prefarmQueue || [])
+        const prev = state.ownAccount.prefarmQueue || [];
+        const queue = prev
           .filter((t) => t.id !== id)
           .sort((a, b) => a.rank - b.rank)
           .map((t, i) => ({ ...t, rank: i + 1 }));
         state.ownAccount.prefarmQueue = queue;
         await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
         renderActiveTab();
+        showToast('Removed target from Prefarm Queue', 'mint');
       },
       onEditPrefarmTarget: async (id, field, val) => {
         const target = (state.ownAccount.prefarmQueue || []).find((t) => t.id === id);

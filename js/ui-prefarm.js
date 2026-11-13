@@ -175,7 +175,7 @@ export function renderPrefarmTab(container, state, handlers) {
     });
 
     container.querySelectorAll('[data-pf-remove]').forEach((btn) => {
-      btn.addEventListener('click', () => handlers.onRemovePrefarmTarget(btn.dataset.pfId));
+      btn.addEventListener('click', () => handlers.onRemovePrefarmTarget(btn.dataset.pfRemove || btn.dataset.pfId));
     });
 
     container.querySelectorAll('[data-pf-edit]').forEach((input) => {
