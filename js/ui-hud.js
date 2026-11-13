@@ -1,5 +1,11 @@
 import { renderAssetIcon } from './assets.js';
-import { getCharacterMeta, getDomainScheduleForDay, getMaterialMeta } from './catalog.js';
+import {
+  getCharacterMeta,
+  getDomainScheduleForDay,
+  getMaterialMeta,
+  getWeaponMeta,
+  normalizeAssetKey
+} from './catalog.js';
 import {
   calcCoinPurse,
   calcCompletionGauges,
@@ -163,9 +169,14 @@ export function renderHudTab(container, state, handlers) {
             <div class="card-eyebrow">TODAY'S DOMAIN &amp; RESIN ROUTER</div>
             <h2 class="card-title">${todayName} Schedule</h2>
           </div>
-          <select class="select-sm mono" data-hud-day>
-            ${WEEKDAYS.map((d) => `<option value="${d}" ${d === todayName ? 'selected' : ''}>${d}</option>`).join('')}
-          </select>
+          <div class="toolbar-right" style="gap: 8px;">
+            <button type="button" class="filter-pill ${state.hudShowAllDomains ? 'active' : ''}" data-hud-all-domains>
+              ${state.hudShowAllDomains ? 'Relevant Only' : `All Domains (${domainsToday.length})`}
+            </button>
+            <select class="select-sm mono" data-hud-day>
+              ${WEEKDAYS.map((d) => `<option value="${d}" ${d === todayName ? 'selected' : ''}>${d}</option>`).join('')}
+            </select>
+          </div>
         </div>
 
         <div class="resin-bar">
@@ -182,8 +193,109 @@ export function renderHudTab(container, state, handlers) {
         </div>
 
         ${(() => {
-          const talentDomains = domainsToday.filter((d) => d.domainType === 'Talent');
-          const weaponDomains = domainsToday.filter((d) => d.domainType === 'Weapon');
+          const prefarmQueue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+          const hasPrefarm = prefarmQueue.length > 0;
+
+          const rosterCandidates = (account.characters || [])
+            .filter(
+              (c) =>
+                c.owned !== false &&
+                c.status !== 'Built' &&
+                c.status !== 'Unowned' &&
+                (Number(c.level) < 90 ||
+                  Number(c.talent?.auto || 1) < 8 ||
+                  Number(c.talent?.skill || 1) < 8 ||
+                  Number(c.talent?.burst || 1) < 8)
+            )
+            .sort((a, b) => Number(b.level) - Number(a.level));
+
+          const weaponCandidatesMap = new Map();
+          for (const w of account.weapons || []) {
+            if (Number(w.level) >= 90) continue;
+            const prev = weaponCandidatesMap.get(w.key);
+            if (!prev || Number(w.level) > Number(prev.level)) {
+              weaponCandidatesMap.set(w.key, w);
+            }
+          }
+          const weaponCandidates = Array.from(weaponCandidatesMap.values()).sort(
+            (a, b) => Number(b.level) - Number(a.level)
+          );
+
+          const enrichDomain = (dom) => {
+            const rewardNorms = new Set((dom.rewards || []).map((r) => normalizeAssetKey(r.key)));
+            const rewardNames = new Set((dom.rewards || []).map((r) => r.name));
+            const matches = [];
+
+            if (dom.domainType === 'Talent') {
+              if (hasPrefarm) {
+                for (const t of prefarmQueue) {
+                  const meta = getCharacterMeta(t.characterKey);
+                  if (rewardNorms.has(meta.domainMatKey) || rewardNames.has(meta.talentBook)) {
+                    matches.push({
+                      kind: 'characters',
+                      key: t.characterKey,
+                      name: meta.name,
+                      badge: `#${t.rank}`,
+                      title: `#${t.rank} ${meta.name} (Lv.${t.currentLevel}→${t.targetLevel})`
+                    });
+                  }
+                }
+              } else {
+                for (const c of rosterCandidates) {
+                  const meta = getCharacterMeta(c.key);
+                  if (rewardNorms.has(meta.domainMatKey) || rewardNames.has(meta.talentBook)) {
+                    matches.push({
+                      kind: 'characters',
+                      key: c.key,
+                      name: meta.name,
+                      badge: `Lv.${c.level}`,
+                      title: `${meta.name} (Lv.${c.level})`
+                    });
+                  }
+                }
+              }
+            } else if (dom.domainType === 'Weapon' && !hasPrefarm) {
+              for (const w of weaponCandidates) {
+                const wm = getWeaponMeta(w.key);
+                if (rewardNorms.has(wm.domainMatKey)) {
+                  matches.push({
+                    kind: 'weapons',
+                    key: w.key,
+                    name: wm.name,
+                    badge: `Lv.${w.level}`,
+                    title: `${wm.name} (Lv.${w.level})`
+                  });
+                }
+              }
+            }
+
+            return { ...dom, matches };
+          };
+
+          const enriched = domainsToday.map(enrichDomain);
+          const showAll = Boolean(state.hudShowAllDomains);
+          const talentDomains = enriched.filter((d) => d.domainType === 'Talent' && (showAll || d.matches.length > 0));
+          const weaponDomains = enriched.filter((d) => d.domainType === 'Weapon' && (showAll || d.matches.length > 0));
+
+          const renderChips = (matches) => {
+            if (!matches.length) return '';
+            const shown = matches.slice(0, 4);
+            const extra = matches.length - shown.length;
+            return `
+              <div class="domain-needed-by">
+                ${shown
+                  .map(
+                    (m) => `
+                  <span class="domain-target-chip" title="${m.title.replace(/"/g, '&quot;')}">
+                    ${renderAssetIcon(m.kind, m.key, m.name, 'icon-xs')}
+                    <span class="mono">${m.badge}</span>
+                  </span>`
+                  )
+                  .join('')}
+                ${extra > 0 ? `<span class="pill mono">+${extra}</span>` : ''}
+              </div>`;
+          };
+
           const renderGroup = (title, list) => `
             <div class="domain-group">
               <div class="card-eyebrow">${title} (${list.length})</div>
@@ -191,29 +303,42 @@ export function renderHudTab(container, state, handlers) {
                 ${list.length
                   ? list
                       .map((dom) => {
-                        const matchesPriority = (dom.rewards || []).some((r) => topBookBases.has(r.name));
+                        const matchesPriority =
+                          dom.matches.length > 0 ||
+                          (dom.rewards || []).some((r) => topBookBases.has(r.name));
                         return `
                         <div class="domain-card ${matchesPriority ? 'domain-highlight' : ''}">
                           <div class="domain-top">
                             <span class="domain-name">${dom.name}</span>
                             <span class="pill ${matchesPriority ? 'pill-gold' : ''}">${dom.region}</span>
                           </div>
-                          <div class="domain-rewards">
-                            ${(dom.rewards || [])
-                              .map(
-                                (r) => `<span class="reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')} ${r.name}</span>`
-                              )
-                              .join('')}
+                          <div class="domain-rewards-row">
+                            <div class="domain-rewards">
+                              ${(dom.rewards || [])
+                                .map(
+                                  (r) => `<span class="reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')} ${r.name}</span>`
+                                )
+                                .join('')}
+                            </div>
+                            ${renderChips(dom.matches)}
                           </div>
                         </div>`;
                       })
                       .join('')
-                  : '<div class="empty-state">No domains scheduled.</div>'}
+                  : '<div class="empty-state">No matching domains open today.</div>'}
               </div>
             </div>`;
-          return domainsToday.length
-            ? `<div class="domain-split">${renderGroup('TALENT DOMAINS', talentDomains)}${renderGroup('WEAPON DOMAINS', weaponDomains)}</div>`
-            : '<div class="empty-state">No scheduled domains found for this day.</div>';
+
+          if (!domainsToday.length) {
+            return '<div class="empty-state">No scheduled domains found for this day.</div>';
+          }
+          if (!showAll && !talentDomains.length && !weaponDomains.length) {
+            return `<div class="empty-state">None of your ${hasPrefarm ? 'prefarm targets\'' : 'unbuilt roster/weapons\''} domains are open on ${todayName}. Click <strong>All Domains</strong> above to browse all ${domainsToday.length}.</div>`;
+          }
+          const boxes = [];
+          if (talentDomains.length || showAll) boxes.push(renderGroup('TALENT DOMAINS', talentDomains));
+          if (weaponDomains.length || showAll) boxes.push(renderGroup('WEAPON DOMAINS', weaponDomains));
+          return `<div class="domain-split">${boxes.join('')}</div>`;
         })()}
       </article>
     </div>
@@ -263,6 +388,10 @@ export function renderHudTab(container, state, handlers) {
   // Bind HUD events
   container.querySelector('[data-hud-day]')?.addEventListener('change', (e) => {
     handlers.onChangeHudDay(e.target.value);
+  });
+
+  container.querySelector('[data-hud-all-domains]')?.addEventListener('click', () => {
+    handlers.onToggleAllDomains?.();
   });
 
   if (!isReadOnly) {

@@ -28,6 +28,7 @@ const state = {
   viewingPartner: false,
   activeTab: 'hud', // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams'
   hudDayOverride: null,
+  hudShowAllDomains: false,
   vaultFilter: { category: 'All', search: '', lowStockOnly: false },
   rosterFilter: {
     status: 'All',
@@ -117,6 +118,7 @@ function renderActiveTab(options = {}) {
     account,
     isReadOnly: state.viewingPartner,
     hudDayOverride: state.hudDayOverride,
+    hudShowAllDomains: state.hudShowAllDomains,
     vaultFilter: state.vaultFilter,
     rosterFilter: state.rosterFilter
   };
@@ -128,6 +130,10 @@ function renderActiveTab(options = {}) {
     renderHudTab(container, viewState, {
       onChangeHudDay: (day) => {
         state.hudDayOverride = day;
+        renderActiveTab();
+      },
+      onToggleAllDomains: () => {
+        state.hudShowAllDomains = !state.hudShowAllDomains;
         renderActiveTab();
       },
       onUpdateWallet: async (field, val) => {

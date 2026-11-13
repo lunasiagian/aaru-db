@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v1';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v2';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -64,25 +64,82 @@ async function fetchYattaCatalog() {
   }
 
   try {
-    const [avatarRes, weaponRes, materialRes] = await Promise.allSettled([
+    const [avatarRes, weaponRes, materialRes, upgradeRes] = await Promise.allSettled([
       fetch('https://gi.yatta.moe/api/v2/en/avatar').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/weapon').then((r) => (r.ok ? r.json() : null)),
-      fetch('https://gi.yatta.moe/api/v2/en/material').then((r) => (r.ok ? r.json() : null))
+      fetch('https://gi.yatta.moe/api/v2/en/material').then((r) => (r.ok ? r.json() : null)),
+      fetch('https://gi.yatta.moe/api/v2/en/upgrade').then((r) => (r.ok ? r.json() : null))
     ]);
 
     const slim = { characters: {}, weapons: {}, materials: {} };
+    const matNormById = new Map();
+    const domainRewardNormSet = new Set();
+    for (const dayList of Object.values(cachedCatalog?.domainSchedule || {})) {
+      for (const dom of dayList || []) {
+        for (const r of dom.rewards || []) {
+          domainRewardNormSet.add(normalizeAssetKey(r.key));
+        }
+      }
+    }
+
+    if (materialRes.status === 'fulfilled' && materialRes.value?.data?.items) {
+      for (const [id, item] of Object.entries(materialRes.value.data.items)) {
+        const norm = normalizeAssetKey(item.name);
+        if (norm) matNormById.set(String(id), { norm, name: item.name });
+        if (!norm || !item.icon) continue;
+        slim.materials[norm] = {
+          name: item.name,
+          rarity: Number(item.rank) || 2,
+          category: item.type || 'Material',
+          icon: `${YATTA_UI_BASE}${item.icon}.png`
+        };
+      }
+    }
+
+    const avatarUpgradeByNorm = new Map();
+    const weaponUpgradeByNorm = new Map();
+    if (upgradeRes.status === 'fulfilled' && upgradeRes.value?.data) {
+      for (const item of Object.values(upgradeRes.value.data.avatar || {})) {
+        const norm = normalizeAssetKey(item.name);
+        if (!norm || !item.items) continue;
+        for (const matId of Object.keys(item.items)) {
+          const mat = matNormById.get(String(matId));
+          if (!mat) continue;
+          if (mat.name.startsWith('Philosophies of ') || domainRewardNormSet.has(mat.norm)) {
+            avatarUpgradeByNorm.set(norm, {
+              domainMatKey: mat.norm,
+              talentBook: mat.name.replace(/^Philosophies of\s+/i, '')
+            });
+            break;
+          }
+        }
+      }
+      for (const item of Object.values(upgradeRes.value.data.weapon || {})) {
+        const norm = normalizeAssetKey(item.name);
+        if (!norm || !item.items) continue;
+        for (const matId of Object.keys(item.items)) {
+          const mat = matNormById.get(String(matId));
+          if (mat && domainRewardNormSet.has(mat.norm)) {
+            weaponUpgradeByNorm.set(norm, { domainMatKey: mat.norm });
+            break;
+          }
+        }
+      }
+    }
 
     if (avatarRes.status === 'fulfilled' && avatarRes.value?.data?.items) {
       for (const item of Object.values(avatarRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon) continue;
+        const upg = avatarUpgradeByNorm.get(norm);
         slim.characters[norm] = {
           name: item.name,
           rarity: Number(item.rank) || 5,
           element: ELEMENT_MAP[item.element] || item.element || 'Unknown',
           weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
           region: item.region || 'Teyvat',
-          icon: `${YATTA_UI_BASE}${item.icon}.png`
+          icon: `${YATTA_UI_BASE}${item.icon}.png`,
+          ...(upg || {})
         };
       }
     }
@@ -91,24 +148,13 @@ async function fetchYattaCatalog() {
       for (const item of Object.values(weaponRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon) continue;
+        const upg = weaponUpgradeByNorm.get(norm);
         slim.weapons[norm] = {
           name: item.name,
           rarity: Number(item.rank) || 4,
           weaponType: WEAPON_TYPE_MAP[item.type] || 'Sword',
-          icon: `${YATTA_UI_BASE}${item.icon}.png`
-        };
-      }
-    }
-
-    if (materialRes.status === 'fulfilled' && materialRes.value?.data?.items) {
-      for (const item of Object.values(materialRes.value.data.items)) {
-        const norm = normalizeAssetKey(item.name);
-        if (!norm || !item.icon) continue;
-        slim.materials[norm] = {
-          name: item.name,
-          rarity: Number(item.rank) || 2,
-          category: item.type || 'Material',
-          icon: `${YATTA_UI_BASE}${item.icon}.png`
+          icon: `${YATTA_UI_BASE}${item.icon}.png`,
+          ...(upg || {})
         };
       }
     }
@@ -181,9 +227,12 @@ export function splitPascalCase(key) {
 
 export function getCharacterMeta(key) {
   const catalog = getCatalog();
+  const base = catalog?.characters?.[key];
   const live = getLiveAssetEntry('characters', key);
+  if (base) {
+    return live ? { ...live, ...base, domainMatKey: base.domainMatKey || live.domainMatKey, talentBook: base.talentBook || live.talentBook } : base;
+  }
   return (
-    catalog?.characters?.[key] ||
     (live ? { key, ...live } : null) || {
       key,
       name: splitPascalCase(key),
@@ -197,9 +246,12 @@ export function getCharacterMeta(key) {
 
 export function getWeaponMeta(key) {
   const catalog = getCatalog();
+  const base = catalog?.weapons?.[key];
   const live = getLiveAssetEntry('weapons', key);
+  if (base) {
+    return live ? { ...live, ...base, domainMatKey: base.domainMatKey || live.domainMatKey } : base;
+  }
   return (
-    catalog?.weapons?.[key] ||
     (live ? { key, substat: '', ...live } : null) || {
       key,
       name: splitPascalCase(key),
