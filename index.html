@@ -10,7 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261113k" />
+  <link rel="stylesheet" href="./styles.css?v=20261113l" />
 </head>
 <body>
   <!-- Login Screen -->
@@ -93,6 +93,37 @@
     </footer>
   </div>
 
+  <!-- Server Region Selection Modal -->
+  <div id="server-modal" class="modal-backdrop" hidden>
+    <div class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="server-modal-title" style="max-width: 520px;">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">AARUDB / SERVER REGION</div>
+          <h2 id="server-modal-title" class="card-title">Select Your Game Server</h2>
+        </div>
+        <button type="button" id="btn-close-server" class="btn btn-ghost btn-xs">✕</button>
+      </div>
+      <div class="server-grid">
+        <button type="button" class="server-option-btn" data-server-choice="NA">
+          <span class="server-name">America (NA)</span>
+          <span class="server-reset mono">Reset: 04:00 EST · 09:00 UTC</span>
+        </button>
+        <button type="button" class="server-option-btn" data-server-choice="EU">
+          <span class="server-name">Europe (EU)</span>
+          <span class="server-reset mono">Reset: 04:00 CET · 03:00 UTC</span>
+        </button>
+        <button type="button" class="server-option-btn" data-server-choice="ASIA">
+          <span class="server-name">Asia</span>
+          <span class="server-reset mono">Reset: 04:00 CST · 20:00 UTC</span>
+        </button>
+        <button type="button" class="server-option-btn" data-server-choice="SAR">
+          <span class="server-name">TW, HK, MO</span>
+          <span class="server-reset mono">Reset: 04:00 CST · 20:00 UTC</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Irminsul GOOD v3 JSON Importer Modal -->
   <div id="import-modal" class="modal-backdrop" hidden>
     <div class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
@@ -142,6 +173,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261113k"></script>
+  <script type="module" src="./js/app.js?v=20261113l"></script>
 </body>
 </html>

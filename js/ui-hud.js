@@ -12,11 +12,35 @@ import {
   calcCoinPurse,
   calcCompletionGauges,
   calcEffectiveHerosWit,
+  calcTargetReadinessPct,
   calculatePrioritySharedPool,
+  calculateWaterfallPrefarm,
+  getServerResetInfo,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261113f';
+} from './calculations.js?v=20261113k';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHORT_DAY = { Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' };
+
+function formatCompactSurplus(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  if (n >= 10_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return n.toLocaleString();
+}
+
+function getSourcePillHtml(item) {
+  if (item.bossUnreleased) {
+    return '<span class="pill pill-coral mono">Unreleased 7.2</span>';
+  }
+  if (item.isToday) {
+    return '<span class="pill pill-sky mono">TODAY · Domain</span>';
+  }
+  if (item.scheduleDays?.length) {
+    const shortDays = item.scheduleDays.map((d) => SHORT_DAY[d] || d.slice(0, 3)).join('/');
+    return `<span class="pill mono">${shortDays}</span>`;
+  }
+  return `<span class="pill mono">${item.sourceLabel}</span>`;
+}
 
 export function renderHudTab(container, state, handlers) {
   const { account, isReadOnly } = state;
@@ -24,9 +48,11 @@ export function renderHudTab(container, state, handlers) {
   const purse = calcCoinPurse(wallet);
   const wits = calcEffectiveHerosWit(account.inventory);
   const gauges = calcCompletionGauges(account);
-  const todayName = state.hudDayOverride || WEEKDAYS[new Date().getDay()];
+  const resetInfo = getServerResetInfo(state.serverId || 'NA');
+  const todayName = state.hudDayOverride || resetInfo.inGameDay;
   const domainsToday = getDomainScheduleForDay(todayName);
   const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {}, account.wallet, todayName);
+  const waterfallMap = calculateWaterfallPrefarm(account.prefarmQueue || [], account.inventory || {}, account.wallet);
 
   const queueForHydration = account.prefarmQueue || [];
   const missingChars = queueForHydration.filter((t) => {
@@ -138,137 +164,177 @@ export function renderHudTab(container, state, handlers) {
       </article>
     </div>
 
-    <div class="hud-main-grid">
-      <!-- Priority Prefarm Allocator (#1 & #2) -->
-      <article class="card">
-        <div class="card-header-row">
-          <div>
-            <div class="card-eyebrow">PRIORITY PREFARM ALLOCATOR / #1 + #2 SHARED POOL</div>
-            <h2 class="card-title">Shared Resource Pool</h2>
-          </div>
-          <div class="priority-badges">
-            ${activeTiers.length
-              ? activeTiers
-                  .map((tierNum) => {
-                    const items = topTwo.filter((t) => t.tier === tierNum);
-                    if (items.length === 1) {
-                      const t = items[0];
-                      const m = getCharacterMeta(t.characterKey);
-                      return `<span class="pill pill-gold mono">#${tierNum} ${m.name} (Lv.${t.targetLevel})</span>`;
-                    }
-                    const names = items.map((t) => getCharacterMeta(t.characterKey).name).join(', ');
-                    return `<span class="pill pill-gold mono" title="${names.replace(/"/g, '&quot;')}">Tier #${tierNum} (${items.length}): ${names}</span>`;
-                  })
-                  .join('')
-              : '<span class="pill">No Prefarm Targets</span>'}
-          </div>
+    <!-- Command Deck: Priority Prefarm Allocator (#1 & #2) -->
+    <article class="card cmd-deck-card">
+      <div class="cmd-deck-header">
+        <div>
+          <div class="card-eyebrow">COMMAND DECK / #1 &amp; #2 PRIORITY ALLOCATOR</div>
+          <h2 class="card-title">Priority Prefarm</h2>
         </div>
-
-        <div class="pool-list">
+        <div class="cmd-reset-bar mono">
+          <button type="button" class="cmd-server-pill" data-open-server-modal title="Change Server Region">
+            ${resetInfo.server.short} · ${resetInfo.server.resetLabel}
+          </button>
+          <span class="cmd-reset-stat">DAY: <strong class="text-gold">${todayName.toUpperCase()}</strong></span>
+          <span class="cmd-reset-stat">RESETS IN: <strong id="hud-reset-countdown" class="text-mint">${resetInfo.countdownText}</strong></span>
           ${(() => {
-            if (!sharedPool.length) {
-              return '<div class="empty-state">Add targets in Prefarm Planner to compute the #1/#2 shared pool.</div>';
-            }
-            const actionItems = sharedPool.filter((i) => i.deficit > 0);
-            const surplusItems = sharedPool.filter((i) => i.deficit === 0);
-
-            const renderActionCard = (item) => {
-              const tierHtml = item.tiers
-                ? `<div class="pool-tier-pills">
-                    ${item.tiers
-                      .map(
-                        (t) =>
-                          `<span class="tier-pill mono ${t.netDeficit > 0 ? 'tier-deficit' : 'tier-ok'}" title="${t.craftedIn ? `+${t.craftedIn} crafted from lower tier` : ''}">${t.label}: ${t.owned.toLocaleString()}/${t.needed.toLocaleString()}</span>`
-                      )
-                      .join('')}
-                  </div>`
-                : item.expBreakdown
-                  ? `<div class="item-meta mono">Owned ${item.owned.toLocaleString()} / Need ${item.neededTotal.toLocaleString()} • 4★ ${item.expBreakdown.wits4} · 3★ ${item.expBreakdown.exp3} · 2★ ${item.expBreakdown.adv2}</div>`
-                  : `<div class="item-meta mono">Owned ${item.owned.toLocaleString()} / Need ${item.neededTotal.toLocaleString()}</div>`;
-
-              const allocTargets = item.alloc?.targets || [];
-              const t1 = allocTargets.find((t) => t.rank === 1) || allocTargets[0];
-              const t2 = allocTargets.find((t) => t.rank === 2) || (allocTargets.length > 1 ? allocTargets[1] : null);
-
-              const allocHtml = allocTargets.length
-                ? `<div class="alloc-wrap">
-                    <div class="alloc-track">
-                      ${t1 ? `<div class="alloc-seg alloc-p1" style="width:${t1.widthPct}%"></div>` : ''}
-                      ${t2 ? `<div class="alloc-seg alloc-p2" style="width:${t2.widthPct}%"></div>` : ''}
-                    </div>
-                    <div class="alloc-labels mono">
-                      ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>${t1.labelPrefix || ''}${t1.name}: <strong>${t1.pct}%</strong></span>` : ''}
-                      ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>${t2.labelPrefix || ''}${t2.name}: <strong>${t2.pct}%</strong></span>` : ''}
-                    </div>
-                  </div>`
-                : '';
-
-              return `
-              <div class="pool-card row-deficit ${item.isToday ? 'pool-card-today' : ''}">
-                <div class="pool-card-top">
-                  <div class="pool-item-info">
-                    ${renderAssetIcon('materials', item.key, item.name, 'icon-md')}
-                    <div>
-                      <div class="item-name">
-                        ${item.name}
-                        ${item.isToday ? '<span class="pill pill-sky mono">TODAY</span>' : ''}
-                      </div>
-                      <div class="pool-badges">
-                        <span class="badge-src mono">${item.sourceLabel}</span>
-                        ${item.scheduleDays?.length ? `<span class="badge-sched mono">${item.scheduleDays.join(' / ')}</span>` : ''}
-                        ${item.kind === 'weeklyBoss' ? `<span class="badge-solvent mono">Dream Solvent${item.dreamSolventCount ? ` (${item.dreamSolventCount})` : ''}</span>` : ''}
-                        ${item.bossUnreleased ? '<span class="pill pill-coral mono">Unreleased 7.2</span>' : ''}
-                      </div>
-                      ${tierHtml}
-                    </div>
-                  </div>
-                  <div class="pool-cost-col mono">
-                    <div class="pool-delta text-coral">-${item.deficit.toLocaleString()} ${item.tiers ? 'NET DEFICIT' : 'DEFICIT'}</div>
-                    ${item.farmingCost ? `<div class="pool-resin-est">${item.farmingCost.text}</div>` : ''}
-                  </div>
-                </div>
-                ${allocHtml}
-              </div>`;
-            };
-
-            const actionHtml = `
-              <div class="pool-section-hdr mono">
-                <span>ACTION REQUIRED (${actionItems.length})</span>
-              </div>
-              ${
-                actionItems.length
-                  ? actionItems.map(renderActionCard).join('')
-                  : '<div class="empty-state">All #1 &amp; #2 materials are fully funded!</div>'
-              }`;
-
-            const surplusHtml = surplusItems.length
-              ? `<details class="surplus-drawer">
-                  <summary class="surplus-summary mono">
-                    <span>READY / SURPLUS (${surplusItems.length})</span>
-                    <span class="muted">Click to expand</span>
-                  </summary>
-                  <div class="surplus-mini-grid">
-                    ${surplusItems
-                      .map(
-                        (item) => `
-                      <div class="surplus-mini-card row-surplus">
-                        ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
-                        <div class="surplus-mini-body">
-                          <div class="surplus-mini-name">${item.name}</div>
-                          <span class="pill pill-mint mono">+${item.surplus.toLocaleString()}</span>
-                        </div>
-                      </div>`
-                      )
-                      .join('')}
-                  </div>
-                </details>`
-              : '';
-
-            return actionHtml + surplusHtml;
+            const farmTodayItems = sharedPool.filter((i) => i.deficit > 0 && i.isToday);
+            if (!farmTodayItems.length) return '';
+            return `<span class="cmd-today-icons" title="Bottlenecks farmable today">
+              ${farmTodayItems
+                .map(
+                  (i) => `<span class="cmd-today-tile rarity-frame-${i.rarity || 3}" title="${i.name} (-${i.deficit.toLocaleString()} NET)">
+                    ${renderAssetIcon('materials', i.key, i.name, 'icon-xs')}
+                  </span>`
+                )
+                .join('')}
+            </span>`;
           })()}
         </div>
-      </article>
+      </div>
 
+      ${
+        topTwo.length
+          ? `<div class="cmd-intent-row">
+              ${topTwo
+                .slice(0, 2)
+                .map((t, idx) => {
+                  const cm = getCharacterMeta(t.characterKey);
+                  const pct = calcTargetReadinessPct(waterfallMap.get(t.id) || []);
+                  const rankCls = idx === 0 ? 'p1' : 'p2';
+                  return `
+                  <div class="cmd-intent-pill ${rankCls}">
+                    <span class="cmd-rank-tag mono ${rankCls}">#${idx + 1}</span>
+                    ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-sm')}
+                    <div class="cmd-intent-body">
+                      <div class="cmd-intent-top">
+                        <span class="cmd-intent-name">${cm.name}</span>
+                        <span class="cmd-intent-specs mono">Lv.${t.currentLevel}→${t.targetLevel} · ${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}</span>
+                      </div>
+                      <div class="cmd-intent-bar-row">
+                        <div class="cmd-intent-track">
+                          <div class="cmd-intent-fill ${rankCls}" style="width:${pct}%"></div>
+                        </div>
+                        <span class="cmd-intent-pct mono">${pct}%</span>
+                      </div>
+                    </div>
+                  </div>`;
+                })
+                .join('')}
+            </div>`
+          : ''
+      }
+
+      ${(() => {
+        if (!sharedPool.length) {
+          return '<div class="empty-state">Add targets in Prefarm to populate the Command Deck.</div>';
+        }
+        const actionItems = sharedPool.filter((i) => i.deficit > 0);
+        const surplusItems = sharedPool.filter((i) => i.deficit <= 0);
+
+        const renderDeckCard = (item) => {
+          const rarity = item.rarity || 3;
+          let tierTilesHtml = '';
+          if (item.tiers) {
+            tierTilesHtml = `
+              <div class="cmd-tier-tiles">
+                ${item.tiers
+                  .map((t) => {
+                    const rNum = t.label === 'T2' ? 2 : t.label === 'T3' ? 3 : t.label === 'T4' ? 4 : 5;
+                    const isOk = t.netDeficit === 0;
+                    return `
+                    <div class="cmd-mini-tile rarity-tile-${rNum} ${isOk ? 'is-ok' : 'is-def'}" title="${t.craftedIn ? `+${t.craftedIn} crafted 3:1` : t.label}">
+                      <span class="cmd-tile-tier mono">${t.label}</span>
+                      <span class="cmd-tile-val mono">${t.owned}/${t.needed}</span>
+                    </div>`;
+                  })
+                  .join('')}
+              </div>`;
+          } else if (item.expBreakdown) {
+            tierTilesHtml = `
+              <div class="cmd-tier-tiles">
+                <div class="cmd-mini-tile rarity-tile-2" title="Wanderer's Advice (1,000 EXP)">
+                  <span class="cmd-tile-tier mono">1k</span>
+                  <span class="cmd-tile-val mono">${item.expBreakdown.adv2}</span>
+                </div>
+                <div class="cmd-mini-tile rarity-tile-3" title="Adventurer's Experience (5,000 EXP)">
+                  <span class="cmd-tile-tier mono">5k</span>
+                  <span class="cmd-tile-val mono">${item.expBreakdown.exp3}</span>
+                </div>
+                <div class="cmd-mini-tile rarity-tile-4" title="Hero's Wit (20,000 EXP) · Effective: ${item.owned}/${item.neededTotal}">
+                  <span class="cmd-tile-tier mono">20k</span>
+                  <span class="cmd-tile-val mono">${item.expBreakdown.wits4}</span>
+                </div>
+              </div>`;
+          }
+
+          const allocTargets = item.alloc?.targets || [];
+          const t1 = allocTargets.find((t) => t.rank === 1) || allocTargets[0];
+          const t2 = allocTargets.find((t) => t.rank === 2) || (allocTargets.length > 1 ? allocTargets[1] : null);
+          const allocHtml = allocTargets.length
+            ? `<div class="cmd-alloc">
+                <div class="alloc-track">
+                  ${t1 ? `<div class="alloc-seg alloc-p1" style="width:${t1.widthPct}%"></div>` : ''}
+                  ${t2 ? `<div class="alloc-seg alloc-p2" style="width:${t2.widthPct}%"></div>` : ''}
+                </div>
+                <div class="alloc-labels mono">
+                  ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>${t1.labelPrefix || ''}${t1.name} <strong>${t1.pct}%</strong></span>` : ''}
+                  ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>${t2.labelPrefix || ''}${t2.name} <strong>${t2.pct}%</strong></span>` : ''}
+                </div>
+              </div>`
+            : '';
+
+          return `
+          <div class="cmd-card ${item.isToday ? 'is-today' : ''}">
+            <div class="cmd-card-head">
+              <div class="cmd-icon-frame rarity-frame-${rarity}">
+                ${renderAssetIcon('materials', item.key, item.name, 'icon-48')}
+              </div>
+              <div class="cmd-card-title-wrap">
+                <div class="cmd-card-name">${item.name}</div>
+                <div class="cmd-card-badges">
+                  ${getSourcePillHtml(item)}
+                  ${item.kind === 'weeklyBoss' && item.dreamSolventCount ? `<span class="badge-solvent mono">Solvent ${item.dreamSolventCount}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            ${tierTilesHtml}
+            ${allocHtml}
+
+            <div class="cmd-card-foot mono">
+              <span class="cmd-net-deficit">-${item.deficit.toLocaleString()} NET</span>
+              <span class="cmd-resin-est">${item.farmingCost?.text || ''}</span>
+            </div>
+          </div>`;
+        };
+
+        const gridHtml = actionItems.length
+          ? `<div class="cmd-deck-grid">${actionItems.map(renderDeckCard).join('')}</div>`
+          : '<div class="empty-state">All #1 &amp; #2 materials are fully funded!</div>';
+
+        const surplusHtml = surplusItems.length
+          ? `<div class="cmd-surplus-strip">
+              <span class="cmd-surplus-lbl mono">READY (${surplusItems.length})</span>
+              <div class="cmd-surplus-badges">
+                ${surplusItems
+                  .map(
+                    (item) => `
+                  <div class="cmd-surplus-badge" title="${item.name}: ${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()} (+${item.surplus.toLocaleString()})">
+                    ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
+                    <span class="mono">+${formatCompactSurplus(item.surplus)}</span>
+                  </div>`
+                  )
+                  .join('')}
+              </div>
+            </div>`
+          : '';
+
+        return gridHtml + surplusHtml;
+      })()}
+    </article>
+
+    <div class="hud-main-grid">
       <!-- Today's Domain & Resin Router -->
       <article class="card">
         <div class="card-header-row">
@@ -511,7 +577,6 @@ export function renderHudTab(container, state, handlers) {
           return `<div class="domain-split">${boxes.join('')}</div>${bossHtml}`;
         })()}
       </article>
-    </div>
 
     <!-- Daily & Weekly Checklist -->
     <article class="card checklist-card">
@@ -553,9 +618,26 @@ export function renderHudTab(container, state, handlers) {
         </div>
       </div>
     </article>
+    </div>
   `;
 
   // Bind HUD events
+  container.querySelector('[data-open-server-modal]')?.addEventListener('click', () => {
+    handlers.onOpenServerModal?.();
+  });
+
+  // Live server reset countdown updater
+  const countdownEl = container.querySelector('#hud-reset-countdown');
+  if (countdownEl) {
+    const timer = setInterval(() => {
+      if (!countdownEl.isConnected) {
+        clearInterval(timer);
+        return;
+      }
+      countdownEl.textContent = getServerResetInfo(state.serverId || 'NA').countdownText;
+    }, 30_000);
+  }
+
   container.querySelector('[data-hud-day]')?.addEventListener('change', (e) => {
     handlers.onChangeHudDay(e.target.value);
   });

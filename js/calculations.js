@@ -3,6 +3,61 @@ import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
  */
+export const SERVER_REGIONS = {
+  NA: { id: 'NA', label: 'America (NA)', short: 'NA', offsetHours: -5, resetLabel: '04:00 EST / 09:00 UTC' },
+  EU: { id: 'EU', label: 'Europe (EU)', short: 'EU', offsetHours: 1, resetLabel: '04:00 CET / 03:00 UTC' },
+  ASIA: { id: 'ASIA', label: 'Asia', short: 'ASIA', offsetHours: 8, resetLabel: '04:00 CST / 20:00 UTC' },
+  SAR: { id: 'SAR', label: 'TW, HK, MO', short: 'TW/HK/MO', offsetHours: 8, resetLabel: '04:00 CST / 20:00 UTC' }
+};
+
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/**
+ * Computes the current in-game day (adjusted for 04:00 server reset) and
+ * time remaining until the next daily reset for the given server region.
+ */
+export function getServerResetInfo(serverId = 'NA', nowMs = Date.now()) {
+  const server = SERVER_REGIONS[serverId] || SERVER_REGIONS.NA;
+  const offsetMs = server.offsetHours * 3600_000;
+  const resetBoundaryMs = 4 * 3600_000; // 04:00 server local time
+  const inGameMs = nowMs + offsetMs - resetBoundaryMs;
+  const inGameDate = new Date(inGameMs);
+  const inGameDay = WEEKDAY_NAMES[inGameDate.getUTCDay()];
+
+  const dayMs = 86400_000;
+  const elapsedInDay = ((inGameMs % dayMs) + dayMs) % dayMs;
+  const msUntilReset = dayMs - elapsedInDay;
+  const totalMinutes = Math.floor(msUntilReset / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return {
+    server,
+    inGameDay,
+    msUntilReset,
+    hours,
+    minutes,
+    countdownText: `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`
+  };
+}
+
+/**
+ * Computes a weighted 0-100% readiness score from a target's requirement rows.
+ */
+export function calcTargetReadinessPct(reqRows = []) {
+  if (!reqRows.length) return 100;
+  let sumRatio = 0;
+  for (const r of reqRows) {
+    const need = Number(r.needed) || 0;
+    if (need <= 0) {
+      sumRatio += 1;
+    } else {
+      sumRatio += Math.min(1, Math.max(0, (Number(r.owned) || 0) / need));
+    }
+  }
+  return Math.round((sumRatio / reqRows.length) * 100);
+}
+
 export function calcEffectiveHerosWit(inventory = {}) {
   const wits4 = Number(inventory.HerosWit?.count ?? 0);
   const exp3 = Number(inventory.AdventurersExperience?.count ?? 0);
@@ -516,13 +571,14 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     if (deficit > 0) {
       const runs = Math.max(1, Math.ceil(goldEquivDeficit / 2.2));
       const resin = runs * 20;
-      farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+      farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
     }
 
     results.push({
       key: series.keys.T4,
       name: `${series.base} Series`,
       kind: 'talentSeries',
+      rarity: 4,
       owned: eff4,
       neededTotal: n4 + n3 + n2,
       deficit,
@@ -568,7 +624,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 2.2));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'weeklyBoss') {
       sourceLabel = 'Weekly Boss';
@@ -578,29 +634,29 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
         farmingCost = { weeks, text: `~${weeks} ${weeks === 1 ? 'Week' : 'Weeks'}` };
       }
     } else if (item.kind === 'worldBoss') {
-      sourceLabel = meta.bossName ? `Overworld Boss · ${meta.bossName}` : 'Overworld Boss';
+      sourceLabel = meta.bossName ? `Boss · ${meta.bossName}` : 'Overworld Boss';
       urgency = 4;
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 2.5));
         const resin = runs * 40;
-        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'exp') {
-      name = "Hero's Wit (EXP Pool)";
-      sourceLabel = 'Ley Line Outcrop';
+      name = "Hero's Wit";
+      sourceLabel = 'Ley Line';
       urgency = 4;
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil((deficit * 20000) / 122500));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'mora') {
-      sourceLabel = 'Ley Line Outcrop';
+      sourceLabel = 'Ley Line';
       urgency = 4;
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 120000));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'localSpecialty') {
       sourceLabel = 'Local Specialty';
@@ -614,6 +670,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       key: item.key,
       name,
       kind: item.kind,
+      rarity: meta.rarity || (item.kind === 'crown' ? 5 : item.kind === 'weeklyBoss' ? 5 : item.kind === 'exp' || item.kind === 'worldBoss' ? 4 : 3),
       owned,
       neededTotal: item.neededTotal,
       deficit,

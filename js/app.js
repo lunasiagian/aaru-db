@@ -1,5 +1,5 @@
 import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113j';
-import { sortAndLabelPrefarmQueue } from './calculations.js?v=20261113f';
+import { SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113k';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -14,9 +14,9 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113f';
+import { renderHudTab } from './ui-hud.js?v=20261113k';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261113f';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261113k';
 import { renderRosterTab } from './ui-roster.js';
 import { renderTeamsTab } from './ui-teams.js';
 
@@ -28,6 +28,7 @@ const state = {
   partnerAccount: null,
   viewingPartner: false,
   activeTab: 'hud', // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams'
+  serverId: 'NA',
   hudDayOverride: null,
   hudShowAllDomains: false,
   vaultFilter: { category: 'All', search: '', lowStockOnly: false },
@@ -118,6 +119,7 @@ function renderActiveTab(options = {}) {
   const viewState = {
     account,
     isReadOnly: state.viewingPartner,
+    serverId: state.serverId,
     hudDayOverride: state.hudDayOverride,
     hudShowAllDomains: state.hudShowAllDomains,
     vaultFilter: state.vaultFilter,
@@ -149,7 +151,8 @@ function renderActiveTab(options = {}) {
         if (item) item.done = done;
         await saveAccountSection(state.sessionUser, 'checklist', state.ownAccount.checklist);
         renderActiveTab();
-      }
+      },
+      onOpenServerModal: () => openServerModal()
     });
   } else if (state.activeTab === 'vault') {
     renderVaultTab(container, viewState, {
@@ -360,11 +363,18 @@ function applyAuthenticatedSession(res) {
   state.viewingPartner = false;
   state.partnerAccount = null;
 
+  const savedServer = localStorage.getItem(`aaru_server_${state.sessionUser}`);
+  state.serverId = savedServer && SERVER_REGIONS[savedServer] ? savedServer : 'NA';
+
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: state.sessionUser }));
   const restoreEl = document.getElementById('session-restore-screen');
   if (restoreEl) restoreEl.hidden = true;
   switchToAppView();
   showToast(`Signed in as ${res.account.displayName} (${res.mode} mode)`, 'mint');
+
+  if (!savedServer) {
+    openServerModal();
+  }
 }
 
 async function handleLogin(username, passphrase = '') {
@@ -609,6 +619,44 @@ function setupSystemDrawer() {
   });
 }
 
+function openServerModal() {
+  const modal = document.getElementById('server-modal');
+  if (!modal) return;
+  modal.querySelectorAll('[data-server-choice]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.serverChoice === state.serverId);
+  });
+  modal.hidden = false;
+}
+
+function setupServerModal() {
+  const modal = document.getElementById('server-modal');
+  const closeBtn = document.getElementById('btn-close-server');
+  if (!modal) return;
+
+  const close = () => {
+    modal.hidden = true;
+  };
+  closeBtn?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelectorAll('[data-server-choice]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const choice = btn.dataset.serverChoice;
+      if (!SERVER_REGIONS[choice]) return;
+      state.serverId = choice;
+      state.hudDayOverride = null;
+      if (state.sessionUser) {
+        localStorage.setItem(`aaru_server_${state.sessionUser}`, choice);
+      }
+      close();
+      renderActiveTab();
+      showToast(`Server set to ${SERVER_REGIONS[choice].label}`, 'mint');
+    });
+  });
+}
+
 async function bootstrap() {
   let savedUser = null;
   try {
@@ -677,6 +725,7 @@ async function bootstrap() {
   });
 
   setupGoodImportModal();
+  setupServerModal();
   setupSystemDrawer();
 
   // Restore session from sessionStorage
