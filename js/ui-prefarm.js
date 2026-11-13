@@ -1,5 +1,11 @@
 import { renderAssetIcon } from './assets.js';
-import { getAllCharacterKeys, getAllWeaponKeys, getCharacterMeta, getWeaponMeta } from './catalog.js';
+import {
+  ensureCharacterMaterials,
+  getAllCharacterKeys,
+  getAllWeaponKeys,
+  getCharacterMeta,
+  getWeaponMeta
+} from './catalog.js';
 import { calculateWaterfallPrefarm } from './calculations.js';
 
 export function renderPrefarmTab(container, state, handlers) {
@@ -7,6 +13,17 @@ export function renderPrefarmTab(container, state, handlers) {
   const allCharKeys = getAllCharacterKeys();
   const allWeaponKeys = getAllWeaponKeys();
   const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+
+  // Hydrate unreleased Lunaris character materials on demand and re-render if updated
+  const missing = queue.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
+  if (missing.length) {
+    Promise.all(missing.map((t) => ensureCharacterMaterials(t.characterKey))).then((results) => {
+      if (results.some(Boolean)) {
+        renderPrefarmTab(container, state, handlers);
+      }
+    });
+  }
+
   const waterfallMap = calculateWaterfallPrefarm(queue, account.inventory || {}, account.wallet);
   const disabledAttr = isReadOnly ? 'disabled' : '';
 
