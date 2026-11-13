@@ -1,4 +1,4 @@
-import { getCharacterMeta, loadCatalog } from './catalog.js';
+import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113b';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -13,9 +13,9 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js';
+import { renderHudTab } from './ui-hud.js?v=20261113b';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261113b';
 import { renderRosterTab } from './ui-roster.js';
 import { renderTeamsTab } from './ui-teams.js';
 
@@ -182,29 +182,37 @@ function renderActiveTab(options = {}) {
       },
       onMovePrefarmTarget: async (id, dir) => {
         const queue = [...(state.ownAccount.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
-        const idx = queue.findIndex((t) => t.id === id);
+        const idx = queue.findIndex((t) => String(t.id) === String(id));
         if (idx === -1) return;
         const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
         if (swapIdx < 0 || swapIdx >= queue.length) return;
         [queue[idx], queue[swapIdx]] = [queue[swapIdx], queue[idx]];
         queue.forEach((t, i) => (t.rank = i + 1));
         state.ownAccount.prefarmQueue = queue;
-        await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
         renderActiveTab();
-      },
-      onRemovePrefarmTarget: async (id) => {
-        const prev = state.ownAccount.prefarmQueue || [];
-        const queue = prev
-          .filter((t) => t.id !== id)
-          .sort((a, b) => a.rank - b.rank)
-          .map((t, i) => ({ ...t, rank: i + 1 }));
-        state.ownAccount.prefarmQueue = queue;
         await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
+      },
+      onRemovePrefarmTarget: async (id, fallbackRank) => {
+        const prev = [...(state.ownAccount.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+        const queue = prev
+          .filter((t, i) => {
+            if (t.id !== undefined && t.id !== null && String(t.id) !== '') {
+              return String(t.id) !== String(id);
+            }
+            return Number(t.rank ?? i + 1) !== Number(fallbackRank);
+          })
+          .map((t, i) => ({ ...t, id: t.id || `pf-${Date.now()}-${i}`, rank: i + 1 }));
+        state.ownAccount.prefarmQueue = queue;
         renderActiveTab();
         showToast('Removed target from Prefarm Queue', 'mint');
+        try {
+          await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
+        } catch (err) {
+          showToast(err?.message || 'Failed to sync removal', 'coral');
+        }
       },
       onEditPrefarmTarget: async (id, field, val) => {
-        const target = (state.ownAccount.prefarmQueue || []).find((t) => t.id === id);
+        const target = (state.ownAccount.prefarmQueue || []).find((t) => String(t.id) === String(id));
         if (!target) return;
         if (field === 'currentLevel') target.currentLevel = Math.min(95, Math.max(1, val));
         else if (field === 'targetLevel') target.targetLevel = Math.min(95, Math.max(1, val));

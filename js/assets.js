@@ -1,4 +1,4 @@
-import { getCatalog, getLiveAssetEntry } from './catalog.js';
+import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261113b';
 
 /**
  * Hybrid Icon Resolver

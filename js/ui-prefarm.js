@@ -7,7 +7,7 @@ import {
   getCharacterMeta,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js';
+} from './catalog.js?v=20261113b';
 import { calculateWaterfallPrefarm } from './calculations.js';
 
 export function renderPrefarmTab(container, state, handlers) {
@@ -148,7 +148,7 @@ export function renderPrefarmTab(container, state, handlers) {
                         ? `
                       <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 ? 'disabled' : ''}>▲</button>
                       <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 ? 'disabled' : ''}>▼</button>
-                      <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id}">Remove</button>`
+                      <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id ?? ''}" data-pf-rank="${target.rank ?? idx + 1}">Remove</button>`
                         : ''
                     }
                   </div>
@@ -285,7 +285,14 @@ export function renderPrefarmTab(container, state, handlers) {
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         btn.textContent = 'Removing...';
-        await handlers.onRemovePrefarmTarget(btn.dataset.pfRemove || btn.dataset.pfId);
+        try {
+          await handlers.onRemovePrefarmTarget(btn.dataset.pfRemove || btn.dataset.pfId, btn.dataset.pfRank);
+        } finally {
+          if (btn.isConnected) {
+            btn.disabled = false;
+            btn.textContent = 'Remove';
+          }
+        }
       });
     });
 
