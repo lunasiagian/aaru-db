@@ -1301,6 +1301,24 @@ textarea:focus {
   padding-top: 6px;
 }
 
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -2px;
+  margin-right: 6px;
+  animation: btn-spin 0.65s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Team Comps & Test Lab */
 .conflict-banner {
   border-color: rgba(232, 111, 92, 0.55);

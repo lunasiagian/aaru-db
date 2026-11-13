@@ -166,7 +166,7 @@ export async function loginAccount(username, passphrase = '') {
   const normalized = (username || '').trim().toLowerCase();
 
   if (!cfg.ACCOUNTS?.[normalized]) {
-    throw new Error('Unknown account. Use "almondeluna" (Luna) or "vanbrohenheim" (Roy).');
+    throw new Error('Invalid account key or passphrase.');
   }
 
   if (isOfflineMode()) {

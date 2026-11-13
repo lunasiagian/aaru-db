@@ -152,30 +152,50 @@ export function renderPrefarmTab(container, state, handlers) {
   `;
 
   if (!isReadOnly) {
-    container.querySelector('#prefarm-add-form')?.addEventListener('submit', (e) => {
+    container.querySelector('#prefarm-add-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const characterKey = fd.get('characterKey');
-      const existingChar = (account.characters || []).find((c) => c.key === characterKey);
-      handlers.onAddPrefarmTarget({
-        characterKey,
-        currentLevel: existingChar?.level || 1,
-        targetLevel: Number(fd.get('targetLevel')) || 90,
-        currentTalent: existingChar?.talent || { auto: 1, skill: 1, burst: 1 },
-        targetTalent: {
-          auto: Number(fd.get('tAuto')) || 6,
-          skill: Number(fd.get('tSkill')) || 9,
-          burst: Number(fd.get('tBurst')) || 9
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const origText = submitBtn?.textContent || 'Add Target';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="btn-spinner"></span> Adding...';
+      }
+      try {
+        const fd = new FormData(e.target);
+        const characterKey = fd.get('characterKey');
+        const existingChar = (account.characters || []).find((c) => c.key === characterKey);
+        await handlers.onAddPrefarmTarget({
+          characterKey,
+          currentLevel: existingChar?.level || 1,
+          targetLevel: Number(fd.get('targetLevel')) || 90,
+          currentTalent: existingChar?.talent || { auto: 1, skill: 1, burst: 1 },
+          targetTalent: {
+            auto: Number(fd.get('tAuto')) || 6,
+            skill: Number(fd.get('tSkill')) || 9,
+            burst: Number(fd.get('tBurst')) || 9
+          }
+        });
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = origText;
         }
-      });
+      }
     });
 
     container.querySelectorAll('[data-pf-move]').forEach((btn) => {
-      btn.addEventListener('click', () => handlers.onMovePrefarmTarget(btn.dataset.pfId, btn.dataset.pfMove));
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        await handlers.onMovePrefarmTarget(btn.dataset.pfId, btn.dataset.pfMove);
+      });
     });
 
     container.querySelectorAll('[data-pf-remove]').forEach((btn) => {
-      btn.addEventListener('click', () => handlers.onRemovePrefarmTarget(btn.dataset.pfRemove || btn.dataset.pfId));
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = 'Removing...';
+        await handlers.onRemovePrefarmTarget(btn.dataset.pfRemove || btn.dataset.pfId);
+      });
     });
 
     container.querySelectorAll('[data-pf-edit]').forEach((input) => {

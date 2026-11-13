@@ -332,13 +332,31 @@ function applyAuthenticatedSession(res) {
 
 async function handleLogin(username, passphrase = '') {
   const errEl = document.getElementById('login-error');
+  const submitBtn = document.getElementById('login-submit-btn');
+  const userInput = document.getElementById('login-username');
+  const passInput = document.getElementById('login-passphrase');
   if (errEl) errEl.textContent = '';
+
+  const origLabel = submitBtn?.textContent || 'Initialize Datasheet';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="btn-spinner"></span> Authenticating...';
+  }
+  if (userInput) userInput.disabled = true;
+  if (passInput) passInput.disabled = true;
 
   try {
     const res = await loginAccount(username, passphrase);
     applyAuthenticatedSession(res);
   } catch (err) {
     if (errEl) errEl.textContent = err.message;
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = origLabel;
+    }
+    if (userInput) userInput.disabled = false;
+    if (passInput) passInput.disabled = false;
   }
 }
 

@@ -423,24 +423,37 @@ export function renderRosterTab(container, state, handlers) {
   if (form && !isReadOnly) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(form);
-      const clamp = (val, min, max, fallback) => {
-        const n = Number(val);
-        return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
-      };
-      const rankRaw = String(fd.get('priorityRank') || '').trim();
-      await handlers.onSaveCharacterInspector(form.dataset.inspectorForm, {
-        status: String(fd.get('status') || 'Bench'),
-        priorityRank: rankRaw ? clamp(rankRaw, 1, 99, '') : '',
-        level: clamp(fd.get('level'), 1, 100, 1),
-        targetLevel: clamp(fd.get('targetLevel'), 1, 100, 90),
-        talent: {
-          auto: clamp(fd.get('tAuto'), 1, 10, 1),
-          skill: clamp(fd.get('tSkill'), 1, 10, 1),
-          burst: clamp(fd.get('tBurst'), 1, 10, 1)
-        },
-        notes: String(fd.get('notes') || '')
-      });
+      const saveBtn = form.querySelector('button[type="submit"]');
+      const origText = saveBtn?.textContent || 'Save to Sheet';
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+      }
+      try {
+        const fd = new FormData(form);
+        const clamp = (val, min, max, fallback) => {
+          const n = Number(val);
+          return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+        };
+        const rankRaw = String(fd.get('priorityRank') || '').trim();
+        await handlers.onSaveCharacterInspector(form.dataset.inspectorForm, {
+          status: String(fd.get('status') || 'Bench'),
+          priorityRank: rankRaw ? clamp(rankRaw, 1, 99, '') : '',
+          level: clamp(fd.get('level'), 1, 100, 1),
+          targetLevel: clamp(fd.get('targetLevel'), 1, 100, 90),
+          talent: {
+            auto: clamp(fd.get('tAuto'), 1, 10, 1),
+            skill: clamp(fd.get('tSkill'), 1, 10, 1),
+            burst: clamp(fd.get('tBurst'), 1, 10, 1)
+          },
+          notes: String(fd.get('notes') || '')
+        });
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = origText;
+        }
+      }
     });
   }
 }
