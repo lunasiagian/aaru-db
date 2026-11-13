@@ -999,6 +999,282 @@ textarea:focus {
   color: var(--text-muted);
 }
 
+/* Redesigned Roster & Armory (Operational Tiers + Minimalist Cards + Inspector Drawer) */
+.roster-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.roster-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.roster-pill-row .filter-pills {
+  flex-wrap: nowrap;
+}
+
+.roster-pill-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-slate);
+  flex-shrink: 0;
+}
+
+.roster-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roster-tier {
+  border: 1px solid var(--border-slate);
+  border-radius: 8px;
+  background: rgba(10, 16, 28, 0.35);
+}
+
+.roster-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.roster-tier-header::-webkit-details-marker {
+  display: none;
+}
+
+.roster-tier-title::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.roster-tier[open] > .roster-tier-header .roster-tier-title::before {
+  transform: rotate(90deg);
+  color: var(--accent-gold);
+}
+
+.roster-tier-body {
+  padding: 4px 14px 14px;
+}
+
+.roster-portrait-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 18px;
+}
+
+.roster-portrait-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 10px;
+  border: 1px solid var(--border-slate);
+  border-radius: 8px;
+  background: var(--bg-card-alt);
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.roster-portrait-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.roster-portrait-card.is-unowned {
+  opacity: 0.52;
+}
+
+.roster-corner-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(10, 16, 28, 0.85);
+  border: 1px solid var(--border-slate);
+  color: var(--text-main);
+}
+
+.roster-portrait-frame {
+  margin-top: 10px;
+}
+
+.icon-portrait {
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+}
+
+.roster-portrait-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.roster-portrait-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.roster-portrait-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.roster-swap-flag {
+  font-size: 12px;
+  color: var(--accent-gold);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 196, 81, 0.45);
+  background: rgba(245, 196, 81, 0.1);
+}
+
+.pill-sky {
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #93c5fd;
+  background: rgba(96, 165, 250, 0.12);
+}
+
+.roster-compact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-slate);
+  border-radius: 6px;
+  background: var(--bg-card-alt);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roster-list-row:hover {
+  border-color: var(--accent-gold);
+}
+
+.roster-list-row.is-unowned {
+  opacity: 0.55;
+}
+
+.roster-list-left,
+.roster-list-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roster-list-right .roster-corner-badge {
+  position: static;
+}
+
+.roster-list-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Slide-Out Right-Hand Inspector Drawer */
+.roster-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(5, 9, 15, 0.65);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.roster-drawer {
+  width: min(420px, 100vw);
+  height: 100%;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border-slate);
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roster-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-slate);
+}
+
+.roster-drawer-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.roster-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roster-drawer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.roster-drawer-talents {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.roster-drawer-weapon {
+  padding: 10px;
+  border: 1px solid var(--border-slate);
+  border-radius: 6px;
+  background: var(--bg-card-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
 /* Team Comps & Test Lab */
 .conflict-banner {
   border-color: rgba(232, 111, 92, 0.55);

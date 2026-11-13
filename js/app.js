@@ -5,7 +5,8 @@ import {
   loginAccount,
   logoutAccount,
   restoreAccountSession,
-  saveAccountSection
+  saveAccountSection,
+  upsertRosterRow
 } from './api.js';
 import {
   commitGoodImport,
@@ -28,7 +29,15 @@ const state = {
   activeTab: 'hud', // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams'
   hudDayOverride: null,
   vaultFilter: { category: 'All', search: '', lowStockOnly: false },
-  rosterFilter: { status: 'All', view: 'characters', search: '' },
+  rosterFilter: {
+    status: 'All',
+    element: 'All',
+    density: 'grid',
+    view: 'characters',
+    search: '',
+    inspectedKey: null,
+    tiers: { active: true, built: true, archive: false }
+  },
   pendingGoodImport: null // { raw, diff }
 };
 
@@ -205,6 +214,48 @@ function renderActiveTab(options = {}) {
         await saveAccountSection(state.sessionUser, 'characters', state.ownAccount.characters);
         renderActiveTab();
         showToast(`Updated ${charKey}`, 'mint');
+      },
+      onSaveCharacterInspector: async (charKey, updates) => {
+        state.ownAccount.characters = state.ownAccount.characters || [];
+        let ch = state.ownAccount.characters.find((c) => c.key === charKey);
+        if (!ch) {
+          ch = {
+            key: charKey,
+            owned: updates.status !== 'Unowned',
+            level: 1,
+            constellation: 0,
+            ascension: 0,
+            talent: { auto: 1, skill: 1, burst: 1 },
+            targetLevel: 90,
+            targetTalents: '9/9/9',
+            status: 'Bench',
+            priorityRank: '',
+            notes: ''
+          };
+          state.ownAccount.characters.push(ch);
+        }
+
+        ch.status = updates.status;
+        ch.owned = updates.status !== 'Unowned';
+        ch.level = updates.level;
+        ch.targetLevel = updates.targetLevel;
+        ch.priorityRank = updates.priorityRank;
+        ch.talent = { ...updates.talent };
+        ch.notes = updates.notes;
+
+        await upsertRosterRow(state.sessionUser, charKey, {
+          owned: ch.owned,
+          level: ch.level,
+          target_lvl: ch.targetLevel,
+          priority_rank: ch.priorityRank,
+          talent_auto: ch.talent.auto,
+          talent_skill: ch.talent.skill,
+          talent_burst: ch.talent.burst,
+          status: ch.status,
+          notes: ch.notes
+        });
+        renderActiveTab();
+        showToast(`Saved ${charKey} to Roster`, 'mint');
       }
     });
   } else if (state.activeTab === 'teams') {

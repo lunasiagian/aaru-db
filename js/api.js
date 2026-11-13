@@ -306,6 +306,39 @@ export async function upsertInventoryRow(username, key, rowPayload) {
 }
 
 /**
+ * Sends a single upsertRow POST with Content-Type: text/plain to {user}_Roster.
+ */
+export async function upsertRosterRow(username, charKey, rowPayload) {
+  if (isOfflineMode()) {
+    const current = loadLocalMock(username);
+    current.characters = current.characters || [];
+    const idx = current.characters.findIndex((c) => c.key === charKey);
+    const updated = {
+      ...(idx >= 0 ? current.characters[idx] : { key: charKey }),
+      ...rowPayload
+    };
+    if (idx >= 0) current.characters[idx] = updated;
+    else current.characters.push(updated);
+    saveLocalMock(username, current);
+    return { ok: true, mode: 'offline', key: charKey, savedAt: Date.now() };
+  }
+
+  const token = requireSessionToken();
+  await postAppsScript(
+    {
+      action: 'upsertRow',
+      token,
+      user: username,
+      sheet: `${username}_Roster`,
+      key: charKey,
+      data: rowPayload
+    },
+    'upsertRow failed'
+  );
+  return { ok: true, mode: 'live', key: charKey, savedAt: Date.now() };
+}
+
+/**
  * Persists non-inventory account sections (wallet, checklist, prefarmQueue, characters, teams).
  */
 export async function saveAccountSection(username, section, payload) {
