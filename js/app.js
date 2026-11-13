@@ -219,7 +219,7 @@ function renderActiveTab(options = {}) {
     renderRosterTab(container, viewState, {
       onChangeRosterFilter: (patch, opts) => {
         state.rosterFilter = { ...state.rosterFilter, ...patch };
-        renderActiveTab(opts);
+        if (!opts?.silent) renderActiveTab(opts);
       },
       onUpdateCharacterField: async (charKey, field, val) => {
         const ch = (state.ownAccount.characters || []).find((c) => c.key === charKey);

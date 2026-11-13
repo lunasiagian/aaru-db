@@ -399,9 +399,10 @@ export function renderRosterTab(container, state, handlers) {
   container.querySelectorAll('.roster-tier').forEach((det) => {
     det.addEventListener('toggle', () => {
       const id = det.dataset.tierId;
-      handlers.onChangeRosterFilter({
-        tiers: { ...tiersState, [id]: det.open }
-      });
+      handlers.onChangeRosterFilter(
+        { tiers: { ...tiersState, [id]: det.open } },
+        { silent: true }
+      );
     });
   });
 
