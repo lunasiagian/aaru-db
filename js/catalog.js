@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v3';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v4';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -64,11 +64,12 @@ async function fetchYattaCatalog() {
   }
 
   try {
-    const [avatarRes, weaponRes, materialRes, upgradeRes] = await Promise.allSettled([
+    const [avatarRes, weaponRes, materialRes, upgradeRes, lunarisVerRes] = await Promise.allSettled([
       fetch('https://gi.yatta.moe/api/v2/en/avatar').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/weapon').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/material').then((r) => (r.ok ? r.json() : null)),
-      fetch('https://gi.yatta.moe/api/v2/en/upgrade').then((r) => (r.ok ? r.json() : null))
+      fetch('https://gi.yatta.moe/api/v2/en/upgrade').then((r) => (r.ok ? r.json() : null)),
+      fetch('https://api.lunaris.moe/data/version.json').then((r) => (r.ok ? r.json() : null))
     ]);
 
     const slim = { characters: {}, weapons: {}, materials: {} };
@@ -158,6 +159,34 @@ async function fetchYattaCatalog() {
           icon: `${YATTA_UI_BASE}${item.icon}.png`,
           ...(upg || {})
         };
+      }
+    }
+
+    // Merge unreleased/datamine characters from api.lunaris.moe
+    const lunarisVer = lunarisVerRes.status === 'fulfilled' ? lunarisVerRes.value?.version : null;
+    if (lunarisVer) {
+      try {
+        const lRes = await fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/charlist.json`);
+        if (lRes.ok) {
+          const charlist = await lRes.json();
+          for (const item of Object.values(charlist || {})) {
+            const name = item?.enName;
+            const norm = normalizeAssetKey(name);
+            if (!norm || norm === 'traveler' || slim.characters[norm]) continue;
+            const iconName = String(item.CardImg || '').replace(/^UI_Gacha_AvatarIcon_/, 'UI_AvatarIcon_');
+            slim.characters[norm] = {
+              pascalKey: String(name).replace(/[^a-zA-Z0-9]/g, ''),
+              name,
+              rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : 4,
+              element: item.element || 'Unknown',
+              weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
+              region: 'Teyvat',
+              icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : ''
+            };
+          }
+        }
+      } catch {
+        // Ignore Lunaris fallback errors
       }
     }
 
