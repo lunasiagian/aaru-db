@@ -8,7 +8,7 @@ import {
   getMaterialMeta,
   getWeaponMeta
 } from './catalog.js?v=20261113d';
-import { calculateWaterfallPrefarm } from './calculations.js';
+import { calculateWaterfallPrefarm } from './calculations.js?v=20261113e';
 
 export function renderPrefarmTab(container, state, handlers) {
   const { account, isReadOnly } = state;

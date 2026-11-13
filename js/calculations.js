@@ -284,46 +284,320 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
   return results;
 }
 
-/**
- * Aggregates shared resource pool for Priority #1 & #2 targets.
- */
-export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, wallet = null) {
-  const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank).slice(0, 2);
-  const pool = {};
+const WEEKDAY_SHORT = {
+  Monday: 'Mon',
+  Tuesday: 'Tue',
+  Wednesday: 'Wed',
+  Thursday: 'Thu',
+  Friday: 'Fri',
+  Saturday: 'Sat',
+  Sunday: 'Sun'
+};
 
-  for (const target of sorted) {
-    const rows = calculatePrefarmRequirements(target, inventory, wallet);
-    for (const r of rows) {
-      if (!pool[r.key]) {
-        pool[r.key] = {
-          key: r.key,
-          name: r.name,
-          category: r.category,
-          owned: r.owned,
-          neededTotal: 0,
-          byTarget: []
-        };
+function getDomainInfoForReward(matKey, todayName) {
+  const catalog = getCatalog();
+  const normTarget = normalizeAssetKeySimple(matKey);
+  const schedule = catalog?.domainSchedule || {};
+  const days = [];
+  let domainName = '';
+  let seriesShortName = '';
+  let domainType = '';
+
+  for (const [dayFull, list] of Object.entries(schedule)) {
+    for (const dom of list || []) {
+      const match = (dom.rewards || []).find((r) => normalizeAssetKeySimple(r.key) === normTarget);
+      if (match) {
+        if (!domainName) domainName = dom.name;
+        if (!domainType) domainType = dom.domainType;
+        if (!seriesShortName) seriesShortName = match.name;
+        const shortDay = WEEKDAY_SHORT[dayFull] || dayFull.slice(0, 3);
+        if (!days.includes(shortDay)) days.push(shortDay);
       }
-      pool[r.key].neededTotal += r.needed;
-      pool[r.key].byTarget.push({
-        rank: target.rank,
-        characterKey: target.characterKey,
-        needed: r.needed
-      });
     }
   }
 
-  return Object.values(pool)
-    .map((item) => {
-      const delta = item.owned - item.neededTotal;
-      return {
-        ...item,
-        delta,
-        deficit: delta < 0 ? Math.abs(delta) : 0,
-        surplus: delta >= 0 ? delta : 0
-      };
-    })
-    .sort((a, b) => b.deficit - a.deficit || b.neededTotal - a.neededTotal);
+  const todayShort = todayName ? WEEKDAY_SHORT[todayName] || todayName.slice(0, 3) : '';
+  return {
+    domainName,
+    domainType,
+    seriesShortName,
+    days,
+    isToday: Boolean(todayShort && days.includes(todayShort))
+  };
+}
+
+function normalizeAssetKeySimple(str) {
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Aggregates & transforms the shared resource pool for Priority #1 & #2 targets
+ * into an actionable farming and resin planner (grouped tiered series with 3:1
+ * alchemy crafting, EXP pool, WL9 resin/run estimates, and #1/#2 allocation).
+ */
+export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, wallet = null, todayName = null) {
+  const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank).slice(0, 2);
+  if (!sorted.length) return [];
+
+  const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
+  const expBreakdown = calcEffectiveHerosWit(inventory);
+  const dreamSolventCount = Number(inventory.DreamSolvent?.count ?? 0);
+
+  const getRawOwned = (matKey) => {
+    if (matKey === 'HerosWit') return effectiveWits;
+    if (matKey === 'Mora') return Number(wallet?.mora ?? inventory[matKey]?.count ?? 0);
+    return Number(inventory[matKey]?.count ?? 0);
+  };
+
+  // Track per-target raw requirements and classify each material key
+  const targetReqs = sorted.map((t) => ({
+    target: t,
+    charMeta: getCharacterMeta(t.characterKey),
+    weaponMeta: t.weaponKey ? getWeaponMeta(t.weaponKey) : null,
+    req: computeRawTargetRequirements(t)
+  }));
+
+  const matKindByKey = new Map();
+  const talentSeriesMap = new Map(); // base -> { base, byTier: { T2, T3, T4 }, byTarget: Map<rank, {T2,T3,T4}> }
+  const flatMap = new Map(); // matKey -> { key, kind, neededByRank: Map<rank, number> }
+
+  for (const { target, charMeta, weaponMeta, req } of targetReqs) {
+    for (const [matKey, needed] of Object.entries(req)) {
+      if (!needed || needed <= 0) continue;
+
+      const bookMatch = matKey.match(/^(TeachingsOf|GuideTo|PhilosophiesOf)(.+)$/);
+      if (bookMatch) {
+        const tierPrefix = bookMatch[1];
+        const base = bookMatch[2];
+        const tierKey = tierPrefix === 'TeachingsOf' ? 'T2' : tierPrefix === 'GuideTo' ? 'T3' : 'T4';
+        if (!talentSeriesMap.has(base)) {
+          talentSeriesMap.set(base, {
+            base,
+            keys: {
+              T2: `TeachingsOf${base}`,
+              T3: `GuideTo${base}`,
+              T4: `PhilosophiesOf${base}`
+            },
+            neededByTier: { T2: 0, T3: 0, T4: 0 },
+            byRank: new Map()
+          });
+        }
+        const series = talentSeriesMap.get(base);
+        series.neededByTier[tierKey] += needed;
+        if (!series.byRank.has(target.rank)) series.byRank.set(target.rank, { T2: 0, T3: 0, T4: 0 });
+        series.byRank.get(target.rank)[tierKey] += needed;
+        continue;
+      }
+
+      // Determine kind for non-book materials
+      let kind = matKindByKey.get(matKey);
+      if (!kind) {
+        if (matKey === 'HerosWit') kind = 'exp';
+        else if (matKey === 'Mora') kind = 'mora';
+        else if (matKey === 'CrownOfInsight') kind = 'crown';
+        else if (matKey === 'MysticEnhancementOre') kind = 'ore';
+        else if (weaponMeta?.domainMatExactKey && matKey === weaponMeta.domainMatExactKey) kind = 'weaponSeries';
+        else if (charMeta?.weeklyMat && matKey === charMeta.weeklyMat) kind = 'weeklyBoss';
+        else if (charMeta?.bossMat && matKey === charMeta.bossMat) kind = 'worldBoss';
+        else if (charMeta?.localSpecialty && matKey === charMeta.localSpecialty) kind = 'localSpecialty';
+        else kind = 'other';
+        matKindByKey.set(matKey, kind);
+      }
+
+      if (!flatMap.has(matKey)) {
+        flatMap.set(matKey, { key: matKey, kind, neededTotal: 0, byRank: new Map() });
+      }
+      const entry = flatMap.get(matKey);
+      entry.neededTotal += needed;
+      entry.byRank.set(target.rank, (entry.byRank.get(target.rank) || 0) + needed);
+    }
+  }
+
+  const buildAlloc = (needByRankEquiv, totalNeedEquiv, netDeficitEquiv) => {
+    const fundedTotal = Math.max(0, totalNeedEquiv - netDeficitEquiv);
+    let remaining = fundedTotal;
+    const targets = [];
+    for (const { target, charMeta } of targetReqs) {
+      const n = needByRankEquiv.get(target.rank) || 0;
+      if (n <= 0) continue;
+      const funded = Math.min(n, remaining);
+      remaining = Math.max(0, remaining - funded);
+      targets.push({
+        rank: target.rank,
+        key: target.characterKey,
+        name: charMeta.name || target.characterKey,
+        needed: n,
+        funded,
+        pct: Math.round((funded / n) * 100),
+        widthPct: totalNeedEquiv > 0 ? Number(((funded / totalNeedEquiv) * 100).toFixed(2)) : 0
+      });
+    }
+    return { targets };
+  };
+
+  const results = [];
+
+  // 1. Talent Book Series (with 3-to-1 Alchemy Conversion)
+  for (const series of talentSeriesMap.values()) {
+    const o2 = getRawOwned(series.keys.T2);
+    const o3 = getRawOwned(series.keys.T3);
+    const o4 = getRawOwned(series.keys.T4);
+    const n2 = series.neededByTier.T2;
+    const n3 = series.neededByTier.T3;
+    const n4 = series.neededByTier.T4;
+
+    const surplus2 = Math.max(0, o2 - n2);
+    const craft3 = Math.floor(surplus2 / 3);
+    const netDef2 = Math.max(0, n2 - o2);
+
+    const eff3 = o3 + craft3;
+    const surplus3 = Math.max(0, eff3 - n3);
+    const craft4 = Math.floor(surplus3 / 3);
+    const netDef3 = Math.max(0, n3 - eff3);
+
+    const eff4 = o4 + craft4;
+    const surplus4 = Math.max(0, eff4 - n4);
+    const netDef4 = Math.max(0, n4 - eff4);
+
+    const deficit = netDef2 + netDef3 + netDef4;
+    const goldEquivDeficit = netDef4 + netDef3 / 3 + netDef2 / 9;
+    const surplus = deficit === 0 ? surplus4 : 0;
+
+    const domInfo = getDomainInfoForReward(series.keys.T4, todayName);
+    const needEquivByRank = new Map();
+    let totalNeedEquiv = 0;
+    for (const [rank, t] of series.byRank.entries()) {
+      const eq = t.T4 + t.T3 / 3 + t.T2 / 9;
+      needEquivByRank.set(rank, eq);
+      totalNeedEquiv += eq;
+    }
+
+    let farmingCost = null;
+    if (deficit > 0) {
+      const runs = Math.max(1, Math.ceil(goldEquivDeficit / 2.2));
+      const resin = runs * 20;
+      farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+    }
+
+    results.push({
+      key: series.keys.T4,
+      name: `${series.base} Series`,
+      kind: 'talentSeries',
+      owned: eff4,
+      neededTotal: n4 + n3 + n2,
+      deficit,
+      surplus,
+      tiers: [
+        { label: 'T2', key: series.keys.T2, owned: o2, needed: n2, netDeficit: netDef2 },
+        { label: 'T3', key: series.keys.T3, owned: eff3, rawOwned: o3, craftedIn: craft3, needed: n3, netDeficit: netDef3 },
+        { label: 'T4', key: series.keys.T4, owned: eff4, rawOwned: o4, craftedIn: craft4, needed: n4, netDeficit: netDef4 }
+      ],
+      sourceLabel: domInfo.domainName || 'Talent Domain',
+      scheduleDays: domInfo.days,
+      isToday: domInfo.isToday,
+      farmingCost,
+      urgency: domInfo.isToday ? 2 : 3,
+      alloc: buildAlloc(needEquivByRank, totalNeedEquiv, goldEquivDeficit)
+    });
+  }
+
+  // 2. Non-Book Materials (Weapon Mats, Weekly Boss, World Boss, EXP, Mora, Local Specialty, etc.)
+  for (const item of flatMap.values()) {
+    const meta = getMaterialMeta(item.key);
+    const owned = getRawOwned(item.key);
+    const delta = owned - item.neededTotal;
+    const deficit = delta < 0 ? Math.abs(delta) : 0;
+    const surplus = delta >= 0 ? delta : 0;
+
+    let name = meta.name;
+    let sourceLabel = 'Material';
+    let scheduleDays = [];
+    let isToday = false;
+    let urgency = 4;
+    let farmingCost = null;
+    let tiers = null;
+
+    if (item.kind === 'weaponSeries') {
+      const domInfo = getDomainInfoForReward(item.key, todayName);
+      name = domInfo.seriesShortName ? `${domInfo.seriesShortName} Series` : meta.name;
+      sourceLabel = domInfo.domainName || 'Weapon Domain';
+      scheduleDays = domInfo.days;
+      isToday = domInfo.isToday;
+      urgency = domInfo.isToday ? 2 : 3;
+      tiers = [{ label: 'T5', key: item.key, owned, needed: item.neededTotal, netDeficit: deficit }];
+      if (deficit > 0) {
+        const runs = Math.max(1, Math.ceil(deficit / 2.2));
+        const resin = runs * 20;
+        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+      }
+    } else if (item.kind === 'weeklyBoss') {
+      sourceLabel = 'Weekly Boss';
+      urgency = 1;
+      if (deficit > 0) {
+        const weeks = Math.max(1, Math.ceil(deficit / 2.4));
+        farmingCost = { weeks, text: `~${weeks} ${weeks === 1 ? 'Week' : 'Weeks'}` };
+      }
+    } else if (item.kind === 'worldBoss') {
+      sourceLabel = meta.bossName ? `Overworld Boss · ${meta.bossName}` : 'Overworld Boss';
+      urgency = 4;
+      if (deficit > 0) {
+        const runs = Math.max(1, Math.ceil(deficit / 2.5));
+        const resin = runs * 40;
+        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+      }
+    } else if (item.kind === 'exp') {
+      name = "Hero's Wit (EXP Pool)";
+      sourceLabel = 'Ley Line Outcrop';
+      urgency = 4;
+      if (deficit > 0) {
+        const runs = Math.max(1, Math.ceil((deficit * 20000) / 122500));
+        const resin = runs * 20;
+        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+      }
+    } else if (item.kind === 'mora') {
+      sourceLabel = 'Ley Line Outcrop';
+      urgency = 4;
+      if (deficit > 0) {
+        const runs = Math.max(1, Math.ceil(deficit / 120000));
+        const resin = runs * 20;
+        farmingCost = { runs, resin, text: `~${runs} Runs (${resin.toLocaleString()} Resin)` };
+      }
+    } else if (item.kind === 'localSpecialty') {
+      sourceLabel = 'Local Specialty';
+    } else if (item.kind === 'crown') {
+      sourceLabel = 'Event / Limited';
+    } else if (item.kind === 'ore') {
+      sourceLabel = 'Forging / Mining';
+    }
+
+    results.push({
+      key: item.key,
+      name,
+      kind: item.kind,
+      owned,
+      neededTotal: item.neededTotal,
+      deficit,
+      surplus,
+      tiers,
+      expBreakdown: item.kind === 'exp' ? expBreakdown : null,
+      sourceLabel,
+      scheduleDays,
+      isToday,
+      bossUnreleased: Boolean(meta.bossUnreleased),
+      dreamSolventCount: item.kind === 'weeklyBoss' ? dreamSolventCount : 0,
+      farmingCost,
+      urgency,
+      alloc: buildAlloc(item.byRank, item.neededTotal, deficit)
+    });
+  }
+
+  return results.sort((a, b) => {
+    const aDef = a.deficit > 0 ? 0 : 1;
+    const bDef = b.deficit > 0 ? 0 : 1;
+    if (aDef !== bDef) return aDef - bDef;
+    if (a.urgency !== b.urgency) return a.urgency - b.urgency;
+    return b.deficit - a.deficit || b.neededTotal - a.neededTotal;
+  });
 }
 
 /**

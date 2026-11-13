@@ -13,7 +13,7 @@ import {
   calcCompletionGauges,
   calcEffectiveHerosWit,
   calculatePrioritySharedPool
-} from './calculations.js';
+} from './calculations.js?v=20261113e';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -23,10 +23,9 @@ export function renderHudTab(container, state, handlers) {
   const purse = calcCoinPurse(wallet);
   const wits = calcEffectiveHerosWit(account.inventory);
   const gauges = calcCompletionGauges(account);
-  const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {}, account.wallet);
-
   const todayName = state.hudDayOverride || WEEKDAYS[new Date().getDay()];
   const domainsToday = getDomainScheduleForDay(todayName);
+  const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {}, account.wallet, todayName);
 
   const queueForHydration = account.prefarmQueue || [];
   const missingChars = queueForHydration.filter((t) => {
@@ -159,27 +158,107 @@ export function renderHudTab(container, state, handlers) {
         </div>
 
         <div class="pool-list">
-          ${sharedPool.length
-            ? sharedPool
-                .slice(0, 10)
-                .map((item) => {
-                  const isDeficit = item.deficit > 0;
-                  return `
-                  <div class="pool-row ${isDeficit ? 'row-deficit' : 'row-surplus'}">
-                    <div class="pool-item-info">
-                      ${renderAssetIcon('materials', item.key, item.name, 'icon-sm')}
-                      <div>
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-meta mono">${item.category} • Owned ${item.owned.toLocaleString()} / Need ${item.neededTotal.toLocaleString()}</div>
+          ${(() => {
+            if (!sharedPool.length) {
+              return '<div class="empty-state">Add targets in Prefarm Planner to compute the #1/#2 shared pool.</div>';
+            }
+            const actionItems = sharedPool.filter((i) => i.deficit > 0);
+            const surplusItems = sharedPool.filter((i) => i.deficit === 0);
+
+            const renderActionCard = (item) => {
+              const tierHtml = item.tiers
+                ? `<div class="pool-tier-pills">
+                    ${item.tiers
+                      .map(
+                        (t) =>
+                          `<span class="tier-pill mono ${t.netDeficit > 0 ? 'tier-deficit' : 'tier-ok'}" title="${t.craftedIn ? `+${t.craftedIn} crafted from lower tier` : ''}">${t.label}: ${t.owned.toLocaleString()}/${t.needed.toLocaleString()}</span>`
+                      )
+                      .join('')}
+                  </div>`
+                : item.expBreakdown
+                  ? `<div class="item-meta mono">Owned ${item.owned.toLocaleString()} / Need ${item.neededTotal.toLocaleString()} • 4★ ${item.expBreakdown.wits4} · 3★ ${item.expBreakdown.exp3} · 2★ ${item.expBreakdown.adv2}</div>`
+                  : `<div class="item-meta mono">Owned ${item.owned.toLocaleString()} / Need ${item.neededTotal.toLocaleString()}</div>`;
+
+              const allocTargets = item.alloc?.targets || [];
+              const t1 = allocTargets.find((t) => t.rank === 1) || allocTargets[0];
+              const t2 = allocTargets.find((t) => t.rank === 2) || (allocTargets.length > 1 ? allocTargets[1] : null);
+
+              const allocHtml = allocTargets.length
+                ? `<div class="alloc-wrap">
+                    <div class="alloc-track">
+                      ${t1 ? `<div class="alloc-seg alloc-p1" style="width:${t1.widthPct}%"></div>` : ''}
+                      ${t2 ? `<div class="alloc-seg alloc-p2" style="width:${t2.widthPct}%"></div>` : ''}
+                    </div>
+                    <div class="alloc-labels mono">
+                      ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>#${t1.rank} ${t1.name}: <strong>${t1.pct}%</strong></span>` : ''}
+                      ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>#${t2.rank} ${t2.name}: <strong>${t2.pct}%</strong></span>` : ''}
+                    </div>
+                  </div>`
+                : '';
+
+              return `
+              <div class="pool-card row-deficit ${item.isToday ? 'pool-card-today' : ''}">
+                <div class="pool-card-top">
+                  <div class="pool-item-info">
+                    ${renderAssetIcon('materials', item.key, item.name, 'icon-sm')}
+                    <div>
+                      <div class="item-name">
+                        ${item.name}
+                        ${item.isToday ? '<span class="pill pill-sky mono">TODAY</span>' : ''}
                       </div>
+                      <div class="pool-badges">
+                        <span class="badge-src mono">${item.sourceLabel}</span>
+                        ${item.scheduleDays?.length ? `<span class="badge-sched mono">${item.scheduleDays.join(' / ')}</span>` : ''}
+                        ${item.kind === 'weeklyBoss' ? `<span class="badge-solvent mono">Dream Solvent${item.dreamSolventCount ? ` (${item.dreamSolventCount})` : ''}</span>` : ''}
+                        ${item.bossUnreleased ? '<span class="pill pill-coral mono">Unreleased 7.2</span>' : ''}
+                      </div>
+                      ${tierHtml}
                     </div>
-                    <div class="pool-delta mono ${isDeficit ? 'text-coral' : 'text-mint'}">
-                      ${isDeficit ? `-${item.deficit.toLocaleString()} DEFICIT` : `+${item.surplus.toLocaleString()} SURPLUS`}
-                    </div>
-                  </div>`;
-                })
-                .join('')
-            : '<div class="empty-state">Add targets in Prefarm Planner to compute the #1/#2 shared pool.</div>'}
+                  </div>
+                  <div class="pool-cost-col mono">
+                    <div class="pool-delta text-coral">-${item.deficit.toLocaleString()} ${item.tiers ? 'NET DEFICIT' : 'DEFICIT'}</div>
+                    ${item.farmingCost ? `<div class="pool-resin-est">${item.farmingCost.text}</div>` : ''}
+                  </div>
+                </div>
+                ${allocHtml}
+              </div>`;
+            };
+
+            const actionHtml = `
+              <div class="pool-section-hdr mono">
+                <span>ACTION REQUIRED (${actionItems.length})</span>
+              </div>
+              ${
+                actionItems.length
+                  ? actionItems.map(renderActionCard).join('')
+                  : '<div class="empty-state">All #1 &amp; #2 materials are fully funded!</div>'
+              }`;
+
+            const surplusHtml = surplusItems.length
+              ? `<details class="surplus-drawer">
+                  <summary class="surplus-summary mono">
+                    <span>READY / SURPLUS (${surplusItems.length})</span>
+                    <span class="muted">Click to expand</span>
+                  </summary>
+                  <div class="surplus-mini-grid">
+                    ${surplusItems
+                      .map(
+                        (item) => `
+                      <div class="surplus-mini-card row-surplus">
+                        ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
+                        <div class="surplus-mini-body">
+                          <div class="surplus-mini-name">${item.name}</div>
+                          <span class="pill pill-mint mono">+${item.surplus.toLocaleString()}</span>
+                        </div>
+                      </div>`
+                      )
+                      .join('')}
+                  </div>
+                </details>`
+              : '';
+
+            return actionHtml + surplusHtml;
+          })()}
         </div>
       </article>
 
