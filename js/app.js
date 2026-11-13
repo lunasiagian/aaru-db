@@ -325,6 +325,15 @@ function switchToAppView() {
 function switchToLoginView() {
   document.getElementById('login-screen').hidden = false;
   document.getElementById('app-shell').hidden = true;
+  const restoreEl = document.getElementById('session-restore-screen');
+  if (restoreEl) restoreEl.hidden = true;
+}
+
+function switchToRestoringView() {
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('app-shell').hidden = true;
+  const restoreEl = document.getElementById('session-restore-screen');
+  if (restoreEl) restoreEl.hidden = false;
 }
 
 function applyAuthenticatedSession(res) {
@@ -334,6 +343,8 @@ function applyAuthenticatedSession(res) {
   state.partnerAccount = null;
 
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: state.sessionUser }));
+  const restoreEl = document.getElementById('session-restore-screen');
+  if (restoreEl) restoreEl.hidden = true;
   switchToAppView();
   showToast(`Signed in as ${res.account.displayName} (${res.mode} mode)`, 'mint');
 }
@@ -477,6 +488,17 @@ function setupGoodImportModal() {
 }
 
 async function bootstrap() {
+  let savedUser = null;
+  try {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) savedUser = JSON.parse(saved)?.user || null;
+  } catch {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+  if (savedUser) {
+    switchToRestoringView();
+  }
+
   await loadCatalog();
 
   // Bind login form & quick-login buttons
