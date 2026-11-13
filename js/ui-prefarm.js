@@ -85,9 +85,13 @@ export function renderPrefarmTab(container, state, handlers) {
             <span>WEAPON (OPTIONAL)</span>
             <select name="weaponKey" class="select-sm">
               <option value="">— None —</option>
-              ${allWeaponKeys
-                .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)
-                .join('')}
+              ${(() => {
+                const firstType = allCharKeys.length ? getCharacterMeta(allCharKeys[0]).weaponType : '';
+                return allWeaponKeys
+                  .filter((wk) => !firstType || getWeaponMeta(wk).weaponType === firstType)
+                  .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)
+                  .join('');
+              })()}
             </select>
           </label>
           <button type="submit" class="btn btn-gold">+ Add Target</button>
@@ -158,10 +162,11 @@ export function renderPrefarmTab(container, state, handlers) {
                     <input type="number" min="1" max="10" class="input-mono sm" data-pf-edit="tBurst" data-pf-id="${target.id}" value="${target.targetTalent.burst}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>WEAPON</span>
+                    <span>WEAPON (${charMeta.weaponType})</span>
                     <select class="select-sm" data-pf-edit="weaponKey" data-pf-id="${target.id}" ${disabledAttr}>
                       <option value="">— None —</option>
                       ${allWeaponKeys
+                        .filter((wk) => wk === target.weaponKey || getWeaponMeta(wk).weaponType === charMeta.weaponType)
                         .map((wk) => `<option value="${wk}" ${target.weaponKey === wk ? 'selected' : ''}>${getWeaponMeta(wk).name}</option>`)
                         .join('')}
                     </select>
@@ -206,7 +211,21 @@ export function renderPrefarmTab(container, state, handlers) {
   `;
 
   if (!isReadOnly) {
-    container.querySelector('#prefarm-add-form')?.addEventListener('submit', async (e) => {
+    const addForm = container.querySelector('#prefarm-add-form');
+    const charSel = addForm?.querySelector('select[name="characterKey"]');
+    const wepSel = addForm?.querySelector('select[name="weaponKey"]');
+    charSel?.addEventListener('change', () => {
+      if (!wepSel) return;
+      const cType = getCharacterMeta(charSel.value).weaponType;
+      const options = ['<option value="">— None —</option>'].concat(
+        allWeaponKeys
+          .filter((wk) => !cType || getWeaponMeta(wk).weaponType === cType)
+          .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)
+      );
+      wepSel.innerHTML = options.join('');
+    });
+
+    addForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const origText = submitBtn?.textContent || 'Add Target';

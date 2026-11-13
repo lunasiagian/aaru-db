@@ -1,5 +1,7 @@
 import { renderAssetIcon } from './assets.js';
 import {
+  ensureCharacterMaterials,
+  ensureWeaponMaterials,
   getCharacterMeta,
   getDomainScheduleForDay,
   getMaterialMeta,
@@ -25,6 +27,18 @@ export function renderHudTab(container, state, handlers) {
 
   const todayName = state.hudDayOverride || WEEKDAYS[new Date().getDay()];
   const domainsToday = getDomainScheduleForDay(todayName);
+
+  const queueForHydration = account.prefarmQueue || [];
+  const missingChars = queueForHydration.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
+  const missingWeps = queueForHydration.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatKey);
+  if (missingChars.length || missingWeps.length) {
+    Promise.all([
+      ...missingChars.map((t) => ensureCharacterMaterials(t.characterKey)),
+      ...missingWeps.map((t) => ensureWeaponMaterials(t.weaponKey))
+    ]).then((results) => {
+      if (results.some(Boolean)) renderHudTab(container, state, handlers);
+    });
+  }
 
   const topTwo = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank).slice(0, 2);
   const topBookBases = new Set(topTwo.map((t) => getCharacterMeta(t.characterKey).talentBook).filter(Boolean));
@@ -254,17 +268,34 @@ export function renderHudTab(container, state, handlers) {
                   }
                 }
               }
-            } else if (dom.domainType === 'Weapon' && !hasPrefarm) {
-              for (const w of weaponCandidates) {
-                const wm = getWeaponMeta(w.key);
-                if (rewardNorms.has(wm.domainMatKey)) {
-                  matches.push({
-                    kind: 'weapons',
-                    key: w.key,
-                    name: wm.name,
-                    badge: `Lv.${w.level}`,
-                    title: `${wm.name} (Lv.${w.level})`
-                  });
+            } else if (dom.domainType === 'Weapon') {
+              const prefarmWeapons = prefarmQueue.filter((t) => t.weaponKey);
+              if (prefarmWeapons.length) {
+                for (const t of prefarmWeapons) {
+                  const wm = getWeaponMeta(t.weaponKey);
+                  if (rewardNorms.has(wm.domainMatKey)) {
+                    const charName = getCharacterMeta(t.characterKey).name;
+                    matches.push({
+                      kind: 'weapons',
+                      key: t.weaponKey,
+                      name: wm.name,
+                      badge: `#${t.rank}`,
+                      title: `#${t.rank} ${wm.name} (${charName})`
+                    });
+                  }
+                }
+              } else {
+                for (const w of weaponCandidates) {
+                  const wm = getWeaponMeta(w.key);
+                  if (rewardNorms.has(wm.domainMatKey)) {
+                    matches.push({
+                      kind: 'weapons',
+                      key: w.key,
+                      name: wm.name,
+                      badge: `Lv.${w.level}`,
+                      title: `${wm.name} (Lv.${w.level})`
+                    });
+                  }
                 }
               }
             }
