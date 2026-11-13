@@ -197,14 +197,15 @@ export function renderHudTab(container, state, handlers) {
         topTwo.length
           ? `<div class="cmd-intent-row">
               ${topTwo
-                .slice(0, 2)
                 .map((t, idx) => {
                   const cm = getCharacterMeta(t.characterKey);
                   const pct = calcTargetReadinessPct(waterfallMap.get(t.id) || []);
-                  const rankCls = idx === 0 ? 'p1' : 'p2';
+                  const rankCls = t.tier === 1 ? 'p1' : 'p2';
+                  const divider = idx > 0 ? '<div class="cmd-intent-divider" aria-hidden="true"></div>' : '';
                   return `
+                  ${divider}
                   <div class="cmd-intent-pill ${rankCls}">
-                    <span class="cmd-rank-tag mono ${rankCls}">#${idx + 1}</span>
+                    <span class="cmd-rank-tag mono ${rankCls}">${t.tierLabel}</span>
                     ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-sm')}
                     <div class="cmd-intent-body">
                       <div class="cmd-intent-top">

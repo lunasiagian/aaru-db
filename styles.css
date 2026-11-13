@@ -1936,12 +1936,21 @@ textarea:focus {
 }
 
 .cmd-intent-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.cmd-intent-divider {
+  width: 1px;
+  background: var(--border-bright);
+  align-self: stretch;
+  margin: 4px 0;
 }
 
 .cmd-intent-pill {
+  flex: 1 1 250px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2184,6 +2193,9 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
+  .cmd-intent-divider {
+    display: none;
+  }
   .hud-kpi-grid,
   .vault-kpi-grid,
   .checklist-columns,
