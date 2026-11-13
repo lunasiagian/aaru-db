@@ -1,4 +1,4 @@
-import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113h';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113j';
 import { sortAndLabelPrefarmQueue } from './calculations.js?v=20261113f';
 import {
   fetchPartnerAccount,
@@ -505,6 +505,110 @@ function setupGoodImportModal() {
   });
 }
 
+function setupSystemDrawer() {
+  const backdrop = document.getElementById('system-drawer-backdrop');
+  const body = document.getElementById('system-drawer-body');
+  const openBtn = document.getElementById('btn-system-drawer');
+  const closeBtn = document.getElementById('btn-close-drawer');
+  if (!backdrop || !body || !openBtn) return;
+
+  const renderDrawer = () => {
+    const st = getCatalogStatus();
+    const sourceBadge =
+      st.source === 'live'
+        ? '<span class="pill pill-mint mono">LIVE API</span>'
+        : st.source === 'cache'
+          ? '<span class="pill pill-sky mono">CACHED LIVE</span>'
+          : st.source === 'snapshot'
+            ? '<span class="pill pill-gold mono">LOCAL SNAPSHOT</span>'
+            : '<span class="pill pill-coral mono">MINIMAL FALLBACK</span>';
+    const syncedText = st.syncedAt ? new Date(st.syncedAt).toLocaleString() : '—';
+    const cacheText = st.cacheTs ? new Date(st.cacheTs).toLocaleString() : 'Not cached';
+
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="card-eyebrow">DATA VERSION &amp; SOURCE</div>
+        <div class="drawer-stat-row">
+          <span>Active Source</span>
+          ${sourceBadge}
+        </div>
+        <div class="drawer-stat-row mono">
+          <span>API / Patch Version</span>
+          <strong class="text-gold">${st.lunarisVer}</strong>
+        </div>
+        <div class="drawer-stat-row mono">
+          <span>Indexed Assets</span>
+          <span>${st.charCount} chars · ${st.weaponCount} wpns · ${st.materialCount} mats</span>
+        </div>
+        <div class="drawer-stat-row mono">
+          <span>Last Synced</span>
+          <span>${syncedText}</span>
+        </div>
+        <div class="drawer-stat-row mono">
+          <span>Browser Cache</span>
+          <span>${cacheText}</span>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="card-eyebrow">SYNC ACTIONS</div>
+        <button type="button" id="btn-refresh-catalog" class="btn btn-gold" style="width:100%;">
+          Check for API Updates &amp; Clear Cache
+        </button>
+        <p class="muted" style="font-size:12px;margin:8px 0 0;line-height:1.45;">
+          Clears the browser catalog cache and re-fetches Project Amber &amp; Lunaris immediately. Falls back to <code>data/live-snapshot.json</code> if upstream APIs are down.
+        </p>
+      </div>
+
+      <div class="drawer-section">
+        <div class="card-eyebrow">AUTOMATED PATCH SNAPSHOTS</div>
+        <p class="muted" style="font-size:12px;margin:0 0 10px;line-height:1.45;">
+          GitHub Actions checks <code>lunaris.moe/data/version.json</code> every 12 hours and updates <code>data/live-snapshot.json</code> whenever a new patch or hotfix drops.
+        </p>
+        <a
+          class="btn btn-outline btn-sm"
+          style="display:inline-block;text-decoration:none;"
+          href="https://github.com/lunasiagian/aaru-db/actions/workflows/sync-snapshot.yml"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open GitHub Actions Sync ↗
+        </a>
+      </div>
+    `;
+
+    body.querySelector('#btn-refresh-catalog')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Refreshing Catalog...';
+      try {
+        const next = await refreshLiveCatalog();
+        renderDrawer();
+        renderActiveTab();
+        showToast(`Catalog refreshed (${next.lunarisVer} · ${next.source.toUpperCase()})`, 'mint');
+      } catch (err) {
+        showToast(err?.message || 'Failed to refresh catalog', 'coral');
+      } finally {
+        if (btn.isConnected) {
+          btn.disabled = false;
+          btn.textContent = 'Check for API Updates & Clear Cache';
+        }
+      }
+    });
+  };
+
+  openBtn.addEventListener('click', () => {
+    renderDrawer();
+    backdrop.hidden = false;
+  });
+  closeBtn?.addEventListener('click', () => {
+    backdrop.hidden = true;
+  });
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) backdrop.hidden = true;
+  });
+}
+
 async function bootstrap() {
   let savedUser = null;
   try {
@@ -573,6 +677,7 @@ async function bootstrap() {
   });
 
   setupGoodImportModal();
+  setupSystemDrawer();
 
   // Restore session from sessionStorage
   try {

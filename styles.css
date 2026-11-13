@@ -1748,6 +1748,65 @@ textarea:focus {
   text-decoration: underline;
 }
 
+.icon-menu-btn {
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px 10px;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(5, 10, 20, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer-backdrop[hidden] {
+  display: none;
+}
+
+.system-drawer {
+  width: min(380px, 92vw);
+  height: 100%;
+  border-radius: 0;
+  border-left: 1px solid var(--border-slate);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.drawer-section {
+  padding: 12px;
+  border: 1px solid var(--border-slate);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
 @media (max-width: 1100px) {
   .hud-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hud-main-grid { grid-template-columns: 1fr; }

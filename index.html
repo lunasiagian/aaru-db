@@ -10,7 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261113i" />
+  <link rel="stylesheet" href="./styles.css?v=20261113j" />
 </head>
 <body>
   <!-- Login Screen -->
@@ -73,6 +73,7 @@
           <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">Import Irminsul JSON</button>
           <button type="button" id="btn-partner-toggle" class="btn btn-outline btn-sm">View Partner (Read-Only)</button>
           <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
+          <button type="button" id="btn-system-drawer" class="btn btn-ghost btn-sm icon-menu-btn" aria-label="System & Data Menu" title="Version &amp; Data Sync">☰</button>
         </div>
       </div>
 
@@ -123,9 +124,24 @@
     </div>
   </div>
 
+  <!-- System & Data Sync Drawer -->
+  <div id="system-drawer-backdrop" class="drawer-backdrop" hidden>
+    <aside id="system-drawer" class="system-drawer card" role="dialog" aria-modal="true" aria-labelledby="system-drawer-title">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">SYSTEM / DATA &amp; VERSION TELEMETRY</div>
+          <h2 id="system-drawer-title" class="card-title">Catalog &amp; Snapshot Sync</h2>
+        </div>
+        <button type="button" id="btn-close-drawer" class="btn btn-ghost btn-xs">✕</button>
+      </div>
+
+      <div id="system-drawer-body" class="drawer-body"></div>
+    </aside>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261113h"></script>
+  <script type="module" src="./js/app.js?v=20261113j"></script>
 </body>
 </html>

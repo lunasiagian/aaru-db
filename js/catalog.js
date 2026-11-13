@@ -28,6 +28,9 @@ let yattaMaps = {
   lunarisVer: null,
   matIdLookup: {}
 };
+let catalogSource = 'fallback';
+let catalogSyncedAt = null;
+let lastCacheTs = null;
 
 export function normalizeAssetKey(str) {
   return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -53,18 +56,39 @@ function buildYattaMaps(raw) {
   yattaMaps = next;
 }
 
-async function fetchYattaCatalog() {
+async function loadSnapshotFallback() {
   try {
-    const cachedRaw = localStorage.getItem(YATTA_CACHE_KEY);
-    if (cachedRaw) {
-      const parsed = JSON.parse(cachedRaw);
-      if (parsed?.ts && Date.now() - parsed.ts < YATTA_TTL_MS && parsed.data) {
-        buildYattaMaps(parsed.data);
-        return;
-      }
-    }
+    const res = await fetch('./data/live-snapshot.json', { cache: 'no-cache' });
+    if (!res.ok) return false;
+    const snap = await res.json();
+    if (!snap || (!snap.characters && !snap.weapons)) return false;
+    buildYattaMaps(snap);
+    catalogSource = 'snapshot';
+    catalogSyncedAt = snap._syncedAt || null;
+    lastCacheTs = null;
+    return true;
   } catch {
-    // Ignore localStorage read errors
+    return false;
+  }
+}
+
+async function fetchYattaCatalog(forceRefresh = false) {
+  if (!forceRefresh) {
+    try {
+      const cachedRaw = localStorage.getItem(YATTA_CACHE_KEY);
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (parsed?.ts && Date.now() - parsed.ts < YATTA_TTL_MS && parsed.data) {
+          buildYattaMaps(parsed.data);
+          catalogSource = 'cache';
+          catalogSyncedAt = parsed.data._syncedAt || null;
+          lastCacheTs = parsed.ts;
+          return;
+        }
+      }
+    } catch {
+      // Ignore localStorage read errors
+    }
   }
 
   try {
@@ -266,20 +290,53 @@ async function fetchYattaCatalog() {
       }
     }
 
+    if (!Object.keys(slim.characters).length && !Object.keys(slim.weapons).length) {
+      const ok = await loadSnapshotFallback();
+      if (ok) return;
+    }
+
     buildYattaMaps(slim);
+    catalogSource = 'live';
+    catalogSyncedAt = new Date().toISOString();
+    lastCacheTs = Date.now();
     try {
       for (const k of Object.keys(localStorage)) {
         if (k.startsWith('aaru_yatta_catalog_') && k !== YATTA_CACHE_KEY) {
           localStorage.removeItem(k);
         }
       }
-      localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: slim }));
+      localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify({ ts: lastCacheTs, data: slim }));
     } catch {
       // Ignore quota errors
     }
   } catch (err) {
-    console.warn('Project Amber (gi.yatta.moe) asset fetch failed:', err);
+    console.warn('Project Amber (gi.yatta.moe) asset fetch failed, trying local snapshot:', err);
+    await loadSnapshotFallback();
   }
+}
+
+export function getCatalogStatus() {
+  return {
+    source: catalogSource,
+    lunarisVer: yattaMaps.lunarisVer || 'Unknown',
+    syncedAt: catalogSyncedAt,
+    cacheTs: lastCacheTs,
+    charCount: yattaMaps.characters.size,
+    weaponCount: yattaMaps.weapons.size,
+    materialCount: yattaMaps.materials.size
+  };
+}
+
+export async function refreshLiveCatalog() {
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith('aaru_yatta_catalog_')) localStorage.removeItem(k);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  await fetchYattaCatalog(true);
+  return getCatalogStatus();
 }
 
 export function getLiveAssetEntry(type, pascalKey) {
