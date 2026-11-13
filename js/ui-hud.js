@@ -12,8 +12,9 @@ import {
   calcCoinPurse,
   calcCompletionGauges,
   calcEffectiveHerosWit,
-  calculatePrioritySharedPool
-} from './calculations.js?v=20261113e';
+  calculatePrioritySharedPool,
+  sortAndLabelPrefarmQueue
+} from './calculations.js?v=20261113f';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -46,7 +47,9 @@ export function renderHudTab(container, state, handlers) {
     });
   }
 
-  const topTwo = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank).slice(0, 2);
+  const labeledQueue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
+  const activeTiers = [...new Set(labeledQueue.map((t) => t.tier))].slice(0, 2);
+  const topTwo = labeledQueue.filter((t) => activeTiers.includes(t.tier));
   const topBookBases = new Set(topTwo.map((t) => getCharacterMeta(t.characterKey).talentBook).filter(Boolean));
 
   const disabledAttr = isReadOnly ? 'disabled' : '';
@@ -146,11 +149,17 @@ export function renderHudTab(container, state, handlers) {
             <h2 class="card-title">Shared Resource Pool</h2>
           </div>
           <div class="priority-badges">
-            ${topTwo.length
-              ? topTwo
-                  .map((t) => {
-                    const m = getCharacterMeta(t.characterKey);
-                    return `<span class="pill pill-gold mono">#${t.rank} ${m.name} (Lv.${t.targetLevel})</span>`;
+            ${activeTiers.length
+              ? activeTiers
+                  .map((tierNum) => {
+                    const items = topTwo.filter((t) => t.tier === tierNum);
+                    if (items.length === 1) {
+                      const t = items[0];
+                      const m = getCharacterMeta(t.characterKey);
+                      return `<span class="pill pill-gold mono">#${tierNum} ${m.name} (Lv.${t.targetLevel})</span>`;
+                    }
+                    const names = items.map((t) => getCharacterMeta(t.characterKey).name).join(', ');
+                    return `<span class="pill pill-gold mono" title="${names.replace(/"/g, '&quot;')}">Tier #${tierNum} (${items.length}): ${names}</span>`;
                   })
                   .join('')
               : '<span class="pill">No Prefarm Targets</span>'}
@@ -190,8 +199,8 @@ export function renderHudTab(container, state, handlers) {
                       ${t2 ? `<div class="alloc-seg alloc-p2" style="width:${t2.widthPct}%"></div>` : ''}
                     </div>
                     <div class="alloc-labels mono">
-                      ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>#${t1.rank} ${t1.name}: <strong>${t1.pct}%</strong></span>` : ''}
-                      ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>#${t2.rank} ${t2.name}: <strong>${t2.pct}%</strong></span>` : ''}
+                      ${t1 ? `<span class="alloc-lbl"><i class="alloc-dot p1"></i>${t1.labelPrefix || ''}${t1.name}: <strong>${t1.pct}%</strong></span>` : ''}
+                      ${t2 ? `<span class="alloc-lbl"><i class="alloc-dot p2"></i>${t2.labelPrefix || ''}${t2.name}: <strong>${t2.pct}%</strong></span>` : ''}
                     </div>
                   </div>`
                 : '';
@@ -293,7 +302,7 @@ export function renderHudTab(container, state, handlers) {
         </div>
 
         ${(() => {
-          const prefarmQueue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+          const prefarmQueue = labeledQueue;
           const hasPrefarm = prefarmQueue.length > 0;
 
           const rosterCandidates = (account.characters || [])
@@ -335,8 +344,8 @@ export function renderHudTab(container, state, handlers) {
                       kind: 'characters',
                       key: t.characterKey,
                       name: meta.name,
-                      badge: `#${t.rank}`,
-                      title: `#${t.rank} ${meta.name} (Lv.${t.currentLevel}→${t.targetLevel})`
+                      badge: t.tierLabel,
+                      title: `${t.tierLabel} ${meta.name} (Lv.${t.currentLevel}→${t.targetLevel})`
                     });
                   }
                 }
@@ -365,8 +374,8 @@ export function renderHudTab(container, state, handlers) {
                       kind: 'weapons',
                       key: t.weaponKey,
                       name: wm.name,
-                      badge: `#${t.rank}`,
-                      title: `#${t.rank} ${wm.name} (${charName})`
+                      badge: t.tierLabel,
+                      title: `${t.tierLabel} ${wm.name} (${charName})`
                     });
                   }
                 }
@@ -488,9 +497,9 @@ export function renderHudTab(container, state, handlers) {
                             <span class="reward-chip">${renderAssetIcon('materials', cm.bossMat, bm.name, 'icon-xs')} ${bm.name}</span>
                           </div>
                           <div class="domain-needed-by">
-                            <span class="domain-target-chip" title="#${t.rank} ${cm.name}">
+                            <span class="domain-target-chip" title="${t.tierLabel} ${cm.name}">
                               ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-xs')}
-                              <span class="mono">#${t.rank}</span>
+                              <span class="mono">${t.tierLabel}</span>
                             </span>
                           </div>
                         </div>

@@ -251,12 +251,39 @@ export function calculatePrefarmRequirements(target, inventory = {}, wallet = nu
 }
 
 /**
- * Waterfall allocation across the ranked prefarmQueue (#1 -> #2 -> #3 ...).
+ * Sorts prefarmQueue by (tier, rank) and assigns sequential global rank plus
+ * per-tier subRank (e.g. #1.1, #1.2, #2.1). Legacy items without `tier`
+ * default to `tier = rank`.
+ */
+export function sortAndLabelPrefarmQueue(prefarmQueue = []) {
+  const sorted = [...prefarmQueue].sort((a, b) => {
+    const aTier = Math.max(1, Number(a.tier) || Number(a.rank) || 1);
+    const bTier = Math.max(1, Number(b.tier) || Number(b.rank) || 1);
+    if (aTier !== bTier) return aTier - bTier;
+    return (Number(a.rank) || 0) - (Number(b.rank) || 0);
+  });
+  const tierCounts = new Map();
+  return sorted.map((t, idx) => {
+    const tier = Math.max(1, Number(t.tier) || Number(t.rank) || 1);
+    const subRank = (tierCounts.get(tier) || 0) + 1;
+    tierCounts.set(tier, subRank);
+    return {
+      ...t,
+      tier,
+      subRank,
+      rank: idx + 1,
+      tierLabel: `#${tier}.${subRank}`
+    };
+  });
+}
+
+/**
+ * Waterfall allocation across the ranked prefarmQueue (#1.1 -> #1.2 -> #2.1 ...).
  * Higher-priority targets consume shared resources (Mora, Hero's Wit, Crowns, Books, Weapon mats)
  * first, and only the remaining surplus flows down to lower-priority targets.
  */
 export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wallet = null) {
-  const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank);
+  const sorted = sortAndLabelPrefarmQueue(prefarmQueue);
   const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
   const pool = new Map();
 
@@ -336,7 +363,9 @@ function normalizeAssetKeySimple(str) {
  * alchemy crafting, EXP pool, WL9 resin/run estimates, and #1/#2 allocation).
  */
 export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, wallet = null, todayName = null) {
-  const sorted = [...prefarmQueue].sort((a, b) => a.rank - b.rank).slice(0, 2);
+  const labeled = sortAndLabelPrefarmQueue(prefarmQueue);
+  const activeTiers = [...new Set(labeled.map((t) => t.tier))].slice(0, 2);
+  const sorted = labeled.filter((t) => activeTiers.includes(t.tier));
   if (!sorted.length) return [];
 
   const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
@@ -417,18 +446,29 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     const fundedTotal = Math.max(0, totalNeedEquiv - netDeficitEquiv);
     let remaining = fundedTotal;
     const targets = [];
-    for (const { target, charMeta } of targetReqs) {
-      const n = needByRankEquiv.get(target.rank) || 0;
-      if (n <= 0) continue;
-      const funded = Math.min(n, remaining);
+    for (const tierNum of activeTiers) {
+      const tierItems = targetReqs.filter((x) => x.target.tier === tierNum);
+      let tierNeed = 0;
+      const tierNames = [];
+      for (const { target, charMeta } of tierItems) {
+        const n = needByRankEquiv.get(target.rank) || 0;
+        if (n > 0) {
+          tierNeed += n;
+          tierNames.push(charMeta.name || target.characterKey);
+        }
+      }
+      if (tierNeed <= 0) continue;
+      const funded = Math.min(tierNeed, remaining);
       remaining = Math.max(0, remaining - funded);
       targets.push({
-        rank: target.rank,
-        key: target.characterKey,
-        name: charMeta.name || target.characterKey,
-        needed: n,
+        rank: targets.length + 1,
+        tier: tierNum,
+        count: tierNames.length,
+        name: tierNames.length === 1 ? tierNames[0] : `Tier #${tierNum} (${tierNames.length})`,
+        labelPrefix: tierNames.length === 1 ? `#${tierNum} ` : '',
+        needed: tierNeed,
         funded,
-        pct: Math.round((funded / n) * 100),
+        pct: Math.round((funded / tierNeed) * 100),
         widthPct: totalNeedEquiv > 0 ? Number(((funded / totalNeedEquiv) * 100).toFixed(2)) : 0
       });
     }

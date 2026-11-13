@@ -8,13 +8,13 @@ import {
   getMaterialMeta,
   getWeaponMeta
 } from './catalog.js?v=20261113d';
-import { calculateWaterfallPrefarm } from './calculations.js?v=20261113e';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113f';
 
 export function renderPrefarmTab(container, state, handlers) {
   const { account, isReadOnly } = state;
   const allCharKeys = getAllCharacterKeys();
   const allWeaponKeys = getAllWeaponKeys();
-  const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+  const queue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
 
   // Hydrate unreleased Lunaris character & weapon materials on demand and re-render if updated
   const missingChars = queue.filter((t) => {
@@ -47,7 +47,7 @@ export function renderPrefarmTab(container, state, handlers) {
         <h1 class="section-title">Ascension &amp; Talent Deficit Calculator</h1>
       </div>
       <div class="header-meta mono">
-        TARGETS: <span class="text-gold">${queue.length}</span> • #1 &amp; #2 FEED CENTRAL HUD POOL
+        TARGETS: <span class="text-gold">${queue.length}</span> • TIER #1 &amp; #2 FEED CENTRAL HUD POOL
       </div>
     </div>
 
@@ -102,6 +102,16 @@ export function renderPrefarmTab(container, state, handlers) {
               })()}
             </select>
           </label>
+          <label class="mini-field">
+            <span>TIER</span>
+            <select name="tier" class="select-sm mono">
+              <option value="1" selected>#1</option>
+              <option value="2">#2</option>
+              <option value="3">#3</option>
+              <option value="4">#4</option>
+              <option value="5">#5</option>
+            </select>
+          </label>
           <button type="submit" class="btn btn-gold">+ Add Target</button>
         </form>
       </article>`
@@ -122,7 +132,7 @@ export function renderPrefarmTab(container, state, handlers) {
               <article class="card prefarm-card">
                 <div class="prefarm-head">
                   <div class="prefarm-char">
-                    <span class="rank-badge mono ${target.rank <= 2 ? 'rank-top' : ''}">#${target.rank}</span>
+                    <span class="rank-badge mono ${target.tier <= 2 ? 'rank-top' : ''}">${target.tierLabel}</span>
                     ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-md')}
                     <div>
                       <div class="item-name">${charMeta.name} <span class="pill">${charMeta.element}</span></div>
@@ -150,8 +160,8 @@ export function renderPrefarmTab(container, state, handlers) {
                     ${
                       !isReadOnly
                         ? `
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 ? 'disabled' : ''}>▲</button>
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 ? 'disabled' : ''}>▼</button>
+                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>▲</button>
+                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>▼</button>
                       <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id ?? ''}" data-pf-rank="${target.rank ?? idx + 1}">Remove</button>`
                         : ''
                     }
@@ -159,6 +169,12 @@ export function renderPrefarmTab(container, state, handlers) {
                 </div>
 
                 <div class="prefarm-targets-edit">
+                  <label class="mini-field">
+                    <span>TIER</span>
+                    <select class="select-sm mono" data-pf-edit="tier" data-pf-id="${target.id}" ${disabledAttr}>
+                      ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${target.tier === n ? 'selected' : ''}>#${n}</option>`).join('')}
+                    </select>
+                  </label>
                   <label class="mini-field">
                     <span>CUR LVL</span>
                     <input type="number" min="1" max="95" class="input-mono sm" data-pf-edit="currentLevel" data-pf-id="${target.id}" value="${target.currentLevel}" ${disabledAttr} />
@@ -258,6 +274,7 @@ export function renderPrefarmTab(container, state, handlers) {
         const existingChar = (account.characters || []).find((c) => c.key === characterKey);
         await handlers.onAddPrefarmTarget({
           characterKey,
+          tier: Number(fd.get('tier')) || 1,
           currentLevel: existingChar?.level || 1,
           targetLevel: Number(fd.get('targetLevel')) || 90,
           currentTalent: existingChar?.talent || { auto: 1, skill: 1, burst: 1 },

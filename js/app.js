@@ -1,4 +1,5 @@
 import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113d';
+import { sortAndLabelPrefarmQueue } from './calculations.js?v=20261113f';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -13,9 +14,9 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113e';
+import { renderHudTab } from './ui-hud.js?v=20261113f';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261113d';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261113f';
 import { renderRosterTab } from './ui-roster.js';
 import { renderTeamsTab } from './ui-teams.js';
 
@@ -172,36 +173,43 @@ function renderActiveTab(options = {}) {
           showToast(`You've already added ${charName} to the Prefarm Queue.`, 'coral');
           return;
         }
-        const nextRank = queue.length + 1;
         const uid = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        const nextQueue = [...queue, { id: uid, rank: nextRank, ...target }];
+        const tier = Math.max(1, Number(target.tier) || 1);
+        const nextQueue = sortAndLabelPrefarmQueue([
+          ...queue,
+          { id: uid, rank: queue.length + 1, ...target, tier }
+        ]);
         state.ownAccount.prefarmQueue = nextQueue;
         await saveAccountSection(state.sessionUser, 'prefarmQueue', nextQueue);
         renderActiveTab();
-        showToast(`Added ${charName} to Prefarm Queue`, 'mint');
+        showToast(`Added ${charName} to Tier #${tier}`, 'mint');
       },
       onMovePrefarmTarget: async (id, dir) => {
-        const queue = [...(state.ownAccount.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
+        const queue = sortAndLabelPrefarmQueue(state.ownAccount.prefarmQueue || []);
         const idx = queue.findIndex((t) => String(t.id) === String(id));
         if (idx === -1) return;
         const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
         if (swapIdx < 0 || swapIdx >= queue.length) return;
+        if (queue[idx].tier !== queue[swapIdx].tier) return;
         [queue[idx], queue[swapIdx]] = [queue[swapIdx], queue[idx]];
         queue.forEach((t, i) => (t.rank = i + 1));
-        state.ownAccount.prefarmQueue = queue;
+        const normalized = sortAndLabelPrefarmQueue(queue);
+        state.ownAccount.prefarmQueue = normalized;
         renderActiveTab();
-        await saveAccountSection(state.sessionUser, 'prefarmQueue', queue);
+        await saveAccountSection(state.sessionUser, 'prefarmQueue', normalized);
       },
       onRemovePrefarmTarget: async (id, fallbackRank) => {
-        const prev = [...(state.ownAccount.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
-        const queue = prev
-          .filter((t, i) => {
-            if (t.id !== undefined && t.id !== null && String(t.id) !== '') {
-              return String(t.id) !== String(id);
-            }
-            return Number(t.rank ?? i + 1) !== Number(fallbackRank);
-          })
-          .map((t, i) => ({ ...t, id: t.id || `pf-${Date.now()}-${i}`, rank: i + 1 }));
+        const prev = sortAndLabelPrefarmQueue(state.ownAccount.prefarmQueue || []);
+        const queue = sortAndLabelPrefarmQueue(
+          prev
+            .filter((t, i) => {
+              if (t.id !== undefined && t.id !== null && String(t.id) !== '') {
+                return String(t.id) !== String(id);
+              }
+              return Number(t.rank ?? i + 1) !== Number(fallbackRank);
+            })
+            .map((t, i) => ({ ...t, id: t.id || `pf-${Date.now()}-${i}` }))
+        );
         state.ownAccount.prefarmQueue = queue;
         renderActiveTab();
         showToast('Removed target from Prefarm Queue', 'mint');
@@ -214,7 +222,8 @@ function renderActiveTab(options = {}) {
       onEditPrefarmTarget: async (id, field, val) => {
         const target = (state.ownAccount.prefarmQueue || []).find((t) => String(t.id) === String(id));
         if (!target) return;
-        if (field === 'currentLevel') target.currentLevel = Math.min(95, Math.max(1, val));
+        if (field === 'tier') target.tier = Math.min(10, Math.max(1, val));
+        else if (field === 'currentLevel') target.currentLevel = Math.min(95, Math.max(1, val));
         else if (field === 'targetLevel') target.targetLevel = Math.min(95, Math.max(1, val));
         else if (field === 'tAuto') target.targetTalent.auto = Math.min(10, Math.max(1, val));
         else if (field === 'tSkill') target.targetTalent.skill = Math.min(10, Math.max(1, val));
@@ -227,8 +236,9 @@ function renderActiveTab(options = {}) {
           }
         } else if (field === 'weaponCurrentLevel') target.weaponCurrentLevel = Math.min(90, Math.max(1, val));
         else if (field === 'weaponTargetLevel') target.weaponTargetLevel = Math.min(90, Math.max(1, val));
-        await saveAccountSection(state.sessionUser, 'prefarmQueue', state.ownAccount.prefarmQueue);
+        state.ownAccount.prefarmQueue = sortAndLabelPrefarmQueue(state.ownAccount.prefarmQueue || []);
         renderActiveTab();
+        await saveAccountSection(state.sessionUser, 'prefarmQueue', state.ownAccount.prefarmQueue);
       }
     });
   } else if (state.activeTab === 'roster') {
