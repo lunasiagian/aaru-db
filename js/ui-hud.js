@@ -20,7 +20,15 @@ import {
 } from './calculations.js?v=20261113k';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const SHORT_DAY = { Sunday: 'Sun', Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat' };
+const PIP_DAYS = [
+  { day: 'Monday', letter: 'M' },
+  { day: 'Tuesday', letter: 'T' },
+  { day: 'Wednesday', letter: 'W' },
+  { day: 'Thursday', letter: 'T' },
+  { day: 'Friday', letter: 'F' },
+  { day: 'Saturday', letter: 'S' },
+  { day: 'Sunday', letter: 'S' }
+];
 
 function formatCompactSurplus(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
@@ -28,16 +36,18 @@ function formatCompactSurplus(n) {
   return n.toLocaleString();
 }
 
-function getSourcePillHtml(item) {
+function getSourceBadgeHtml(item, todayName) {
   if (item.bossUnreleased) {
     return '<span class="pill pill-coral mono">Unreleased 7.2</span>';
   }
-  if (item.isToday) {
-    return '<span class="pill pill-sky mono">TODAY · Domain</span>';
-  }
   if (item.scheduleDays?.length) {
-    const shortDays = item.scheduleDays.map((d) => SHORT_DAY[d] || d.slice(0, 3)).join('/');
-    return `<span class="pill mono">${shortDays}</span>`;
+    const farmSet = new Set(item.scheduleDays);
+    return `<div class="cmd-day-pips" title="Domain days: ${item.scheduleDays.join(', ')}">
+      ${PIP_DAYS.map(
+        ({ day, letter }) =>
+          `<span class="cmd-day-pip mono ${farmSet.has(day) ? 'is-farmable' : ''} ${day === todayName ? 'is-today' : ''}">${letter}</span>`
+      ).join('')}
+    </div>`;
   }
   return `<span class="pill mono">${item.sourceLabel}</span>`;
 }
@@ -238,34 +248,37 @@ export function renderHudTab(container, state, handlers) {
           let tierTilesHtml = '';
           if (item.tiers) {
             tierTilesHtml = `
-              <div class="cmd-tier-tiles">
+              <div class="cmd-item-tiles">
                 ${item.tiers
                   .map((t) => {
                     const rNum = t.label === 'T2' ? 2 : t.label === 'T3' ? 3 : t.label === 'T4' ? 4 : 5;
                     const isOk = t.netDeficit === 0;
+                    const matName = getMaterialMeta(t.key).name;
                     return `
-                    <div class="cmd-mini-tile rarity-tile-${rNum} ${isOk ? 'is-ok' : 'is-def'}" title="${t.craftedIn ? `+${t.craftedIn} crafted 3:1` : t.label}">
-                      <span class="cmd-tile-tier mono">${t.label}</span>
-                      <span class="cmd-tile-val mono">${t.owned}/${t.needed}</span>
+                    <div class="cmd-item-tile rarity-bg-${rNum} ${isOk ? 'is-complete' : 'is-deficit'}" title="${matName}: ${t.owned}/${t.needed}${t.craftedIn ? ` (+${t.craftedIn} crafted 3:1)` : ''}">
+                      ${renderAssetIcon('materials', t.key, matName, 'icon-tile-img')}
+                      <span class="cmd-tile-overlay mono">${t.owned}/${t.needed}</span>
                     </div>`;
                   })
                   .join('')}
               </div>`;
           } else if (item.expBreakdown) {
+            const expTiles = [
+              { key: 'WanderersAdvice', name: "Wanderer's Advice", r: 2, val: `${item.expBreakdown.adv2}`, complete: false },
+              { key: 'AdventurersExperience', name: "Adventurer's Experience", r: 3, val: `${item.expBreakdown.exp3}`, complete: false },
+              { key: 'HerosWit', name: "Hero's Wit", r: 4, val: `${item.owned}/${item.neededTotal}`, complete: item.deficit === 0 }
+            ];
             tierTilesHtml = `
-              <div class="cmd-tier-tiles">
-                <div class="cmd-mini-tile rarity-tile-2" title="Wanderer's Advice (1,000 EXP)">
-                  <span class="cmd-tile-tier mono">1k</span>
-                  <span class="cmd-tile-val mono">${item.expBreakdown.adv2}</span>
-                </div>
-                <div class="cmd-mini-tile rarity-tile-3" title="Adventurer's Experience (5,000 EXP)">
-                  <span class="cmd-tile-tier mono">5k</span>
-                  <span class="cmd-tile-val mono">${item.expBreakdown.exp3}</span>
-                </div>
-                <div class="cmd-mini-tile rarity-tile-4" title="Hero's Wit (20,000 EXP) · Effective: ${item.owned}/${item.neededTotal}">
-                  <span class="cmd-tile-tier mono">20k</span>
-                  <span class="cmd-tile-val mono">${item.expBreakdown.wits4}</span>
-                </div>
+              <div class="cmd-item-tiles">
+                ${expTiles
+                  .map(
+                    (et) => `
+                  <div class="cmd-item-tile rarity-bg-${et.r} ${et.complete ? 'is-complete' : ''}" title="${et.name}">
+                    ${renderAssetIcon('materials', et.key, et.name, 'icon-tile-img')}
+                    <span class="cmd-tile-overlay mono">${et.val}</span>
+                  </div>`
+                  )
+                  .join('')}
               </div>`;
           }
 
@@ -286,7 +299,7 @@ export function renderHudTab(container, state, handlers) {
             : '';
 
           return `
-          <div class="cmd-card ${item.isToday ? 'is-today' : ''}">
+          <div class="cmd-card">
             <div class="cmd-card-head">
               <div class="cmd-icon-frame rarity-frame-${rarity}">
                 ${renderAssetIcon('materials', item.key, item.name, 'icon-48')}
@@ -294,7 +307,7 @@ export function renderHudTab(container, state, handlers) {
               <div class="cmd-card-title-wrap">
                 <div class="cmd-card-name">${item.name}</div>
                 <div class="cmd-card-badges">
-                  ${getSourcePillHtml(item)}
+                  ${getSourceBadgeHtml(item, todayName)}
                   ${item.kind === 'weeklyBoss' && item.dreamSolventCount ? `<span class="badge-solvent mono">Solvent ${item.dreamSolventCount}</span>` : ''}
                 </div>
               </div>

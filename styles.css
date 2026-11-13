@@ -2033,12 +2033,7 @@ textarea:focus {
   padding: 14px 16px;
   border-radius: 10px;
   background: rgba(13, 22, 34, 0.82);
-  border: 1px solid var(--border-slate);
-}
-
-.cmd-card.is-today {
-  border-color: rgba(56, 189, 248, 0.55);
-  box-shadow: inset 0 2px 0 rgba(56, 189, 248, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .cmd-card-head {
@@ -2086,37 +2081,108 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
-.cmd-tier-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.cmd-mini-tile {
-  display: flex;
-  flex-direction: column;
+/* 7-Day Pip Schedule */
+.cmd-day-pips {
+  display: inline-flex;
   align-items: center;
-  padding: 5px 6px;
-  border-radius: 6px;
-  background: rgba(15, 26, 38, 0.85);
-  border: 1px solid var(--border-slate);
+  gap: 4px;
 }
 
-.cmd-mini-tile.rarity-tile-2 { border-top: 2px solid #52b788; }
-.cmd-mini-tile.rarity-tile-3 { border-top: 2px solid #4ea8de; }
-.cmd-mini-tile.rarity-tile-4 { border-top: 2px solid #9b72cf; }
-.cmd-mini-tile.rarity-tile-5 { border-top: 2px solid #d9a05b; }
-.cmd-mini-tile.is-ok { background: rgba(82, 183, 136, 0.12); }
-.cmd-mini-tile.is-def { background: rgba(232, 111, 92, 0.1); }
-
-.cmd-tile-tier {
+.cmd-day-pip {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 10.5px;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: rgba(139, 162, 186, 0.45);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.cmd-tile-val {
-  font-size: 12px;
+.cmd-day-pip.is-farmable {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.cmd-day-pip.is-today {
+  box-shadow: 0 0 0 1.5px var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.cmd-day-pip.is-farmable.is-today {
+  background: rgba(245, 196, 81, 0.22);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+/* In-Game Rarity Icon Tiles */
+.cmd-item-tiles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmd-item-tile {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  transition: opacity 0.15s ease;
+}
+
+.cmd-item-tile.is-complete {
+  opacity: 0.5;
+}
+
+.cmd-item-tile.rarity-bg-2 {
+  background: linear-gradient(180deg, rgba(82, 183, 136, 0.28), rgba(14, 24, 34, 0.92));
+  border-color: rgba(82, 183, 136, 0.55);
+}
+
+.cmd-item-tile.rarity-bg-3 {
+  background: linear-gradient(180deg, rgba(78, 168, 222, 0.28), rgba(14, 24, 34, 0.92));
+  border-color: rgba(78, 168, 222, 0.55);
+}
+
+.cmd-item-tile.rarity-bg-4 {
+  background: linear-gradient(180deg, rgba(155, 114, 207, 0.3), rgba(14, 24, 34, 0.92));
+  border-color: rgba(155, 114, 207, 0.6);
+}
+
+.cmd-item-tile.rarity-bg-5 {
+  background: linear-gradient(180deg, rgba(217, 160, 91, 0.32), rgba(14, 24, 34, 0.92));
+  border-color: rgba(217, 160, 91, 0.65);
+}
+
+.cmd-item-tile .icon-tile-img {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  margin-bottom: 8px;
+}
+
+.cmd-tile-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px 3px;
+  background: rgba(7, 12, 20, 0.86);
+  color: var(--text-primary);
+  font-size: 10.5px;
   font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
 }
 
 .cmd-alloc .alloc-track {
