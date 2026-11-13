@@ -5,6 +5,7 @@ import {
   getAllCharacterKeys,
   getAllWeaponKeys,
   getCharacterMeta,
+  getMaterialMeta,
   getWeaponMeta
 } from './catalog.js';
 import { calculateWaterfallPrefarm } from './calculations.js';
@@ -16,7 +17,10 @@ export function renderPrefarmTab(container, state, handlers) {
   const queue = [...(account.prefarmQueue || [])].sort((a, b) => a.rank - b.rank);
 
   // Hydrate unreleased Lunaris character & weapon materials on demand and re-render if updated
-  const missingChars = queue.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
+  const missingChars = queue.filter((t) => {
+    const cm = getCharacterMeta(t.characterKey);
+    return !cm.talentBook || !cm.bossMat;
+  });
   const missingWeps = queue.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatExactKey);
   if (missingChars.length || missingWeps.length) {
     Promise.all([
@@ -106,6 +110,7 @@ export function renderPrefarmTab(container, state, handlers) {
             .map((target, idx) => {
               const charMeta = getCharacterMeta(target.characterKey);
               const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
+              const bossMeta = charMeta.bossMat ? getMaterialMeta(charMeta.bossMat) : null;
               const reqRows = waterfallMap.get(target.id) || [];
               const deficitCount = reqRows.filter((r) => r.deficit > 0).length;
 
@@ -122,6 +127,15 @@ export function renderPrefarmTab(container, state, handlers) {
                         Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} →
                         ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` • ${weaponMeta.name} (${target.weaponCurrentLevel || 1}→${target.weaponTargetLevel || 90})` : ''}
                       </div>
+                      ${
+                        bossMeta?.bossName
+                          ? `<div class="item-meta mono" style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
+                              ${bossMeta.bossIcon ? `<img src="${bossMeta.bossIcon}" alt="${bossMeta.bossName}" referrerpolicy="no-referrer" style="width:20px;height:20px;border-radius:4px;object-fit:cover;" />` : ''}
+                              <span>Ascension Boss: ${bossMeta.bossName}</span>
+                              ${bossMeta.bossUnreleased ? '<span class="pill pill-coral mono">Overworld Boss Unreleased as of 7.2</span>' : ''}
+                            </div>`
+                          : ''
+                      }
                     </div>
                   </div>
 

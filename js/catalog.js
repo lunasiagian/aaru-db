@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v7';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v8';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -68,11 +68,12 @@ async function fetchYattaCatalog() {
   }
 
   try {
-    const [avatarRes, weaponRes, materialRes, upgradeRes, lunarisVerRes] = await Promise.allSettled([
+    const [avatarRes, weaponRes, materialRes, upgradeRes, monsterRes, lunarisVerRes] = await Promise.allSettled([
       fetch('https://gi.yatta.moe/api/v2/en/avatar').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/weapon').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/material').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/upgrade').then((r) => (r.ok ? r.json() : null)),
+      fetch('https://gi.yatta.moe/api/v2/en/monster').then((r) => (r.ok ? r.json() : null)),
       fetch('https://api.lunaris.moe/data/version.json').then((r) => (r.ok ? r.json() : null))
     ]);
 
@@ -157,7 +158,7 @@ async function fetchYattaCatalog() {
     if (weaponRes.status === 'fulfilled' && weaponRes.value?.data?.items) {
       for (const item of Object.values(weaponRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
-        if (!norm || !item.icon) continue;
+        if (!norm || !item.icon || item.isWeaponSkin) continue;
         const upg = weaponUpgradeByNorm.get(norm);
         const pascalKey = String(item.name || '').replace(/[^a-zA-Z0-9]/g, '');
         slim.weapons[norm] = {
@@ -175,11 +176,19 @@ async function fetchYattaCatalog() {
     const lunarisVer = lunarisVerRes.status === 'fulfilled' ? lunarisVerRes.value?.version : null;
     if (lunarisVer) {
       try {
-        const [lCharRes, lWepRes, lMatRes] = await Promise.allSettled([
+        const [lCharRes, lWepRes, lMatRes, lMonRes] = await Promise.allSettled([
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/charlist.json`).then((r) => (r.ok ? r.json() : null)),
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/weaponlist.json`).then((r) => (r.ok ? r.json() : null)),
-          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/materiallist.json`).then((r) => (r.ok ? r.json() : null))
+          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/materiallist.json`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/monsterlist.json`).then((r) => (r.ok ? r.json() : null))
         ]);
+
+        const yattaMonsterIds = new Set(
+          monsterRes.status === 'fulfilled' && monsterRes.value?.data?.items
+            ? Object.keys(monsterRes.value.data.items)
+            : []
+        );
+        const lunarisMonsters = lMonRes.status === 'fulfilled' && lMonRes.value ? lMonRes.value : {};
 
         const matIdLookup = {};
         for (const [id, m] of matNormById.entries()) {
@@ -196,8 +205,19 @@ async function fetchYattaCatalog() {
                 name,
                 rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : item.qualityType === 'QUALITY_PURPLE' ? 4 : 3,
                 category: item.type || 'Material',
-                icon: `${YATTA_UI_BASE}${item.icon}.png`
+                icon: `https://api.lunaris.moe/data/assets/items/${item.icon}.webp`
               };
+            }
+            if (/^113\d+$/.test(String(id)) && Array.isArray(item.sourceMonsters) && slim.materials[norm]) {
+              const monId = String(item.sourceMonsters?.[0]?.[0] || '');
+              const mon = monId ? lunarisMonsters[monId] : null;
+              if (mon?.enName) {
+                slim.materials[norm].bossName = mon.enName;
+                slim.materials[norm].bossIcon = mon.icon
+                  ? `https://api.lunaris.moe/data/assets/monstericon/${mon.icon}.webp`
+                  : '';
+                slim.materials[norm].bossUnreleased = yattaMonsterIds.size > 0 && !yattaMonsterIds.has(monId);
+              }
             }
           }
         }
@@ -348,9 +368,12 @@ export function getWeaponMeta(key) {
 
 export function getMaterialMeta(key) {
   const catalog = getCatalog();
+  const base = catalog?.materials?.[key];
   const live = getLiveAssetEntry('materials', key);
+  if (base) {
+    return live ? { ...live, ...base, icon: base.icon || live.icon } : base;
+  }
   return (
-    catalog?.materials?.[key] ||
     (live ? { key, daysOfWeek: [], ...live } : null) || {
       key,
       name: splitPascalCase(key),
@@ -386,7 +409,7 @@ const pendingDetailFetches = new Map();
 export async function ensureCharacterMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.characters.get(norm);
-  if (!entry || entry.talentBook || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || (entry.talentBook && entry.bossMat) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingDetailFetches.has(norm)) return pendingDetailFetches.get(norm);
 
   const task = (async () => {

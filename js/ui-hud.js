@@ -29,7 +29,10 @@ export function renderHudTab(container, state, handlers) {
   const domainsToday = getDomainScheduleForDay(todayName);
 
   const queueForHydration = account.prefarmQueue || [];
-  const missingChars = queueForHydration.filter((t) => !getCharacterMeta(t.characterKey).talentBook);
+  const missingChars = queueForHydration.filter((t) => {
+    const cm = getCharacterMeta(t.characterKey);
+    return !cm.talentBook || !cm.bossMat;
+  });
   const missingWeps = queueForHydration.filter((t) => t.weaponKey && !getWeaponMeta(t.weaponKey).domainMatKey);
   if (missingChars.length || missingWeps.length) {
     Promise.all([
@@ -369,7 +372,53 @@ export function renderHudTab(container, state, handlers) {
           const boxes = [];
           if (talentDomains.length || showAll) boxes.push(renderGroup('TALENT DOMAINS', talentDomains));
           if (weaponDomains.length || showAll) boxes.push(renderGroup('WEAPON DOMAINS', weaponDomains));
-          return `<div class="domain-split">${boxes.join('')}</div>`;
+
+          const bossRows = prefarmQueue
+            .map((t) => {
+              const cm = getCharacterMeta(t.characterKey);
+              const bm = cm.bossMat ? getMaterialMeta(cm.bossMat) : null;
+              return bm?.bossName ? { t, cm, bm } : null;
+            })
+            .filter(Boolean);
+
+          const bossHtml = bossRows.length
+            ? `<div class="domain-group" style="margin-top:12px;">
+                <div class="card-eyebrow">ASCENSION BOSSES (PREFARM) (${bossRows.length})</div>
+                <div class="domain-list">
+                  ${bossRows
+                    .map(
+                      ({ t, cm, bm }) => `
+                      <div class="domain-card ${bm.bossUnreleased ? '' : 'domain-highlight'}">
+                        <div class="domain-top">
+                          <span class="domain-name" style="display:flex;align-items:center;gap:8px;">
+                            ${bm.bossIcon ? `<img src="${bm.bossIcon}" alt="${bm.bossName}" referrerpolicy="no-referrer" style="width:22px;height:22px;border-radius:4px;object-fit:cover;" />` : ''}
+                            ${bm.bossName}
+                          </span>
+                          ${
+                            bm.bossUnreleased
+                              ? '<span class="pill pill-coral mono">Overworld Boss Unreleased as of 7.2</span>'
+                              : '<span class="pill pill-gold mono">Overworld Boss</span>'
+                          }
+                        </div>
+                        <div class="domain-rewards-row">
+                          <div class="domain-rewards">
+                            <span class="reward-chip">${renderAssetIcon('materials', cm.bossMat, bm.name, 'icon-xs')} ${bm.name}</span>
+                          </div>
+                          <div class="domain-needed-by">
+                            <span class="domain-target-chip" title="#${t.rank} ${cm.name}">
+                              ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-xs')}
+                              <span class="mono">#${t.rank}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>`
+                    )
+                    .join('')}
+                </div>
+              </div>`
+            : '';
+
+          return `<div class="domain-split">${boxes.join('')}</div>${bossHtml}`;
         })()}
       </article>
     </div>

@@ -952,7 +952,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "TriumphOfThePaleStarArmy", "name": "Pale Star Army" }] }
     ],
     "Tuesday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfResistance", "name": "Resistance" }] },
@@ -970,7 +970,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "RevelryOfTheCellaredSpiritualNectar", "name": "Spiritual Nectar" }] }
     ],
     "Wednesday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfBallad", "name": "Ballad" }] },
@@ -988,7 +988,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "TheFrostEmperorsFarewell", "name": "Frost Emperor" }] }
     ],
     "Thursday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFreedom", "name": "Freedom" }] },
@@ -1006,7 +1006,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "TriumphOfThePaleStarArmy", "name": "Pale Star Army" }] }
     ],
     "Friday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfResistance", "name": "Resistance" }] },
@@ -1024,7 +1024,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "RevelryOfTheCellaredSpiritualNectar", "name": "Spiritual Nectar" }] }
     ],
     "Saturday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfBallad", "name": "Ballad" }] },
@@ -1042,7 +1042,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "TheFrostEmperorsFarewell", "name": "Frost Emperor" }] }
     ],
     "Sunday": [
       { "name": "Forsaken Rift", "region": "Mondstadt", "domainType": "Talent", "rewards": [{ "key": "PhilosophiesOfFreedom", "name": "Freedom" }, { "key": "PhilosophiesOfResistance", "name": "Resistance" }, { "key": "PhilosophiesOfBallad", "name": "Ballad" }] },
@@ -1060,7 +1060,7 @@
       { "name": "Echoes of the Deep Tides", "region": "Fontaine", "domainType": "Weapon", "rewards": [{ "key": "EchoOfAnAncientChord", "name": "Ancient Chord" }, { "key": "EssenceOfPureSacredDewdrop", "name": "Pure Sacred Dewdrop" }, { "key": "GoldenGobletOfThePristineSea", "name": "Pristine Sea" }] },
       { "name": "Ancient Watchtower", "region": "Natlan", "domainType": "Weapon", "rewards": [{ "key": "BlazingSacrificialHeartsSplendor", "name": "Blazing Sacrificial Heart" }, { "key": "DeliriousDivinityOfTheSacredLord", "name": "Delirious Decadence" }, { "key": "NightWindsMysticRevelation", "name": "Night-Wind's Mystic" }] },
       { "name": "Lost Mooncourt", "region": "Nod-Krai", "domainType": "Weapon", "rewards": [{ "key": "ArtfulDeviceWish", "name": "Artful Device" }, { "key": "AfterglowOfLongNightFlint", "name": "Long Night Flint" }, { "key": "OblationOfTheFarNorthScions", "name": "Far-North Scions" }] },
-      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "UnblemishedLunarIron", "name": "Lunar Iron" }] }
+      { "name": "Frozen Citadel", "region": "Snezhnaya", "domainType": "Weapon", "rewards": [{ "key": "TriumphOfThePaleStarArmy", "name": "Pale Star Army" }, { "key": "RevelryOfTheCellaredSpiritualNectar", "name": "Spiritual Nectar" }, { "key": "TheFrostEmperorsFarewell", "name": "Frost Emperor" }] }
     ]
   },
   "costCurves": {
