@@ -1,4 +1,4 @@
-import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113b';
+import { getCharacterMeta, loadCatalog } from './catalog.js?v=20261113c';
 import {
   fetchPartnerAccount,
   isOfflineMode,

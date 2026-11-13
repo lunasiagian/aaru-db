@@ -265,6 +265,11 @@ async function fetchYattaCatalog() {
 
     buildYattaMaps(slim);
     try {
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith('aaru_yatta_catalog_') && k !== YATTA_CACHE_KEY) {
+          localStorage.removeItem(k);
+        }
+      }
       localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: slim }));
     } catch {
       // Ignore quota errors
