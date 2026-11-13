@@ -1,4 +1,4 @@
-import { getCatalog } from './catalog.js';
+import { getCatalog, getLiveAssetEntry } from './catalog.js';
 
 /**
  * Hybrid Icon Resolver
@@ -20,9 +20,12 @@ export function getAssetUrl(type, pascalKey) {
  */
 export function getFallbackAssetUrl(type, pascalKey) {
   const catalog = getCatalog();
-  if (!catalog || !pascalKey) return '';
-  const bucket = catalog[type] || {};
+  if (!pascalKey) return '';
+  const bucket = catalog?.[type] || {};
   if (bucket[pascalKey]?.icon) return bucket[pascalKey].icon;
+
+  const live = getLiveAssetEntry(type, pascalKey);
+  if (live?.icon) return live.icon;
 
   // Handle Traveler variants (TravelerCryo -> Traveler or TravelerAnemo)
   if (type === 'characters' && pascalKey.startsWith('Traveler')) {
