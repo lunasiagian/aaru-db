@@ -804,9 +804,9 @@ export function evaluateTeamCapabilities(
 
   let buffCap = null;
   for (const { source, text } of scanSources) {
-    // Pattern A: "for every X Stat ... by Y% ... up to Z%"
+    // Pattern A: "(for) every X (points of) Stat ... by Y% ... up to Z%"
     let m = text.match(
-      /for\s+every\s+([\d,]+)\s+(Max\s+HP|HP|DEF|ATK|Elemental\s+Mastery|EM)[^.]{0,140}?by\s+([\d.]+)%[^.]{0,120}?(?:up\s+to|maximum(?:\s+increase)?(?:\s+of|\s+is)?)\s+([\d.]+)%/i
+      /(?:for\s+)?every\s+([\d,]+)\s+(?:points?\s+of\s+)?(Max\s+HP|HP|DEF|ATK|Elemental\s+Mastery|EM)[^.]{0,140}?by\s+([\d.]+)%[^.]{0,120}?(?:up\s+to|maximum(?:\s+increase)?(?:\s+of|\s+is)?)\s+([\d.]+)%/i
     );
     let unitStep = 0;
     let statWord = '';
