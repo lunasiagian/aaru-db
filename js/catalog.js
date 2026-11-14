@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v4';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v5';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -703,8 +703,6 @@ const BASE_FIGHT_PROPS = new Set([
 
 function cleanYattaText(str) {
   return String(str || '')
-    .replace(/<color=[^>]*>/gi, '')
-    .replace(/<\/color>/gi, '')
     .replace(/\{LINK#[^}]*\}/gi, '')
     .replace(/\{\/LINK\}/gi, '')
     .replace(/\{LAYOUT_[^}]*#([^}]*)\}/gi, '$1')
@@ -757,12 +755,17 @@ function fetchCurve(kind) {
   return weaponCurvePromise;
 }
 
+const AVATAR_CURVE_FALLBACK = {
+  80: { GROW_CURVE_HP_S4: 7.417, GROW_CURVE_ATTACK_S4: 7.417, GROW_CURVE_HP_S5: 7.756, GROW_CURVE_ATTACK_S5: 7.756 },
+  90: { GROW_CURVE_HP_S4: 8.349, GROW_CURVE_ATTACK_S4: 8.349, GROW_CURVE_HP_S5: 8.739, GROW_CURVE_ATTACK_S5: 8.739 }
+};
+
 function calcYattaCharLevelStats(upgrade, curveData, level, promoteIdx) {
-  const lvInfo = curveData?.[String(level)]?.curveInfos || {};
+  const lvInfo = curveData?.[String(level)]?.curveInfos || AVATAR_CURVE_FALLBACK[level] || AVATAR_CURVE_FALLBACK[90];
   const promote = upgrade?.promote?.[promoteIdx]?.addProps || {};
   const out = { hp: 0, atk: 0, def: 0 };
   for (const p of upgrade?.prop || []) {
-    const mult = Number(lvInfo[p.type]) || 1;
+    const mult = Number(lvInfo[p.type]) || 8.35;
     const add = Number(promote[p.propType]) || 0;
     const total = (Number(p.initValue) || 0) * mult + add;
     if (p.propType === 'FIGHT_PROP_BASE_HP') out.hp = Math.round(total);
@@ -865,7 +868,8 @@ function parseYattaAvatarKit(data, curveData) {
       if (kind === 'burst' && costElemVal > 0) burstCost = costElemVal;
       talents.push({ kind, name: t.name, description: desc, costElemVal, labels, multipliers });
     } else if (tType === 2) {
-      const slot = passiveIdx === 0 ? 'A1' : passiveIdx === 1 ? 'A4' : 'Utility';
+      const isHexerei = /witch'?s\s+eve\s+rite|hexerei/i.test(t.name);
+      const slot = isHexerei ? 'Hexerei' : passiveIdx === 0 ? 'A1' : passiveIdx === 1 ? 'A4' : 'Utility';
       passiveIdx += 1;
       passives.push({ slot, name: t.name, description: desc });
     }
@@ -940,11 +944,15 @@ function parseLunarisCharKit(detail) {
 
   const passives = rawPassives
     .filter((p) => p && (p.name || p.description || p.desc))
-    .map((p, idx) => ({
-      slot: idx === 0 ? 'A1' : idx === 1 ? 'A4' : idx === 2 ? 'Special' : 'Utility',
-      name: p.name || `Passive ${idx + 1}`,
-      description: cleanYattaText(p.description || p.desc || '')
-    }));
+    .map((p, idx) => {
+      const isHexerei = /witch'?s\s+eve\s+rite|hexerei/i.test(p.name || '');
+      const slot = isHexerei ? 'Hexerei' : idx === 0 ? 'A1' : idx === 1 ? 'A4' : idx === 2 ? 'Special' : 'Utility';
+      return {
+        slot,
+        name: p.name || `Passive ${idx + 1}`,
+        description: cleanYattaText(p.description || p.desc || '')
+      };
+    });
 
   const constellations = Object.entries(detail?.constellations || {})
     .sort((a, b) => a[0].localeCompare(b[0]))

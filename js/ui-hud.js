@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261113ac';
+} from './catalog.js?v=20261113af';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,

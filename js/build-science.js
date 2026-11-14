@@ -1,4 +1,4 @@
-import { getCharacterMeta } from './catalog.js?v=20261113ac';
+import { getCharacterMeta } from './catalog.js?v=20261113af';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -196,10 +196,20 @@ export function classifyCharacterRole(charKey, kitData) {
     /all\s+(?:nearby\s+)?party\s+members|all\s+characters\s+in\s+the\s+party|increases?\s+(?:all\s+)?(?:nearby\s+)?party\s+members|res\s+is\s+decreased|decreases?\s+.*res/i.test(
       nonNormalText
     );
-  const hasOffField =
-    /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field/i.test(
-      nonNormalText
+  const hasLongDuration = talents
+    .filter((t) => t.kind !== 'normal')
+    .some((t) =>
+      Object.entries(t.multipliers || {}).some(([lbl, arr]) => {
+        if (!/duration/i.test(lbl)) return false;
+        const sec = parseFirstNumber(Array.isArray(arr) ? arr[0] : arr);
+        return sec >= 10;
+      })
     );
+  const hasOffField =
+    /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
+      nonNormalText
+    ) ||
+    (hasLongDuration && !usesNormalAttack && /deals?\s+.*dmg/i.test(nonNormalText));
 
   let primaryRole = 'DPS';
   if (usesNormalAttack && !hasHeal) primaryRole = 'On-Field DPS';
@@ -207,8 +217,7 @@ export function classifyCharacterRole(charKey, kitData) {
   else if (hasHeal) primaryRole = 'Healer';
   else if (hasShield && hasOffField) primaryRole = 'Off-Field Shielder';
   else if (hasShield) primaryRole = 'Shielder';
-  else if (hasOffField && hasBuff) primaryRole = 'Sub-DPS / Buffer';
-  else if (hasOffField) primaryRole = 'Sub-DPS';
+  else if (hasOffField) primaryRole = 'Off-Field Sub-DPS';
   else if (hasBuff) primaryRole = 'Support';
 
   const tags = [];
@@ -286,13 +295,24 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null) {
 function pickCharBaseStats(char, kitData) {
   const lv = Number(char?.level) || 90;
   const bs = kitData?.baseStats;
-  if (!bs) {
+  const valid = (s) => s && Number(s.hp) > 0 && Number(s.atk) > 0;
+  if (!bs || (!valid(bs.lv90) && !valid(bs.lv80))) {
     const scale = lv <= 80 ? 0.89 : lv >= 95 ? 1.07 : 1;
     return { hp: Math.round(12200 * scale), atk: Math.round(280 * scale), def: Math.round(730 * scale) };
   }
-  if (lv <= 80 && bs.lv80) return bs.lv80;
-  if (lv >= 95 && bs.lv95) return bs.lv95;
-  return bs.lv90 || bs.lv80;
+  const s80 = valid(bs.lv80) ? bs.lv80 : bs.lv90;
+  const s90 = valid(bs.lv90) ? bs.lv90 : bs.lv80;
+  if (lv <= 80) return s80;
+  if (lv >= 95 && valid(bs.lv95)) return bs.lv95;
+  if (lv < 90) {
+    const t = (lv - 80) / 10;
+    return {
+      hp: Math.round(s80.hp + (s90.hp - s80.hp) * t),
+      atk: Math.round(s80.atk + (s90.atk - s80.atk) * t),
+      def: Math.round(s80.def + (s90.def - s80.def) * t)
+    };
+  }
+  return s90;
 }
 
 function pickWeaponStats(weapon, weaponStats) {

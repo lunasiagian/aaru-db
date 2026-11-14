@@ -34,6 +34,20 @@ function ensureUserSheet_(ss, user, table) {
   return sheet;
 }
 
+function sanitizeTargetTalents_(val) {
+  if (val instanceof Date) {
+    return `${val.getUTCMonth() + 1}/${val.getUTCDate()}/${val.getUTCFullYear() % 100}`;
+  }
+  const s = String(val || '').replace(/^'+/, '').trim();
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear() % 100}`;
+    }
+  }
+  return /^\d+\/\d+\/\d+$/.test(s) ? s : '9/9/9';
+}
+
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const profiles = ['almondeluna', 'vanbrohenheim'];
@@ -190,7 +204,7 @@ function doPost(e) {
             c.talent?.skill || 1,
             c.talent?.burst || 1,
             prev.target_lvl || 90,
-            prev.target_talents || '9/9/9',
+            "'" + sanitizeTargetTalents_(prev.target_talents || '9/9/9'),
             prev.status || autoStatus,
             prev.priority_rank || '',
             prev.notes || ''
@@ -245,6 +259,9 @@ function doPost(e) {
       const normalizedFields = { ...fields };
       if (normalizedFields.raw_count === undefined && normalizedFields.count !== undefined) {
         normalizedFields.raw_count = normalizedFields.count;
+      }
+      if (normalizedFields.target_talents !== undefined) {
+        normalizedFields.target_talents = "'" + sanitizeTargetTalents_(normalizedFields.target_talents);
       }
       if (normalizedFields.last_updated === undefined) {
         normalizedFields.last_updated = now;

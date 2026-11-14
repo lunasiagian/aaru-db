@@ -8,13 +8,13 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113ac';
+} from './catalog.js?v=20261113af';
 import {
   analyzeCharacterKit,
   computeCharacterCombatStats,
   computeEffectiveTalents,
   evaluateErComfort
-} from './build-science.js?v=20261113ac';
+} from './build-science.js?v=20261113af';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -284,11 +284,17 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
 const TIMING_LABEL_RE = /^(cd|.*duration|energy cost|.*stamina cost)$/i;
 
 function formatKitDescription(desc) {
-  const escaped = escapeHtml(desc || '');
-  return escaped.replace(
+  let html = escapeHtml(String(desc || '').replace(/\\n/g, '\n'));
+  html = html.replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/gi, '<em class="kit-lore">$1</em>');
+  html = html.replace(
+    /&lt;color=#([0-9A-Fa-f]{6,8})&gt;([\s\S]*?)&lt;\/color&gt;/gi,
+    '<span style="color:#$1">$2</span>'
+  );
+  html = html.replace(
     /^(Tap|Hold|Normal Attack|Charged Attack|Plunging Attack|Radiance:[^:\n]*:?)$/gm,
     '<strong class="kit-subheading">$1</strong>'
   );
+  return html;
 }
 
 function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
@@ -396,11 +402,11 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
           <div class="dossier-kit-card">
             <div class="dossier-kit-head">
               <div>
-                <span class="pill pill-violet mono">${escapeHtml(p.slot)}</span>
+                <span class="pill ${p.slot === 'Hexerei' ? 'pill-amber' : 'pill-violet'} mono">${escapeHtml(p.slot)}</span>
                 <strong class="dossier-kit-name">${escapeHtml(p.name)}</strong>
               </div>
             </div>
-            <p class="dossier-kit-desc">${escapeHtml(p.description)}</p>
+            <p class="dossier-kit-desc">${formatKitDescription(p.description)}</p>
           </div>`
           )
           .join('')}
@@ -424,7 +430,7 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
                     </div>
                     <span class="pill mono ${isActive ? 'pill-mint' : ''}">${isActive ? 'ACTIVE' : 'LOCKED'}</span>
                   </div>
-                  <p class="dossier-kit-desc">${escapeHtml(con.description)}</p>
+                  <p class="dossier-kit-desc">${formatKitDescription(con.description)}</p>
                 </div>`;
                 })
                 .join('')}
@@ -436,6 +442,12 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
 
 function renderDossierTargetsTab(c, isReadOnly) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
+  const tgtParts = String(c.targetTalents || '9/9/9')
+    .split('/')
+    .map((n) => Math.min(10, Math.max(1, Number(n) || 9)));
+  const tgtA = tgtParts[0] || 9;
+  const tgtE = tgtParts[1] || 9;
+  const tgtQ = tgtParts[2] || 9;
   return `
     <form class="roster-drawer-form dossier-targets-form" data-inspector-form="${c.key}">
       <div class="roster-drawer-grid">
@@ -479,21 +491,31 @@ function renderDossierTargetsTab(c, isReadOnly) {
         </label>
       </div>
 
-      <label class="mini-field">
-        <span>TARGET TALENTS (E.G. 9/9/9 OR 1/9/10)</span>
-        <input type="text" class="input-mono" name="targetTalents" value="${escapeHtml(c.targetTalents || '9/9/9')}" ${disabledAttr} />
-      </label>
+      <div class="roster-drawer-talents">
+        <label class="mini-field">
+          <span>TGT A</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tgtAuto" value="${tgtA}" ${disabledAttr} />
+        </label>
+        <label class="mini-field">
+          <span>TGT E</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tgtSkill" value="${tgtE}" ${disabledAttr} />
+        </label>
+        <label class="mini-field">
+          <span>TGT Q</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tgtBurst" value="${tgtQ}" ${disabledAttr} />
+        </label>
+      </div>
 
       <label class="mini-field">
         <span>GEAR SWAP &amp; ENDGAME NOTES (STYGIAN ONSLAUGHT / IMAGINARIUM THEATRE)</span>
-        <textarea class="input-textarea" rows="4" name="notes" placeholder="e.g. Borrows Furina's Golden Troupe in Stygian Onslaught..." ${disabledAttr}>${escapeHtml(c.notes || '')}</textarea>
+        <textarea class="textarea-lab" rows="4" name="notes" placeholder="e.g. Borrows Furina's Golden Troupe in Stygian Onslaught..." ${disabledAttr}>${escapeHtml(c.notes || '')}</textarea>
       </label>
 
       <div class="roster-drawer-actions">
         ${
           isReadOnly
             ? '<span class="muted mono" style="font-size:11px;">Partner View — Read Only</span>'
-            : '<button type="submit" class="btn-primary">Save to Sheet</button>'
+            : '<button type="submit" class="btn btn-gold">Save to Sheet</button>'
         }
       </div>
     </form>`;
@@ -842,7 +864,7 @@ export function renderRosterTab(container, state, handlers) {
               skill: clamp(fd.get('tSkill'), 1, 10, 1),
               burst: clamp(fd.get('tBurst'), 1, 10, 1)
             },
-            targetTalents: String(fd.get('targetTalents') || '9/9/9').trim(),
+            targetTalents: `${clamp(fd.get('tgtAuto'), 1, 10, 9)}/${clamp(fd.get('tgtSkill'), 1, 10, 9)}/${clamp(fd.get('tgtBurst'), 1, 10, 9)}`,
             notes: String(fd.get('notes') || '')
           });
         } finally {

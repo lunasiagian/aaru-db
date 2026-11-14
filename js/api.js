@@ -98,6 +98,20 @@ export function saveLocalMock(username, data) {
   }
 }
 
+function parseTargetTalents(raw) {
+  if (raw instanceof Date) {
+    return `${raw.getUTCMonth() + 1}/${raw.getUTCDate()}/${raw.getUTCFullYear() % 100}`;
+  }
+  const s = String(raw || '').replace(/^'+/, '').trim();
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear() % 100}`;
+    }
+  }
+  return /^\d+\/\d+\/\d+$/.test(s) ? s : '9/9/9';
+}
+
 function normalizeSheetRowCharacter(r) {
   const level = Number(r.level) || 1;
   return {
@@ -112,7 +126,7 @@ function normalizeSheetRowCharacter(r) {
       burst: Number(r.talent_burst) || 1
     },
     targetLevel: Number(r.targetLevel ?? r.target_lvl) || 90,
-    targetTalents: r.targetTalents || r.target_talents || '9/9/9',
+    targetTalents: parseTargetTalents(r.targetTalents ?? r.target_talents),
     status: r.status || (level >= 90 ? 'Built' : level >= 70 ? 'In Progress' : 'Bench'),
     priorityRank: r.priorityRank ?? r.priority_rank ?? '',
     swapTag: r.swapTag || '',
