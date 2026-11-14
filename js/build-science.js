@@ -598,25 +598,32 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
   const soloDelta = currentEr - soloEndgameReq;
 
   let summary = '';
+  let erStatus = 'ok';
+  let erDelta = 0;
   if (teamVerdicts.length) {
     const best = [...teamVerdicts].sort((a, b) => b.delta - a.delta)[0];
+    erDelta = best.delta;
     const reasons = [];
     if (best.hasSameElemBattery) reasons.push(`Double ${charElem}`);
     if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}× Energy Weapon`);
     const via = reasons.length ? ` via ${reasons.join(' + ')}` : '';
     if (best.delta >= 0 && hasEndgameFlag && soloDelta < 0) {
+      erStatus = 'warn';
       summary = `${currentEr}% ER — Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
     } else if (best.delta >= 0) {
+      erStatus = 'ok';
       summary = `${currentEr}% ER — Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     } else {
+      erStatus = best.delta >= -12 ? 'warn' : 'short';
       summary = `${currentEr}% ER — ${Math.abs(best.delta)}% short even in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     }
   } else {
-    const delta = currentEr - baseReq;
+    erDelta = currentEr - baseReq;
+    erStatus = erDelta >= 0 ? 'ok' : erDelta >= -12 ? 'warn' : 'short';
     summary =
-      delta >= 0
+      erDelta >= 0
         ? `${currentEr}% ER — Meets solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`
-        : `${currentEr}% ER — ${Math.abs(delta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
+        : `${currentEr}% ER — ${Math.abs(erDelta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
   }
 
   let burstTriggerNote = '';
@@ -634,6 +641,8 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     hasEndgameFlag,
     teamVerdicts,
     burstTriggerNote,
+    erStatus,
+    erDelta,
     summary
   };
 }

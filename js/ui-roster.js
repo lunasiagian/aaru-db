@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261114b';
+} from './build-science.js?v=20261114c';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -673,6 +673,18 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const activeTab = dossierTab || 'loadout';
 
   const dmgLabel = combat.dmgBonusKey ? formatStatKey(combat.dmgBonusKey) : 'Elem DMG%';
+  const erColorClass =
+    erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : 'text-mint';
+  const erPillClass =
+    erReport.erStatus === 'short' ? 'pill-coral' : erReport.erStatus === 'warn' ? 'pill-gold' : 'pill-mint';
+  const erPillLabel =
+    erReport.erStatus === 'short'
+      ? `LOW ER (${erReport.erDelta}%)`
+      : erReport.erStatus === 'warn'
+        ? 'BORDERLINE'
+        : 'ON TARGET';
+  const erCardStateClass =
+    erReport.erStatus === 'short' ? 'is-er-short' : erReport.erStatus === 'warn' ? 'is-er-warn' : 'is-er-ok';
 
   return `
     <div class="dossier-shell">
@@ -737,7 +749,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   : `<div class="combat-stat-box"><span class="stat-label">CRIT RATE</span><span class="stat-val">${combat.critRate.toFixed(1)}%</span></div>
                      <div class="combat-stat-box"><span class="stat-label">CRIT DMG</span><span class="stat-val">${combat.critDmg.toFixed(1)}%</span></div>`
               }
-              <div class="combat-stat-box"><span class="stat-label">ENERGY RECHARGE</span><span class="stat-val text-cyan">${combat.er.toFixed(1)}%</span></div>
+              <div class="combat-stat-box"><span class="stat-label">ENERGY RECHARGE</span><span class="stat-val ${erColorClass}">${combat.er.toFixed(1)}%</span></div>
               <div class="combat-stat-box"><span class="stat-label">${combat.healingBonus > 0 && kitAnalysis.isNonCrit ? 'HEAL BONUS' : dmgLabel.toUpperCase()}</span><span class="stat-val">${(combat.healingBonus > 0 && kitAnalysis.isNonCrit ? combat.healingBonus : combat.dmgBonus).toFixed(1)}%</span></div>
             </div>
 
@@ -768,9 +780,12 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 .join('')}
             </div>
 
-            <div class="dossier-er-card">
-              <div class="card-eyebrow">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
-              <p class="dossier-er-summary">${escapeHtml(erReport.summary)}</p>
+            <div class="dossier-er-card ${erCardStateClass}">
+              <div class="dossier-er-head">
+                <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
+                <span class="pill ${erPillClass} mono">${erPillLabel}</span>
+              </div>
+              <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}">${escapeHtml(erReport.summary)}</p>
               ${erReport.burstTriggerNote ? `<p class="dossier-er-summary text-amber">${escapeHtml(erReport.burstTriggerNote)}</p>` : ''}
               ${
                 erReport.teamVerdicts.length
