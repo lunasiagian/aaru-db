@@ -1,4 +1,4 @@
-import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113aa';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113ac';
 import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113t';
 import {
   fetchPartnerAccount,
@@ -17,8 +17,9 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261113t';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261113t';
-import { renderRosterTab } from './ui-roster.js?v=20261113ab';
+import { renderRosterTab } from './ui-roster.js?v=20261113ac';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
+import { CHANGELOG } from './changelog.js?v=20261113ac';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
 
@@ -703,6 +704,54 @@ function setupServerModal() {
   });
 }
 
+function initChangelogModal() {
+  const btn = document.getElementById('btn-changelog');
+  const dot = document.getElementById('changelog-dot');
+  const modal = document.getElementById('changelog-modal');
+  const body = document.getElementById('changelog-body');
+  const closeBtn = document.getElementById('btn-close-changelog');
+  if (!btn || !modal || !body) return;
+
+  const latestVer = CHANGELOG[0]?.version || '';
+  const seenVer = localStorage.getItem('aaru_changelog_seen');
+  if (dot && latestVer && seenVer !== latestVer) {
+    dot.hidden = false;
+  }
+
+  const renderBody = () => {
+    body.innerHTML = CHANGELOG.map(
+      (entry, idx) => `
+      <article class="changelog-entry ${idx === 0 ? 'is-latest' : ''}">
+        <div class="changelog-entry-head">
+          <div>
+            <span class="pill mono ${idx === 0 ? 'pill-mint' : ''}">${entry.version}</span>
+            <strong class="changelog-title">${entry.title}</strong>
+          </div>
+          <span class="mono muted" style="font-size:11px;">${entry.date}</span>
+        </div>
+        <ul class="changelog-points">
+          ${entry.highlights.map((h) => `<li>${h}</li>`).join('')}
+        </ul>
+      </article>`
+    ).join('');
+  };
+
+  btn.addEventListener('click', () => {
+    renderBody();
+    modal.hidden = false;
+    if (latestVer) localStorage.setItem('aaru_changelog_seen', latestVer);
+    if (dot) dot.hidden = true;
+  });
+
+  const close = () => {
+    modal.hidden = true;
+  };
+  closeBtn?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+}
+
 async function bootstrap() {
   let savedUser = null;
   try {
@@ -716,6 +765,7 @@ async function bootstrap() {
   }
 
   await loadCatalog();
+  initChangelogModal();
 
   // Bind login form & quick-login buttons
   document.getElementById('login-form')?.addEventListener('submit', (e) => {

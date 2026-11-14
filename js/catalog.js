@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v3';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v4';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -871,12 +871,22 @@ function parseYattaAvatarKit(data, curveData) {
     }
   }
 
+  const constellations = Object.entries(data?.constellation || {})
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([idx, c]) => ({
+      level: Number(idx) + 1,
+      name: c?.name || `Constellation ${Number(idx) + 1}`,
+      description: cleanYattaText(c?.description || '')
+    }))
+    .filter((c) => c.level >= 1 && c.level <= 6 && c.name);
+
   return {
     baseStats: { lv80, lv90, lv95 },
     ascensionStat,
     burstCost: burstCost || 60,
     talents,
-    passives
+    passives,
+    constellations
   };
 }
 
@@ -936,6 +946,19 @@ function parseLunarisCharKit(detail) {
       description: cleanYattaText(p.description || p.desc || '')
     }));
 
+  const constellations = Object.entries(detail?.constellations || {})
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, c], idx) => {
+      const m = key.match(/(\d+)/);
+      const lv = m ? Number(m[1]) : idx + 1;
+      return {
+        level: lv,
+        name: c?.name || `Constellation ${lv}`,
+        description: cleanYattaText(c?.description || c?.desc || '')
+      };
+    })
+    .filter((c) => c.level >= 1 && c.level <= 6 && c.name);
+
   return {
     baseStats: {
       lv80: { hp: 11200, atk: 260, def: 680 },
@@ -945,7 +968,8 @@ function parseLunarisCharKit(detail) {
     ascensionStat: null,
     burstCost,
     talents,
-    passives
+    passives,
+    constellations
   };
 }
 

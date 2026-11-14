@@ -1,4 +1,4 @@
-import { getCharacterMeta } from './catalog.js?v=20261113aa';
+import { getCharacterMeta } from './catalog.js?v=20261113ac';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -306,10 +306,59 @@ function pickWeaponStats(weapon, weaponStats) {
 }
 
 /**
+ * Computes effective talent levels (base + active constellation +3 boosts) and active C1-C6 flags.
+ */
+export function computeEffectiveTalents(char, kitData) {
+  const base = {
+    auto: Math.max(1, Math.min(10, Number(char?.talent?.auto) || 1)),
+    skill: Math.max(1, Math.min(10, Number(char?.talent?.skill) || 1)),
+    burst: Math.max(1, Math.min(10, Number(char?.talent?.burst) || 1))
+  };
+  const bonuses = { auto: 0, skill: 0, burst: 0 };
+  const ownedCon = Number(char?.constellation) || 0;
+  const talents = kitData?.talents || [];
+  const constellations = kitData?.constellations || [];
+
+  const normName = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalName = normName(talents.find((t) => t.kind === 'normal')?.name);
+  const skillName = normName(talents.find((t) => t.kind === 'skill')?.name);
+  const burstName = normName(talents.find((t) => t.kind === 'burst')?.name);
+
+  for (const c of constellations) {
+    if (Number(c.level) > ownedCon) continue;
+    const desc = String(c.description || '');
+    const m = desc.match(/increases?\s+the\s+level\s+of\s+(.+?)\s+by\s+(\d+)/i);
+    if (!m) continue;
+    const targetRaw = m[1];
+    const targetNorm = normName(targetRaw);
+    const inc = Number(m[2]) || 3;
+
+    if (/normalattack/i.test(targetNorm) || (normalName && targetNorm.includes(normalName))) {
+      bonuses.auto += inc;
+    } else if (/elementalskill/i.test(targetNorm) || (skillName && targetNorm.includes(skillName))) {
+      bonuses.skill += inc;
+    } else if (/elementalburst/i.test(targetNorm) || (burstName && targetNorm.includes(burstName))) {
+      bonuses.burst += inc;
+    }
+  }
+
+  return {
+    base,
+    bonuses,
+    effective: {
+      auto: Math.min(15, base.auto + bonuses.auto),
+      skill: Math.min(15, base.skill + bonuses.skill),
+      burst: Math.min(15, base.burst + bonuses.burst)
+    }
+  };
+}
+
+/**
  * Computes exact total character combat stats and artifact Roll Value (RV%).
  */
 export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null) {
-  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, char?.talent);
+  const effectiveTalents = computeEffectiveTalents(char, kitData);
+  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, effectiveTalents.effective);
   const charBase = pickCharBaseStats(char, kitData);
   const wepBase = pickWeaponStats(weapon, weaponStats);
 

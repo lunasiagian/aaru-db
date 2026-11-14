@@ -8,12 +8,13 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113aa';
+} from './catalog.js?v=20261113ac';
 import {
   analyzeCharacterKit,
   computeCharacterCombatStats,
+  computeEffectiveTalents,
   evaluateErComfort
-} from './build-science.js?v=20261113aa';
+} from './build-science.js?v=20261113ac';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -290,15 +291,29 @@ function formatKitDescription(desc) {
   );
 }
 
-function renderDossierTalentsTab(c, kitData, kitAnalysis) {
+function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
   if (!kitData) {
-    return '<div class="empty-state mono">Syncing live talents &amp; passives from Project Amber / Lunaris...</div>';
+    return '<div class="empty-state mono">Syncing live talents, passives &amp; constellations from Project Amber / Lunaris...</div>';
   }
   const talents = kitData.talents || [];
   const passives = kitData.passives || [];
+  const constellations = kitData.constellations || [];
+  const ownedCon = c.owned ? Number(c.constellation) || 0 : 0;
   const talentLv = (kind) => {
     if (!c.owned) return 9;
-    return kind === 'normal' ? c.talent?.auto || 1 : kind === 'skill' ? c.talent?.skill || 1 : c.talent?.burst || 1;
+    return kind === 'normal'
+      ? effTalents.effective.auto
+      : kind === 'skill'
+        ? effTalents.effective.skill
+        : effTalents.effective.burst;
+  };
+  const talentBonus = (kind) => {
+    if (!c.owned) return 0;
+    return kind === 'normal'
+      ? effTalents.bonuses.auto
+      : kind === 'skill'
+        ? effTalents.bonuses.skill
+        : effTalents.bonuses.burst;
   };
   const usesNormal = Boolean(kitAnalysis?.roleInfo?.usesNormalAttack);
 
@@ -356,7 +371,11 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis) {
               <div class="dossier-kit-badges mono">
                 ${t.kind === 'normal' && usesNormal ? '<span class="pill pill-amber">INFUSION PRIORITY</span>' : ''}
                 ${t.costElemVal ? `<span class="pill pill-sky">${t.costElemVal} Energy</span>` : ''}
-                <span class="pill pill-mint">${c.owned ? `Lv.${lv}` : `Preview Lv.${lv}`}</span>
+                ${
+                  c.owned
+                    ? `<span class="pill pill-mint">Lv.${lv}${talentBonus(t.kind) ? ` (+${talentBonus(t.kind)})` : ''}</span>`
+                    : `<span class="pill pill-mint">Preview Lv.${lv}</span>`
+                }
               </div>
             </div>
             ${timingHtml}
@@ -386,7 +405,33 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis) {
           )
           .join('')}
       </div>
-    </div>`;
+    </div>
+
+    ${
+      constellations.length
+        ? `<div class="dossier-section">
+            <div class="card-eyebrow">CONSTELLATIONS (${c.owned ? `C${ownedCon} ACTIVE` : 'PREVIEW'})</div>
+            <div class="dossier-kit-list">
+              ${constellations
+                .map((con) => {
+                  const isActive = c.owned && con.level <= ownedCon;
+                  return `
+                <div class="dossier-kit-card ${isActive ? 'is-con-active' : 'is-con-locked'}">
+                  <div class="dossier-kit-head">
+                    <div>
+                      <span class="pill mono ${isActive ? 'pill-gold' : ''}">C${con.level}</span>
+                      <strong class="dossier-kit-name">${escapeHtml(con.name)}</strong>
+                    </div>
+                    <span class="pill mono ${isActive ? 'pill-mint' : ''}">${isActive ? 'ACTIVE' : 'LOCKED'}</span>
+                  </div>
+                  <p class="dossier-kit-desc">${escapeHtml(con.description)}</p>
+                </div>`;
+                })
+                .join('')}
+            </div>
+          </div>`
+        : ''
+    }`;
 }
 
 function renderDossierTargetsTab(c, isReadOnly) {
@@ -465,6 +510,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
     weaponStats
   );
   const kitAnalysis = combat.kitAnalysis;
+  const effTalents = computeEffectiveTalents(c, kitData);
   const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData);
 
   const idx = navList.findIndex((item) => item.key === c.key);
@@ -511,7 +557,13 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 </div>
                 <div class="dossier-hero-chips mono">
                   ${c.owned ? `<span class="pill pill-gold">C${c.constellation}</span>` : ''}
-                  ${c.owned ? `<span class="pill">A/E/Q: ${c.talent?.auto || 1}/${c.talent?.skill || 1}/${c.talent?.burst || 1}</span>` : ''}
+                  ${
+                    c.owned
+                      ? `<span class="pill">A/E/Q: ${effTalents.effective.auto}/${effTalents.effective.skill}/${effTalents.effective.burst}${
+                          effTalents.bonuses.skill || effTalents.bonuses.burst || effTalents.bonuses.auto ? ' <span class="text-cyan">(+C)</span>' : ''
+                        }</span>`
+                      : ''
+                  }
                   <span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>
                   ${(kitAnalysis.roleInfo?.tags || []).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}
                 </div>
@@ -601,7 +653,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-tab-body">
               ${
                 activeTab === 'talents'
-                  ? renderDossierTalentsTab(c, kitData, kitAnalysis)
+                  ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
                   : activeTab === 'targets'
                     ? renderDossierTargetsTab(c, isReadOnly)
                     : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
