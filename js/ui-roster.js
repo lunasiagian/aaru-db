@@ -8,7 +8,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113ah';
+} from './catalog.js?v=20261114e';
 import {
   analyzeCharacterKit,
   calcTalentUpgradeDiff,
@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261114d';
+} from './build-science.js?v=20261114e';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -783,9 +783,15 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-er-card ${erCardStateClass}">
               <div class="dossier-er-head">
                 <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
-                <span class="pill ${erPillClass} mono">${erPillLabel}</span>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  <span class="pill ${erReport.dataSource === 'KQM_TCL' ? 'pill-mint' : 'pill-violet'} mono" style="font-size:10.5px;">
+                    ${erReport.dataSource === 'KQM_TCL' ? 'KQM TCL VERIFIED' : 'KIT PARSER ESTIMATE'}
+                  </span>
+                  <span class="pill ${erPillClass} mono">${erPillLabel}</span>
+                </div>
               </div>
               <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}">${escapeHtml(erReport.summary)}</p>
+              ${erReport.particleNote ? `<p class="muted mono" style="margin:0;font-size:11.5px;">Particles: ${escapeHtml(erReport.particleNote)}</p>` : ''}
               ${erReport.burstTriggerNote ? `<p class="dossier-er-summary text-amber">${escapeHtml(erReport.burstTriggerNote)}</p>` : ''}
               ${
                 erReport.teamVerdicts.length

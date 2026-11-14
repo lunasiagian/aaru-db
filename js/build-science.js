@@ -1,5 +1,5 @@
-import { getCharacterMeta } from './catalog.js?v=20261113ah';
-import { calcTalentUpgradeCost } from './calculations.js?v=20261113ah';
+import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261114e';
+import { calcTalentUpgradeCost } from './calculations.js?v=20261114e';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -581,8 +581,14 @@ const BATTERY_WEAPON_RE = /^(Favonius|Sacrificial|ElegyForTheEnd|XiphosMoonlight
  * Evaluates team-context Energy Recharge comfort & endgame mode (Stygian Onslaught / IT) safety.
  */
 export function evaluateErComfort(char, combatStats, teams = [], weapons = [], kitData = null, kitAnalysis = null) {
+  const kqm = getKqmEntry(char?.key);
+  const dataSource = kqm ? 'KQM_TCL' : 'KIT_PARSER';
   const burstCost = Number(kitData?.burstCost) || 60;
-  const baseReq = BURST_COST_ER_BASE[burstCost] || Math.round(95 + burstCost * 0.9);
+  const parserBaseReq = BURST_COST_ER_BASE[burstCost] || Math.round(95 + burstCost * 0.9);
+  const isOffFieldRole = kitAnalysis?.roleInfo?.primaryRole === 'Off-Field Sub-DPS';
+  const parserRoleAdj = !kqm && isOffFieldRole ? 10 : 0;
+  const baseReq = kqm?.erBaselines?.solo ?? parserBaseReq + parserRoleAdj;
+
   const currentEr = Math.round(combatStats?.er || 100);
   const charElem = char?.meta?.element || '';
   const burstTriggers = (kitAnalysis?.roleInfo?.kitTriggers || []).filter((t) => t.requiresBurst);
@@ -604,8 +610,19 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
       const wKey = m.weaponKey || weaponByHolder.get(m.characterKey) || '';
       if (BATTERY_WEAPON_RE.test(wKey)) batteryWeapons += 1;
     }
-    const reduction = (hasSameElemBattery ? 20 : 0) + batteryWeapons * 12;
-    const reqEr = Math.max(100, baseReq - reduction);
+    let reqEr;
+    if (kqm?.erBaselines) {
+      if (hasSameElemBattery && kqm.erBaselines.doubleSameElement) {
+        reqEr = Math.max(100, kqm.erBaselines.doubleSameElement - batteryWeapons * 10);
+      } else if (batteryWeapons > 0 && kqm.erBaselines.favonius) {
+        reqEr = Math.max(100, Math.min(baseReq - batteryWeapons * 12, kqm.erBaselines.favonius));
+      } else {
+        reqEr = Math.max(100, baseReq - (hasSameElemBattery ? 20 : 0) - batteryWeapons * 12);
+      }
+    } else {
+      const reduction = (hasSameElemBattery ? 20 : 0) + batteryWeapons * 12;
+      reqEr = Math.max(100, baseReq - reduction);
+    }
     const delta = currentEr - reqEr;
     const status = delta >= 0 ? 'COMFORTABLE' : delta >= -12 ? 'BORDERLINE' : `SHORT (${delta}% ER)`;
     return {
@@ -669,6 +686,9 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     burstTriggerNote,
     erStatus,
     erDelta,
+    dataSource,
+    particlesPerCast: kqm?.particlesPerCast ?? null,
+    particleNote: kqm?.particleNote || '',
     summary
   };
 }
@@ -748,7 +768,9 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
   const critNote = analysis.isNonCrit ? ' (Non-Crit scaling — Crit Rate/DMG bypassed)' : '';
   const weaponNote = weaponData?.name ? ` Paired with ${weaponData.name}.` : '';
 
+  const kqm = getKqmEntry(char?.key);
   const priority = getTalentPriorityInfo(kitData, analysis);
+  const priorityOrderText = kqm?.talentPriority || priority.orderText;
 
   // Passive & unlocked constellation highlights
   const ownedCon = Number(char?.constellation) || 0;
@@ -800,8 +822,9 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
       ? 'C0 baseline kit; check A1/A4 passives for rotation triggers.'
       : `C${ownedCon} unlocked; standard kit scaling active.`;
 
+  const particleStr = erDiag?.particleNote ? ` (${erDiag.particleNote})` : '';
   const erText = erDiag?.summary
-    ? `${erDiag.summary}${erDiag.burstTriggerNote ? ` ${erDiag.burstTriggerNote}` : ''}`
+    ? `${erDiag.summary}${particleStr}${erDiag.burstTriggerNote ? ` ${erDiag.burstTriggerNote}` : ''}`
     : `${analysis.burstCost || 60}-cost Burst; sync artifacts to compute ER comfort.`;
 
   return [
@@ -813,7 +836,7 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
     {
       label: 'TALENT PRIORITY ORDER',
       tone: 'gold',
-      text: stripMarkup(`${priority.orderText}. ${priority.lowValueNote}`)
+      text: stripMarkup(`${priorityOrderText}. ${priority.lowValueNote}`)
     },
     {
       label: `UNLOCKED PASSIVES & C${ownedCon}`,
@@ -873,7 +896,9 @@ export function calcTalentUpgradeDiff(charKey, kitData, slot, currentLvl, target
     : 0;
 
   const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData, null, constellation);
+  const kqm = getKqmEntry(char?.key);
   const priority = getTalentPriorityInfo(kitData, analysis);
+  const priorityOrderText = kqm?.talentPriority || priority.orderText;
   const tier = priority.tiers[slot] || 'medium';
 
   let badge = 'MODERATE';

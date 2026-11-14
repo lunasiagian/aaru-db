@@ -1,4 +1,5 @@
 let cachedCatalog = null;
+let cachedKqmTcl = {};
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
@@ -391,10 +392,24 @@ export function getLiveAssetEntry(type, pascalKey) {
 
 export async function loadCatalog() {
   if (cachedCatalog) return cachedCatalog;
+  const [catRes, kqmRes] = await Promise.allSettled([
+    fetch('./data/catalog.json', { cache: 'no-cache' }),
+    fetch('./data/kqm-tcl.json', { cache: 'no-cache' })
+  ]);
+
+  if (kqmRes.status === 'fulfilled' && kqmRes.value?.ok) {
+    try {
+      cachedKqmTcl = (await kqmRes.value.json()) || {};
+    } catch {
+      cachedKqmTcl = {};
+    }
+  }
+
   try {
-    const res = await fetch('./data/catalog.json', { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    cachedCatalog = await res.json();
+    if (catRes.status !== 'fulfilled' || !catRes.value?.ok) {
+      throw new Error(`HTTP ${catRes.value?.status || 'fetch error'}`);
+    }
+    cachedCatalog = await catRes.value.json();
   } catch (err) {
     console.warn('Failed to fetch data/catalog.json, using minimal fallback.', err);
     cachedCatalog = {
@@ -424,6 +439,17 @@ export async function loadCatalog() {
 
 export function getCatalog() {
   return cachedCatalog;
+}
+
+export function getKqmEntry(pascalKey) {
+  if (!pascalKey || !cachedKqmTcl) return null;
+  if (cachedKqmTcl[pascalKey]) return cachedKqmTcl[pascalKey];
+  const norm = normalizeAssetKey(pascalKey);
+  for (const [k, v] of Object.entries(cachedKqmTcl)) {
+    if (k === '_meta') continue;
+    if (normalizeAssetKey(k) === norm) return v;
+  }
+  return null;
 }
 
 export function splitPascalCase(key) {

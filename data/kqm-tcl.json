@@ -1,0 +1,349 @@
+{
+  "_meta": {
+    "source": "https://github.com/KeqingMains/tcl",
+    "syncedAt": "2026-11-14T07:12:00.000Z",
+    "count": 56
+  },
+  "Albedo": {
+    "particlesPerCast": 0.67,
+    "particleNote": "67% chance per Transient Blossom proc (2s ICD)",
+    "erBaselines": { "solo": 130, "doubleSameElement": 110, "favonius": 110 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Alhaitham": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Projection Attack",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Skill (E) > Normal (A) ≥ Burst (Q)"
+  },
+  "Arlecchino": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles on Elemental Skill cast",
+    "erBaselines": { "solo": 100, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Normal (A) >> Skill (E) ≥ Burst (Q)"
+  },
+  "Baizhu": {
+    "particlesPerCast": 3.5,
+    "particleNote": "3–4 particles per Skill cast",
+    "erBaselines": { "solo": 210, "doubleSameElement": 175, "favonius": 165 },
+    "talentPriority": "Burst (Q) ≥ Skill (E) >> Normal (A)"
+  },
+  "Barbara": {
+    "particlesPerCast": 0,
+    "particleNote": "0 particles generated",
+    "erBaselines": { "solo": 180, "doubleSameElement": 150, "favonius": 145 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) >> Normal (A)"
+  },
+  "Beidou": {
+    "particlesPerCast": 4,
+    "particleNote": "2 uncharged; 4 on Perfect Counter",
+    "erBaselines": { "solo": 195, "doubleSameElement": 155, "favonius": 145 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Bennett": {
+    "particlesPerCast": 2.25,
+    "particleNote": "2–3 particles on Tap Skill",
+    "erBaselines": { "solo": 220, "doubleSameElement": 185, "favonius": 175 },
+    "talentPriority": "Burst (Q) >> Skill (E) > Normal (A)"
+  },
+  "Chasca": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles during Nightsoul Skill",
+    "erBaselines": { "solo": 120, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Chevreuse": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Hold Skill (10s ICD)",
+    "erBaselines": { "solo": 145, "doubleSameElement": 120, "favonius": 115 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Citlali": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles on Skill cast",
+    "erBaselines": { "solo": 165, "doubleSameElement": 140, "favonius": 135 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Clorinde": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Impale the Night (2s ICD)",
+    "erBaselines": { "solo": 125, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Collei": {
+    "particlesPerCast": 3,
+    "particleNote": "3 particles on Skill cast",
+    "erBaselines": { "solo": 195, "doubleSameElement": 160, "favonius": 150 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Cyno": {
+    "particlesPerCast": 3,
+    "particleNote": "3 on Skill outside Burst; 1.33 inside Burst",
+    "erBaselines": { "solo": 155, "doubleSameElement": 130, "favonius": 125 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Dehya": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Fiery Sanctum coordinated proc",
+    "erBaselines": { "solo": 200, "doubleSameElement": 165, "favonius": 155 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Diluc": {
+    "particlesPerCast": 1.33,
+    "particleNote": "1–2 particles per Skill cast (3 casts)",
+    "erBaselines": { "solo": 120, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Normal (A) ≥ Skill (E) ≥ Burst (Q)"
+  },
+  "Diona": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Hold Skill (5 paws × 80%)",
+    "erBaselines": { "solo": 195, "doubleSameElement": 165, "favonius": 155 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Eula": {
+    "particlesPerCast": 1.5,
+    "particleNote": "1–2 on Tap Skill; 2–3 on Hold Skill",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Burst (Q) > Normal (A) > Skill (E)"
+  },
+  "Faruzan": {
+    "particlesPerCast": 2,
+    "particleNote": "2 particles per Pressurized Collapse (5.5s ICD)",
+    "erBaselines": { "solo": 250, "doubleSameElement": 215, "favonius": 195 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Fischl": {
+    "particlesPerCast": 0.67,
+    "particleNote": "67% chance per Oz attack",
+    "erBaselines": { "solo": 135, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Furina": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Salon Member interval (2.5s ICD)",
+    "erBaselines": { "solo": 195, "doubleSameElement": 155, "favonius": 145 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Ganyu": {
+    "particlesPerCast": 2,
+    "particleNote": "2 on Skill cast + 2 on Ice Lotus bloom",
+    "erBaselines": { "solo": 140, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Normal (A) > Burst (Q) > Skill (E)"
+  },
+  "HuTao": {
+    "particlesPerCast": 2.5,
+    "particleNote": "2–3 particles on Blood Blossom proc (5s ICD)",
+    "erBaselines": { "solo": 125, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Normal (A) ≥ Skill (E) > Burst (Q)"
+  },
+  "Jean": {
+    "particlesPerCast": 2.67,
+    "particleNote": "2–3 particles per Gale Blade cast",
+    "erBaselines": { "solo": 185, "doubleSameElement": 155, "favonius": 145 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "KaedeharaKazuha": {
+    "particlesPerCast": 3,
+    "particleNote": "3 on Tap Skill; 4 on Hold Skill",
+    "erBaselines": { "solo": 175, "doubleSameElement": 145, "favonius": 135 },
+    "talentPriority": "Burst (Q) ≥ Skill (E) ≥ Normal (A)"
+  },
+  "Kaeya": {
+    "particlesPerCast": 2.67,
+    "particleNote": "2–3 particles per Skill cast (up to 4 on Freeze)",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "KamisatoAyaka": {
+    "particlesPerCast": 4.5,
+    "particleNote": "4–5 particles per Skill cast",
+    "erBaselines": { "solo": 160, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Burst (Q) > Normal (A) ≥ Skill (E)"
+  },
+  "KamisatoAyato": {
+    "particlesPerCast": 1.5,
+    "particleNote": "1–2 particles per Water Illusion / Shunsuiken (2.5s ICD)",
+    "erBaselines": { "solo": 145, "doubleSameElement": 125, "favonius": 120 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Keqing": {
+    "particlesPerCast": 2.5,
+    "particleNote": "2–3 particles per Stellar Restoration recast",
+    "erBaselines": { "solo": 115, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Burst (Q) ≥ Normal (A) ≥ Skill (E)"
+  },
+  "Kinich": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles during Nightsoul Skill",
+    "erBaselines": { "solo": 120, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "KujouSara": {
+    "particlesPerCast": 3,
+    "particleNote": "3 particles per Tengu Juurai: Ambush",
+    "erBaselines": { "solo": 195, "doubleSameElement": 160, "favonius": 150 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) >> Normal (A)"
+  },
+  "KukiShinobu": {
+    "particlesPerCast": 0.45,
+    "particleNote": "45% chance per Grass Ring tick",
+    "erBaselines": { "solo": 110, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Layla": {
+    "particlesPerCast": 1.33,
+    "particleNote": "1–2 particles per Shooting Star volley (3.5s ICD)",
+    "erBaselines": { "solo": 155, "doubleSameElement": 130, "favonius": 125 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Lynette": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Skill cast",
+    "erBaselines": { "solo": 185, "doubleSameElement": 155, "favonius": 145 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Lyney": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles on Skill cast",
+    "erBaselines": { "solo": 125, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Normal (A) > Skill (E) ≥ Burst (Q)"
+  },
+  "Mavuika": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles on Skill cast (Fighting Spirit Burst)",
+    "erBaselines": { "solo": 100, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Burst (Q) ≥ Skill (E) >> Normal (A)"
+  },
+  "Mona": {
+    "particlesPerCast": 3.33,
+    "particleNote": "3–4 particles on Phantom explosion",
+    "erBaselines": { "solo": 220, "doubleSameElement": 185, "favonius": 175 },
+    "talentPriority": "Burst (Q) >> Skill (E) > Normal (A)"
+  },
+  "Mualani": {
+    "particlesPerCast": 4.5,
+    "particleNote": "4–5 particles on Sharky's Surging Bite",
+    "erBaselines": { "solo": 115, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Nahida": {
+    "particlesPerCast": 3,
+    "particleNote": "3 particles per Tri-Karma Purification (7s ICD)",
+    "erBaselines": { "solo": 135, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Navia": {
+    "particlesPerCast": 3.5,
+    "particleNote": "3–4 particles per Ceremonial Crystalshot",
+    "erBaselines": { "solo": 135, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Skill (E) > Normal (A) ≥ Burst (Q)"
+  },
+  "Neuvillette": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Skill hit",
+    "erBaselines": { "solo": 135, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Normal (A) > Burst (Q) ≥ Skill (E)"
+  },
+  "Nilou": {
+    "particlesPerCast": 1.5,
+    "particleNote": "1–2 on Skill activation + 1–2 on 3rd dance step",
+    "erBaselines": { "solo": 140, "doubleSameElement": 120, "favonius": 115 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) >> Normal (A)"
+  },
+  "Noelle": {
+    "particlesPerCast": 0,
+    "particleNote": "0 particles generated",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 125 },
+    "talentPriority": "Normal (A) ≥ Burst (Q) > Skill (E)"
+  },
+  "Qiqi": {
+    "particlesPerCast": 0,
+    "particleNote": "0 particles generated",
+    "erBaselines": { "solo": 210, "doubleSameElement": 180, "favonius": 170 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) >> Normal (A)"
+  },
+  "RaidenShogun": {
+    "particlesPerCast": 0.5,
+    "particleNote": "50% chance per Coordinated Attack",
+    "erBaselines": { "solo": 225, "doubleSameElement": 205, "favonius": 200 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Rosaria": {
+    "particlesPerCast": 3,
+    "particleNote": "3 particles per Skill cast",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "SangonomiyaKokomi": {
+    "particlesPerCast": 0.67,
+    "particleNote": "67% chance per Bake-Kurage ripple",
+    "erBaselines": { "solo": 185, "doubleSameElement": 155, "favonius": 145 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) > Normal (A)"
+  },
+  "Shenhe": {
+    "particlesPerCast": 3,
+    "particleNote": "3 on Tap Skill; 4 on Hold Skill",
+    "erBaselines": { "solo": 195, "doubleSameElement": 165, "favonius": 155 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Sucrose": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles per Skill cast",
+    "erBaselines": { "solo": 175, "doubleSameElement": 145, "favonius": 135 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) ≥ Normal (A)"
+  },
+  "Tighnari": {
+    "particlesPerCast": 3.5,
+    "particleNote": "3–4 particles per Skill cast",
+    "erBaselines": { "solo": 115, "doubleSameElement": 100, "favonius": 100 },
+    "talentPriority": "Normal (A) ≥ Burst (Q) > Skill (E)"
+  },
+  "Wanderer": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per 2s during Windfavored",
+    "erBaselines": { "solo": 135, "doubleSameElement": 115, "favonius": 110 },
+    "talentPriority": "Normal (A) > Skill (E) > Burst (Q)"
+  },
+  "Wriothesley": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Chilling Penalty punch (2s ICD)",
+    "erBaselines": { "solo": 125, "doubleSameElement": 110, "favonius": 105 },
+    "talentPriority": "Normal (A) > Skill (E) > Burst (Q)"
+  },
+  "Xiangling": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Guoba flame hit (4 total)",
+    "erBaselines": { "solo": 230, "doubleSameElement": 190, "favonius": 175 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Xilonen": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Skill Rush",
+    "erBaselines": { "solo": 155, "doubleSameElement": 130, "favonius": 125 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Xingqiu": {
+    "particlesPerCast": 5,
+    "particleNote": "5 particles on Skill cast",
+    "erBaselines": { "solo": 215, "doubleSameElement": 180, "favonius": 170 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "YaeMiko": {
+    "particlesPerCast": 1,
+    "particleNote": "1 particle per Sesshou Sakura interval (2.5s ICD)",
+    "erBaselines": { "solo": 165, "doubleSameElement": 135, "favonius": 130 },
+    "talentPriority": "Skill (E) > Burst (Q) >> Normal (A)"
+  },
+  "Yelan": {
+    "particlesPerCast": 4,
+    "particleNote": "4 particles on Lingering Lifeline",
+    "erBaselines": { "solo": 200, "doubleSameElement": 165, "favonius": 155 },
+    "talentPriority": "Burst (Q) > Skill (E) >> Normal (A)"
+  },
+  "Zhongli": {
+    "particlesPerCast": 0.5,
+    "particleNote": "50% chance per Stone Stele resonance",
+    "erBaselines": { "solo": 125, "doubleSameElement": 105, "favonius": 105 },
+    "talentPriority": "Skill (E) ≥ Burst (Q) >> Normal (A)"
+  }
+}
