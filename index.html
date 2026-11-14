@@ -10,7 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261113s" />
+  <link rel="stylesheet" href="./styles.css?v=20261113t" />
 </head>
 <body>
   <!-- Login Screen -->
@@ -50,47 +50,82 @@
 
   <!-- Main Application Shell -->
   <div id="app-shell" class="app-shell" hidden>
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-brand">
-          <div class="brand-title">AaruDB</div>
+    <!-- Left Navigation Rail -->
+    <aside class="nav-rail" aria-label="Primary Navigation">
+      <div class="rail-top">
+        <div class="rail-logo" title="AaruDB">
+          <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+            <polygon points="14,2 26,14 14,26 2,14" fill="none" stroke="currentColor" stroke-width="2" />
+            <polygon points="14,7 21,14 14,21 7,14" fill="currentColor" opacity="0.85" />
+          </svg>
+        </div>
+      </div>
+
+      <nav class="rail-nav" aria-label="Primary Views">
+        <button type="button" class="nav-tab active" data-tab-btn="hud" title="Central HUD">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+          <span>HUD</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab-btn="vault" title="Inventory Vault">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          <span>Vault</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab-btn="prefarm" title="Prefarm Queue">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Prefarm</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab-btn="roster" title="Roster & Armory">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Roster</span>
+        </button>
+        <button type="button" class="nav-tab" data-tab-btn="teams" title="Team Comps">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Teams</span>
+        </button>
+      </nav>
+
+      <div class="rail-bottom">
+        <button type="button" id="btn-system-drawer" class="rail-sys-btn" aria-label="System & Data Menu" title="System &amp; Patch Telemetry">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          <span id="system-status-dot" class="status-dot" title="Catalog Status"></span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Workspace Column -->
+    <div class="shell-workspace">
+      <header class="telemetry-bar">
+        <div class="telemetry-left">
+          <span id="topbar-breadcrumb" class="telemetry-crumb mono">AARUDB / CENTRAL HUD</span>
+          <button type="button" id="btn-server-trigger" class="telemetry-server-pill mono" title="Change Game Server">NA · RESETS IN --H --M</button>
+        </div>
+
+        <div class="telemetry-right">
           <div class="brand-sub mono">
             <span id="active-user-badge"></span>
             <span id="sync-mode-badge" class="pill mono">OFFLINE / MOCK</span>
           </div>
-        </div>
-
-        <nav class="topbar-nav" aria-label="Primary Views">
-          <button type="button" class="nav-tab active" data-tab-btn="hud">Central HUD</button>
-          <button type="button" class="nav-tab" data-tab-btn="vault">Vault</button>
-          <button type="button" class="nav-tab" data-tab-btn="prefarm">Prefarm</button>
-          <button type="button" class="nav-tab" data-tab-btn="roster">Roster</button>
-          <button type="button" class="nav-tab" data-tab-btn="teams">Teams</button>
-        </nav>
-
-        <div class="topbar-actions">
-          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">Import JSON</button>
           <button type="button" id="btn-partner-toggle" class="btn btn-outline btn-sm">Partner View</button>
+          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">+ Import GOOD</button>
           <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
-          <button type="button" id="btn-system-drawer" class="btn btn-ghost btn-sm icon-menu-btn" aria-label="System & Data Menu" title="Version &amp; Data Sync">☰</button>
         </div>
-      </div>
+      </header>
 
       <div id="readonly-banner" class="readonly-banner mono" hidden></div>
-    </header>
 
-    <main class="main-container">
-      <section class="tab-view active" data-tab="hud"></section>
-      <section class="tab-view" data-tab="vault" hidden></section>
-      <section class="tab-view" data-tab="prefarm" hidden></section>
-      <section class="tab-view" data-tab="roster" hidden></section>
-      <section class="tab-view" data-tab="teams" hidden></section>
-    </main>
+      <main class="main-container">
+        <section class="tab-view active" data-tab="hud"></section>
+        <section class="tab-view" data-tab="vault" hidden></section>
+        <section class="tab-view" data-tab="prefarm" hidden></section>
+        <section class="tab-view" data-tab="roster" hidden></section>
+        <section class="tab-view" data-tab="teams" hidden></section>
+      </main>
 
-    <footer class="app-footer">
-      <p>Data &amp; assets pulled via <a href="https://gi.yatta.moe" target="_blank" rel="noopener noreferrer">Project Amber</a> &amp; <a href="https://lunaris.moe" target="_blank" rel="noopener noreferrer">Lunaris</a>. This website wouldn't be possible without Genshin Impact community's continuous archival effort.</p>
-      <p class="footer-disclaimer">Aaru DB isn’t endorsed by <a href="https://mihoyo.com/" target="_blank" rel="noopener noreferrer">miHoYo</a> and doesn’t reflect the views or opinions of miHoYo or anyone officially involved in producing or managing <a href="https://genshin.mihoyo.com/" target="_blank" rel="noopener noreferrer">Genshin Impact</a>. Genshin Impact and miHoYo are trademarks or registered trademarks of miHoYo. Genshin Impact &copy; miHoYo.</p>
-    </footer>
+      <footer class="app-footer">
+        <p>Data &amp; assets pulled via <a href="https://gi.yatta.moe" target="_blank" rel="noopener noreferrer">Project Amber</a> &amp; <a href="https://lunaris.moe" target="_blank" rel="noopener noreferrer">Lunaris</a>. This website wouldn't be possible without Genshin Impact community's continuous archival effort.</p>
+        <p class="footer-disclaimer">Aaru DB isn’t endorsed by <a href="https://mihoyo.com/" target="_blank" rel="noopener noreferrer">miHoYo</a> and doesn’t reflect the views or opinions of miHoYo or anyone officially involved in producing or managing <a href="https://genshin.mihoyo.com/" target="_blank" rel="noopener noreferrer">Genshin Impact</a>. Genshin Impact and miHoYo are trademarks or registered trademarks of miHoYo. Genshin Impact &copy; miHoYo.</p>
+      </footer>
+    </div>
   </div>
 
   <!-- Server Region Selection Modal -->
@@ -173,6 +208,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261113s"></script>
+  <script type="module" src="./js/app.js?v=20261113t"></script>
 </body>
 </html>

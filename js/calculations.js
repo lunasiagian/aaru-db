@@ -723,3 +723,144 @@ export function detectTeamWeaponConflicts(teams = []) {
   }
   return conflicts;
 }
+
+/**
+ * Computes Spare / Uncommitted Mora and Hero's Wit remaining after funding
+ * the active Priority #1 & #2 queue.
+ */
+export function calcSpareReserves(account = {}, sharedPool = []) {
+  const wallet = account.wallet || {};
+  const inventory = account.inventory || {};
+  const bagMora = Number(wallet.mora ?? inventory.Mora?.count ?? 0);
+  const bagWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
+
+  const moraItem = sharedPool.find((i) => i.kind === 'mora');
+  const expItem = sharedPool.find((i) => i.kind === 'exp');
+  const committedMora = Number(moraItem?.neededTotal ?? 0);
+  const committedWits = Number(expItem?.neededTotal ?? 0);
+
+  const spareMora = bagMora - committedMora;
+  const spareWits = bagWits - committedWits;
+
+  return {
+    bagMora,
+    bagWits,
+    committedMora,
+    committedWits,
+    spareMora,
+    spareWits,
+    isMoraBroke: spareMora < 0,
+    isWitsBroke: spareWits < 0
+  };
+}
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Calculates estimated resin days, real calendar landing date (relative to server),
+ * and the true bottleneck gatekeeper for a priority target.
+ */
+export function calcTargetTelemetry(target, sharedPool = [], serverId = 'NA', nowMs = Date.now()) {
+  const server = SERVER_REGIONS[serverId] || SERVER_REGIONS.NA;
+  let resinDomains = 0;
+  let resinBosses = 0;
+  let resinLeyLines = 0;
+  let totalUnfundedResin = 0;
+  let weeklyWeeks = 0;
+
+  for (const item of sharedPool) {
+    if (item.deficit <= 0) continue;
+    const targets = item.alloc?.targets || [];
+    const at = targets.find((x) => x.characterKey === target.characterKey);
+    if (!at || at.needed <= at.funded) continue;
+
+    if (item.kind === 'weeklyBoss') {
+      const myDeficit = Math.max(0, at.needed - at.funded);
+      weeklyWeeks = Math.max(weeklyWeeks, Math.ceil(myDeficit / 2.4));
+    }
+
+    if (item.farmingCost?.resin) {
+      const totalUnfunded = targets.reduce((acc, x) => acc + Math.max(0, x.needed - x.funded), 0);
+      const myUnfunded = Math.max(0, at.needed - at.funded);
+      const shareResin = totalUnfunded > 0 ? item.farmingCost.resin * (myUnfunded / totalUnfunded) : 0;
+      totalUnfundedResin += shareResin;
+
+      if (item.kind === 'talentSeries' || item.kind === 'weaponSeries') resinDomains += shareResin;
+      else if (item.kind === 'worldBoss') resinBosses += shareResin;
+      else resinLeyLines += shareResin;
+    }
+  }
+
+  const resinDays = totalUnfundedResin > 0 ? Math.ceil(totalUnfundedResin / 180) : 0;
+  const landingMs = nowMs + server.offsetHours * 3600_000 + resinDays * 86400_000;
+  const landingDate = new Date(landingMs);
+  const etaDateText = `${MONTH_SHORT[landingDate.getUTCMonth()]} ${landingDate.getUTCDate()}`;
+  const etaLabel = resinDays > 0 ? `~${resinDays}d · ${etaDateText}` : weeklyWeeks > 0 ? `~${weeklyWeeks}w · ${etaDateText}` : 'Ready';
+
+  const weeklyDays = weeklyWeeks * 7;
+  let gatekeeper;
+  if (weeklyDays > resinDays && weeklyWeeks > 0) {
+    gatekeeper = {
+      type: 'weekly',
+      label: `Weekly Boss locked (~${weeklyWeeks} ${weeklyWeeks === 1 ? 'Monday' : 'Mondays'}) — save Fragile Resin`
+    };
+  } else if (resinDomains > 0 && resinDomains >= resinBosses && resinDomains >= resinLeyLines) {
+    gatekeeper = {
+      type: 'domain',
+      label: `Domain schedule locked (~${resinDays}d · ${Math.round(resinDomains).toLocaleString()} Resin)`
+    };
+  } else if (resinBosses > 0 && resinBosses >= resinLeyLines) {
+    gatekeeper = {
+      type: 'boss',
+      label: `World Boss locked (~${resinDays}d · ${Math.round(resinBosses).toLocaleString()} Resin)`
+    };
+  } else if (resinDays > 0) {
+    gatekeeper = {
+      type: 'leyline',
+      label: `Ley Line / EXP locked (~${resinDays}d · ${Math.round(totalUnfundedResin).toLocaleString()} Resin)`
+    };
+  } else {
+    gatekeeper = { type: 'ready', label: 'Fully funded — ready to build' };
+  }
+
+  return {
+    resinDays,
+    totalUnfundedResin: Math.round(totalUnfundedResin),
+    etaDateText,
+    etaLabel,
+    weeklyWeeks,
+    gatekeeper
+  };
+}
+
+/**
+ * Aggregates remaining deficit resin across domain, boss, and ley line categories.
+ */
+export function calcResinAllocationSummary(sharedPool = []) {
+  const sums = { talent: 0, weapon: 0, boss: 0, leyline: 0 };
+  for (const item of sharedPool) {
+    const r = Number(item.farmingCost?.resin || 0);
+    if (item.deficit <= 0 || r <= 0) continue;
+    if (item.kind === 'talentSeries') sums.talent += r;
+    else if (item.kind === 'weaponSeries') sums.weapon += r;
+    else if (item.kind === 'worldBoss') sums.boss += r;
+    else if (item.kind === 'mora' || item.kind === 'exp') sums.leyline += r;
+  }
+
+  const totalResin = sums.talent + sums.weapon + sums.boss + sums.leyline;
+  const defs = [
+    { id: 'talent', label: 'Talent Domains', resin: sums.talent, colorVar: 'var(--telemetry-cyan)' },
+    { id: 'weapon', label: 'Weapon Domains', resin: sums.weapon, colorVar: 'var(--telemetry-violet)' },
+    { id: 'boss', label: 'World Bosses', resin: sums.boss, colorVar: 'var(--telemetry-amber)' },
+    { id: 'leyline', label: 'Ley Lines (Mora/EXP)', resin: sums.leyline, colorVar: 'var(--telemetry-mint)' }
+  ];
+
+  const buckets = defs
+    .filter((b) => b.resin > 0)
+    .map((b) => ({
+      ...b,
+      pct: totalResin > 0 ? Math.max(1, Math.round((b.resin / totalResin) * 100)) : 0
+    }));
+
+  return { totalResin, buckets };
+}

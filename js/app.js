@@ -1,5 +1,5 @@
 import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113j';
-import { SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113p';
+import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113t';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -14,11 +14,11 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113s';
+import { renderHudTab } from './ui-hud.js?v=20261113t';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261113k';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261113t';
 import { renderRosterTab } from './ui-roster.js';
-import { renderTeamsTab } from './ui-teams.js';
+import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
 
@@ -103,9 +103,33 @@ function updateTopBar() {
   document.querySelectorAll('[data-tab-btn]').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.tabBtn === state.activeTab);
   });
+
+  const crumbMap = {
+    hud: 'AARUDB / CENTRAL HUD',
+    vault: 'AARUDB / INVENTORY VAULT',
+    prefarm: 'AARUDB / PREFARM QUEUE',
+    roster: 'AARUDB / ROSTER & ARMORY',
+    teams: 'AARUDB / TEAM COMPS'
+  };
+  const crumbEl = document.getElementById('topbar-breadcrumb');
+  if (crumbEl) crumbEl.textContent = crumbMap[state.activeTab] || 'AARUDB';
+
+  const srvBtn = document.getElementById('btn-server-trigger');
+  if (srvBtn) {
+    const rInfo = getServerResetInfo(state.serverId || 'NA');
+    srvBtn.textContent = `${rInfo.server.short} · RESETS IN ${rInfo.countdownText.toUpperCase()}`;
+  }
+
+  const sysDot = document.getElementById('system-status-dot');
+  if (sysDot) {
+    const src = getCatalogStatus().source;
+    sysDot.className = `status-dot ${src === 'live' ? 'is-live' : src === 'cache' ? 'is-cache' : 'is-snapshot'}`;
+    sysDot.title = `Catalog source: ${src.toUpperCase()}`;
+  }
 }
 
 function renderActiveTab(options = {}) {
+  const prevScrollY = options.preserveScroll ? window.scrollY : null;
   const account = getActiveAccount();
   if (!account) return;
 
@@ -142,13 +166,13 @@ function renderActiveTab(options = {}) {
       onUpdateWallet: async (field, val) => {
         state.ownAccount.wallet = { ...(state.ownAccount.wallet || {}), [field]: val };
         await saveAccountSection(state.sessionUser, 'wallet', state.ownAccount.wallet);
-        renderActiveTab();
+        renderActiveTab({ preserveScroll: true });
         showToast(`Updated ${field}`, 'mint');
       },
       onUpdateWalletPatch: async (patch, toastMsg = 'Updated Resin') => {
         state.ownAccount.wallet = { ...(state.ownAccount.wallet || {}), ...patch };
         await saveAccountSection(state.sessionUser, 'wallet', state.ownAccount.wallet);
-        renderActiveTab();
+        renderActiveTab({ preserveScroll: true });
         showToast(toastMsg, 'mint');
       },
       onToggleChecklist: async (group, id, done) => {
@@ -156,6 +180,11 @@ function renderActiveTab(options = {}) {
         const item = list.find((i) => i.id === id);
         if (item) item.done = done;
         await saveAccountSection(state.sessionUser, 'checklist', state.ownAccount.checklist);
+        renderActiveTab({ preserveScroll: true });
+      },
+      onNavigateTab: (tab) => {
+        state.activeTab = tab;
+        updateTopBar();
         renderActiveTab();
       },
       onOpenServerModal: () => openServerModal()
@@ -339,6 +368,9 @@ function renderActiveTab(options = {}) {
       const len = el.value?.length || 0;
       el.setSelectionRange?.(len, len);
     }
+  }
+  if (prevScrollY !== null) {
+    window.scrollTo(0, prevScrollY);
   }
 }
 
@@ -642,6 +674,7 @@ function setupServerModal() {
   const close = () => {
     modal.hidden = true;
   };
+  document.getElementById('btn-server-trigger')?.addEventListener('click', openServerModal);
   closeBtn?.addEventListener('click', close);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) close();
@@ -657,6 +690,7 @@ function setupServerModal() {
         localStorage.setItem(`aaru_server_${state.sessionUser}`, choice);
       }
       close();
+      updateTopBar();
       renderActiveTab();
       showToast(`Server set to ${SERVER_REGIONS[choice].label}`, 'mint');
     });
