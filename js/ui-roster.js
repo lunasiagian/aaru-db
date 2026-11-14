@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261114h';
+} from './build-science.js?v=20261114i';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -696,13 +696,22 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">›</button>
           </div>
           <div class="dossier-title-group">
-            <h1 class="dossier-char-name">${escapeHtml(c.meta.name)}</h1>
+            <div class="dossier-title-row">
+              <h1 class="dossier-char-name">${escapeHtml(c.meta.name)}</h1>
+              <span class="dossier-char-submeta mono">${c.meta.rarity || 5}★ · ${escapeHtml(c.meta.element)} · ${escapeHtml(c.meta.weaponType)}</span>
+            </div>
             <div class="dossier-meta-pills mono">
-              <span class="pill">${escapeHtml(c.meta.element)}</span>
-              <span class="pill">${escapeHtml(c.meta.weaponType)}</span>
-              <span class="pill pill-gold">${c.meta.rarity || 5}★</span>
               ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
-              ${(kitAnalysis.roleInfo?.utilityTags || []).map((tag) => `<span class="pill pill-violet">${escapeHtml(tag)}</span>`).join('')}
+              ${(() => {
+                const allTags = kitAnalysis.roleInfo?.utilityTags || [];
+                const shown = allTags.slice(0, 2);
+                const extra = allTags.slice(2);
+                return `${shown.map((tag) => `<span class="pill pill-violet">${escapeHtml(tag)}</span>`).join('')}${
+                  extra.length
+                    ? `<span class="pill pill-muted" title="${escapeHtml(extra.join(' · '))}">+${extra.length}</span>`
+                    : ''
+                }`;
+              })()}
             </div>
           </div>
         </div>
@@ -731,7 +740,6 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                         }</span>`
                       : ''
                   }
-                  <span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>
                   ${
                     kitData?.ascensionStat?.key
                       ? `<span class="pill pill-sky">${escapeHtml(
@@ -741,9 +749,8 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                               ? 'CRIT RATE'
                               : formatStatKey(kitData.ascensionStat.key).replace('%', '')
                         )}${kitData.ascensionStat.value ? ` +${kitData.ascensionStat.value}${kitData.ascensionStat.key === 'eleMas' ? '' : '%'}` : ''}</span>`
-                      : ''
+                      : `<span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>`
                   }
-                  ${(kitAnalysis.roleInfo?.tags || []).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}
                 </div>
               </div>
             </div>

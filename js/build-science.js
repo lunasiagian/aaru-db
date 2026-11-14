@@ -331,15 +331,38 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     }
   }
 
+  const ascKey = kitData?.ascensionStat?.key || '';
+  const hasSustainAscension = ascKey === 'hp_' || ascKey === 'def_' || ascKey === 'heal_';
+  const hasOffensiveSelfBuff = /(?:his|her|their|\w+'s)\s+(?:crit\s+rate|crit\s+dmg|elemental\s+dmg)/i.test(
+    nonNormalText
+  );
+  const hasHealingLabel = /(?:heal|regeneration|hp\s+restored)/i.test(labelText);
+  const isDedicatedHealer = hasPartyHeal && (hasHealingLabel || hasSustainAscension || !hasOffensiveSelfBuff);
+
   let primaryRole = 'Quickswap DPS';
-  if (usesNormalAttack && !hasPartyHeal) primaryRole = 'On-Field Carry';
-  else if (hasOffField) primaryRole = 'Off-Field Sub-DPS';
-  else if (hasPartyHeal || hasShield || utilityTags.some((t) => t !== 'Self-Sustain')) primaryRole = 'Sustain / Support';
+  if (isDedicatedHealer) {
+    primaryRole = 'Healer / Support';
+    if (hasOffField) {
+      const charElem = getCharacterMeta(charKey)?.element || '';
+      utilityTags.push(charElem ? `Off-Field ${charElem}` : 'Off-Field Sub-DPS');
+    }
+  } else if (usesNormalAttack && !hasPartyHeal) {
+    primaryRole = 'On-Field Carry';
+  } else if (hasOffField) {
+    primaryRole = 'Off-Field Sub-DPS';
+  } else if (hasPartyHeal || hasShield || utilityTags.some((t) => t !== 'Self-Sustain')) {
+    primaryRole = 'Sustain / Support';
+  }
+
+  const finalTags =
+    primaryRole === 'Healer / Support'
+      ? utilityTags.filter((t) => t !== 'Healer')
+      : utilityTags;
 
   return {
     charKey,
     primaryRole,
-    utilityTags: utilityTags.slice(0, 4),
+    utilityTags: [...new Set(finalTags)].slice(0, 4),
     kitTriggers,
     usesNormalAttack
   };
@@ -751,7 +774,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     };
   }
 
-  if (role === 'Sustain / Support') {
+  if (role === 'Sustain / Support' || role === 'Healer / Support') {
     const skillSupport = /heal|shield|absorption|bonus/i.test((tSkill?.labels || []).join(' '));
     const burstSupport = /heal|shield|absorption|bonus/i.test((tBurst?.labels || []).join(' '));
     const eFirst = skillSupport && !burstSupport ? true : !skillSupport && burstSupport ? false : skillFavored;
