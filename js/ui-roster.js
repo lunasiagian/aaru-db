@@ -783,12 +783,15 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-er-card ${erCardStateClass}">
               <div class="dossier-er-head">
                 <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                  <span class="pill ${erReport.dataSource === 'KQM_TCL' ? 'pill-mint' : 'pill-violet'} mono" style="font-size:10.5px;">
-                    ${erReport.dataSource === 'KQM_TCL' ? 'KQM TCL VERIFIED' : 'KIT PARSER ESTIMATE'}
-                  </span>
-                  <span class="pill ${erPillClass} mono">${erPillLabel}</span>
-                </div>
+                <span class="pill ${erPillClass} mono er-status-pill">
+                  ${erPillLabel}
+                  <span
+                    class="er-source-badge ${erReport.dataSource === 'KQM_TCL' ? 'is-kqm' : 'is-parser'}"
+                    title="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                    data-tooltip="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                    aria-label="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                  >${erReport.dataSource === 'KQM_TCL' ? '✓' : '?'}</span>
+                </span>
               </div>
               <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}">${escapeHtml(erReport.summary)}</p>
               ${erReport.particleNote ? `<p class="muted mono" style="margin:0;font-size:11.5px;">Particles: ${escapeHtml(erReport.particleNote)}</p>` : ''}
