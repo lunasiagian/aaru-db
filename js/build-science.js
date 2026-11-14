@@ -278,31 +278,51 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       ) ||
       (hasLongDuration && /deals?\s+.*dmg/i.test(nonNormalText)));
 
-  // Scan utility tags with magnitudes across talents, passives, and unlocked constellations
+  // Scan utility tags with strict ally-recipient scope across sentences
   const utilityTags = [];
-  const emBuffMatch = nonNormalText.match(
-    /(?:nearby\s+party\s+members|all\s+(?:nearby\s+)?party\s+members|party\s+members)[\s\S]{0,100}?elemental\s+mastery\s+(?:is\s+)?increased\s+by\s+(\d+)/i
-  );
-  if (emBuffMatch) {
-    utilityTags.push(`EM Buffer (+${emBuffMatch[1]})`);
-  } else if (/(?:party|nearby\s+party\s+members)[\s\S]{0,80}?elemental\s+mastery/i.test(nonNormalText)) {
-    utilityTags.push('EM Buffer');
+  const matchesAllyBuff = (s, statRe) => {
+    const p1 = new RegExp(
+      `(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members(?:'|’s)?|allies(?:'|’s)?|all\\s+characters\\s+in\\s+the\\s+party)[^.]{0,35}?${statRe}`,
+      'i'
+    );
+    const p2 = new RegExp(
+      `(?:increases?|grant(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to)\\s+(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members|allies|the\\s+active\\s+character|all\\s+characters\\s+in\\s+the\\s+party)`,
+      'i'
+    );
+    if (!p1.test(s) && !p2.test(s)) return false;
+    // Reject "for each party member..., [Name]'s own stat is increased"
+    if (/for\s+each[^.]{0,60}(?:party\s+member|character\s+in\s+the\s+party)/i.test(s) && !p2.test(s)) {
+      return /(?:all\s+)?(?:nearby\s+)?(?:party\s+members(?:'|’s)|allies(?:'|’s))/.test(s);
+    }
+    return true;
+  };
+
+  const emSentence = sentences.find((s) => matchesAllyBuff(s, '(?:Elemental\\s+Mastery|EM)'));
+  if (emSentence) {
+    const emM = emSentence.match(/(?:Elemental\s+Mastery|EM)[^.]{0,35}?by\s+(\d+)/i);
+    utilityTags.push(emM ? `EM Buffer (+${emM[1]})` : 'EM Buffer');
   }
 
-  const dmgBuffMatch = nonNormalText.match(
-    /(?:nearby\s+party\s+members|all\s+(?:nearby\s+)?party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,120}?(?:dmg|damage)\s+(?:dealt\s+)?(?:is\s+)?increased\s+by\s+([\d.]+%)/i
+  const dmgSentence = sentences.find((s) =>
+    matchesAllyBuff(s, '(?:[^\\n.]{0,30}(?:DMG|Damage)|(?:DMG|Damage)\\s+(?:dealt|Bonus))')
   );
-  if (dmgBuffMatch) {
-    utilityTags.push(`DMG Buffer (+${dmgBuffMatch[1]})`);
-  } else if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,90}?(?:dmg\s+dealt|dmg\s+bonus|elemental\s+dmg)/i.test(nonNormalText)) {
-    utilityTags.push('DMG Buffer');
+  if (dmgSentence) {
+    const dmgM = dmgSentence.match(/(?:DMG|Damage)[^.]{0,35}?by\s+([\d.]+%)/i);
+    utilityTags.push(dmgM ? `DMG Buffer (+${dmgM[1]})` : 'DMG Buffer');
   }
-  if (/lunar[- ]?(?:charged|bloom|crystallize|reaction)[\s\S]{0,80}?(?:dmg|bonus|buff|increase)/i.test(nonNormalText)) {
+
+  const lunarSentence = sentences.find((s) =>
+    matchesAllyBuff(s, 'Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)[^.]{0,30}?DMG')
+  );
+  if (lunarSentence) {
     utilityTags.push('Lunar / Reaction Buffer');
   }
 
-  if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,80}?(?:increases?\s+atk|atk\s+(?:is\s+)?increased)/i.test(nonNormalText)) {
+  if (sentences.some((s) => matchesAllyBuff(s, 'ATK'))) {
     utilityTags.push('ATK Buffer');
+  }
+  if (sentences.some((s) => matchesAllyBuff(s, '(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)'))) {
+    utilityTags.push('Crit Buffer');
   }
   if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
     utilityTags.push('RES Shred');
