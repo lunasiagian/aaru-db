@@ -8,12 +8,12 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113z';
+} from './catalog.js?v=20261113aa';
 import {
   analyzeCharacterKit,
   computeCharacterCombatStats,
   evaluateErComfort
-} from './build-science.js?v=20261113z';
+} from './build-science.js?v=20261113aa';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -280,36 +280,54 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
     </div>`;
 }
 
-function renderDossierTalentsTab(c, kitData) {
+function renderDossierTalentsTab(c, kitData, kitAnalysis) {
   if (!kitData) {
     return '<div class="empty-state mono">Syncing live talents &amp; passives from Project Amber / Lunaris...</div>';
   }
   const talents = kitData.talents || [];
   const passives = kitData.passives || [];
-  const talentLv = (kind) =>
-    kind === 'normal' ? c.talent?.auto || 1 : kind === 'skill' ? c.talent?.skill || 1 : c.talent?.burst || 1;
+  const talentLv = (kind) => {
+    if (!c.owned) return 9;
+    return kind === 'normal' ? c.talent?.auto || 1 : kind === 'skill' ? c.talent?.skill || 1 : c.talent?.burst || 1;
+  };
+  const usesNormal = Boolean(kitAnalysis?.roleInfo?.usesNormalAttack);
 
   return `
     <div class="dossier-section">
       <div class="card-eyebrow">COMBAT TALENTS</div>
       <div class="dossier-kit-list">
         ${talents
-          .map(
-            (t) => `
-          <div class="dossier-kit-card">
+          .map((t) => {
+            const lv = talentLv(t.kind);
+            const multEntries = Object.entries(t.multipliers || {});
+            const multHtml = multEntries.length
+              ? `<div class="dossier-mult-grid mono">
+                  ${multEntries
+                    .map(([lbl, arr]) => {
+                      const idx = Math.min((arr?.length || 1) - 1, Math.max(0, lv - 1));
+                      const val = Array.isArray(arr) ? arr[idx] ?? arr[0] ?? '—' : String(arr || '—');
+                      return `<div class="dossier-mult-row"><span class="muted">${escapeHtml(lbl)}</span><span>${escapeHtml(val)}</span></div>`;
+                    })
+                    .join('')}
+                </div>`
+              : '';
+            return `
+          <div class="dossier-kit-card ${t.kind === 'normal' && usesNormal ? 'is-priority-talent' : ''}">
             <div class="dossier-kit-head">
               <div>
                 <span class="pill mono">${t.kind === 'normal' ? 'NORMAL' : t.kind === 'skill' ? 'SKILL' : 'BURST'}</span>
                 <strong class="dossier-kit-name">${escapeHtml(t.name)}</strong>
               </div>
               <div class="dossier-kit-badges mono">
+                ${t.kind === 'normal' && usesNormal ? '<span class="pill pill-amber">INFUSION PRIORITY</span>' : ''}
                 ${t.costElemVal ? `<span class="pill pill-sky">${t.costElemVal} Energy</span>` : ''}
-                ${c.owned ? `<span class="pill pill-mint">Lv.${talentLv(t.kind)}</span>` : ''}
+                <span class="pill pill-mint">${c.owned ? `Lv.${lv}` : `Preview Lv.${lv}`}</span>
               </div>
             </div>
             <p class="dossier-kit-desc">${escapeHtml(t.description)}</p>
-          </div>`
-          )
+            ${multHtml}
+          </div>`;
+          })
           .join('')}
       </div>
     </div>
@@ -435,6 +453,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
               <span class="pill">${escapeHtml(c.meta.element)}</span>
               <span class="pill">${escapeHtml(c.meta.weaponType)}</span>
               <span class="pill pill-gold">${c.meta.rarity || 5}★</span>
+              ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
             </div>
           </div>
         </div>
@@ -458,6 +477,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   ${c.owned ? `<span class="pill pill-gold">C${c.constellation}</span>` : ''}
                   ${c.owned ? `<span class="pill">A/E/Q: ${c.talent?.auto || 1}/${c.talent?.skill || 1}/${c.talent?.burst || 1}</span>` : ''}
                   <span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>
+                  ${(kitAnalysis.roleInfo?.tags || []).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}
                 </div>
               </div>
             </div>
@@ -545,7 +565,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-tab-body">
               ${
                 activeTab === 'talents'
-                  ? renderDossierTalentsTab(c, kitData)
+                  ? renderDossierTalentsTab(c, kitData, kitAnalysis)
                   : activeTab === 'targets'
                     ? renderDossierTargetsTab(c, isReadOnly)
                     : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)

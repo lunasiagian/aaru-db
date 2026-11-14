@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v2';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v3';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -772,6 +772,45 @@ function calcYattaCharLevelStats(upgrade, curveData, level, promoteIdx) {
   return out;
 }
 
+function formatYattaParam(val, fmt) {
+  const n = Number(val) || 0;
+  if (fmt === 'F1P') return `${(n * 100).toFixed(1)}%`;
+  if (fmt === 'F2P') return `${(n * 100).toFixed(2)}%`;
+  if (fmt === 'P') return `${Math.round(n * 100)}%`;
+  if (fmt === 'F1') return n.toFixed(1);
+  if (fmt === 'F2') return n.toFixed(2);
+  if (fmt === 'I') return String(Math.round(n));
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+function extractYattaMultipliers(promoteObj) {
+  const multipliers = {};
+  if (!promoteObj || typeof promoteObj !== 'object') return multipliers;
+  const levels = Object.keys(promoteObj)
+    .map((k) => Number(k))
+    .filter((n) => Number.isFinite(n) && n >= 1 && n <= 15)
+    .sort((a, b) => a - b);
+  if (!levels.length) return multipliers;
+
+  const baseDesc = promoteObj[String(levels[0])]?.description || [];
+  for (const line of baseDesc) {
+    const [rawLabel, rawTpl] = String(line || '').split('|');
+    const label = String(rawLabel || '').trim();
+    if (!label || !rawTpl) continue;
+    const row = [];
+    for (const lv of levels) {
+      const params = promoteObj[String(lv)]?.params || [];
+      const tpl = promoteObj[String(lv)]?.description?.find((l) => l.startsWith(`${label}|`))?.split('|')[1] || rawTpl;
+      const formatted = tpl.replace(/\{param(\d+):([^}]+)\}/g, (_, idx, fmt) =>
+        formatYattaParam(params[Number(idx) - 1], fmt)
+      );
+      row.push(formatted);
+    }
+    multipliers[label] = row;
+  }
+  return multipliers;
+}
+
 function parseYattaAvatarKit(data, curveData) {
   const upgrade = data?.upgrade || {};
   const lv80 = calcYattaCharLevelStats(upgrade, curveData, 80, 5);
@@ -813,9 +852,8 @@ function parseYattaAvatarKit(data, curveData) {
     if (tType === 0 || tType === 1) {
       const kind = activeIdx === 0 ? 'normal' : activeIdx === 1 ? 'skill' : 'burst';
       activeIdx += 1;
-      const labels = Array.isArray(t.promote?.['1']?.description)
-        ? t.promote['1'].description.map((line) => String(line).split('|')[0].trim()).filter(Boolean)
-        : [];
+      const multipliers = extractYattaMultipliers(t.promote);
+      const labels = Object.keys(multipliers);
       let costElemVal = Number(t.costElemVal) || 0;
       if (!costElemVal && kind === 'burst' && Array.isArray(t.promote?.['1']?.description)) {
         const costLine = t.promote['1'].description.find((l) => /Energy Cost/i.test(l));
@@ -825,7 +863,7 @@ function parseYattaAvatarKit(data, curveData) {
         }
       }
       if (kind === 'burst' && costElemVal > 0) burstCost = costElemVal;
-      talents.push({ kind, name: t.name, description: desc, costElemVal, labels });
+      talents.push({ kind, name: t.name, description: desc, costElemVal, labels, multipliers });
     } else if (tType === 2) {
       const slot = passiveIdx === 0 ? 'A1' : passiveIdx === 1 ? 'A4' : 'Utility';
       passiveIdx += 1;
@@ -853,7 +891,8 @@ function parseLunarisCharKit(detail) {
       name: na.name,
       description: cleanYattaText(na.description || na.desc || ''),
       costElemVal: 0,
-      labels: Object.keys(na.multipliers || {})
+      labels: Object.keys(na.multipliers || {}),
+      multipliers: na.multipliers || {}
     });
   }
 
@@ -864,7 +903,8 @@ function parseLunarisCharKit(detail) {
       name: es.name,
       description: cleanYattaText(es.description || es.desc || ''),
       costElemVal: 0,
-      labels: Object.keys(es.multipliers || {})
+      labels: Object.keys(es.multipliers || {}),
+      multipliers: es.multipliers || {}
     });
   }
 
@@ -877,7 +917,8 @@ function parseLunarisCharKit(detail) {
       name: eb.name,
       description: cleanYattaText(eb.description || eb.desc || ''),
       costElemVal: burstCost,
-      labels: Object.keys(eb.multipliers || {})
+      labels: Object.keys(eb.multipliers || {}),
+      multipliers: eb.multipliers || {}
     });
   }
 

@@ -1,4 +1,4 @@
-import { getCharacterMeta } from './catalog.js?v=20261113z';
+import { getCharacterMeta } from './catalog.js?v=20261113aa';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -65,11 +65,172 @@ export function getArtifactMainStatValue(mainStatKey, level = 20, rarity = 5) {
   return (base5 + (max5 - base5) * t) * rarScale;
 }
 
+const STAT_BOUNDS = {
+  em: [200, 2000],
+  maxHp: [15000, 80000],
+  totalDef: [1200, 5500],
+  totalAtk: [1200, 6500]
+};
+
+function parseFirstNumber(str) {
+  const m = String(str || '').replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : NaN;
+}
+
+function getTalentLevelForKind(kind, talentLevels) {
+  if (kind === 'normal') return Math.max(1, Math.min(15, Number(talentLevels?.auto) || 9));
+  if (kind === 'skill') return Math.max(1, Math.min(15, Number(talentLevels?.skill) || 9));
+  return Math.max(1, Math.min(15, Number(talentLevels?.burst) || 9));
+}
+
+function addUniqueCap(caps, statKey, capValue, label) {
+  const bounds = STAT_BOUNDS[statKey];
+  if (!bounds || !Number.isFinite(capValue)) return;
+  const rounded = Math.round(capValue);
+  if (rounded < bounds[0] || rounded > bounds[1]) return;
+  if (caps.some((c) => c.statKey === statKey && Math.abs(c.capValue - rounded) < 50)) return;
+  caps.push({ statKey, capValue: rounded, label });
+}
+
+export function extractStatCaps(kitData, talentLevels = null) {
+  const caps = [];
+  const talents = kitData?.talents || [];
+  const passives = kitData?.passives || [];
+  const fullText = [
+    ...talents.map((t) => `${t.name} ${t.description}`),
+    ...passives.map((p) => `${p.name} ${p.description}`)
+  ].join('\n');
+
+  // 1. Explicit threshold mentions (e.g. "1,000 Elemental Mastery", "40,000 Max HP")
+  const explicitPatterns = [
+    { re: /([\d,]+)\s+Elemental Mastery/gi, statKey: 'em', prefix: 'Passive EM Cap' },
+    { re: /([\d,]+)\s+Max HP/gi, statKey: 'maxHp', prefix: 'Passive HP Cap' },
+    { re: /([\d,]+)\s+DEF\b/gi, statKey: 'totalDef', prefix: 'Passive DEF Cap' },
+    { re: /([\d,]+)\s+ATK\b/gi, statKey: 'totalAtk', prefix: 'Passive ATK Cap' }
+  ];
+  for (const { re, statKey, prefix } of explicitPatterns) {
+    let m;
+    while ((m = re.exec(fullText)) !== null) {
+      const val = Number(m[1].replace(/,/g, ''));
+      addUniqueCap(caps, statKey, val, `${prefix} (${val.toLocaleString()})`);
+    }
+  }
+
+  // 2. Multiplier-table ratio caps (e.g. "Max ATK Bonus" 400 / "ATK Bonus Ratio" 10% -> 4,000 ATK)
+  for (const t of talents) {
+    const mult = t.multipliers || {};
+    const lvIdx = getTalentLevelForKind(t.kind, talentLevels) - 1;
+    const entries = Object.entries(mult);
+    const kindLabel = t.kind === 'normal' ? 'NA' : t.kind === 'skill' ? 'Skill' : 'Burst';
+
+    for (const [statWord, statKey] of [
+      ['ATK', 'totalAtk'],
+      ['HP', 'maxHp'],
+      ['DEF', 'totalDef'],
+      ['EM', 'em']
+    ]) {
+      const maxEntry = entries.find(([lbl]) => new RegExp(`max\\s+${statWord}\\s+bonus`, 'i').test(lbl));
+      const ratioEntry = entries.find(([lbl]) => new RegExp(`${statWord}\\s+bonus\\s+ratio`, 'i').test(lbl));
+      if (maxEntry && ratioEntry) {
+        const maxVal = parseFirstNumber(maxEntry[1]?.[lvIdx] ?? maxEntry[1]?.[0]);
+        const ratioPct = parseFirstNumber(ratioEntry[1]?.[lvIdx] ?? ratioEntry[1]?.[0]);
+        if (maxVal > 0 && ratioPct > 0) {
+          const derived = maxVal / (ratioPct / 100);
+          addUniqueCap(caps, statKey, derived, `${kindLabel} ${statWord} Cap (${Math.round(derived).toLocaleString()})`);
+        }
+      }
+    }
+  }
+
+  // 3. Passive scaling ratio caps (e.g. "Every point of ATK ... by 0.7%. The maximum increase ... is 14%")
+  for (const p of passives) {
+    const desc = p.description || '';
+    const m = desc.match(
+      /every\s+(?:([\d,]+)\s+points?\s+of\s+|point\s+of\s+)(ATK|Max HP|HP|DEF|Elemental Mastery)[\s\S]{0,140}?by\s+([\d.]+)%[\s\S]{0,160}?max(?:imum)?(?:\s+increase)?[^.\d]*([\d.]+)%/i
+    );
+    if (m) {
+      const unitStep = m[1] ? Number(m[1].replace(/,/g, '')) : 1;
+      const statWord = m[2].toUpperCase();
+      const perStep = Number(m[3]);
+      const maxPct = Number(m[4]);
+      if (perStep > 0 && maxPct > 0) {
+        let derived = (maxPct / perStep) * unitStep;
+        const statKey =
+          statWord.includes('HP')
+            ? 'maxHp'
+            : statWord.includes('DEF')
+              ? 'totalDef'
+              : statWord.includes('MASTERY')
+                ? 'em'
+                : 'totalAtk';
+        // Handle datamine phrasing like "every point of ATK ... 0.7% ... max 14%" (actually per 100 ATK)
+        if (unitStep === 1 && statKey !== 'em' && derived < 500) derived *= 100;
+        addUniqueCap(caps, statKey, derived, `${p.slot} Scaling Cap (${Math.round(derived).toLocaleString()})`);
+      }
+    }
+  }
+
+  return caps;
+}
+
+/**
+ * Deterministically classify a character's combat role and Normal Attack / infusion relevance.
+ */
+export function classifyCharacterRole(charKey, kitData) {
+  const talents = kitData?.talents || [];
+  const passives = kitData?.passives || [];
+  const nonNormalText = talents
+    .filter((t) => t.kind !== 'normal')
+    .map((t) => `${t.name} ${t.description}`)
+    .concat(passives.map((p) => `${p.name} ${p.description}`))
+    .join('\n');
+  const labelText = talents.flatMap((t) => t.labels || []).join(' ');
+
+  const usesNormalAttack =
+    /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging/i.test(
+      nonNormalText
+    );
+  const hasHeal = /heal|regeneration|restores?\s+(?:party\s+members'?\s+)?hp/i.test(`${labelText}\n${nonNormalText}`);
+  const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield/i.test(`${labelText}\n${nonNormalText}`);
+  const hasBuff =
+    /all\s+(?:nearby\s+)?party\s+members|all\s+characters\s+in\s+the\s+party|increases?\s+(?:all\s+)?(?:nearby\s+)?party\s+members|res\s+is\s+decreased|decreases?\s+.*res/i.test(
+      nonNormalText
+    );
+  const hasOffField =
+    /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field/i.test(
+      nonNormalText
+    );
+
+  let primaryRole = 'DPS';
+  if (usesNormalAttack && !hasHeal) primaryRole = 'On-Field DPS';
+  else if (hasHeal && hasBuff) primaryRole = 'Support / Healer';
+  else if (hasHeal) primaryRole = 'Healer';
+  else if (hasShield && hasOffField) primaryRole = 'Off-Field Shielder';
+  else if (hasShield) primaryRole = 'Shielder';
+  else if (hasOffField && hasBuff) primaryRole = 'Sub-DPS / Buffer';
+  else if (hasOffField) primaryRole = 'Sub-DPS';
+  else if (hasBuff) primaryRole = 'Support';
+
+  const tags = [];
+  if (usesNormalAttack) tags.push('Infusion · Normal Atk');
+  if (hasOffField) tags.push('Off-Field');
+  if (hasBuff) tags.push('Team Buffer');
+  if (hasShield) tags.push('Shielder');
+  if (hasHeal) tags.push('Healer');
+
+  return {
+    charKey,
+    primaryRole,
+    tags: tags.slice(0, 3),
+    usesNormalAttack
+  };
+}
+
 /**
  * Deterministically inspect hydrated talents & passives to classify kit scaling,
- * non-crit mechanics, useful substats, and passive stat caps.
+ * non-crit mechanics, useful substats, role, and passive stat caps.
  */
-export function analyzeCharacterKit(charKey, kitData) {
+export function analyzeCharacterKit(charKey, kitData, talentLevels = null) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
 
@@ -108,29 +269,8 @@ export function analyzeCharacterKit(charKey, kitData) {
     usefulSubstats = ['atk_', 'eleMas', 'critRate_', 'critDMG_', 'enerRech_'];
   }
 
-  // Detect explicit passive stat thresholds (e.g. 1,000 EM or 40,000 Max HP)
-  const statCaps = [];
-  const emCapMatch = passiveText.match(/([\d,]+)\s+Elemental Mastery/i);
-  if (emCapMatch) {
-    const val = Number(emCapMatch[1].replace(/,/g, ''));
-    if (val >= 200 && val <= 2000) {
-      statCaps.push({ statKey: 'em', capValue: val, label: `Passive EM Cap (${val.toLocaleString()})` });
-    }
-  }
-  const hpCapMatch = passiveText.match(/([\d,]+)\s+Max HP/i);
-  if (hpCapMatch) {
-    const val = Number(hpCapMatch[1].replace(/,/g, ''));
-    if (val >= 15000 && val <= 80000) {
-      statCaps.push({ statKey: 'maxHp', capValue: val, label: `Passive HP Cap (${val.toLocaleString()})` });
-    }
-  }
-  const defCapMatch = passiveText.match(/([\d,]+)\s+DEF/i);
-  if (defCapMatch) {
-    const val = Number(defCapMatch[1].replace(/,/g, ''));
-    if (val >= 1500 && val <= 6000) {
-      statCaps.push({ statKey: 'totalDef', capValue: val, label: `Passive DEF Cap (${val.toLocaleString()})` });
-    }
-  }
+  const statCaps = extractStatCaps(kitData, talentLevels);
+  const roleInfo = classifyCharacterRole(charKey, kitData);
 
   return {
     charKey,
@@ -138,6 +278,7 @@ export function analyzeCharacterKit(charKey, kitData) {
     primaryScaling,
     usefulSubstats,
     statCaps,
+    roleInfo,
     burstCost: Number(kitData?.burstCost) || 60
   };
 }
@@ -168,7 +309,7 @@ function pickWeaponStats(weapon, weaponStats) {
  * Computes exact total character combat stats and artifact Roll Value (RV%).
  */
 export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null) {
-  const kitAnalysis = analyzeCharacterKit(char?.key, kitData);
+  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, char?.talent);
   const charBase = pickCharBaseStats(char, kitData);
   const wepBase = pickWeaponStats(weapon, weaponStats);
 
