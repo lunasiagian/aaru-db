@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v1';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v2';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -705,6 +705,8 @@ function cleanYattaText(str) {
   return String(str || '')
     .replace(/<color=[^>]*>/gi, '')
     .replace(/<\/color>/gi, '')
+    .replace(/\{LINK#[^}]*\}/gi, '')
+    .replace(/\{\/LINK\}/gi, '')
     .replace(/\{LAYOUT_[^}]*#([^}]*)\}/gi, '$1')
     .replace(/\\n/g, '\n')
     .trim();
@@ -843,21 +845,56 @@ function parseYattaAvatarKit(data, curveData) {
 function parseLunarisCharKit(detail) {
   const skills = detail?.skills || {};
   const talents = [];
-  if (detail?.attacks?.name) {
-    talents.push({ kind: 'normal', name: detail.attacks.name, description: cleanYattaText(detail.attacks.desc || ''), costElemVal: 0, labels: [] });
+
+  const na = skills.normalattack || detail?.attacks;
+  if (na?.name) {
+    talents.push({
+      kind: 'normal',
+      name: na.name,
+      description: cleanYattaText(na.description || na.desc || ''),
+      costElemVal: 0,
+      labels: Object.keys(na.multipliers || {})
+    });
   }
-  if (skills?.skill?.name) {
-    talents.push({ kind: 'skill', name: skills.skill.name, description: cleanYattaText(skills.skill.desc || ''), costElemVal: 0, labels: [] });
+
+  const es = skills.elementalskill || skills.skill;
+  if (es?.name) {
+    talents.push({
+      kind: 'skill',
+      name: es.name,
+      description: cleanYattaText(es.description || es.desc || ''),
+      costElemVal: 0,
+      labels: Object.keys(es.multipliers || {})
+    });
   }
-  let burstCost = Number(skills?.burst?.energyCost || skills?.burst?.cost || 60);
-  if (skills?.burst?.name) {
-    talents.push({ kind: 'burst', name: skills.burst.name, description: cleanYattaText(skills.burst.desc || ''), costElemVal: burstCost, labels: [] });
+
+  const eb = skills.elementalburst || skills.burst;
+  const ebCostRaw = eb?.multipliers?.['Energy Cost']?.[0] || eb?.energyCost || eb?.cost || 60;
+  const burstCost = Number(String(ebCostRaw).replace(/[^\d]/g, '')) || 60;
+  if (eb?.name) {
+    talents.push({
+      kind: 'burst',
+      name: eb.name,
+      description: cleanYattaText(eb.description || eb.desc || ''),
+      costElemVal: burstCost,
+      labels: Object.keys(eb.multipliers || {})
+    });
   }
-  const passives = (Array.isArray(detail?.passives) ? detail.passives : []).map((p, idx) => ({
-    slot: idx === 0 ? 'A1' : idx === 1 ? 'A4' : 'Utility',
-    name: p?.name || `Passive ${idx + 1}`,
-    description: cleanYattaText(p?.desc || p?.description || '')
-  }));
+
+  const rawPassives = Array.isArray(detail?.passives)
+    ? detail.passives
+    : Object.entries(detail?.passives || {})
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([, v]) => v);
+
+  const passives = rawPassives
+    .filter((p) => p && (p.name || p.description || p.desc))
+    .map((p, idx) => ({
+      slot: idx === 0 ? 'A1' : idx === 1 ? 'A4' : idx === 2 ? 'Special' : 'Utility',
+      name: p.name || `Passive ${idx + 1}`,
+      description: cleanYattaText(p.description || p.desc || '')
+    }));
+
   return {
     baseStats: {
       lv80: { hp: 11200, atk: 260, def: 680 },

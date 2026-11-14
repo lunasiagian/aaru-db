@@ -1,4 +1,4 @@
-import { getCharacterMeta } from './catalog.js?v=20261113y';
+import { getCharacterMeta } from './catalog.js?v=20261113z';
 
 const AVG_ROLL_VALUE = {
   hp: 254,

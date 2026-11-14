@@ -8,12 +8,12 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113y';
+} from './catalog.js?v=20261113z';
 import {
   analyzeCharacterKit,
   computeCharacterCombatStats,
   evaluateErComfort
-} from './build-science.js?v=20261113y';
+} from './build-science.js?v=20261113z';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
