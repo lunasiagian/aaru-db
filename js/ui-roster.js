@@ -280,6 +280,16 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
     </div>`;
 }
 
+const TIMING_LABEL_RE = /^(cd|.*duration|energy cost|.*stamina cost)$/i;
+
+function formatKitDescription(desc) {
+  const escaped = escapeHtml(desc || '');
+  return escaped.replace(
+    /^(Tap|Hold|Normal Attack|Charged Attack|Plunging Attack|Radiance:[^:\n]*:?)$/gm,
+    '<strong class="kit-subheading">$1</strong>'
+  );
+}
+
 function renderDossierTalentsTab(c, kitData, kitAnalysis) {
   if (!kitData) {
     return '<div class="empty-state mono">Syncing live talents &amp; passives from Project Amber / Lunaris...</div>';
@@ -300,17 +310,42 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis) {
           .map((t) => {
             const lv = talentLv(t.kind);
             const multEntries = Object.entries(t.multipliers || {});
-            const multHtml = multEntries.length
-              ? `<div class="dossier-mult-grid mono">
-                  ${multEntries
-                    .map(([lbl, arr]) => {
-                      const idx = Math.min((arr?.length || 1) - 1, Math.max(0, lv - 1));
-                      const val = Array.isArray(arr) ? arr[idx] ?? arr[0] ?? '—' : String(arr || '—');
-                      return `<div class="dossier-mult-row"><span class="muted">${escapeHtml(lbl)}</span><span>${escapeHtml(val)}</span></div>`;
-                    })
-                    .join('')}
+            const timingPills = [];
+            const scalingRows = [];
+
+            for (const [lbl, arr] of multEntries) {
+              const idx = Math.min((arr?.length || 1) - 1, Math.max(0, lv - 1));
+              const val = Array.isArray(arr) ? arr[idx] ?? arr[0] ?? '—' : String(arr || '—');
+              if (TIMING_LABEL_RE.test(lbl.trim())) {
+                timingPills.push({ lbl, val });
+              } else {
+                scalingRows.push({ lbl, val });
+              }
+            }
+
+            const timingHtml = timingPills.length
+              ? `<div class="dossier-timing-pills mono">
+                  ${timingPills.map((p) => `<span class="pill">${escapeHtml(p.lbl)}: ${escapeHtml(p.val)}</span>`).join('')}
                 </div>`
               : '';
+
+            const multHtml = scalingRows.length
+              ? `<details class="dossier-mult-drawer">
+                  <summary class="dossier-mult-summary mono">
+                    <span>Scaling &amp; Multipliers (${scalingRows.length})</span>
+                    <span class="text-cyan">Lv.${lv} ▾</span>
+                  </summary>
+                  <div class="dossier-mult-table mono">
+                    ${scalingRows
+                      .map(
+                        (r) =>
+                          `<div class="dossier-mult-row"><span class="dossier-mult-lbl">${escapeHtml(r.lbl)}</span><span class="dossier-mult-val">${escapeHtml(r.val)}</span></div>`
+                      )
+                      .join('')}
+                  </div>
+                </details>`
+              : '';
+
             return `
           <div class="dossier-kit-card ${t.kind === 'normal' && usesNormal ? 'is-priority-talent' : ''}">
             <div class="dossier-kit-head">
@@ -324,7 +359,8 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis) {
                 <span class="pill pill-mint">${c.owned ? `Lv.${lv}` : `Preview Lv.${lv}`}</span>
               </div>
             </div>
-            <p class="dossier-kit-desc">${escapeHtml(t.description)}</p>
+            ${timingHtml}
+            <p class="dossier-kit-desc">${formatKitDescription(t.description)}</p>
             ${multHtml}
           </div>`;
           })
