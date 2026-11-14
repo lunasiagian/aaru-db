@@ -877,7 +877,7 @@ textarea:focus {
 .alloc-lbl {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
 }
 
 .alloc-dot {
@@ -2007,8 +2007,8 @@ textarea:focus {
   flex: 1 1 250px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 16px;
+  padding: 12px 16px;
   border-radius: 10px;
   background: rgba(12, 20, 31, 0.72);
   border: 1px solid var(--border-slate);
@@ -2422,7 +2422,7 @@ textarea:focus {
 .cmd-card-head {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .cmd-icon-frame {
