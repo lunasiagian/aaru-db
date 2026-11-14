@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261114c';
+} from './build-science.js?v=20261114d';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -623,18 +623,18 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       </div>
 
       <div class="dossier-insights-card">
-        <div class="card-eyebrow" style="margin-bottom:8px;">DETERMINISTIC KIT INSIGHTS</div>
-        <ul class="dossier-insights-list">
+        <div class="card-eyebrow" style="margin-bottom:8px;">KIT SUMMARY &amp; PRIORITY</div>
+        <div class="dossier-insights-grid">
           ${insights
             .map(
               (ins) => `
-            <li class="dossier-insight-item">
-              <span class="pill pill-${ins.tone}">${escapeHtml(ins.label)}</span>
-              <span>${escapeHtml(ins.text)}</span>
-            </li>`
+            <div class="dossier-insight-row">
+              <div class="dossier-insight-key mono">${escapeHtml(ins.label)}</div>
+              <div class="dossier-insight-val">${escapeHtml(ins.text)}</div>
+            </div>`
             )
             .join('')}
-        </ul>
+        </div>
       </div>
 
       <label class="mini-field">

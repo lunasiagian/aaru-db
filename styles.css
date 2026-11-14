@@ -34,6 +34,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px;
+}
+
 html,
 body {
   margin: 0;
@@ -45,8 +49,8 @@ body {
     radial-gradient(ellipse 55% 40% at 85% 5%, rgba(167, 139, 250, 0.10), transparent 65%);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.5;
 }
 
 [hidden] {
@@ -97,7 +101,7 @@ body {
 .eyebrow,
 .card-eyebrow {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -144,7 +148,7 @@ body {
   gap: 4px;
   padding: 3px 9px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   background: rgba(42, 63, 85, 0.55);
   border: 1px solid var(--border-slate);
@@ -184,7 +188,7 @@ body {
   background: var(--bg-card-alt);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, opacity 0.15s;
@@ -291,7 +295,7 @@ textarea:focus {
 
 .mini-field > span {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11.5px;
   color: var(--text-muted);
   letter-spacing: 0.06em;
 }
@@ -1278,7 +1282,7 @@ textarea:focus {
 }
 
 .req-name {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   min-width: 0;
   white-space: nowrap;
@@ -1291,7 +1295,7 @@ textarea:focus {
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12.5px;
   min-width: 0;
 }
 
@@ -3601,7 +3605,7 @@ textarea:focus {
 
 .dossier-roi-slot {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   margin-right: 6px;
 }
 
@@ -3622,28 +3626,72 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
-  padding: 2px 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  padding: 3px 0;
   border-top: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
-.dossier-insights-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.dossier-insights-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-.dossier-insight-item {
-  display: flex;
-  flex-wrap: wrap;
+.dossier-insight-row {
+  display: grid;
+  grid-template-columns: 165px 1fr;
+  gap: 10px 16px;
   align-items: baseline;
-  gap: 8px;
-  font-size: 12.5px;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dossier-insight-row:first-child {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.dossier-insight-key {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dossier-insight-val {
+  font-size: 13.5px;
   line-height: 1.45;
-  color: var(--text-secondary, #cbd5e1);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .dossier-insight-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* Global +1pt Telemetry Typography Scale */
+.card-eyebrow,
+.combat-stat-box .stat-label {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.combat-stat-box .stat-val {
+  font-size: 16.5px;
+}
+
+.item-meta,
+.dossier-er-summary,
+.dossier-er-team-row,
+.dossier-substats-list,
+.dossier-kit-desc,
+.prefarm-surplus-summary {
+  font-size: 13.5px;
+  line-height: 1.45;
 }
 
 .btn-changelog {

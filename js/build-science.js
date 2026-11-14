@@ -174,6 +174,17 @@ export function extractStatCaps(kitData, talentLevels = null) {
   return caps;
 }
 
+function stripMarkup(str) {
+  return String(str || '')
+    .replace(/<color=#[0-9A-Fa-f]+>/gi, '')
+    .replace(/<\/color>/gi, '')
+    .replace(/<\/?i>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/^#+/, '')
+    .replace(/\s+#+/g, ' ')
+    .trim();
+}
+
 /**
  * Deterministically classify a character's combat role, utility vector, and conditional kit triggers.
  */
@@ -183,32 +194,40 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const ownedCon = Number(constellation) || 0;
   const activeCons = (kitData?.constellations || []).filter((c) => Number(c.level) <= ownedCon);
 
-  const burstName = talents.find((t) => t.kind === 'burst')?.name || '';
+  const burstName = stripMarkup(talents.find((t) => t.kind === 'burst')?.name || '');
   const nonNormalText = talents
     .filter((t) => t.kind !== 'normal')
-    .map((t) => `${t.name} ${t.description}`)
-    .concat(passives.map((p) => `${p.name} ${p.description}`))
-    .concat(activeCons.map((c) => `${c.name} ${c.description}`))
+    .map((t) => `${stripMarkup(t.name)} ${stripMarkup(t.description)}`)
+    .concat(passives.map((p) => `${stripMarkup(p.name)} ${stripMarkup(p.description)}`))
+    .concat(activeCons.map((c) => `${stripMarkup(c.name)} ${stripMarkup(c.description)}`))
     .join('\n');
   const labelText = talents.flatMap((t) => t.labels || []).join(' ');
+  const sentences = nonNormalText.split(/(?<=[.!?\n])\s+|\n+/);
 
-  const usesNormalAttack =
-    /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging/i.test(
-      nonNormalText
-    ) ||
-    /(?:Normal|Charged|Plunging)\s+Attack[^.]{0,80}(?:DMG|enhanced|enhances?|infused|converted)/i.test(
-      nonNormalText
-    ) ||
-    /(?:enhances?|increases?)\s+(?:his|her|their|\w+'s)?\s*(?:Normal|Charged|Plunging)\s+Attack/i.test(
-      nonNormalText
-    ) ||
-    /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(nonNormalText);
+  const isCoordSentence = (s) =>
+    /(?:when|after)\s+(?:your\s+active\s+character'?s?\s+)?(?:Normal|Charged|Plunging)\s+(?:and\s+(?:Charged|Plunging)\s+)?Attacks?\s+(?:hit|are\s+used|trigger)[^.]{0,80}(?:create|trigger|unleash|launch|coordinated)/i.test(
+      s
+    ) || /(?:active\s+character'?s?\s+)?(?:Normal|Charged)\s+Attacks?\s+will\s+trigger/i.test(s);
+
+  const hasCoordinatedTrigger = sentences.some(isCoordSentence);
+  const nonCoordText = sentences.filter((s) => !isCoordSentence(s)).join('\n');
 
   const hasStanceExitClause = /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(
     nonNormalText
   );
 
-  const sentences = nonNormalText.split(/(?<=[.!?\n])\s+|\n+/);
+  const usesNormalAttack =
+    /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging\s+attack\s+(?:dmg|infusion)/i.test(
+      nonCoordText
+    ) ||
+    /(?:Normal|Charged|Plunging)\s+(?:and\s+(?:Charged|Plunging)\s+)?Attack[^.]{0,80}(?:enhanced|enhances?|infused|converted|dmg\s+(?:is\s+)?increased)/i.test(
+      nonCoordText
+    ) ||
+    /(?:enhances?|increases?)\s+(?:his|her|their|\w+'s)?\s*(?:Normal|Charged|Plunging)\s+Attack/i.test(
+      nonCoordText
+    ) ||
+    hasStanceExitClause;
+
   const hasPartyHeal = sentences.some(
     (s) =>
       /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s) &&
@@ -219,7 +238,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     (sentences.some((s) => /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s)) ||
       /bond\s+of\s+life/i.test(nonNormalText));
 
-  const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield/i.test(
+  const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield|forms?\s+a\s+shield/i.test(
     `${labelText}\n${nonNormalText}`
   );
   const hasLongDuration = talents
@@ -234,9 +253,10 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const hasOffField =
     !usesNormalAttack &&
     !hasStanceExitClause &&
-    (/off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
-      nonNormalText
-    ) ||
+    (hasCoordinatedTrigger ||
+      /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
+        nonNormalText
+      ) ||
       (hasLongDuration && /deals?\s+.*dmg/i.test(nonNormalText)));
 
   // Scan utility tags with magnitudes across talents, passives, and unlocked constellations
@@ -264,6 +284,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   }
   if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
     utilityTags.push('RES Shred');
+  }
+  if (/interruption\s+resistance|resistance\s+to\s+interruption/i.test(nonNormalText)) {
+    utilityTags.push('Poise / IR');
+  }
+  if (/dmg\s+reduction|reduces?\s+dmg\s+taken|decreases?\s+dmg\s+taken/i.test(nonNormalText)) {
+    utilityTags.push('DMG Reduction');
   }
   if (hasShield) utilityTags.push('Shielder');
   if (hasPartyHeal) utilityTags.push('Healer');
@@ -301,7 +327,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   return {
     charKey,
     primaryRole,
-    utilityTags: utilityTags.slice(0, 3),
+    utilityTags: utilityTags.slice(0, 4),
     kitTriggers,
     usesNormalAttack
   };
@@ -728,19 +754,37 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
   const ownedCon = Number(char?.constellation) || 0;
   const highlights = [];
   for (const trig of roleInfo.kitTriggers || []) {
-    highlights.push(`${trig.source}: ${trig.effect}`);
+    highlights.push(stripMarkup(`${trig.source}: ${trig.effect}`));
   }
   for (const cap of analysis.statCaps || []) {
-    highlights.push(`${cap.source}: ${cap.target} ${cap.stat}`);
+    highlights.push(stripMarkup(`${cap.source}: ${cap.target} ${cap.stat}`));
+  }
+  for (const p of kitData?.passives || []) {
+    if (p.slot !== 'A1' && p.slot !== 'A4' && p.slot !== 'Hexerei') continue;
+    const pDesc = stripMarkup(p.description || '');
+    const naCaMatch = pDesc.match(/Normal\s+and\s+Charged\s+Attack[^.]{0,60}by\s+(\d+%)/i);
+    const atkSpdMatch = pDesc.match(/ATK\s+SPD[^.]{0,40}by\s+(\d+%)/i);
+    if (naCaMatch && atkSpdMatch) {
+      highlights.push(`${p.slot}: +${naCaMatch[1]} NA/CA DMG & +${atkSpdMatch[1]} ATK SPD`);
+    } else if (naCaMatch) {
+      highlights.push(`${p.slot}: +${naCaMatch[1]} NA/CA DMG`);
+    } else if (/counterattack|max(?:imum)?\s+dmg\s+bonus/i.test(pDesc)) {
+      highlights.push(`${p.slot}: Instant Max Counter`);
+    } else {
+      const dmgPctM = pDesc.match(/(?:Elemental\s+(?:Skill|Burst)|all\s+party\s+members'?)\s+(?:DMG|CRIT\s+Rate)[^.]{0,45}?by\s+([\d.]+%)/i);
+      if (dmgPctM) highlights.push(`${p.slot}: +${dmgPctM[1]} Buff`);
+    }
   }
   for (const c of kitData?.constellations || []) {
     if (Number(c.level) > ownedCon) continue;
-    const desc = String(c.description || '');
+    const desc = stripMarkup(c.description || '');
     const lvMatch = desc.match(/increases?\s+the\s+level\s+of\s+(.+?)\s+by\s+(\d+)/i);
     if (lvMatch) {
-      highlights.push(`C${c.level}: +${lvMatch[2]} ${lvMatch[1].trim()}`);
+      highlights.push(`C${c.level}: +${lvMatch[2]} ${stripMarkup(lvMatch[1])}`);
     } else if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?[\w\s]*res/i.test(desc)) {
       highlights.push(`C${c.level}: RES Shred`);
+    } else if (/creates?\s+a\s+shield|shield\s+that\s+absorbs/i.test(desc)) {
+      highlights.push(`C${c.level}: Shield`);
     } else if (/restore|regenerates?\s+[\d.]+\s+energy/i.test(desc)) {
       highlights.push(`C${c.level}: Energy Refund`);
     } else if (/crit\s+(rate|dmg)/i.test(desc)) {
@@ -749,7 +793,7 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
       highlights.push(`C${c.level}: Extra Skill Charge`);
     }
   }
-  const uniqueHighlights = [...new Set(highlights)].slice(0, 4);
+  const uniqueHighlights = [...new Set(highlights.map(stripMarkup))].slice(0, 5);
   const highlightText = uniqueHighlights.length
     ? uniqueHighlights.join(' · ')
     : ownedCon === 0
@@ -764,22 +808,22 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
     {
       label: 'CORE IDENTITY & UTILITY',
       tone: 'cyan',
-      text: `${roleInfo.primaryRole}${tags}. Scales off ${analysis.primaryScaling}${critNote}.${weaponNote}`
+      text: stripMarkup(`${roleInfo.primaryRole}${tags}. Scales off ${analysis.primaryScaling}${critNote}.${weaponNote}`)
     },
     {
       label: 'TALENT PRIORITY ORDER',
       tone: 'gold',
-      text: `${priority.orderText}. ${priority.lowValueNote}`
+      text: stripMarkup(`${priority.orderText}. ${priority.lowValueNote}`)
     },
     {
       label: `UNLOCKED PASSIVES & C${ownedCon}`,
       tone: 'mint',
-      text: highlightText
+      text: stripMarkup(highlightText)
     },
     {
       label: 'ER & TEAM COMFORT VERDICT',
       tone: erDiag?.soloDelta < 0 && erDiag?.hasEndgameFlag ? 'coral' : 'cyan',
-      text: erText
+      text: stripMarkup(erText)
     }
   ];
 }
@@ -848,7 +892,7 @@ export function calcTalentUpgradeDiff(charKey, kitData, slot, currentLvl, target
   return {
     slot,
     slotLabel: labelMap[slot] || slot,
-    talentName: talent?.name || labelMap[slot],
+    talentName: stripMarkup(talent?.name || labelMap[slot]),
     changed,
     baseCur,
     baseTgt,
