@@ -195,6 +195,10 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const activeCons = (kitData?.constellations || []).filter((c) => Number(c.level) <= ownedCon);
 
   const burstName = stripMarkup(talents.find((t) => t.kind === 'burst')?.name || '');
+  const normalText = talents
+    .filter((t) => t.kind === 'normal')
+    .map((t) => `${stripMarkup(t.name)} ${stripMarkup(t.description)}`)
+    .join('\n');
   const nonNormalText = talents
     .filter((t) => t.kind !== 'normal')
     .map((t) => `${stripMarkup(t.name)} ${stripMarkup(t.description)}`)
@@ -216,7 +220,15 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     nonNormalText
   );
 
+  const normalHasInfusion =
+    /(?:Normal|Charged|Plunging)(?:,\s*(?:Charged|Plunging))*(?:\s+and\s+(?:Charged|Plunging))?\s+Attacks?[^.]{0,100}(?:converted|infused|cannot\s+be\s+overridden)/i.test(
+      normalText
+    ) ||
+    (/bond\s+of\s+life/i.test(normalText) &&
+      /masque\s+of\s+the\s+red\s+death|infused|converted/i.test(normalText));
+
   const usesNormalAttack =
+    normalHasInfusion ||
     /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging\s+attack\s+(?:dmg|infusion)/i.test(
       nonCoordText
     ) ||
@@ -354,6 +366,11 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
 
   const labelText = talents.flatMap((t) => t.labels || []).join(' ');
   const hpHits = (fullText.match(/\bmax\s*hp\b/gi) || []).length + (labelText.match(/\bhp\b/gi) || []).length;
+  const hasHpScaling =
+    /\bhp\b/i.test(labelText) ||
+    /(?:dmg|damage|shield|heal|healing|bonus)[^.]{0,45}(?:of|based\s+on)\s+(?:her|his|their|\w+'s)?\s*max\s*hp/i.test(
+      fullText
+    );
   const defHits = (fullText.match(/\bdef\b/gi) || []).length;
   const emHits = (fullText.match(/\belemental\s+mastery\b/gi) || []).length;
 
@@ -361,12 +378,12 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
   let usefulSubstats = ['atk_', 'critRate_', 'critDMG_', 'enerRech_'];
 
   if (isNonCrit) {
-    primaryScaling = hpHits >= 2 ? 'HP (Non-Crit)' : 'ATK (Non-Crit)';
-    usefulSubstats = hpHits >= 2 ? ['hp_', 'enerRech_', 'hp', 'eleMas'] : ['atk_', 'enerRech_', 'atk', 'eleMas'];
+    primaryScaling = hpHits >= 2 && hasHpScaling ? 'HP (Non-Crit)' : 'ATK (Non-Crit)';
+    usefulSubstats = hpHits >= 2 && hasHpScaling ? ['hp_', 'enerRech_', 'hp', 'eleMas'] : ['atk_', 'enerRech_', 'atk', 'eleMas'];
   } else if (defHits >= 3 && defHits >= hpHits) {
     primaryScaling = 'DEF';
     usefulSubstats = ['def_', 'critRate_', 'critDMG_', 'enerRech_'];
-  } else if (hpHits >= 3) {
+  } else if (hpHits >= 3 && hasHpScaling) {
     primaryScaling = 'HP';
     usefulSubstats = ['hp_', 'critRate_', 'critDMG_', 'enerRech_'];
   } else if (emHits >= 3 && !/normal attack dmg/i.test(labelText)) {

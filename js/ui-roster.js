@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261114f';
+} from './build-science.js?v=20261114h';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -732,6 +732,17 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                       : ''
                   }
                   <span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>
+                  ${
+                    kitData?.ascensionStat?.key
+                      ? `<span class="pill pill-sky">${escapeHtml(
+                          kitData.ascensionStat.key === 'critDMG_'
+                            ? 'CRIT DMG'
+                            : kitData.ascensionStat.key === 'critRate_'
+                              ? 'CRIT RATE'
+                              : formatStatKey(kitData.ascensionStat.key).replace('%', '')
+                        )}${kitData.ascensionStat.value ? ` +${kitData.ascensionStat.value}${kitData.ascensionStat.key === 'eleMas' ? '' : '%'}` : ''}</span>`
+                      : ''
+                  }
                   ${(kitAnalysis.roleInfo?.tags || []).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join('')}
                 </div>
               </div>
