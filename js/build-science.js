@@ -281,18 +281,21 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   // Scan utility tags with strict ally-recipient scope across sentences
   const utilityTags = [];
   const matchesAllyBuff = (s, statRe) => {
-    const p1 = new RegExp(
-      `(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members(?:'|’s)?|allies(?:'|’s)?|all\\s+characters\\s+in\\s+the\\s+party)[^.]{0,35}?${statRe}`,
+    if (/(?:her|his|their)\s+own\s+/i.test(s)) return false;
+    const allyNoun =
+      '(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members|allies|all\\s+characters\\s+in\\s+the\\s+party|the\\s+active\\s+character)';
+    const pPossessive = new RegExp(`${allyNoun}(?:'|’s)?\\s+${statRe}`, 'i');
+    const pGrantTo = new RegExp(
+      `(?:increases?|grant(?:s|ing)?|gain(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to|for)\\s+${allyNoun}`,
       'i'
     );
-    const p2 = new RegExp(
-      `(?:increases?|grant(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to)\\s+(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members|allies|the\\s+active\\s+character|all\\s+characters\\s+in\\s+the\\s+party)`,
+    const pHaveTheir = new RegExp(
+      `${allyNoun}[^.]{0,40}?(?:have\\s+their|gain(?:s)?)[^.]{0,30}?${statRe}`,
       'i'
     );
-    if (!p1.test(s) && !p2.test(s)) return false;
-    // Reject "for each party member..., [Name]'s own stat is increased"
-    if (/for\s+each[^.]{0,60}(?:party\s+member|character\s+in\s+the\s+party)/i.test(s) && !p2.test(s)) {
-      return /(?:all\s+)?(?:nearby\s+)?(?:party\s+members(?:'|’s)|allies(?:'|’s))/.test(s);
+    if (!pPossessive.test(s) && !pGrantTo.test(s) && !pHaveTheir.test(s)) return false;
+    if (new RegExp(`\\b[A-Z][a-z]+(?:'|’s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s)) {
+      return false;
     }
     return true;
   };
@@ -303,19 +306,26 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     utilityTags.push(emM ? `EM Buffer (+${emM[1]})` : 'EM Buffer');
   }
 
-  const dmgSentence = sentences.find((s) =>
-    matchesAllyBuff(s, '(?:[^\\n.]{0,30}(?:DMG|Damage)|(?:DMG|Damage)\\s+(?:dealt|Bonus))')
+  const isReactionBuffer =
+    /converted\s+into\s+(?:the\s+)?Lunar[- ]/i.test(nonNormalText) ||
+    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(
+      nonNormalText
+    ) ||
+    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG/i.test(
+      nonNormalText
+    );
+  if (isReactionBuffer) {
+    utilityTags.push('Reaction Buffer');
+  }
+
+  const dmgSentence = sentences.find(
+    (s) =>
+      !/Base\s+DMG/i.test(s) &&
+      matchesAllyBuff(s, '(?:[^\\n.]{0,30}(?:DMG|Damage)|(?:DMG|Damage)\\s+(?:dealt|Bonus))')
   );
   if (dmgSentence) {
     const dmgM = dmgSentence.match(/(?:DMG|Damage)[^.]{0,35}?by\s+([\d.]+%)/i);
     utilityTags.push(dmgM ? `DMG Buffer (+${dmgM[1]})` : 'DMG Buffer');
-  }
-
-  const lunarSentence = sentences.find((s) =>
-    matchesAllyBuff(s, 'Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)[^.]{0,30}?DMG')
-  );
-  if (lunarSentence) {
-    utilityTags.push('Lunar / Reaction Buffer');
   }
 
   if (sentences.some((s) => matchesAllyBuff(s, 'ATK'))) {
