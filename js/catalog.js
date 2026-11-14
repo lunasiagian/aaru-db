@@ -1,5 +1,5 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v10';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v11';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -25,6 +25,7 @@ let yattaMaps = {
   characters: new Map(),
   weapons: new Map(),
   materials: new Map(),
+  artifacts: new Map(),
   lunarisVer: null,
   matIdLookup: {}
 };
@@ -41,6 +42,7 @@ function buildYattaMaps(raw) {
     characters: new Map(),
     weapons: new Map(),
     materials: new Map(),
+    artifacts: new Map(),
     lunarisVer: raw?._lunarisVer || null,
     matIdLookup: raw?._matIdLookup || {}
   };
@@ -52,6 +54,9 @@ function buildYattaMaps(raw) {
   }
   for (const [normKey, entry] of Object.entries(raw?.materials || {})) {
     next.materials.set(normKey, entry);
+  }
+  for (const [normKey, entry] of Object.entries(raw?.artifacts || {})) {
+    next.artifacts.set(normKey, entry);
   }
   yattaMaps = next;
 }
@@ -92,16 +97,17 @@ async function fetchYattaCatalog(forceRefresh = false) {
   }
 
   try {
-    const [avatarRes, weaponRes, materialRes, upgradeRes, monsterRes, lunarisVerRes] = await Promise.allSettled([
+    const [avatarRes, weaponRes, materialRes, upgradeRes, monsterRes, reliquaryRes, lunarisVerRes] = await Promise.allSettled([
       fetch('https://gi.yatta.moe/api/v2/en/avatar').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/weapon').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/material').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/upgrade').then((r) => (r.ok ? r.json() : null)),
       fetch('https://gi.yatta.moe/api/v2/en/monster').then((r) => (r.ok ? r.json() : null)),
+      fetch('https://gi.yatta.moe/api/v2/en/reliquary').then((r) => (r.ok ? r.json() : null)),
       fetch('https://api.lunaris.moe/data/version.json').then((r) => (r.ok ? r.json() : null))
     ]);
 
-    const slim = { characters: {}, weapons: {}, materials: {} };
+    const slim = { characters: {}, weapons: {}, materials: {}, artifacts: {} };
     const matNormById = new Map();
     const domainRewardNormSet = new Set();
     for (const dayList of Object.values(cachedCatalog?.domainSchedule || {})) {
@@ -199,15 +205,29 @@ async function fetchYattaCatalog(forceRefresh = false) {
       }
     }
 
+    if (reliquaryRes.status === 'fulfilled' && reliquaryRes.value?.data?.items) {
+      for (const [id, item] of Object.entries(reliquaryRes.value.data.items)) {
+        const norm = normalizeAssetKey(item.name);
+        if (!norm || !item.icon) continue;
+        slim.artifacts[norm] = {
+          name: item.name,
+          setId: String(id),
+          icon: item.icon,
+          source: 'yatta'
+        };
+      }
+    }
+
     // Merge unreleased/datamine characters, weapons & materials from api.lunaris.moe
     const lunarisVer = lunarisVerRes.status === 'fulfilled' ? lunarisVerRes.value?.version : null;
     if (lunarisVer) {
       try {
-        const [lCharRes, lWepRes, lMatRes, lMonRes] = await Promise.allSettled([
+        const [lCharRes, lWepRes, lMatRes, lMonRes, lRelicRes] = await Promise.allSettled([
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/charlist.json`).then((r) => (r.ok ? r.json() : null)),
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/weaponlist.json`).then((r) => (r.ok ? r.json() : null)),
           fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/materiallist.json`).then((r) => (r.ok ? r.json() : null)),
-          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/monsterlist.json`).then((r) => (r.ok ? r.json() : null))
+          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/monsterlist.json`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/reliquarylist.json`).then((r) => (r.ok ? r.json() : null))
         ]);
 
         const yattaMonsterIds = new Set(
@@ -283,6 +303,21 @@ async function fetchYattaCatalog(forceRefresh = false) {
               rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : item.qualityType === 'QUALITY_PURPLE' ? 4 : 3,
               weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
               icon: item.weaponIcon ? `https://api.lunaris.moe/data/assets/weaponicon/${item.weaponIcon}.webp` : ''
+            };
+          }
+        }
+
+        if (lRelicRes.status === 'fulfilled' && lRelicRes.value) {
+          for (const [relicId, item] of Object.entries(lRelicRes.value)) {
+            const name = item?.enName || item?.name;
+            const norm = normalizeAssetKey(name);
+            if (!norm || slim.artifacts[norm]) continue;
+            const iconName = item?.icon || `UI_RelicIcon_${relicId}_4`;
+            slim.artifacts[norm] = {
+              name,
+              setId: String(relicId),
+              icon: iconName,
+              source: 'lunaris'
             };
           }
         }
@@ -611,4 +646,29 @@ export function getAllWeaponKeys() {
     }
   }
   return Array.from(byNorm.values()).sort((a, b) => a.localeCompare(b));
+}
+
+const ARTIFACT_SLOT_NUM = {
+  flower: '4',
+  plume: '2',
+  sands: '5',
+  goblet: '1',
+  circlet: '3'
+};
+
+/**
+ * Resolve an artifact slot's UI icon URL from Project Amber / Lunaris catalog data.
+ * @param {string} setKey - GOOD setKey or artifact set display name.
+ * @param {string} slotKey - flower | plume | sands | goblet | circlet.
+ * @returns {string} Icon URL or empty string if unknown.
+ */
+export function getArtifactIcon(setKey, slotKey) {
+  const entry = yattaMaps.artifacts.get(normalizeAssetKey(setKey));
+  if (!entry?.icon) return '';
+  const slotNum = ARTIFACT_SLOT_NUM[String(slotKey || '').toLowerCase()] || '4';
+  const baseIcon = String(entry.icon).replace(/_\d+$/, `_${slotNum}`);
+  if (entry.source === 'lunaris') {
+    return `https://api.lunaris.moe/data/assets/reliquary/${baseIcon}.webp`;
+  }
+  return `https://gi.yatta.moe/assets/UI/reliquary/${baseIcon}.png`;
 }

@@ -1,8 +1,15 @@
 import { renderAssetIcon } from './assets.js';
-import { getAllCharacterKeys, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261113j';
+import { getAllCharacterKeys, getArtifactIcon, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261113x';
 
 const STATUS_PILLS = ['All', 'Active Work', 'Combat Ready', 'Swap Flagged'];
 const ELEMENT_PILLS = ['All', 'Pyro', 'Hydro', 'Anemo', 'Electro', 'Dendro', 'Cryo', 'Geo'];
+const SORT_OPTIONS = [
+  { value: 'priority', label: 'Sort: Default' },
+  { value: 'level', label: 'Sort: Level' },
+  { value: 'rarity', label: 'Sort: Rarity' },
+  { value: 'cv', label: 'Sort: Crit Value' },
+  { value: 'name', label: 'Sort: Name' }
+];
 const INSPECTOR_STATUSES = ['Active Prefarm', 'In Progress', 'Built', 'Bench', 'Unowned'];
 const SWAP_NOTE_RE = /\b(swap|borrow|share|theatre|theater|stygian|onslaught)\b/i;
 
@@ -43,6 +50,25 @@ function sortByPriorityThenLevel(a, b) {
   return b.level - a.level || a.meta.name.localeCompare(b.meta.name);
 }
 
+function sortCharacters(list, sortBy, tierId) {
+  const copy = [...list];
+  if (sortBy === 'level') {
+    return copy.sort((a, b) => b.level - a.level || b.constellation - a.constellation || a.meta.name.localeCompare(b.meta.name));
+  }
+  if (sortBy === 'rarity') {
+    return copy.sort((a, b) => (b.meta.rarity || 4) - (a.meta.rarity || 4) || b.level - a.level || a.meta.name.localeCompare(b.meta.name));
+  }
+  if (sortBy === 'cv') {
+    return copy.sort((a, b) => b.subCv - a.subCv || b.level - a.level || a.meta.name.localeCompare(b.meta.name));
+  }
+  if (sortBy === 'name') {
+    return copy.sort((a, b) => a.meta.name.localeCompare(b.meta.name));
+  }
+  if (tierId === 'active') return copy.sort(sortByPriorityThenLevel);
+  if (tierId === 'built') return copy.sort((a, b) => b.level - a.level || a.meta.name.localeCompare(b.meta.name));
+  return copy.sort((a, b) => (a.owned === b.owned ? b.level - a.level || a.meta.name.localeCompare(b.meta.name) : a.owned ? -1 : 1));
+}
+
 function renderCharacterCard(c, density) {
   const isUnreleased = Boolean(c.meta?.unreleased || c.meta?.lunarisId);
   const cornerBadge = c.owned ? `Lv.${c.level} · C${c.constellation}` : isUnreleased ? 'UNRELEASED' : '';
@@ -52,6 +78,9 @@ function renderCharacterCard(c, density) {
   const statusLabel = formatStatusLabel(c);
   const statusClass = getStatusPillClass(c.status);
   const swapBadge = isSwapFlagged(c) ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">⇄</span>' : '';
+  const talentBadge = c.owned
+    ? `<span class="roster-talent-chip mono" title="Talents: Normal / Skill / Burst">${c.talent.auto}/${c.talent.skill}/${c.talent.burst}</span>`
+    : '';
 
   if (density === 'list') {
     return `
@@ -62,6 +91,8 @@ function renderCharacterCard(c, density) {
         </span>
         <span class="roster-list-right mono">
           ${swapBadge}
+          ${talentBadge}
+          ${c.subCv > 0 ? `<span class="pill pill-sky">${c.subCv.toFixed(1)} CV</span>` : ''}
           ${cornerBadgeHtml}
           <span class="pill ${statusClass}">${statusLabel}</span>
         </span>
@@ -78,6 +109,7 @@ function renderCharacterCard(c, density) {
         <span class="roster-portrait-name">${escapeHtml(c.meta.name)}</span>
         <span class="roster-portrait-pills">
           <span class="pill mono ${statusClass}">${statusLabel}</span>
+          ${talentBadge}
           ${swapBadge}
         </span>
       </div>
@@ -144,24 +176,29 @@ function splitPascalSet(s) {
   return String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^Of /, 'of ');
 }
 
-function renderEquippedArtifacts(charKey, artifacts = []) {
-  const equipped = (artifacts || [])
-    .filter((a) => a.location === charKey)
-    .sort((a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9));
-
-  if (!equipped.length) {
-    return '<div class="muted mono" style="font-size:12px;">No equipped artifacts in GOOD export</div>';
-  }
-
-  const setCounts = new Map();
+function calcArtifactSubCv(equipped = []) {
   let subCv = 0;
   for (const a of equipped) {
-    if (a.setKey) setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
     for (const s of a.substats || []) {
       if (s.key === 'critRate_') subCv += (Number(s.value) || 0) * 2;
       if (s.key === 'critDMG_') subCv += Number(s.value) || 0;
     }
   }
+  return subCv;
+}
+
+function renderEquippedArtifacts(equipped = []) {
+  const sorted = [...equipped].sort((a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9));
+
+  if (!sorted.length) {
+    return '<div class="muted mono" style="font-size:12px;">No equipped artifacts in GOOD export</div>';
+  }
+
+  const setCounts = new Map();
+  for (const a of sorted) {
+    if (a.setKey) setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
+  }
+  const subCv = calcArtifactSubCv(sorted);
   const activeSets = Array.from(setCounts.entries())
     .filter(([, cnt]) => cnt >= 2)
     .map(([setKey, cnt]) => `${cnt >= 4 ? '4pc' : '2pc'} ${splitPascalSet(setKey)}`);
@@ -172,40 +209,59 @@ function renderEquippedArtifacts(charKey, artifacts = []) {
       <span class="pill pill-sky">Sub CV: ${subCv.toFixed(1)}</span>
     </div>
     <div class="artifact-list">
-      ${equipped
-        .map(
-          (a) => `
+      ${sorted
+        .map((a) => {
+          const iconUrl = getArtifactIcon(a.setKey, a.slotKey);
+          const slotName = SLOT_LABEL[a.slotKey] || a.slotKey;
+          const iconHtml = iconUrl
+            ? `<div class="artifact-row-icon rarity-${a.rarity || 5}"><img src="${iconUrl}" alt="${escapeHtml(splitPascalSet(a.setKey))}" loading="lazy" /></div>`
+            : `<div class="artifact-row-icon rarity-${a.rarity || 5}"><span class="mono">${escapeHtml(slotName.slice(0, 2).toUpperCase())}</span></div>`;
+          return `
         <div class="artifact-row">
-          <div class="artifact-row-top">
-            <span class="mono text-gold">${SLOT_LABEL[a.slotKey] || a.slotKey} · +${a.level}</span>
-            <span class="mono">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
+          ${iconHtml}
+          <div class="artifact-row-body">
+            <div class="artifact-row-top">
+              <span class="mono text-gold">${escapeHtml(slotName)} · +${a.level}</span>
+              <span class="mono artifact-main-stat">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
+            </div>
+            <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
+            <div class="artifact-subs mono">${(a.substats || []).map(formatSubstat).join(' · ')}</div>
           </div>
-          <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
-          <div class="artifact-subs mono">${(a.substats || []).map(formatSubstat).join(' · ')}</div>
-        </div>`
-        )
+        </div>`;
+        })
         .join('')}
     </div>`;
 }
 
-function renderInspectorDrawer(c, isReadOnly, artifacts = []) {
+function renderInspectorDrawer(c, isReadOnly) {
   if (!c) return '';
   const disabledAttr = isReadOnly ? 'disabled' : '';
   const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
 
   return `
     <div class="roster-drawer-backdrop" data-close-drawer>
-      <aside class="roster-drawer" role="dialog" aria-label="${escapeHtml(c.meta.name)} Inspector">
+      <aside class="roster-drawer" role="dialog" aria-label="${escapeHtml(c.meta.name)} Character Sheet">
         <div class="roster-drawer-head">
           <div class="roster-identity">
             ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-md')}
             <div>
               <h2 class="roster-drawer-title">${escapeHtml(c.meta.name)}</h2>
-              <div class="item-meta mono">${escapeHtml(c.meta.element)} • ${escapeHtml(c.meta.weaponType)}</div>
+              <div class="item-meta mono">${escapeHtml(c.meta.element)} • ${escapeHtml(c.meta.weaponType)} • ${c.meta.rarity || 5}★</div>
             </div>
           </div>
           <button type="button" class="btn-icon" data-close-drawer aria-label="Close inspector">✕</button>
         </div>
+
+        ${
+          c.owned
+            ? `<div class="char-sheet-strip mono">
+                <span class="pill pill-sky">Lv.${c.level} / ${c.targetLevel}</span>
+                <span class="pill pill-gold">C${c.constellation}</span>
+                <span class="pill">Talents ${c.talent?.auto || 1} / ${c.talent?.skill || 1} / ${c.talent?.burst || 1}</span>
+                ${c.subCv > 0 ? `<span class="pill pill-mint">${c.subCv.toFixed(1)} CV</span>` : ''}
+              </div>`
+            : ''
+        }
 
         <form class="roster-drawer-form" data-inspector-form="${c.key}">
           <div class="roster-drawer-grid">
@@ -264,7 +320,7 @@ function renderInspectorDrawer(c, isReadOnly, artifacts = []) {
 
           <div class="roster-drawer-weapon">
             <div class="card-eyebrow">EQUIPPED ARTIFACTS</div>
-            ${renderEquippedArtifacts(c.key, artifacts)}
+            ${renderEquippedArtifacts(c.equippedArtifacts)}
           </div>
 
           <label class="mini-field full">
@@ -294,6 +350,13 @@ export function renderRosterTab(container, state, handlers) {
     if (w.location) weaponByLocation.set(w.location, w);
   }
 
+  const artifactsByLocation = new Map();
+  for (const a of account.artifacts || []) {
+    if (!a.location) continue;
+    if (!artifactsByLocation.has(a.location)) artifactsByLocation.set(a.location, []);
+    artifactsByLocation.get(a.location).push(a);
+  }
+
   const allKeys = new Set([
     ...ownedMap.keys(),
     ...getAllCharacterKeys()
@@ -302,6 +365,8 @@ export function renderRosterTab(container, state, handlers) {
   const combinedChars = Array.from(allKeys).map((key) => {
     const meta = getCharacterMeta(key);
     const owned = ownedMap.get(key);
+    const equippedArtifacts = artifactsByLocation.get(key) || [];
+    const subCv = calcArtifactSubCv(equippedArtifacts);
     if (!owned || owned.status === 'Unowned' || owned.owned === false) {
       return {
         key,
@@ -315,7 +380,9 @@ export function renderRosterTab(container, state, handlers) {
         priorityRank: owned?.priorityRank || '',
         swapTag: owned?.swapTag || '',
         notes: owned?.notes || '',
-        equippedWeapon: null
+        equippedWeapon: null,
+        equippedArtifacts: [],
+        subCv: 0
       };
     }
 
@@ -336,13 +403,16 @@ export function renderRosterTab(container, state, handlers) {
       priorityRank: owned.priorityRank || '',
       swapTag: owned.swapTag || '',
       notes: owned.notes || '',
-      equippedWeapon: weaponByLocation.get(key) || null
+      equippedWeapon: weaponByLocation.get(key) || null,
+      equippedArtifacts,
+      subCv
     };
   });
 
   const q = (rosterFilter.search || '').trim().toLowerCase();
   const statusFilter = rosterFilter.status || 'All';
   const elementFilter = rosterFilter.element || 'All';
+  const sortBy = rosterFilter.sortBy || 'priority';
   const density = rosterFilter.density === 'list' ? 'list' : 'grid';
   const tiersState = rosterFilter.tiers || { active: true, built: true, archive: false };
 
@@ -355,17 +425,23 @@ export function renderRosterTab(container, state, handlers) {
     return true;
   });
 
-  const activeTier = filteredChars
-    .filter((c) => c.status === 'Active Prefarm' || c.status === 'In Progress')
-    .sort(sortByPriorityThenLevel);
+  const activeTier = sortCharacters(
+    filteredChars.filter((c) => c.status === 'Active Prefarm' || c.status === 'In Progress'),
+    sortBy,
+    'active'
+  );
 
-  const builtTier = filteredChars
-    .filter((c) => c.status === 'Built')
-    .sort((a, b) => b.level - a.level || a.meta.name.localeCompare(b.meta.name));
+  const builtTier = sortCharacters(
+    filteredChars.filter((c) => c.status === 'Built'),
+    sortBy,
+    'built'
+  );
 
-  const archiveTier = filteredChars
-    .filter((c) => c.status === 'Bench' || c.status === 'Unowned')
-    .sort((a, b) => (a.owned === b.owned ? b.level - a.level || a.meta.name.localeCompare(b.meta.name) : a.owned ? -1 : 1));
+  const archiveTier = sortCharacters(
+    filteredChars.filter((c) => c.status === 'Bench' || c.status === 'Unowned'),
+    sortBy,
+    'archive'
+  );
 
   const filteredWeapons = [...(account.weapons || [])]
     .filter((w) => {
@@ -407,6 +483,11 @@ export function renderRosterTab(container, state, handlers) {
         </div>
 
         <div class="toolbar-right">
+          <select class="select-sm mono roster-sort-select" data-roster-sort aria-label="Sort characters">
+            ${SORT_OPTIONS.map(
+              (opt) => `<option value="${opt.value}" ${sortBy === opt.value ? 'selected' : ''}>${opt.label}</option>`
+            ).join('')}
+          </select>
           <div class="subtab-switch">
             <button type="button" class="filter-pill ${density === 'grid' ? 'active' : ''}" data-roster-density="grid">Portrait Grid</button>
             <button type="button" class="filter-pill ${density === 'list' ? 'active' : ''}" data-roster-density="list">Compact List</button>
@@ -468,8 +549,12 @@ export function renderRosterTab(container, state, handlers) {
       }
     </article>
 
-    ${renderInspectorDrawer(inspectedChar, isReadOnly, account.artifacts || [])}
+    ${renderInspectorDrawer(inspectedChar, isReadOnly)}
   `;
+
+  container.querySelector('[data-roster-sort]')?.addEventListener('change', (e) => {
+    handlers.onChangeRosterFilter({ sortBy: e.target.value });
+  });
 
   container.querySelectorAll('[data-roster-status]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onChangeRosterFilter({ status: btn.dataset.rosterStatus }));
