@@ -266,7 +266,14 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     !usesNormalAttack &&
     !hasStanceExitClause &&
     (hasCoordinatedTrigger ||
-      /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
+      /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
+        nonNormalText
+      ) ||
+      /(?:follow|follows|accompan(?:y|ies))\s+the\s+active\s+character/i.test(nonNormalText) ||
+      /continuously\s+dealing\s+(?:AoE\s+)?(?:Pyro|Hydro|Anemo|Electro|Dendro|Cryo|Geo)\s+DMG/i.test(
+        nonNormalText
+      ) ||
+      /while\s+[^.]{1,40}\s+is\s+on\s+the\s+field,?\s+(?:and\s+)?nearby\s+party\s+members/i.test(
         nonNormalText
       ) ||
       (hasLongDuration && /deals?\s+.*dmg/i.test(nonNormalText)));
@@ -289,6 +296,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     utilityTags.push(`DMG Buffer (+${dmgBuffMatch[1]})`);
   } else if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,90}?(?:dmg\s+dealt|dmg\s+bonus|elemental\s+dmg)/i.test(nonNormalText)) {
     utilityTags.push('DMG Buffer');
+  }
+  if (/lunar[- ]?(?:charged|bloom|crystallize|reaction)[\s\S]{0,80}?(?:dmg|bonus|buff|increase)/i.test(nonNormalText)) {
+    utilityTags.push('Lunar / Reaction Buffer');
   }
 
   if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,80}?(?:increases?\s+atk|atk\s+(?:is\s+)?increased)/i.test(nonNormalText)) {
