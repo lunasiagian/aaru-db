@@ -44,7 +44,11 @@ function sortByPriorityThenLevel(a, b) {
 }
 
 function renderCharacterCard(c, density) {
-  const cornerBadge = c.owned ? `Lv.${c.level} · C${c.constellation}` : 'UNOWNED';
+  const isUnreleased = Boolean(c.meta?.unreleased || c.meta?.lunarisId);
+  const cornerBadge = c.owned ? `Lv.${c.level} · C${c.constellation}` : isUnreleased ? 'UNRELEASED' : '';
+  const cornerBadgeHtml = cornerBadge
+    ? `<span class="roster-corner-badge mono ${!c.owned && isUnreleased ? 'is-unreleased' : ''}">${cornerBadge}</span>`
+    : '';
   const statusLabel = formatStatusLabel(c);
   const statusClass = getStatusPillClass(c.status);
   const swapBadge = isSwapFlagged(c) ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">⇄</span>' : '';
@@ -58,7 +62,7 @@ function renderCharacterCard(c, density) {
         </span>
         <span class="roster-list-right mono">
           ${swapBadge}
-          <span class="roster-corner-badge">${cornerBadge}</span>
+          ${cornerBadgeHtml}
           <span class="pill ${statusClass}">${statusLabel}</span>
         </span>
       </button>`;
@@ -66,7 +70,7 @@ function renderCharacterCard(c, density) {
 
   return `
     <button type="button" class="roster-portrait-card ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
-      <span class="roster-corner-badge mono">${cornerBadge}</span>
+      ${cornerBadgeHtml}
       <div class="roster-portrait-frame">
         ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-portrait')}
       </div>

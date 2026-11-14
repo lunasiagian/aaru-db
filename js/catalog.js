@@ -259,6 +259,7 @@ async function fetchYattaCatalog(forceRefresh = false) {
             const iconName = String(item.CardImg || '').replace(/^UI_Gacha_AvatarIcon_/, 'UI_AvatarIcon_');
             slim.characters[norm] = {
               lunarisId: charId,
+              unreleased: true,
               pascalKey: String(name).replace(/[^a-zA-Z0-9]/g, ''),
               name,
               rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : 4,

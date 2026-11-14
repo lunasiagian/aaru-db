@@ -1413,6 +1413,12 @@ textarea:focus {
   color: var(--text-main);
 }
 
+.roster-corner-badge.is-unreleased {
+  color: var(--telemetry-amber);
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.14);
+}
+
 .roster-portrait-frame {
   margin-top: 10px;
 }
