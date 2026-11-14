@@ -3146,7 +3146,7 @@ textarea:focus {
   flex-shrink: 0;
 }
 
-.icon-lg {
+.dossier-portrait-wrap .icon-lg {
   width: 100%;
   height: 100%;
   object-fit: cover;
