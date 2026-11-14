@@ -195,9 +195,33 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const usesNormalAttack =
     /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging/i.test(
       nonNormalText
-    );
-  const hasHeal = /heal|regeneration|restores?\s+(?:party\s+members'?\s+)?hp/i.test(`${labelText}\n${nonNormalText}`);
-  const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield/i.test(`${labelText}\n${nonNormalText}`);
+    ) ||
+    /(?:Normal|Charged|Plunging)\s+Attack[^.]{0,80}(?:DMG|enhanced|enhances?|infused|converted)/i.test(
+      nonNormalText
+    ) ||
+    /(?:enhances?|increases?)\s+(?:his|her|their|\w+'s)?\s*(?:Normal|Charged|Plunging)\s+Attack/i.test(
+      nonNormalText
+    ) ||
+    /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(nonNormalText);
+
+  const hasStanceExitClause = /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(
+    nonNormalText
+  );
+
+  const sentences = nonNormalText.split(/(?<=[.!?\n])\s+|\n+/);
+  const hasPartyHeal = sentences.some(
+    (s) =>
+      /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s) &&
+      /(?:party|nearby|allies|allied|active\s+character|other\s+characters|teammates)/i.test(s)
+  );
+  const hasSelfSustain =
+    !hasPartyHeal &&
+    (sentences.some((s) => /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s)) ||
+      /bond\s+of\s+life/i.test(nonNormalText));
+
+  const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield/i.test(
+    `${labelText}\n${nonNormalText}`
+  );
   const hasLongDuration = talents
     .filter((t) => t.kind !== 'normal')
     .some((t) =>
@@ -208,10 +232,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       })
     );
   const hasOffField =
-    /off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
+    !usesNormalAttack &&
+    !hasStanceExitClause &&
+    (/off-field|even\s+when\s+not\s+on\s+the\s+field|coordinated\s+attack|continues?\s+to\s+attack|takes?\s+effect.*off-field|solar\s+isotoma|transient\s+blossom|follows\s+the\s+active\s+character|when\s+opponents\s+within\s+.*take\s+dmg/i.test(
       nonNormalText
     ) ||
-    (hasLongDuration && !usesNormalAttack && /deals?\s+.*dmg/i.test(nonNormalText));
+      (hasLongDuration && /deals?\s+.*dmg/i.test(nonNormalText)));
 
   // Scan utility tags with magnitudes across talents, passives, and unlocked constellations
   const utilityTags = [];
@@ -240,7 +266,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     utilityTags.push('RES Shred');
   }
   if (hasShield) utilityTags.push('Shielder');
-  if (hasHeal) utilityTags.push('Healer');
+  if (hasPartyHeal) utilityTags.push('Healer');
+  else if (hasSelfSustain) utilityTags.push('Self-Sustain');
 
   // Detect conditional Burst triggers in passives & unlocked constellations
   const kitTriggers = [];
@@ -267,9 +294,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   }
 
   let primaryRole = 'Quickswap DPS';
-  if (usesNormalAttack && !hasHeal) primaryRole = 'On-Field Carry';
+  if (usesNormalAttack && !hasPartyHeal) primaryRole = 'On-Field Carry';
   else if (hasOffField) primaryRole = 'Off-Field Sub-DPS';
-  else if (hasHeal || hasShield || utilityTags.length > 0) primaryRole = 'Sustain / Support';
+  else if (hasPartyHeal || hasShield || utilityTags.some((t) => t !== 'Self-Sustain')) primaryRole = 'Sustain / Support';
 
   return {
     charKey,

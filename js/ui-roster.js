@@ -16,7 +16,7 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   generateKitInsights
-} from './build-science.js?v=20261113ah';
+} from './build-science.js?v=20261114b';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
