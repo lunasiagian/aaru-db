@@ -17,7 +17,7 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261113t';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261113t';
-import { renderRosterTab } from './ui-roster.js?v=20261113u';
+import { renderRosterTab } from './ui-roster.js?v=20261113w';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
@@ -472,6 +472,7 @@ function setupGoodImportModal() {
           <div class="diff-stat"><span class="mono">SOURCE</span><strong>${diff.source} (v${diff.version})</strong></div>
           <div class="diff-stat"><span class="mono">CHARACTERS</span><strong class="text-gold">${diff.charChanges.length} changes</strong> / ${diff.charactersTotal} total</div>
           <div class="diff-stat"><span class="mono">WEAPONS</span><strong class="text-mint">${diff.weaponChanges.length} changes</strong> / ${diff.weaponsTotal} total</div>
+          <div class="diff-stat"><span class="mono">ARTIFACTS</span><strong class="text-cyan">${diff.equippedArtifactsCount || 0} equipped</strong> / ${diff.artifactsTotal || 0} total</div>
           <div class="diff-stat"><span class="mono">MATERIALS</span><strong>${diff.matChanges.length} synced</strong> / ${diff.materialsTotal} total</div>
         </div>
         <div class="diff-samples mono">

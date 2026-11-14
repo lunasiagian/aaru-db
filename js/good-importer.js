@@ -118,11 +118,24 @@ export function computeGoodImportDiff(account, good) {
     nextWallet.acquaintFates = good.materials.AcquaintFate;
   }
 
+  const nextArtifacts = (good.artifacts || [])
+    .filter((a) => a && a.location && a.setKey)
+    .map((a) => ({
+      setKey: a.setKey,
+      slotKey: a.slotKey || '',
+      level: Number(a.level) || 0,
+      rarity: Number(a.rarity) || 5,
+      mainStatKey: a.mainStatKey || '',
+      location: a.location,
+      substats: Array.isArray(a.substats) ? a.substats : []
+    }));
+
   const mergedAccount = {
     ...account,
     wallet: nextWallet,
     characters: Array.from(mergedCharsMap.values()),
     weapons: nextWeapons.length ? nextWeapons : account.weapons,
+    artifacts: nextArtifacts.length ? nextArtifacts : (account.artifacts || []),
     inventory: nextInventory
   };
 
@@ -131,6 +144,8 @@ export function computeGoodImportDiff(account, good) {
     version: good.version,
     charactersTotal: (good.characters || []).length,
     weaponsTotal: (good.weapons || []).length,
+    artifactsTotal: (good.artifacts || []).length,
+    equippedArtifactsCount: nextArtifacts.length,
     materialsTotal: Object.keys(good.materials || {}).length,
     charChanges,
     weaponChanges,

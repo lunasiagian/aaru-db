@@ -150,10 +150,34 @@ function normalizeAccount(raw) {
     }))
     .filter((w) => Boolean(w.key));
 
+  const artifacts = (Array.isArray(raw.artifacts) ? raw.artifacts : [])
+    .map((a) => {
+      let substats = Array.isArray(a.substats) ? a.substats : [];
+      if (!substats.length && typeof a.substats_json === 'string' && a.substats_json) {
+        try {
+          const parsed = JSON.parse(a.substats_json);
+          if (Array.isArray(parsed)) substats = parsed;
+        } catch {
+          // Ignore malformed substats JSON
+        }
+      }
+      return {
+        setKey: a.setKey || a.set_key || '',
+        slotKey: a.slotKey || a.slot_key || '',
+        level: Number(a.level) || 0,
+        rarity: Number(a.rarity) || 5,
+        mainStatKey: a.mainStatKey || a.main_stat || '',
+        location: a.location || '',
+        substats
+      };
+    })
+    .filter((a) => Boolean(a.setKey && a.location));
+
   return {
     ...raw,
     characters,
-    weapons
+    weapons,
+    artifacts
   };
 }
 

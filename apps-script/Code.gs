@@ -14,6 +14,9 @@ const TABLE_SCHEMAS = {
     'weapon_uid', 'weapon_key', 'level', 'ascension', 'refinement',
     'location', 'target_lvl', 'status'
   ],
+  Artifacts: [
+    'set_key', 'slot_key', 'level', 'rarity', 'main_stat', 'location', 'substats_json'
+  ],
   Teams: [
     'team_id', 'team_name', 'archetype', 'slot_1', 'slot_2', 'slot_3', 'slot_4',
     'energy_comfort', 'rotation_notes'
@@ -82,6 +85,7 @@ function loadProfileAccount_(ss, targetUser) {
     inventory: inventory,
     roster: sheetToObjects(ss.getSheetByName(`${targetUser}_Roster`)),
     weapons: sheetToObjects(ss.getSheetByName(`${targetUser}_Weapons`)),
+    artifacts: sheetToObjects(ss.getSheetByName(`${targetUser}_Artifacts`)),
     teams: sections.teams || sheetToObjects(ss.getSheetByName(`${targetUser}_Teams`)),
     tasks: sheetToObjects(ss.getSheetByName(`${targetUser}_Tasks`)),
     wallet: sections.wallet || null,
@@ -208,6 +212,21 @@ function doPost(e) {
           w.level >= 90 ? 'Maxed' : 'Bench'
         ]);
         replaceSheetBody(wepSheet, wepRows);
+      }
+
+      if (Array.isArray(good.artifacts)) {
+        const artSheet = ensureUserSheet_(ss, user, 'Artifacts');
+        const equipped = good.artifacts.filter(a => a && a.location);
+        const artRows = equipped.map(a => [
+          a.setKey || '',
+          a.slotKey || '',
+          Number(a.level) || 0,
+          Number(a.rarity) || 5,
+          a.mainStatKey || '',
+          a.location || '',
+          JSON.stringify(Array.isArray(a.substats) ? a.substats : [])
+        ]);
+        replaceSheetBody(artSheet, artRows);
       }
 
       return jsonResponse({ ok: true, importedAt: now });

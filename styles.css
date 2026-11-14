@@ -2889,6 +2889,49 @@ textarea:focus {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.artifact-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.artifact-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(7, 10, 16, 0.65);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.artifact-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.artifact-set-name {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.artifact-subs {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 @media (max-width: 1100px) {
   .hud-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hud-main-grid { grid-template-columns: 1fr; }

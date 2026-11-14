@@ -101,7 +101,94 @@ function renderTierSection(tierId, title, list, isOpen, density) {
     </details>`;
 }
 
-function renderInspectorDrawer(c, isReadOnly) {
+const SLOT_ORDER = { flower: 0, plume: 1, sands: 2, goblet: 3, circlet: 4 };
+const SLOT_LABEL = { flower: 'Flower', plume: 'Plume', sands: 'Sands', goblet: 'Goblet', circlet: 'Circlet' };
+const STAT_LABEL = {
+  hp: 'HP',
+  hp_: 'HP%',
+  atk: 'ATK',
+  atk_: 'ATK%',
+  def: 'DEF',
+  def_: 'DEF%',
+  eleMas: 'EM',
+  enerRech_: 'ER%',
+  heal_: 'Heal%',
+  critRate_: 'CR',
+  critDMG_: 'CD',
+  physical_dmg_: 'Phys%',
+  anemo_dmg_: 'Anemo%',
+  geo_dmg_: 'Geo%',
+  electro_dmg_: 'Electro%',
+  hydro_dmg_: 'Hydro%',
+  pyro_dmg_: 'Pyro%',
+  cryo_dmg_: 'Cryo%',
+  dendro_dmg_: 'Dendro%'
+};
+const PERCENT_STATS = new Set([
+  'hp_', 'atk_', 'def_', 'enerRech_', 'heal_', 'critRate_', 'critDMG_',
+  'physical_dmg_', 'anemo_dmg_', 'geo_dmg_', 'electro_dmg_', 'hydro_dmg_',
+  'pyro_dmg_', 'cryo_dmg_', 'dendro_dmg_'
+]);
+
+function formatStatKey(k) {
+  return STAT_LABEL[k] || String(k || '').replace(/_/g, '');
+}
+
+function formatSubstat(sub) {
+  const lbl = formatStatKey(sub.key);
+  const val = Number(sub.value) || 0;
+  return `${lbl} +${val}${PERCENT_STATS.has(sub.key) ? '%' : ''}`;
+}
+
+function splitPascalSet(s) {
+  return String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^Of /, 'of ');
+}
+
+function renderEquippedArtifacts(charKey, artifacts = []) {
+  const equipped = (artifacts || [])
+    .filter((a) => a.location === charKey)
+    .sort((a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9));
+
+  if (!equipped.length) {
+    return '<div class="muted mono" style="font-size:12px;">No equipped artifacts in GOOD export</div>';
+  }
+
+  const setCounts = new Map();
+  let subCv = 0;
+  for (const a of equipped) {
+    if (a.setKey) setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
+    for (const s of a.substats || []) {
+      if (s.key === 'critRate_') subCv += (Number(s.value) || 0) * 2;
+      if (s.key === 'critDMG_') subCv += Number(s.value) || 0;
+    }
+  }
+  const activeSets = Array.from(setCounts.entries())
+    .filter(([, cnt]) => cnt >= 2)
+    .map(([setKey, cnt]) => `${cnt >= 4 ? '4pc' : '2pc'} ${splitPascalSet(setKey)}`);
+
+  return `
+    <div class="artifact-summary-row mono">
+      <span class="pill pill-mint">${activeSets.length ? activeSets.join(' + ') : 'Rainbow Set'}</span>
+      <span class="pill pill-sky">Sub CV: ${subCv.toFixed(1)}</span>
+    </div>
+    <div class="artifact-list">
+      ${equipped
+        .map(
+          (a) => `
+        <div class="artifact-row">
+          <div class="artifact-row-top">
+            <span class="mono text-gold">${SLOT_LABEL[a.slotKey] || a.slotKey} · +${a.level}</span>
+            <span class="mono">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
+          </div>
+          <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
+          <div class="artifact-subs mono">${(a.substats || []).map(formatSubstat).join(' · ')}</div>
+        </div>`
+        )
+        .join('')}
+    </div>`;
+}
+
+function renderInspectorDrawer(c, isReadOnly, artifacts = []) {
   if (!c) return '';
   const disabledAttr = isReadOnly ? 'disabled' : '';
   const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
@@ -173,6 +260,11 @@ function renderInspectorDrawer(c, isReadOnly) {
                   </div>`
                 : '<div class="muted mono" style="font-size:12px;">No weapon assigned in GOOD export</div>'
             }
+          </div>
+
+          <div class="roster-drawer-weapon">
+            <div class="card-eyebrow">EQUIPPED ARTIFACTS</div>
+            ${renderEquippedArtifacts(c.key, artifacts)}
           </div>
 
           <label class="mini-field full">
@@ -376,7 +468,7 @@ export function renderRosterTab(container, state, handlers) {
       }
     </article>
 
-    ${renderInspectorDrawer(inspectedChar, isReadOnly)}
+    ${renderInspectorDrawer(inspectedChar, isReadOnly, account.artifacts || [])}
   `;
 
   container.querySelectorAll('[data-roster-status]').forEach((btn) => {
