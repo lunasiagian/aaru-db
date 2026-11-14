@@ -896,9 +896,7 @@ export function calcTalentUpgradeDiff(charKey, kitData, slot, currentLvl, target
     : 0;
 
   const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData, null, constellation);
-  const kqm = getKqmEntry(char?.key);
   const priority = getTalentPriorityInfo(kitData, analysis);
-  const priorityOrderText = kqm?.talentPriority || priority.orderText;
   const tier = priority.tiers[slot] || 'medium';
 
   let badge = 'MODERATE';
