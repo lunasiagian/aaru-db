@@ -3474,6 +3474,103 @@ textarea:focus {
   opacity: 0.55;
 }
 
+.dossier-roi-preview,
+.dossier-insights-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(12, 16, 26, 0.58);
+  padding: 12px 14px;
+}
+
+.dossier-roi-empty {
+  font-size: 12px;
+  text-align: center;
+  padding: 6px 4px;
+}
+
+.dossier-roi-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dossier-roi-total-cost {
+  font-size: 11px;
+  color: var(--gold, #fbbf24);
+}
+
+.dossier-roi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dossier-roi-item {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 9px 11px;
+}
+
+.dossier-roi-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.dossier-roi-slot {
+  font-weight: 700;
+  font-size: 13px;
+  margin-right: 6px;
+}
+
+.dossier-roi-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.dossier-roi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dossier-roi-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding: 2px 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.dossier-insights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dossier-insight-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary, #cbd5e1);
+}
+
 .btn-changelog {
   position: relative;
   display: inline-flex;

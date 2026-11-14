@@ -8,13 +8,15 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113ag';
+} from './catalog.js?v=20261113ah';
 import {
   analyzeCharacterKit,
+  calcTalentUpgradeDiff,
   computeCharacterCombatStats,
   computeEffectiveTalents,
-  evaluateErComfort
-} from './build-science.js?v=20261113ag';
+  evaluateErComfort,
+  generateKitInsights
+} from './build-science.js?v=20261113ah';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -440,14 +442,124 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
     }`;
 }
 
-function renderDossierTargetsTab(c, isReadOnly) {
+function formatMoraCompact(mora) {
+  if (!mora) return '0';
+  if (mora >= 1000000) return `${(mora / 1000000).toFixed(2)}M`;
+  if (mora >= 1000) return `${Math.round(mora / 1000)}k`;
+  return String(mora);
+}
+
+function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTalents) {
+  const slots = ['auto', 'skill', 'burst'];
+  const diffs = slots
+    .map((slot) =>
+      calcTalentUpgradeDiff(
+        c.key,
+        kitData,
+        slot,
+        curTalents[slot] ?? 1,
+        tgtTalents[slot] ?? (curTalents[slot] ?? 1),
+        c.constellation || 0,
+        kitAnalysis
+      )
+    )
+    .filter((d) => d.changed);
+
+  if (!diffs.length) {
+    return `<div class="dossier-roi-empty muted mono">Adjust TGT A / E / Q above to preview exact multiplier gains &amp; Mora cost.</div>`;
+  }
+
+  let totalMora = 0;
+  let totalTeachings = 0;
+  let totalGuide = 0;
+  let totalPhil = 0;
+  let totalWeekly = 0;
+  let totalCrown = 0;
+  let bookName = diffs[0]?.cost?.bookName || 'Talent';
+
+  for (const d of diffs) {
+    totalMora += d.cost.mora || 0;
+    totalTeachings += d.cost.books?.Teachings || 0;
+    totalGuide += d.cost.books?.Guide || 0;
+    totalPhil += d.cost.books?.Philosophies || 0;
+    totalWeekly += d.cost.weekly || 0;
+    totalCrown += d.cost.crown || 0;
+  }
+
+  const costParts = [`${formatMoraCompact(totalMora)} Mora`];
+  if (totalTeachings) costParts.push(`${totalTeachings}× Teachings`);
+  if (totalGuide) costParts.push(`${totalGuide}× Guide`);
+  if (totalPhil) costParts.push(`${totalPhil}× Philosophies`);
+  if (bookName && (totalTeachings || totalGuide || totalPhil)) costParts[1] += ` of ${bookName}`;
+  if (totalWeekly) costParts.push(`${totalWeekly}× Weekly`);
+  if (totalCrown) costParts.push(`${totalCrown}× Crown`);
+
+  return `
+    <div class="dossier-roi-header">
+      <span class="card-eyebrow" style="margin:0;">TALENT LEVEL MULTIPLIER &amp; COST PREVIEW</span>
+      <span class="mono dossier-roi-total-cost">${escapeHtml(costParts.join(' · '))}</span>
+    </div>
+    <div class="dossier-roi-list">
+      ${diffs
+        .map((d) => {
+          const shownRows = d.rows.slice(0, 5);
+          const extraCount = Math.max(0, d.rows.length - shownRows.length);
+          const bonusNote = d.bonus ? ` <span class="text-cyan">(+${d.bonus} C)</span>` : '';
+          return `
+            <div class="dossier-roi-item">
+              <div class="dossier-roi-item-head">
+                <div>
+                  <span class="dossier-roi-slot">${escapeHtml(d.slotLabel)}</span>
+                  <span class="muted" style="font-size:12px;">${escapeHtml(d.talentName)}</span>
+                </div>
+                <div class="dossier-roi-badges">
+                  <span class="pill">Lv.${d.effCur} → Lv.${d.effTgt}${bonusNote}</span>
+                  ${d.avgRelGainPct > 0 ? `<span class="pill pill-mint">+${d.avgRelGainPct}%</span>` : ''}
+                  <span class="pill pill-${d.badgeTone}">${d.badge}</span>
+                </div>
+              </div>
+              ${
+                shownRows.length
+                  ? `<div class="dossier-roi-rows">
+                      ${shownRows
+                        .map(
+                          (r) => `
+                        <div class="dossier-roi-row">
+                          <span class="muted">${escapeHtml(r.label)}</span>
+                          <span class="mono">${escapeHtml(r.oldDisplay)} → <strong>${escapeHtml(r.newDisplay)}</strong> ${
+                            r.relGainPct !== null ? `<span class="text-mint">(+${r.relGainPct}%)</span>` : ''
+                          }</span>
+                        </div>`
+                        )
+                        .join('')}
+                      ${extraCount ? `<div class="muted mono" style="font-size:11px;padding-top:3px;">+${extraCount} more scaling rows</div>` : ''}
+                    </div>`
+                  : '<div class="muted mono" style="font-size:11px;">No scaling multiplier table cached yet.</div>'
+              }
+            </div>`;
+        })
+        .join('')}
+    </div>`;
+}
+
+function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
+  const curTalents = {
+    auto: Math.min(10, Math.max(1, Number(c.talent?.auto) || 1)),
+    skill: Math.min(10, Math.max(1, Number(c.talent?.skill) || 1)),
+    burst: Math.min(10, Math.max(1, Number(c.talent?.burst) || 1))
+  };
   const tgtParts = String(c.targetTalents || '9/9/9')
     .split('/')
     .map((n) => Math.min(10, Math.max(1, Number(n) || 9)));
-  const tgtA = tgtParts[0] || 9;
-  const tgtE = tgtParts[1] || 9;
-  const tgtQ = tgtParts[2] || 9;
+  const tgtTalents = {
+    auto: tgtParts[0] || 9,
+    skill: tgtParts[1] || 9,
+    burst: tgtParts[2] || 9
+  };
+
+  const insights = generateKitInsights(c, kitData, weaponMeta, erReport, kitAnalysis);
+
   return `
     <form class="roster-drawer-form dossier-targets-form" data-inspector-form="${c.key}">
       <div class="roster-drawer-grid">
@@ -479,31 +591,50 @@ function renderDossierTargetsTab(c, isReadOnly) {
       <div class="roster-drawer-talents">
         <label class="mini-field">
           <span>A (NORMAL)</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tAuto" value="${c.talent?.auto || 1}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tAuto" value="${curTalents.auto}" ${disabledAttr} />
         </label>
         <label class="mini-field">
           <span>E (SKILL)</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tSkill" value="${c.talent?.skill || 1}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tSkill" value="${curTalents.skill}" ${disabledAttr} />
         </label>
         <label class="mini-field">
           <span>Q (BURST)</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tBurst" value="${c.talent?.burst || 1}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tBurst" value="${curTalents.burst}" ${disabledAttr} />
         </label>
       </div>
 
       <div class="roster-drawer-talents">
         <label class="mini-field">
           <span>TGT A</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tgtAuto" value="${tgtA}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tgtAuto" value="${tgtTalents.auto}" ${disabledAttr} />
         </label>
         <label class="mini-field">
           <span>TGT E</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tgtSkill" value="${tgtE}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tgtSkill" value="${tgtTalents.skill}" ${disabledAttr} />
         </label>
         <label class="mini-field">
           <span>TGT Q</span>
-          <input type="number" min="1" max="10" class="input-mono" name="tgtBurst" value="${tgtQ}" ${disabledAttr} />
+          <input type="number" min="1" max="10" class="input-mono" name="tgtBurst" value="${tgtTalents.burst}" ${disabledAttr} />
         </label>
+      </div>
+
+      <div class="dossier-roi-preview" id="dossier-roi-preview">
+        ${renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTalents)}
+      </div>
+
+      <div class="dossier-insights-card">
+        <div class="card-eyebrow" style="margin-bottom:8px;">DETERMINISTIC KIT INSIGHTS</div>
+        <ul class="dossier-insights-list">
+          ${insights
+            .map(
+              (ins) => `
+            <li class="dossier-insight-item">
+              <span class="pill pill-${ins.tone}">${escapeHtml(ins.label)}</span>
+              <span>${escapeHtml(ins.text)}</span>
+            </li>`
+            )
+            .join('')}
+        </ul>
       </div>
 
       <label class="mini-field">
@@ -523,6 +654,7 @@ function renderDossierTargetsTab(c, isReadOnly) {
 
 function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const kitData = getCharacterKit(c.key);
+  const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
   const weaponStats = c.equippedWeapon ? getWeaponStats(c.equippedWeapon.key) : null;
   const combat = computeCharacterCombatStats(
     c,
@@ -672,14 +804,14 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-tabs">
               <button type="button" class="filter-pill ${activeTab === 'loadout' ? 'active' : ''}" data-dossier-tab="loadout">Loadout &amp; Artifacts</button>
               <button type="button" class="filter-pill ${activeTab === 'talents' ? 'active' : ''}" data-dossier-tab="talents">Talents &amp; Passives</button>
-              <button type="button" class="filter-pill ${activeTab === 'targets' ? 'active' : ''}" data-dossier-tab="targets">Build Targets &amp; Notes</button>
+              <button type="button" class="filter-pill ${activeTab === 'targets' ? 'active' : ''}" data-dossier-tab="targets">Build Targets &amp; Kit Notes</button>
             </div>
             <div class="dossier-tab-body">
               ${
                 activeTab === 'talents'
                   ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
                   : activeTab === 'targets'
-                    ? renderDossierTargetsTab(c, isReadOnly)
+                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta)
                     : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
               }
             </div>
@@ -841,6 +973,42 @@ export function renderRosterTab(container, state, handlers) {
     });
 
     const form = container.querySelector('[data-inspector-form]');
+    if (form) {
+      const previewEl = form.querySelector('#dossier-roi-preview');
+      const liveInputs = form.querySelectorAll('input[name="tAuto"],input[name="tSkill"],input[name="tBurst"],input[name="tgtAuto"],input[name="tgtSkill"],input[name="tgtBurst"]');
+      if (previewEl && liveInputs.length) {
+        const updateLivePreview = () => {
+          const clampLv = (name, fallback) => {
+            const val = Number(form.querySelector(`[name="${name}"]`)?.value);
+            return Number.isFinite(val) ? Math.min(10, Math.max(1, val)) : fallback;
+          };
+          const liveKit = getCharacterKit(inspectedChar.key);
+          const liveEff = computeEffectiveTalents(inspectedChar, liveKit);
+          const liveAnalysis = analyzeCharacterKit(
+            inspectedChar.key,
+            liveKit,
+            liveEff.effective,
+            inspectedChar.constellation || 0
+          );
+          previewEl.innerHTML = renderTalentRoiPreviewHtml(
+            inspectedChar,
+            liveKit,
+            liveAnalysis,
+            {
+              auto: clampLv('tAuto', 1),
+              skill: clampLv('tSkill', 1),
+              burst: clampLv('tBurst', 1)
+            },
+            {
+              auto: clampLv('tgtAuto', 9),
+              skill: clampLv('tgtSkill', 9),
+              burst: clampLv('tgtBurst', 9)
+            }
+          );
+        };
+        liveInputs.forEach((inp) => inp.addEventListener('input', updateLivePreview));
+      }
+    }
     if (form && !isReadOnly) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();

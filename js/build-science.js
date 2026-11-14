@@ -1,4 +1,5 @@
-import { getCharacterMeta } from './catalog.js?v=20261113ag';
+import { getCharacterMeta } from './catalog.js?v=20261113ah';
+import { calcTalentUpgradeCost } from './calculations.js?v=20261113ah';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -607,5 +608,221 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     teamVerdicts,
     burstTriggerNote,
     summary
+  };
+}
+
+function parsePrimaryMultiplierNumber(displayStr) {
+  const cleaned = String(displayStr || '').replace(/,/g, '');
+  const m = cleaned.match(/[-+]?\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : null;
+}
+
+function scoreTalentScalingWeight(talent) {
+  if (!talent) return 0;
+  const mults = talent.multipliers || {};
+  const labels = Object.keys(mults).filter((l) => !/^(cd|duration|energy cost|stamina|max)/i.test(l));
+  let maxPct = 0;
+  for (const lbl of labels) {
+    const arr = mults[lbl];
+    if (!Array.isArray(arr) || !arr.length) continue;
+    const val = parsePrimaryMultiplierNumber(arr[Math.min(arr.length - 1, 8)]);
+    if (val && val > maxPct) maxPct = val;
+  }
+  return labels.length * 15 + maxPct;
+}
+
+export function getTalentPriorityInfo(kitData, kitAnalysis) {
+  const role = kitAnalysis?.roleInfo?.primaryRole || 'Quickswap DPS';
+  const usesNormal = Boolean(kitAnalysis?.roleInfo?.usesNormalAttack);
+  const talents = kitData?.talents || [];
+  const tSkill = talents.find((t) => t.kind === 'skill');
+  const tBurst = talents.find((t) => t.kind === 'burst');
+
+  const skillWeight = scoreTalentScalingWeight(tSkill);
+  const burstWeight = scoreTalentScalingWeight(tBurst);
+  const skillFavored = skillWeight >= burstWeight;
+
+  if (role === 'On-Field Carry' || usesNormal) {
+    return {
+      tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
+      orderText: skillFavored
+        ? 'Normal (A) > Skill (E) ≥ Burst (Q)'
+        : 'Normal (A) > Burst (Q) ≥ Skill (E)',
+      lowValueNote: 'All 3 talents contribute to on-field rotations; prioritize Normal (A) first.'
+    };
+  }
+
+  if (role === 'Sustain / Support') {
+    const skillSupport = /heal|shield|absorption|bonus/i.test((tSkill?.labels || []).join(' '));
+    const burstSupport = /heal|shield|absorption|bonus/i.test((tBurst?.labels || []).join(' '));
+    const eFirst = skillSupport && !burstSupport ? true : !skillSupport && burstSupport ? false : skillFavored;
+    return {
+      tiers: { auto: 'low', skill: eFirst ? 'high' : 'medium', burst: eFirst ? 'medium' : 'high' },
+      orderText: eFirst
+        ? 'Skill (E) > Burst (Q) >> Normal (A)'
+        : 'Burst (Q) > Skill (E) >> Normal (A)',
+      lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1.'
+    };
+  }
+
+  // Off-Field Sub-DPS or Quickswap DPS
+  return {
+    tiers: { auto: 'low', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
+    orderText: skillFavored
+      ? 'Skill (E) > Burst (Q) >> Normal (A)'
+      : 'Burst (Q) > Skill (E) >> Normal (A)',
+    lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1 unless on-fielding.'
+  };
+}
+
+/**
+ * Synthesizes 4 concise deterministic kit insights from parsed talents, passives, constellations & ER diagnostics.
+ */
+export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalysis = null) {
+  const analysis =
+    kitAnalysis || analyzeCharacterKit(char?.key, kitData, char?.talent, char?.constellation || 0);
+  const roleInfo = analysis.roleInfo || { primaryRole: 'Quickswap DPS', utilityTags: [], kitTriggers: [] };
+  const tags = roleInfo.utilityTags?.length ? ` · ${roleInfo.utilityTags.join(' · ')}` : '';
+  const critNote = analysis.isNonCrit ? ' (Non-Crit scaling — Crit Rate/DMG bypassed)' : '';
+  const weaponNote = weaponData?.name ? ` Paired with ${weaponData.name}.` : '';
+
+  const priority = getTalentPriorityInfo(kitData, analysis);
+
+  // Passive & unlocked constellation highlights
+  const ownedCon = Number(char?.constellation) || 0;
+  const highlights = [];
+  for (const trig of roleInfo.kitTriggers || []) {
+    highlights.push(`${trig.source}: ${trig.effect}`);
+  }
+  for (const cap of analysis.statCaps || []) {
+    highlights.push(`${cap.source}: ${cap.target} ${cap.stat}`);
+  }
+  for (const c of kitData?.constellations || []) {
+    if (Number(c.level) > ownedCon) continue;
+    const desc = String(c.description || '');
+    const lvMatch = desc.match(/increases?\s+the\s+level\s+of\s+(.+?)\s+by\s+(\d+)/i);
+    if (lvMatch) {
+      highlights.push(`C${c.level}: +${lvMatch[2]} ${lvMatch[1].trim()}`);
+    } else if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?[\w\s]*res/i.test(desc)) {
+      highlights.push(`C${c.level}: RES Shred`);
+    } else if (/restore|regenerates?\s+[\d.]+\s+energy/i.test(desc)) {
+      highlights.push(`C${c.level}: Energy Refund`);
+    } else if (/crit\s+(rate|dmg)/i.test(desc)) {
+      highlights.push(`C${c.level}: Crit Boost`);
+    } else if (/charges?\s+of|additional\s+charge/i.test(desc)) {
+      highlights.push(`C${c.level}: Extra Skill Charge`);
+    }
+  }
+  const uniqueHighlights = [...new Set(highlights)].slice(0, 4);
+  const highlightText = uniqueHighlights.length
+    ? uniqueHighlights.join(' · ')
+    : ownedCon === 0
+      ? 'C0 baseline kit; check A1/A4 passives for rotation triggers.'
+      : `C${ownedCon} unlocked; standard kit scaling active.`;
+
+  const erText = erDiag?.summary
+    ? `${erDiag.summary}${erDiag.burstTriggerNote ? ` ${erDiag.burstTriggerNote}` : ''}`
+    : `${analysis.burstCost || 60}-cost Burst; sync artifacts to compute ER comfort.`;
+
+  return [
+    {
+      label: 'CORE IDENTITY & UTILITY',
+      tone: 'cyan',
+      text: `${roleInfo.primaryRole}${tags}. Scales off ${analysis.primaryScaling}${critNote}.${weaponNote}`
+    },
+    {
+      label: 'TALENT PRIORITY ORDER',
+      tone: 'gold',
+      text: `${priority.orderText}. ${priority.lowValueNote}`
+    },
+    {
+      label: `UNLOCKED PASSIVES & C${ownedCon}`,
+      tone: 'mint',
+      text: highlightText
+    },
+    {
+      label: 'ER & TEAM COMFORT VERDICT',
+      tone: erDiag?.soloDelta < 0 && erDiag?.hasEndgameFlag ? 'coral' : 'cyan',
+      text: erText
+    }
+  ];
+}
+
+/**
+ * Compares per-level multiplier rows between currentLvl and targetLvl (with +3 constellation boosts)
+ * and attaches exact Mora/Book/Weekly/Crown upgrade costs + ROI badge.
+ */
+export function calcTalentUpgradeDiff(charKey, kitData, slot, currentLvl, targetLvl, constellation = 0, kitAnalysis = null) {
+  const baseCur = Math.max(1, Math.min(10, Number(currentLvl) || 1));
+  const baseTgt = Math.max(1, Math.min(10, Number(targetLvl) || baseCur));
+  const changed = baseTgt > baseCur;
+
+  const kindMap = { auto: 'normal', skill: 'skill', burst: 'burst' };
+  const labelMap = { auto: 'Normal (A)', skill: 'Skill (E)', burst: 'Burst (Q)' };
+  const talent = (kitData?.talents || []).find((t) => t.kind === kindMap[slot]);
+
+  const { bonuses } = computeEffectiveTalents({ talent: { [slot]: baseCur }, constellation }, kitData);
+  const bonus = bonuses[slot] || 0;
+  const effCur = Math.min(15, baseCur + bonus);
+  const effTgt = Math.min(15, baseTgt + bonus);
+
+  const cost = changed
+    ? calcTalentUpgradeCost(charKey, baseCur, baseTgt)
+    : { mora: 0, books: { Teachings: 0, Guide: 0, Philosophies: 0 }, bookName: '', weekly: 0, weeklyMat: '', crown: 0 };
+
+  const rows = [];
+  const mults = talent?.multipliers || {};
+  for (const [label, arr] of Object.entries(mults)) {
+    if (!Array.isArray(arr) || !arr.length) continue;
+    const oldDisplay = arr[Math.min(arr.length - 1, Math.max(0, effCur - 1))];
+    const newDisplay = arr[Math.min(arr.length - 1, Math.max(0, effTgt - 1))];
+    if (oldDisplay === undefined || newDisplay === undefined) continue;
+    if (String(oldDisplay) === String(newDisplay)) continue;
+    const oldNum = parsePrimaryMultiplierNumber(oldDisplay);
+    const newNum = parsePrimaryMultiplierNumber(newDisplay);
+    const relGainPct =
+      oldNum && newNum && oldNum > 0
+        ? Math.round(((newNum - oldNum) / oldNum) * 1000) / 10
+        : null;
+    rows.push({ label, oldDisplay, newDisplay, relGainPct });
+  }
+
+  const gainValues = rows.map((r) => r.relGainPct).filter((v) => v !== null && Number.isFinite(v));
+  const avgRelGainPct = gainValues.length
+    ? Math.round((gainValues.reduce((a, b) => a + b, 0) / gainValues.length) * 10) / 10
+    : 0;
+
+  const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData, null, constellation);
+  const priority = getTalentPriorityInfo(kitData, analysis);
+  const tier = priority.tiers[slot] || 'medium';
+
+  let badge = 'MODERATE';
+  let badgeTone = 'cyan';
+  if (tier === 'low') {
+    badge = 'LUXURY / MORA SINK';
+    badgeTone = 'coral';
+  } else if (baseTgt === 10 && baseCur < 10) {
+    badge = 'LUXURY / MORA SINK';
+    badgeTone = 'gold';
+  } else if (tier === 'high') {
+    badge = 'HIGH VALUE';
+    badgeTone = 'mint';
+  }
+
+  return {
+    slot,
+    slotLabel: labelMap[slot] || slot,
+    talentName: talent?.name || labelMap[slot],
+    changed,
+    baseCur,
+    baseTgt,
+    bonus,
+    effCur,
+    effTgt,
+    rows,
+    avgRelGainPct,
+    cost,
+    badge,
+    badgeTone
   };
 }

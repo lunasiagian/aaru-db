@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261113ag';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261113ah';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -185,6 +185,51 @@ function addWeaponRequirements(addReq, weaponKey, curLvlRaw, tgtLvlRaw) {
   }
 }
 
+const DEFAULT_TALENT_CURVE = {
+  2: { mora: 12500, bookTier: 'Teachings', bookCount: 3, weekly: 0, crown: 0 },
+  3: { mora: 17500, bookTier: 'Guide', bookCount: 2, weekly: 0, crown: 0 },
+  4: { mora: 25000, bookTier: 'Guide', bookCount: 4, weekly: 0, crown: 0 },
+  5: { mora: 30000, bookTier: 'Guide', bookCount: 6, weekly: 0, crown: 0 },
+  6: { mora: 37500, bookTier: 'Guide', bookCount: 9, weekly: 0, crown: 0 },
+  7: { mora: 120000, bookTier: 'Philosophies', bookCount: 4, weekly: 1, crown: 0 },
+  8: { mora: 260000, bookTier: 'Philosophies', bookCount: 6, weekly: 1, crown: 0 },
+  9: { mora: 450000, bookTier: 'Philosophies', bookCount: 12, weekly: 2, crown: 0 },
+  10: { mora: 700000, bookTier: 'Philosophies', bookCount: 16, weekly: 2, crown: 1 }
+};
+
+export function calcTalentUpgradeCost(charKey, currentLvl, targetLvl) {
+  const catalog = getCatalog();
+  const talentCurve = catalog?.costCurves?.talentByLevel || DEFAULT_TALENT_CURVE;
+  const charMeta = getCharacterMeta(charKey);
+  const cT = Math.max(1, Math.min(10, Number(currentLvl) || 1));
+  const tT = Math.max(cT, Math.min(10, Number(targetLvl) || cT));
+
+  let mora = 0;
+  const books = { Teachings: 0, Guide: 0, Philosophies: 0 };
+  let weekly = 0;
+  let crown = 0;
+
+  for (let lvl = cT + 1; lvl <= tT; lvl++) {
+    const step = talentCurve[lvl];
+    if (!step) continue;
+    mora += step.mora || 0;
+    if (step.bookTier && books[step.bookTier] !== undefined) {
+      books[step.bookTier] += step.bookCount || 0;
+    }
+    weekly += step.weekly || 0;
+    crown += step.crown || 0;
+  }
+
+  return {
+    mora,
+    books,
+    bookName: charMeta?.talentBook || 'Gold',
+    weekly,
+    weeklyMat: charMeta?.weeklyMat || '',
+    crown
+  };
+}
+
 function computeRawTargetRequirements(target) {
   const catalog = getCatalog();
   const curves = catalog?.costCurves || {};
@@ -226,17 +271,7 @@ function computeRawTargetRequirements(target) {
   }
 
   // 3. Talents (Auto / Skill / Burst)
-  const talentCurve = curves.talentByLevel || {
-    2: { mora: 12500, bookTier: 'Teachings', bookCount: 3, weekly: 0, crown: 0 },
-    3: { mora: 17500, bookTier: 'Guide', bookCount: 2, weekly: 0, crown: 0 },
-    4: { mora: 25000, bookTier: 'Guide', bookCount: 4, weekly: 0, crown: 0 },
-    5: { mora: 30000, bookTier: 'Guide', bookCount: 6, weekly: 0, crown: 0 },
-    6: { mora: 37500, bookTier: 'Guide', bookCount: 9, weekly: 0, crown: 0 },
-    7: { mora: 120000, bookTier: 'Philosophies', bookCount: 4, weekly: 1, crown: 0 },
-    8: { mora: 260000, bookTier: 'Philosophies', bookCount: 6, weekly: 1, crown: 0 },
-    9: { mora: 450000, bookTier: 'Philosophies', bookCount: 12, weekly: 2, crown: 0 },
-    10: { mora: 700000, bookTier: 'Philosophies', bookCount: 16, weekly: 2, crown: 1 }
-  };
+  const talentCurve = curves.talentByLevel || DEFAULT_TALENT_CURVE;
 
   const bookBase = charMeta.talentBook || 'Gold';
   const slots = ['auto', 'skill', 'burst'];
