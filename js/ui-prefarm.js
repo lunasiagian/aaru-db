@@ -8,7 +8,48 @@ import {
   getMaterialMeta,
   getWeaponMeta
 } from './catalog.js?v=20261113ah';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113t';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113ah';
+
+const uiState = {
+  openTargets: new Set(),
+  expandedSurplus: new Set()
+};
+
+function formatCompactNumber(n) {
+  const num = Number(n) || 0;
+  if (Math.abs(num) >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(2)}M`;
+  }
+  return num.toLocaleString();
+}
+
+function escapeAttr(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderReqChipHtml(r) {
+  const isDef = r.deficit > 0;
+  const fullRatio = `${r.owned.toLocaleString()} / ${r.needed.toLocaleString()}`;
+  const compactRatio = `${formatCompactNumber(r.owned)} / ${formatCompactNumber(r.needed)}`;
+  const compactDelta = isDef
+    ? `-${formatCompactNumber(r.deficit)}`
+    : `+${formatCompactNumber(r.surplus)}`;
+  return `
+    <div class="req-chip ${isDef ? 'row-deficit' : 'row-surplus'}" title="${escapeAttr(`${r.name}: ${fullRatio}`)}">
+      ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
+      <div class="req-chip-body">
+        <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
+        <div class="req-nums mono">
+          <span title="${escapeAttr(fullRatio)}">${compactRatio}</span>
+          <span class="${isDef ? 'text-coral' : 'text-mint'}">${compactDelta}</span>
+        </div>
+      </div>
+    </div>`;
+}
 
 export function renderPrefarmTab(container, state, handlers) {
   const { account, isReadOnly } = state;
@@ -126,7 +167,12 @@ export function renderPrefarmTab(container, state, handlers) {
               const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
               const bossMeta = charMeta.bossMat ? getMaterialMeta(charMeta.bossMat) : null;
               const reqRows = waterfallMap.get(target.id) || [];
-              const deficitCount = reqRows.filter((r) => r.deficit > 0).length;
+              const deficitRows = reqRows.filter((r) => r.deficit > 0);
+              const surplusRows = reqRows.filter((r) => r.deficit <= 0);
+              const deficitCount = deficitRows.length;
+              const targetStateKey = String(target.id ?? target.characterKey);
+              const targetsOpen = uiState.openTargets.has(targetStateKey);
+              const surplusOpen = uiState.expandedSurplus.has(targetStateKey);
 
               return `
               <article class="card prefarm-card">
@@ -160,6 +206,7 @@ export function renderPrefarmTab(container, state, handlers) {
                     ${
                       !isReadOnly
                         ? `
+                      <button type="button" class="btn btn-ghost btn-xs ${targetsOpen ? 'active' : ''}" data-pf-toggle-targets="${escapeAttr(targetStateKey)}">⚙ Targets</button>
                       <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>▲</button>
                       <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>▼</button>
                       <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id ?? ''}" data-pf-rank="${target.rank ?? idx + 1}">Remove</button>`
@@ -168,7 +215,9 @@ export function renderPrefarmTab(container, state, handlers) {
                   </div>
                 </div>
 
-                <div class="prefarm-targets-edit">
+                ${
+                  targetsOpen && !isReadOnly
+                    ? `<div class="prefarm-targets-edit">
                   <label class="mini-field">
                     <span>TIER</span>
                     <select class="select-sm mono" data-pf-edit="tier" data-pf-id="${target.id}" ${disabledAttr}>
@@ -217,26 +266,42 @@ export function renderPrefarmTab(container, state, handlers) {
                         </label>`
                       : ''
                   }
-                </div>
+                </div>`
+                    : ''
+                }
 
-                <div class="req-grid">
-                  ${reqRows
-                    .map((r) => {
-                      const isDef = r.deficit > 0;
-                      return `
-                      <div class="req-chip ${isDef ? 'row-deficit' : 'row-surplus'}">
-                        ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
-                        <div class="req-chip-body">
-                          <div class="req-name">${r.name}</div>
-                          <div class="req-nums mono">
-                            <span>${r.owned.toLocaleString()} / ${r.needed.toLocaleString()}</span>
-                            <span class="${isDef ? 'text-coral' : 'text-mint'}">${isDef ? `-${r.deficit.toLocaleString()}` : `+${r.surplus.toLocaleString()}`}</span>
-                          </div>
+                ${
+                  deficitRows.length
+                    ? `<div class="req-grid">
+                        ${deficitRows.map(renderReqChipHtml).join('')}
+                      </div>`
+                    : ''
+                }
+
+                ${
+                  surplusRows.length
+                    ? `<div class="prefarm-surplus-bar">
+                        <div class="prefarm-surplus-summary mono">
+                          <span class="text-mint">✓ Ready in Bag (${surplusRows.length}):</span>
+                          <span class="prefarm-surplus-inline muted">
+                            ${surplusRows
+                              .map((r) => `${escapeAttr(r.name)} (+${formatCompactNumber(r.surplus)})`)
+                              .join(' · ')}
+                          </span>
+                          <button type="button" class="btn btn-ghost btn-xs prefarm-surplus-toggle" data-pf-toggle-surplus="${escapeAttr(targetStateKey)}">
+                            ${surplusOpen ? 'Hide' : 'Inspect'}
+                          </button>
                         </div>
-                      </div>`;
-                    })
-                    .join('')}
-                </div>
+                        ${
+                          surplusOpen
+                            ? `<div class="req-grid prefarm-surplus-grid">
+                                ${surplusRows.map(renderReqChipHtml).join('')}
+                              </div>`
+                            : ''
+                        }
+                      </div>`
+                    : ''
+                }
               </article>`;
             })
             .join('')
@@ -244,7 +309,25 @@ export function renderPrefarmTab(container, state, handlers) {
     </div>
   `;
 
+  container.querySelectorAll('[data-pf-toggle-surplus]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.pfToggleSurplus;
+      if (uiState.expandedSurplus.has(key)) uiState.expandedSurplus.delete(key);
+      else uiState.expandedSurplus.add(key);
+      renderPrefarmTab(container, state, handlers);
+    });
+  });
+
   if (!isReadOnly) {
+    container.querySelectorAll('[data-pf-toggle-targets]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.pfToggleTargets;
+        if (uiState.openTargets.has(key)) uiState.openTargets.delete(key);
+        else uiState.openTargets.add(key);
+        renderPrefarmTab(container, state, handlers);
+      });
+    });
+
     const addForm = container.querySelector('#prefarm-add-form');
     const charSel = addForm?.querySelector('select[name="characterKey"]');
     const wepSel = addForm?.querySelector('select[name="weaponKey"]');

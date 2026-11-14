@@ -1255,8 +1255,9 @@ textarea:focus {
 
 .req-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 8px;
+  margin-top: 12px;
 }
 
 .req-chip {
@@ -1266,16 +1267,20 @@ textarea:focus {
   padding: 7px 9px;
   border-radius: 6px;
   border: 1px solid var(--border-slate);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .req-chip-body {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .req-name {
   font-size: 12px;
   font-weight: 600;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1284,7 +1289,55 @@ textarea:focus {
 .req-nums {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
+  min-width: 0;
+}
+
+.req-nums > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.prefarm-controls .btn-xs.active {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.prefarm-surplus-bar {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.prefarm-surplus-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  min-width: 0;
+}
+
+.prefarm-surplus-inline {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prefarm-surplus-toggle {
+  flex-shrink: 0;
+}
+
+.prefarm-surplus-grid {
+  margin-top: 8px;
 }
 
 /* Roster & Armory */
