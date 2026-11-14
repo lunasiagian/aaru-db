@@ -524,10 +524,10 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
     <div class="dossier-shell">
       <div class="dossier-topbar">
         <div class="dossier-topbar-left">
-          <button type="button" class="btn-ghost mono" data-dossier-back>← Back to Roster</button>
+          <button type="button" class="btn btn-outline btn-sm mono" data-dossier-back>← Back to Roster</button>
           <div class="dossier-nav-btns">
-            <button type="button" class="btn-icon" data-inspect-char="${prevChar ? prevChar.key : ''}" ${prevChar ? '' : 'disabled'} title="${prevChar ? escapeHtml(prevChar.meta.name) : ''}">‹</button>
-            <button type="button" class="btn-icon" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">›</button>
+            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${prevChar ? prevChar.key : ''}" ${prevChar ? '' : 'disabled'} title="${prevChar ? escapeHtml(prevChar.meta.name) : ''}">‹</button>
+            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">›</button>
           </div>
           <div class="dossier-title-group">
             <h1 class="dossier-char-name">${escapeHtml(c.meta.name)}</h1>

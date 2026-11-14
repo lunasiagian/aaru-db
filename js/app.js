@@ -17,7 +17,7 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261113t';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261113t';
-import { renderRosterTab } from './ui-roster.js?v=20261113ac';
+import { renderRosterTab } from './ui-roster.js?v=20261113ae';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 import { CHANGELOG } from './changelog.js?v=20261113ac';
 
