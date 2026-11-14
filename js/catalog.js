@@ -1,5 +1,6 @@
 let cachedCatalog = null;
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v11';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v1';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -170,12 +171,13 @@ async function fetchYattaCatalog(forceRefresh = false) {
     }
 
     if (avatarRes.status === 'fulfilled' && avatarRes.value?.data?.items) {
-      for (const item of Object.values(avatarRes.value.data.items)) {
+      for (const [id, item] of Object.entries(avatarRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon) continue;
         const upg = avatarUpgradeByNorm.get(norm);
         const pascalKey = String(item.name || '').replace(/[^a-zA-Z0-9]/g, '');
         slim.characters[norm] = {
+          id: String(id),
           pascalKey,
           name: item.name,
           rarity: Number(item.rank) || 5,
@@ -189,12 +191,13 @@ async function fetchYattaCatalog(forceRefresh = false) {
     }
 
     if (weaponRes.status === 'fulfilled' && weaponRes.value?.data?.items) {
-      for (const item of Object.values(weaponRes.value.data.items)) {
+      for (const [id, item] of Object.entries(weaponRes.value.data.items)) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.icon || item.isWeaponSkin) continue;
         const upg = weaponUpgradeByNorm.get(norm);
         const pascalKey = String(item.name || '').replace(/[^a-zA-Z0-9]/g, '');
         slim.weapons[norm] = {
+          id: String(id),
           pascalKey,
           name: item.name,
           rarity: Number(item.rank) || 4,
@@ -671,4 +674,320 @@ export function getArtifactIcon(setKey, slotKey) {
     return `https://api.lunaris.moe/data/assets/reliquary/${baseIcon}.webp`;
   }
   return `https://gi.yatta.moe/assets/UI/reliquary/${baseIcon}.png`;
+}
+
+const FIGHT_PROP_TO_STAT = {
+  FIGHT_PROP_HP_PERCENT: 'hp_',
+  FIGHT_PROP_ATTACK_PERCENT: 'atk_',
+  FIGHT_PROP_DEFENSE_PERCENT: 'def_',
+  FIGHT_PROP_ELEMENT_MASTERY: 'eleMas',
+  FIGHT_PROP_CHARGE_EFFICIENCY: 'enerRech_',
+  FIGHT_PROP_CRITICAL: 'critRate_',
+  FIGHT_PROP_CRITICAL_HURT: 'critDMG_',
+  FIGHT_PROP_HEAL_ADD: 'heal_',
+  FIGHT_PROP_PHYSICAL_ADD_HURT: 'physical_dmg_',
+  FIGHT_PROP_FIRE_ADD_HURT: 'pyro_dmg_',
+  FIGHT_PROP_WATER_ADD_HURT: 'hydro_dmg_',
+  FIGHT_PROP_WIND_ADD_HURT: 'anemo_dmg_',
+  FIGHT_PROP_ELEC_ADD_HURT: 'electro_dmg_',
+  FIGHT_PROP_GRASS_ADD_HURT: 'dendro_dmg_',
+  FIGHT_PROP_ICE_ADD_HURT: 'cryo_dmg_',
+  FIGHT_PROP_ROCK_ADD_HURT: 'geo_dmg_'
+};
+
+const BASE_FIGHT_PROPS = new Set([
+  'FIGHT_PROP_BASE_HP',
+  'FIGHT_PROP_BASE_ATTACK',
+  'FIGHT_PROP_BASE_DEFENSE'
+]);
+
+function cleanYattaText(str) {
+  return String(str || '')
+    .replace(/<color=[^>]*>/gi, '')
+    .replace(/<\/color>/gi, '')
+    .replace(/\{LAYOUT_[^}]*#([^}]*)\}/gi, '$1')
+    .replace(/\\n/g, '\n')
+    .trim();
+}
+
+let kitCacheMem = null;
+function loadKitCache() {
+  if (kitCacheMem) return kitCacheMem;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(KIT_CACHE_KEY) || '{}');
+    kitCacheMem = {
+      chars: parsed?.chars && typeof parsed.chars === 'object' ? parsed.chars : {},
+      weapons: parsed?.weapons && typeof parsed.weapons === 'object' ? parsed.weapons : {}
+    };
+  } catch {
+    kitCacheMem = { chars: {}, weapons: {} };
+  }
+  return kitCacheMem;
+}
+
+function saveKitCache() {
+  try {
+    localStorage.setItem(KIT_CACHE_KEY, JSON.stringify(loadKitCache()));
+  } catch {
+    // Ignore localStorage quota errors
+  }
+}
+
+let avatarCurvePromise = null;
+let weaponCurvePromise = null;
+
+function fetchCurve(kind) {
+  if (kind === 'avatar') {
+    if (!avatarCurvePromise) {
+      avatarCurvePromise = fetch('https://gi.yatta.moe/api/v2/static/avatarCurve')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => j?.data || null)
+        .catch(() => null);
+    }
+    return avatarCurvePromise;
+  }
+  if (!weaponCurvePromise) {
+    weaponCurvePromise = fetch('https://gi.yatta.moe/api/v2/static/weaponCurve')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.data || null)
+      .catch(() => null);
+  }
+  return weaponCurvePromise;
+}
+
+function calcYattaCharLevelStats(upgrade, curveData, level, promoteIdx) {
+  const lvInfo = curveData?.[String(level)]?.curveInfos || {};
+  const promote = upgrade?.promote?.[promoteIdx]?.addProps || {};
+  const out = { hp: 0, atk: 0, def: 0 };
+  for (const p of upgrade?.prop || []) {
+    const mult = Number(lvInfo[p.type]) || 1;
+    const add = Number(promote[p.propType]) || 0;
+    const total = (Number(p.initValue) || 0) * mult + add;
+    if (p.propType === 'FIGHT_PROP_BASE_HP') out.hp = Math.round(total);
+    else if (p.propType === 'FIGHT_PROP_BASE_ATTACK') out.atk = Math.round(total);
+    else if (p.propType === 'FIGHT_PROP_BASE_DEFENSE') out.def = Math.round(total);
+  }
+  return out;
+}
+
+function parseYattaAvatarKit(data, curveData) {
+  const upgrade = data?.upgrade || {};
+  const lv80 = calcYattaCharLevelStats(upgrade, curveData, 80, 5);
+  const lv90 = calcYattaCharLevelStats(upgrade, curveData, 90, 6);
+  const lv95 = curveData?.['95']
+    ? calcYattaCharLevelStats(upgrade, curveData, 95, 6)
+    : {
+        hp: Math.round(lv90.hp * 1.07),
+        atk: Math.round(lv90.atk * 1.07),
+        def: Math.round(lv90.def * 1.07)
+      };
+
+  const maxPromote = upgrade?.promote?.[6]?.addProps || {};
+  let ascensionStat = null;
+  for (const [propKey, val] of Object.entries(maxPromote)) {
+    if (BASE_FIGHT_PROPS.has(propKey)) continue;
+    const mapped = FIGHT_PROP_TO_STAT[propKey];
+    if (mapped) {
+      ascensionStat = {
+        key: mapped,
+        value: mapped === 'eleMas' ? Math.round(Number(val) || 0) : Math.round((Number(val) || 0) * 1000) / 10
+      };
+      break;
+    }
+  }
+
+  const talents = [];
+  const passives = [];
+  let burstCost = 0;
+
+  const talentEntries = Object.entries(data?.talent || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
+  let activeIdx = 0;
+  let passiveIdx = 0;
+
+  for (const [, t] of talentEntries) {
+    if (!t?.name) continue;
+    const tType = Number(t.type);
+    const desc = cleanYattaText(t.description);
+    if (tType === 0 || tType === 1) {
+      const kind = activeIdx === 0 ? 'normal' : activeIdx === 1 ? 'skill' : 'burst';
+      activeIdx += 1;
+      const labels = Array.isArray(t.promote?.['1']?.description)
+        ? t.promote['1'].description.map((line) => String(line).split('|')[0].trim()).filter(Boolean)
+        : [];
+      let costElemVal = Number(t.costElemVal) || 0;
+      if (!costElemVal && kind === 'burst' && Array.isArray(t.promote?.['1']?.description)) {
+        const costLine = t.promote['1'].description.find((l) => /Energy Cost/i.test(l));
+        const m = costLine?.match(/\{param(\d+):/i);
+        if (m && Array.isArray(t.promote?.['1']?.params)) {
+          costElemVal = Math.round(Number(t.promote['1'].params[Number(m[1]) - 1]) || 0);
+        }
+      }
+      if (kind === 'burst' && costElemVal > 0) burstCost = costElemVal;
+      talents.push({ kind, name: t.name, description: desc, costElemVal, labels });
+    } else if (tType === 2) {
+      const slot = passiveIdx === 0 ? 'A1' : passiveIdx === 1 ? 'A4' : 'Utility';
+      passiveIdx += 1;
+      passives.push({ slot, name: t.name, description: desc });
+    }
+  }
+
+  return {
+    baseStats: { lv80, lv90, lv95 },
+    ascensionStat,
+    burstCost: burstCost || 60,
+    talents,
+    passives
+  };
+}
+
+function parseLunarisCharKit(detail) {
+  const skills = detail?.skills || {};
+  const talents = [];
+  if (detail?.attacks?.name) {
+    talents.push({ kind: 'normal', name: detail.attacks.name, description: cleanYattaText(detail.attacks.desc || ''), costElemVal: 0, labels: [] });
+  }
+  if (skills?.skill?.name) {
+    talents.push({ kind: 'skill', name: skills.skill.name, description: cleanYattaText(skills.skill.desc || ''), costElemVal: 0, labels: [] });
+  }
+  let burstCost = Number(skills?.burst?.energyCost || skills?.burst?.cost || 60);
+  if (skills?.burst?.name) {
+    talents.push({ kind: 'burst', name: skills.burst.name, description: cleanYattaText(skills.burst.desc || ''), costElemVal: burstCost, labels: [] });
+  }
+  const passives = (Array.isArray(detail?.passives) ? detail.passives : []).map((p, idx) => ({
+    slot: idx === 0 ? 'A1' : idx === 1 ? 'A4' : 'Utility',
+    name: p?.name || `Passive ${idx + 1}`,
+    description: cleanYattaText(p?.desc || p?.description || '')
+  }));
+  return {
+    baseStats: {
+      lv80: { hp: 11200, atk: 260, def: 680 },
+      lv90: { hp: 12500, atk: 295, def: 750 },
+      lv95: { hp: 13375, atk: 315, def: 800 }
+    },
+    ascensionStat: null,
+    burstCost,
+    talents,
+    passives
+  };
+}
+
+function parseYattaWeaponStats(data, curveData) {
+  const upgrade = data?.upgrade || {};
+  const calcAt = (lv, promoteIdx) => {
+    const lvInfo = curveData?.[String(lv)]?.curveInfos || {};
+    const promote = upgrade?.promote?.[promoteIdx]?.addProps || {};
+    let atk = 0;
+    let subKey = '';
+    let subVal = 0;
+    for (const p of upgrade?.prop || []) {
+      const mult = Number(lvInfo[p.type]) || 1;
+      const add = Number(promote[p.propType]) || 0;
+      const total = (Number(p.initValue) || 0) * mult + add;
+      if (p.propType === 'FIGHT_PROP_BASE_ATTACK') {
+        atk = Math.round(total);
+      } else if (FIGHT_PROP_TO_STAT[p.propType]) {
+        subKey = FIGHT_PROP_TO_STAT[p.propType];
+        subVal = subKey === 'eleMas' ? Math.round(total) : Math.round(total * 1000) / 10;
+      }
+    }
+    return { atk, subKey, subVal };
+  };
+  const affixObj = data?.affix ? Object.values(data.affix)[0] : null;
+  return {
+    lv80: calcAt(80, 5),
+    lv90: calcAt(90, 6),
+    passiveName: affixObj?.name || '',
+    passiveDesc: cleanYattaText(affixObj?.upgrade?.['0'] || '')
+  };
+}
+
+export function getCharacterKit(pascalKey) {
+  const norm = normalizeAssetKey(pascalKey);
+  return loadKitCache().chars[norm] || null;
+}
+
+export function getWeaponStats(pascalKey) {
+  const norm = normalizeAssetKey(pascalKey);
+  return loadKitCache().weapons[norm] || null;
+}
+
+const pendingKitFetches = new Map();
+
+export async function ensureCharacterKitAndStats(pascalKey) {
+  const norm = normalizeAssetKey(pascalKey);
+  const cache = loadKitCache();
+  if (cache.chars[norm]) return cache.chars[norm];
+  const entry = yattaMaps.characters.get(norm);
+  if (!entry) return null;
+  if (pendingKitFetches.has(norm)) return pendingKitFetches.get(norm);
+
+  const task = (async () => {
+    try {
+      if (entry.id) {
+        const [detailRes, curveData] = await Promise.all([
+          fetch(`https://gi.yatta.moe/api/v2/en/avatar/${encodeURIComponent(entry.id)}`).then((r) => (r.ok ? r.json() : null)),
+          fetchCurve('avatar')
+        ]);
+        if (detailRes?.data) {
+          const parsed = parseYattaAvatarKit(detailRes.data, curveData);
+          cache.chars[norm] = parsed;
+          saveKitCache();
+          return parsed;
+        }
+      }
+      if (entry.lunarisId && yattaMaps.lunarisVer) {
+        const url = `https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/en/char/${encodeURIComponent(entry.lunarisId)}.json`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const detail = await res.json();
+          const parsed = parseLunarisCharKit(detail);
+          cache.chars[norm] = parsed;
+          saveKitCache();
+          return parsed;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      pendingKitFetches.delete(norm);
+    }
+  })();
+
+  pendingKitFetches.set(norm, task);
+  return task;
+}
+
+const pendingWeaponStatFetches = new Map();
+
+export async function ensureWeaponStats(pascalKey) {
+  const norm = normalizeAssetKey(pascalKey);
+  const cache = loadKitCache();
+  if (cache.weapons[norm]) return cache.weapons[norm];
+  const entry = yattaMaps.weapons.get(norm);
+  if (!entry?.id) return null;
+  if (pendingWeaponStatFetches.has(norm)) return pendingWeaponStatFetches.get(norm);
+
+  const task = (async () => {
+    try {
+      const [detailRes, curveData] = await Promise.all([
+        fetch(`https://gi.yatta.moe/api/v2/en/weapon/${encodeURIComponent(entry.id)}`).then((r) => (r.ok ? r.json() : null)),
+        fetchCurve('weapon')
+      ]);
+      if (detailRes?.data) {
+        const parsed = parseYattaWeaponStats(detailRes.data, curveData);
+        cache.weapons[norm] = parsed;
+        saveKitCache();
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      pendingWeaponStatFetches.delete(norm);
+    }
+  })();
+
+  pendingWeaponStatFetches.set(norm, task);
+  return task;
 }

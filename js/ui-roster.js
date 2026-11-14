@@ -1,7 +1,26 @@
 import { renderAssetIcon } from './assets.js';
-import { getAllCharacterKeys, getArtifactIcon, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261113x';
+import {
+  ensureCharacterKitAndStats,
+  ensureWeaponStats,
+  getAllCharacterKeys,
+  getArtifactIcon,
+  getCharacterKit,
+  getCharacterMeta,
+  getWeaponMeta,
+  getWeaponStats
+} from './catalog.js?v=20261113y';
+import {
+  analyzeCharacterKit,
+  computeCharacterCombatStats,
+  evaluateErComfort
+} from './build-science.js?v=20261113y';
 
-const STATUS_PILLS = ['All', 'Active Work', 'Combat Ready', 'Swap Flagged'];
+const STATUS_PILLS = [
+  { id: 'All', label: 'All' },
+  { id: 'Active Work', label: 'Active' },
+  { id: 'Combat Ready', label: 'Built' },
+  { id: 'Swap Flagged', label: 'Swaps' }
+];
 const ELEMENT_PILLS = ['All', 'Pyro', 'Hydro', 'Anemo', 'Electro', 'Dendro', 'Cryo', 'Geo'];
 const SORT_OPTIONS = [
   { value: 'priority', label: 'Sort: Default' },
@@ -23,24 +42,6 @@ function escapeHtml(str) {
 
 function isSwapFlagged(c) {
   return Boolean((c.swapTag && c.swapTag.trim()) || (c.notes && SWAP_NOTE_RE.test(c.notes)));
-}
-
-function formatStatusLabel(c) {
-  if (c.status === 'Active Prefarm') {
-    return c.priorityRank ? `#${c.priorityRank} PREFARM` : 'PREFARM';
-  }
-  if (c.status === 'In Progress') return 'BUILDING';
-  if (c.status === 'Built') return 'BUILT';
-  if (c.status === 'Bench') return 'BENCH';
-  return 'UNOWNED';
-}
-
-function getStatusPillClass(status) {
-  if (status === 'Built') return 'pill-mint';
-  if (status === 'Active Prefarm') return 'pill-gold';
-  if (status === 'In Progress') return 'pill-sky';
-  if (status === 'Unowned') return 'pill-muted';
-  return '';
 }
 
 function sortByPriorityThenLevel(a, b) {
@@ -75,12 +76,18 @@ function renderCharacterCard(c, density) {
   const cornerBadgeHtml = cornerBadge
     ? `<span class="roster-corner-badge mono ${!c.owned && isUnreleased ? 'is-unreleased' : ''}">${cornerBadge}</span>`
     : '';
-  const statusLabel = formatStatusLabel(c);
-  const statusClass = getStatusPillClass(c.status);
-  const swapBadge = isSwapFlagged(c) ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">⇄</span>' : '';
-  const talentBadge = c.owned
-    ? `<span class="roster-talent-chip mono" title="Talents: Normal / Skill / Burst">${c.talent.auto}/${c.talent.skill}/${c.talent.burst}</span>`
+  const elemSlug = String(c.meta?.element || 'unknown').toLowerCase();
+  const prefarmBadge =
+    c.status === 'Active Prefarm'
+      ? `<span class="pill mono pill-gold">${c.priorityRank ? `#${c.priorityRank} ` : ''}PREFARM</span>`
+      : '';
+  const swapBadge = isSwapFlagged(c)
+    ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">⇄</span>'
     : '';
+  const actionableHtml =
+    prefarmBadge || swapBadge
+      ? `<span class="roster-portrait-pills">${prefarmBadge}${swapBadge}</span>`
+      : '';
 
   if (density === 'list') {
     return `
@@ -90,28 +97,22 @@ function renderCharacterCard(c, density) {
           <span class="roster-list-name">${escapeHtml(c.meta.name)}</span>
         </span>
         <span class="roster-list-right mono">
+          ${prefarmBadge}
           ${swapBadge}
-          ${talentBadge}
-          ${c.subCv > 0 ? `<span class="pill pill-sky">${c.subCv.toFixed(1)} CV</span>` : ''}
           ${cornerBadgeHtml}
-          <span class="pill ${statusClass}">${statusLabel}</span>
         </span>
       </button>`;
   }
 
   return `
-    <button type="button" class="roster-portrait-card ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
+    <button type="button" class="roster-portrait-card elem-glow-${elemSlug} ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
       ${cornerBadgeHtml}
       <div class="roster-portrait-frame">
         ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-portrait')}
       </div>
       <div class="roster-portrait-footer">
         <span class="roster-portrait-name">${escapeHtml(c.meta.name)}</span>
-        <span class="roster-portrait-pills">
-          <span class="pill mono ${statusClass}">${statusLabel}</span>
-          ${talentBadge}
-          ${swapBadge}
-        </span>
+        ${actionableHtml}
       </div>
     </button>`;
 }
@@ -166,7 +167,7 @@ function formatStatKey(k) {
   return STAT_LABEL[k] || String(k || '').replace(/_/g, '');
 }
 
-function formatSubstat(sub) {
+function formatSubstatValue(sub) {
   const lbl = formatStatKey(sub.key);
   const val = Number(sub.value) || 0;
   return `${lbl} +${val}${PERCENT_STATS.has(sub.key) ? '%' : ''}`;
@@ -187,156 +188,372 @@ function calcArtifactSubCv(equipped = []) {
   return subCv;
 }
 
-function renderEquippedArtifacts(equipped = []) {
-  const sorted = [...equipped].sort((a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9));
+function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
+  const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
+  const wepLvStats = weaponStats
+    ? (c.equippedWeapon?.level <= 80 ? weaponStats.lv80 : weaponStats.lv90)
+    : null;
 
-  if (!sorted.length) {
-    return '<div class="muted mono" style="font-size:12px;">No equipped artifacts in GOOD export</div>';
-  }
-
+  const sortedArtifacts = [...(c.equippedArtifacts || [])].sort(
+    (a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9)
+  );
   const setCounts = new Map();
-  for (const a of sorted) {
+  for (const a of sortedArtifacts) {
     if (a.setKey) setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
   }
-  const subCv = calcArtifactSubCv(sorted);
   const activeSets = Array.from(setCounts.entries())
     .filter(([, cnt]) => cnt >= 2)
     .map(([setKey, cnt]) => `${cnt >= 4 ? '4pc' : '2pc'} ${splitPascalSet(setKey)}`);
+  const usefulSet = new Set(kitAnalysis?.usefulSubstats || []);
 
   return `
-    <div class="artifact-summary-row mono">
-      <span class="pill pill-mint">${activeSets.length ? activeSets.join(' + ') : 'Rainbow Set'}</span>
-      <span class="pill pill-sky">Sub CV: ${subCv.toFixed(1)}</span>
+    <div class="dossier-section">
+      <div class="card-eyebrow">EQUIPPED WEAPON</div>
+      ${
+        c.equippedWeapon
+          ? `<div class="dossier-weapon-card">
+              ${renderAssetIcon('weapons', c.equippedWeapon.key, weaponMeta.name, 'icon-md')}
+              <div class="dossier-weapon-info">
+                <div class="dossier-weapon-name">${escapeHtml(weaponMeta.name)}</div>
+                <div class="item-meta mono">Lv.${c.equippedWeapon.level} · R${c.equippedWeapon.refinement} · ${weaponMeta.rarity}★</div>
+              </div>
+              ${
+                wepLvStats
+                  ? `<div class="dossier-weapon-stats mono">
+                      <span class="pill">ATK ${wepLvStats.atk}</span>
+                      ${
+                        wepLvStats.subKey
+                          ? `<span class="pill pill-sky">${escapeHtml(formatStatKey(wepLvStats.subKey))} +${wepLvStats.subVal}${PERCENT_STATS.has(wepLvStats.subKey) ? '%' : ''}</span>`
+                          : ''
+                      }
+                    </div>`
+                  : ''
+              }
+            </div>`
+          : '<div class="muted mono" style="font-size:12px;">No weapon assigned in GOOD export</div>'
+      }
     </div>
-    <div class="artifact-list">
-      ${sorted
-        .map((a) => {
-          const iconUrl = getArtifactIcon(a.setKey, a.slotKey);
-          const slotName = SLOT_LABEL[a.slotKey] || a.slotKey;
-          const iconHtml = iconUrl
-            ? `<div class="artifact-row-icon rarity-${a.rarity || 5}"><img src="${iconUrl}" alt="${escapeHtml(splitPascalSet(a.setKey))}" loading="lazy" /></div>`
-            : `<div class="artifact-row-icon rarity-${a.rarity || 5}"><span class="mono">${escapeHtml(slotName.slice(0, 2).toUpperCase())}</span></div>`;
-          return `
-        <div class="artifact-row">
-          ${iconHtml}
-          <div class="artifact-row-body">
-            <div class="artifact-row-top">
-              <span class="mono text-gold">${escapeHtml(slotName)} · +${a.level}</span>
-              <span class="mono artifact-main-stat">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
-            </div>
-            <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
-            <div class="artifact-subs mono">${(a.substats || []).map(formatSubstat).join(' · ')}</div>
-          </div>
-        </div>`;
-        })
-        .join('')}
+
+    <div class="dossier-section">
+      <div class="dossier-section-head">
+        <span class="card-eyebrow">EQUIPPED ARTIFACTS</span>
+        <div class="artifact-summary-row mono">
+          <span class="pill pill-mint">${activeSets.length ? activeSets.join(' + ') : 'Rainbow Set'}</span>
+        </div>
+      </div>
+      ${
+        sortedArtifacts.length
+          ? `<div class="dossier-artifact-grid">
+              ${sortedArtifacts
+                .map((a) => {
+                  const iconUrl = getArtifactIcon(a.setKey, a.slotKey);
+                  const slotName = SLOT_LABEL[a.slotKey] || a.slotKey;
+                  const iconHtml = iconUrl
+                    ? `<div class="artifact-row-icon rarity-${a.rarity || 5}"><img src="${iconUrl}" alt="${escapeHtml(splitPascalSet(a.setKey))}" loading="lazy" /></div>`
+                    : `<div class="artifact-row-icon rarity-${a.rarity || 5}"><span class="mono">${escapeHtml(slotName.slice(0, 2).toUpperCase())}</span></div>`;
+                  return `
+                    <div class="dossier-artifact-card">
+                      <div class="dossier-artifact-top">
+                        ${iconHtml}
+                        <div class="artifact-row-body">
+                          <div class="artifact-row-top">
+                            <span class="mono text-gold">${escapeHtml(slotName)} · +${a.level}</span>
+                            <span class="mono artifact-main-stat">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
+                          </div>
+                          <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
+                        </div>
+                      </div>
+                      <div class="dossier-substats-list mono">
+                        ${(a.substats || [])
+                          .map((sub) => {
+                            const isUseful = usefulSet.has(sub.key);
+                            return `<span class="substat-chip ${isUseful ? 'is-useful' : 'is-dead'}">${escapeHtml(formatSubstatValue(sub))}</span>`;
+                          })
+                          .join('')}
+                      </div>
+                    </div>`;
+                })
+                .join('')}
+            </div>`
+          : '<div class="muted mono" style="font-size:12px;">No equipped artifacts in GOOD export</div>'
+      }
     </div>`;
 }
 
-function renderInspectorDrawer(c, isReadOnly) {
-  if (!c) return '';
-  const disabledAttr = isReadOnly ? 'disabled' : '';
-  const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
+function renderDossierTalentsTab(c, kitData) {
+  if (!kitData) {
+    return '<div class="empty-state mono">Syncing live talents &amp; passives from Project Amber / Lunaris...</div>';
+  }
+  const talents = kitData.talents || [];
+  const passives = kitData.passives || [];
+  const talentLv = (kind) =>
+    kind === 'normal' ? c.talent?.auto || 1 : kind === 'skill' ? c.talent?.skill || 1 : c.talent?.burst || 1;
 
   return `
-    <div class="roster-drawer-backdrop" data-close-drawer>
-      <aside class="roster-drawer" role="dialog" aria-label="${escapeHtml(c.meta.name)} Character Sheet">
-        <div class="roster-drawer-head">
-          <div class="roster-identity">
-            ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-md')}
-            <div>
-              <h2 class="roster-drawer-title">${escapeHtml(c.meta.name)}</h2>
-              <div class="item-meta mono">${escapeHtml(c.meta.element)} • ${escapeHtml(c.meta.weaponType)} • ${c.meta.rarity || 5}★</div>
+    <div class="dossier-section">
+      <div class="card-eyebrow">COMBAT TALENTS</div>
+      <div class="dossier-kit-list">
+        ${talents
+          .map(
+            (t) => `
+          <div class="dossier-kit-card">
+            <div class="dossier-kit-head">
+              <div>
+                <span class="pill mono">${t.kind === 'normal' ? 'NORMAL' : t.kind === 'skill' ? 'SKILL' : 'BURST'}</span>
+                <strong class="dossier-kit-name">${escapeHtml(t.name)}</strong>
+              </div>
+              <div class="dossier-kit-badges mono">
+                ${t.costElemVal ? `<span class="pill pill-sky">${t.costElemVal} Energy</span>` : ''}
+                ${c.owned ? `<span class="pill pill-mint">Lv.${talentLv(t.kind)}</span>` : ''}
+              </div>
+            </div>
+            <p class="dossier-kit-desc">${escapeHtml(t.description)}</p>
+          </div>`
+          )
+          .join('')}
+      </div>
+    </div>
+
+    <div class="dossier-section">
+      <div class="card-eyebrow">ASCENSION PASSIVES</div>
+      <div class="dossier-kit-list">
+        ${passives
+          .map(
+            (p) => `
+          <div class="dossier-kit-card">
+            <div class="dossier-kit-head">
+              <div>
+                <span class="pill pill-violet mono">${escapeHtml(p.slot)}</span>
+                <strong class="dossier-kit-name">${escapeHtml(p.name)}</strong>
+              </div>
+            </div>
+            <p class="dossier-kit-desc">${escapeHtml(p.description)}</p>
+          </div>`
+          )
+          .join('')}
+      </div>
+    </div>`;
+}
+
+function renderDossierTargetsTab(c, isReadOnly) {
+  const disabledAttr = isReadOnly ? 'disabled' : '';
+  return `
+    <form class="roster-drawer-form dossier-targets-form" data-inspector-form="${c.key}">
+      <div class="roster-drawer-grid">
+        <label class="mini-field">
+          <span>STATUS</span>
+          <select class="select-sm mono" name="status" ${disabledAttr}>
+            ${INSPECTOR_STATUSES.map(
+              (s) => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s}</option>`
+            ).join('')}
+          </select>
+        </label>
+        <label class="mini-field">
+          <span>PRIORITY RANK</span>
+          <input type="number" min="1" max="99" class="input-mono" name="priorityRank" placeholder="—" value="${c.priorityRank || ''}" ${disabledAttr} />
+        </label>
+      </div>
+
+      <div class="roster-drawer-grid">
+        <label class="mini-field">
+          <span>CURRENT LVL (1–100)</span>
+          <input type="number" min="1" max="100" class="input-mono" name="level" value="${c.level || 1}" ${disabledAttr} />
+        </label>
+        <label class="mini-field">
+          <span>TARGET LVL (1–100)</span>
+          <input type="number" min="1" max="100" class="input-mono" name="targetLevel" value="${c.targetLevel || 90}" ${disabledAttr} />
+        </label>
+      </div>
+
+      <div class="roster-drawer-talents">
+        <label class="mini-field">
+          <span>A (NORMAL)</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tAuto" value="${c.talent?.auto || 1}" ${disabledAttr} />
+        </label>
+        <label class="mini-field">
+          <span>E (SKILL)</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tSkill" value="${c.talent?.skill || 1}" ${disabledAttr} />
+        </label>
+        <label class="mini-field">
+          <span>Q (BURST)</span>
+          <input type="number" min="1" max="10" class="input-mono" name="tBurst" value="${c.talent?.burst || 1}" ${disabledAttr} />
+        </label>
+      </div>
+
+      <label class="mini-field">
+        <span>TARGET TALENTS (E.G. 9/9/9 OR 1/9/10)</span>
+        <input type="text" class="input-mono" name="targetTalents" value="${escapeHtml(c.targetTalents || '9/9/9')}" ${disabledAttr} />
+      </label>
+
+      <label class="mini-field">
+        <span>GEAR SWAP &amp; ENDGAME NOTES (STYGIAN ONSLAUGHT / IMAGINARIUM THEATRE)</span>
+        <textarea class="input-textarea" rows="4" name="notes" placeholder="e.g. Borrows Furina's Golden Troupe in Stygian Onslaught..." ${disabledAttr}>${escapeHtml(c.notes || '')}</textarea>
+      </label>
+
+      <div class="roster-drawer-actions">
+        ${
+          isReadOnly
+            ? '<span class="muted mono" style="font-size:11px;">Partner View — Read Only</span>'
+            : '<button type="submit" class="btn-primary">Save to Sheet</button>'
+        }
+      </div>
+    </form>`;
+}
+
+function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
+  const kitData = getCharacterKit(c.key);
+  const weaponStats = c.equippedWeapon ? getWeaponStats(c.equippedWeapon.key) : null;
+  const combat = computeCharacterCombatStats(
+    c,
+    c.equippedWeapon,
+    c.equippedArtifacts,
+    kitData,
+    weaponStats
+  );
+  const kitAnalysis = combat.kitAnalysis;
+  const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData);
+
+  const idx = navList.findIndex((item) => item.key === c.key);
+  const prevChar = idx > 0 ? navList[idx - 1] : null;
+  const nextChar = idx >= 0 && idx < navList.length - 1 ? navList[idx + 1] : null;
+  const activeTab = dossierTab || 'loadout';
+
+  const dmgLabel = combat.dmgBonusKey ? formatStatKey(combat.dmgBonusKey) : 'Elem DMG%';
+
+  return `
+    <div class="dossier-shell">
+      <div class="dossier-topbar">
+        <div class="dossier-topbar-left">
+          <button type="button" class="btn-ghost mono" data-dossier-back>← Back to Roster</button>
+          <div class="dossier-nav-btns">
+            <button type="button" class="btn-icon" data-inspect-char="${prevChar ? prevChar.key : ''}" ${prevChar ? '' : 'disabled'} title="${prevChar ? escapeHtml(prevChar.meta.name) : ''}">‹</button>
+            <button type="button" class="btn-icon" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">›</button>
+          </div>
+          <div class="dossier-title-group">
+            <h1 class="dossier-char-name">${escapeHtml(c.meta.name)}</h1>
+            <div class="dossier-meta-pills mono">
+              <span class="pill">${escapeHtml(c.meta.element)}</span>
+              <span class="pill">${escapeHtml(c.meta.weaponType)}</span>
+              <span class="pill pill-gold">${c.meta.rarity || 5}★</span>
             </div>
           </div>
-          <button type="button" class="btn-icon" data-close-drawer aria-label="Close inspector">✕</button>
         </div>
+        <div class="dossier-sync-badge mono">
+          ${kitData ? '<span class="pill pill-mint">KIT SYNCED</span>' : '<span class="pill pill-sky">SYNCING KIT...</span>'}
+        </div>
+      </div>
 
-        ${
-          c.owned
-            ? `<div class="char-sheet-strip mono">
-                <span class="pill pill-sky">Lv.${c.level} / ${c.targetLevel}</span>
-                <span class="pill pill-gold">C${c.constellation}</span>
-                <span class="pill">Talents ${c.talent?.auto || 1} / ${c.talent?.skill || 1} / ${c.talent?.burst || 1}</span>
-                ${c.subCv > 0 ? `<span class="pill pill-mint">${c.subCv.toFixed(1)} CV</span>` : ''}
-              </div>`
-            : ''
-        }
+      <div class="dossier-grid">
+        <aside class="dossier-left-col">
+          <article class="card dossier-telemetry-card">
+            <div class="dossier-hero-row">
+              <div class="dossier-portrait-wrap">
+                ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-lg')}
+              </div>
+              <div class="dossier-hero-stats">
+                <div class="dossier-hero-lv mono">
+                  ${c.owned ? `Lv.${c.level} <span class="muted">/ ${c.targetLevel}</span>` : '<span class="muted">Unowned</span>'}
+                </div>
+                <div class="dossier-hero-chips mono">
+                  ${c.owned ? `<span class="pill pill-gold">C${c.constellation}</span>` : ''}
+                  ${c.owned ? `<span class="pill">A/E/Q: ${c.talent?.auto || 1}/${c.talent?.skill || 1}/${c.talent?.burst || 1}</span>` : ''}
+                  <span class="pill pill-violet">${escapeHtml(kitAnalysis.primaryScaling)}</span>
+                </div>
+              </div>
+            </div>
 
-        <form class="roster-drawer-form" data-inspector-form="${c.key}">
-          <div class="roster-drawer-grid">
-            <label class="mini-field">
-              <span>STATUS</span>
-              <select class="select-sm mono" name="status" ${disabledAttr}>
-                ${INSPECTOR_STATUSES.map(
-                  (s) => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s}</option>`
-                ).join('')}
-              </select>
-            </label>
-            <label class="mini-field">
-              <span>PRIORITY RANK</span>
-              <input type="number" min="1" max="99" class="input-mono" name="priorityRank" placeholder="—" value="${c.priorityRank || ''}" ${disabledAttr} />
-            </label>
-          </div>
+            <div class="card-eyebrow" style="margin-top:14px;">COMPUTED COMBAT STATS</div>
+            <div class="combat-stats-grid mono">
+              <div class="combat-stat-box"><span class="stat-label">MAX HP</span><span class="stat-val">${combat.maxHp.toLocaleString()}</span></div>
+              <div class="combat-stat-box"><span class="stat-label">TOTAL ATK</span><span class="stat-val">${combat.totalAtk.toLocaleString()}</span></div>
+              <div class="combat-stat-box"><span class="stat-label">TOTAL DEF</span><span class="stat-val">${combat.totalDef.toLocaleString()}</span></div>
+              <div class="combat-stat-box"><span class="stat-label">ELEMENTAL MASTERY</span><span class="stat-val">${combat.em}</span></div>
+              ${
+                kitAnalysis.isNonCrit
+                  ? '<div class="combat-stat-box is-span-2"><span class="stat-label">CRIT PROFILE</span><span class="pill pill-amber">NON-CRIT KIT (-100% CR)</span></div>'
+                  : `<div class="combat-stat-box"><span class="stat-label">CRIT RATE</span><span class="stat-val">${combat.critRate.toFixed(1)}%</span></div>
+                     <div class="combat-stat-box"><span class="stat-label">CRIT DMG</span><span class="stat-val">${combat.critDmg.toFixed(1)}%</span></div>`
+              }
+              <div class="combat-stat-box"><span class="stat-label">ENERGY RECHARGE</span><span class="stat-val text-cyan">${combat.er.toFixed(1)}%</span></div>
+              <div class="combat-stat-box"><span class="stat-label">${combat.healingBonus > 0 && kitAnalysis.isNonCrit ? 'HEAL BONUS' : dmgLabel.toUpperCase()}</span><span class="stat-val">${(combat.healingBonus > 0 && kitAnalysis.isNonCrit ? combat.healingBonus : combat.dmgBonus).toFixed(1)}%</span></div>
+            </div>
 
-          <div class="roster-drawer-grid">
-            <label class="mini-field">
-              <span>CURRENT LVL (1–100)</span>
-              <input type="number" min="1" max="100" class="input-mono" name="level" value="${c.level || 1}" ${disabledAttr} />
-            </label>
-            <label class="mini-field">
-              <span>TARGET LVL (1–100)</span>
-              <input type="number" min="1" max="100" class="input-mono" name="targetLevel" value="${c.targetLevel || 90}" ${disabledAttr} />
-            </label>
-          </div>
+            <div class="dossier-grade-block">
+              <div class="dossier-grade-head mono">
+                <span>BUILD EFFICIENCY (RV%)</span>
+                <span class="text-mint">${combat.rvPct}% (${combat.usefulRolls} / 38 useful rolls)</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill" style="width:${combat.rvPct}%"></div></div>
+              ${
+                !kitAnalysis.isNonCrit
+                  ? `<div class="dossier-cv-row mono"><span>Substat Crit Value</span><span class="text-sky">${combat.subCv.toFixed(1)} CV</span></div>`
+                  : ''
+              }
+              ${kitAnalysis.statCaps
+                .map((cap) => {
+                  const cur = Number(combat[cap.statKey]) || 0;
+                  const pct = Math.min(100, Math.round((cur / cap.capValue) * 100));
+                  return `
+                    <div class="dossier-cap-row">
+                      <div class="dossier-grade-head mono">
+                        <span>${escapeHtml(cap.label)}</span>
+                        <span>${cur.toLocaleString()} / ${cap.capValue.toLocaleString()}</span>
+                      </div>
+                      <div class="progress-track"><div class="progress-fill is-cyan" style="width:${pct}%"></div></div>
+                    </div>`;
+                })
+                .join('')}
+            </div>
 
-          <div class="roster-drawer-talents">
-            <label class="mini-field">
-              <span>A (NORMAL)</span>
-              <input type="number" min="1" max="10" class="input-mono" name="tAuto" value="${c.talent?.auto || 1}" ${disabledAttr} />
-            </label>
-            <label class="mini-field">
-              <span>E (SKILL)</span>
-              <input type="number" min="1" max="10" class="input-mono" name="tSkill" value="${c.talent?.skill || 1}" ${disabledAttr} />
-            </label>
-            <label class="mini-field">
-              <span>Q (BURST)</span>
-              <input type="number" min="1" max="10" class="input-mono" name="tBurst" value="${c.talent?.burst || 1}" ${disabledAttr} />
-            </label>
-          </div>
+            <div class="dossier-er-card">
+              <div class="card-eyebrow">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
+              <p class="dossier-er-summary">${escapeHtml(erReport.summary)}</p>
+              ${
+                erReport.teamVerdicts.length
+                  ? `<div class="dossier-er-teams mono">
+                      ${erReport.teamVerdicts
+                        .map(
+                          (tv) => `
+                        <div class="dossier-er-team-row">
+                          <span>${escapeHtml(tv.teamName)} (Req ~${tv.reqEr}%)</span>
+                          <span class="pill ${tv.delta >= 0 ? 'pill-mint' : tv.delta >= -12 ? 'pill-gold' : 'pill-coral'}">${tv.status}</span>
+                        </div>`
+                        )
+                        .join('')}
+                    </div>`
+                  : ''
+              }
+              ${
+                erReport.hasEndgameFlag
+                  ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
+                      <span>Solo Stygian / Theatre (~${erReport.soloEndgameReq}%)</span>
+                      <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                    </div>`
+                  : ''
+              }
+            </div>
+          </article>
+        </aside>
 
-          <div class="roster-drawer-weapon">
-            <div class="card-eyebrow">EQUIPPED WEAPON</div>
-            ${
-              c.equippedWeapon
-                ? `<div class="roster-weapon-row">
-                    ${renderAssetIcon('weapons', c.equippedWeapon.key, weaponMeta.name, 'icon-sm')}
-                    <span class="weapon-label">${escapeHtml(weaponMeta.name)}</span>
-                    <span class="mono muted">Lv.${c.equippedWeapon.level} · R${c.equippedWeapon.refinement}</span>
-                  </div>`
-                : '<div class="muted mono" style="font-size:12px;">No weapon assigned in GOOD export</div>'
-            }
-          </div>
-
-          <div class="roster-drawer-weapon">
-            <div class="card-eyebrow">EQUIPPED ARTIFACTS</div>
-            ${renderEquippedArtifacts(c.equippedArtifacts)}
-          </div>
-
-          <label class="mini-field full">
-            <span>GEAR SWAP &amp; BUILD NOTES (IT / STYGIAN ONSLAUGHT)</span>
-            <textarea rows="4" class="textarea-lab" name="notes" placeholder="e.g. Borrowing Favonius Lance from Zhongli for Stygian Onslaught; swap Emblem sands..." ${disabledAttr}>${escapeHtml(c.notes || '')}</textarea>
-          </label>
-
-          <div class="roster-drawer-foot">
-            ${
-              isReadOnly
-                ? '<span class="muted mono" style="font-size:12px;">Partner View — Read-only</span>'
-                : '<button type="submit" class="btn btn-gold">Save to Sheet</button>'
-            }
-          </div>
-        </form>
-      </aside>
+        <section class="dossier-right-col">
+          <article class="card dossier-workspace-card">
+            <div class="dossier-tabs">
+              <button type="button" class="filter-pill ${activeTab === 'loadout' ? 'active' : ''}" data-dossier-tab="loadout">Loadout &amp; Artifacts</button>
+              <button type="button" class="filter-pill ${activeTab === 'talents' ? 'active' : ''}" data-dossier-tab="talents">Talents &amp; Passives</button>
+              <button type="button" class="filter-pill ${activeTab === 'targets' ? 'active' : ''}" data-dossier-tab="targets">Build Targets &amp; Notes</button>
+            </div>
+            <div class="dossier-tab-body">
+              ${
+                activeTab === 'talents'
+                  ? renderDossierTalentsTab(c, kitData)
+                  : activeTab === 'targets'
+                    ? renderDossierTargetsTab(c, isReadOnly)
+                    : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
+              }
+            </div>
+          </article>
+        </section>
+      </div>
     </div>`;
 }
 
@@ -376,6 +593,7 @@ export function renderRosterTab(container, state, handlers) {
         targetLevel: owned?.targetLevel || 90,
         constellation: owned?.constellation || 0,
         talent: owned?.talent || { auto: 1, skill: 1, burst: 1 },
+        targetTalents: owned?.targetTalents || '9/9/9',
         status: 'Unowned',
         priorityRank: owned?.priorityRank || '',
         swapTag: owned?.swapTag || '',
@@ -399,6 +617,7 @@ export function renderRosterTab(container, state, handlers) {
       targetLevel: Number(owned.targetLevel) || 90,
       constellation: Number(owned.constellation) || 0,
       talent: owned.talent || { auto: 1, skill: 1, burst: 1 },
+      targetTalents: owned.targetTalents || '9/9/9',
       status: effectiveStatus,
       priorityRank: owned.priorityRank || '',
       swapTag: owned.swapTag || '',
@@ -430,18 +649,104 @@ export function renderRosterTab(container, state, handlers) {
     sortBy,
     'active'
   );
-
   const builtTier = sortCharacters(
     filteredChars.filter((c) => c.status === 'Built'),
     sortBy,
     'built'
   );
-
   const archiveTier = sortCharacters(
     filteredChars.filter((c) => c.status === 'Bench' || c.status === 'Unowned'),
     sortBy,
     'archive'
   );
+  const dossierNavList = [...activeTier, ...builtTier, ...archiveTier];
+
+  const inspectedChar = rosterFilter.inspectedKey
+    ? combinedChars.find((c) => c.key === rosterFilter.inspectedKey) || null
+    : null;
+
+  if (inspectedChar) {
+    // Trigger background kit & weapon stat hydration if not cached yet
+    const needsKit = !getCharacterKit(inspectedChar.key);
+    const wepKey = inspectedChar.equippedWeapon?.key;
+    const needsWep = Boolean(wepKey && !getWeaponStats(wepKey));
+    if (needsKit || needsWep) {
+      Promise.all([
+        needsKit ? ensureCharacterKitAndStats(inspectedChar.key) : Promise.resolve(null),
+        needsWep ? ensureWeaponStats(wepKey) : Promise.resolve(null)
+      ]).then(([kitRes, wepRes]) => {
+        if ((kitRes || wepRes) && state.rosterFilter?.inspectedKey === inspectedChar.key) {
+          handlers.onRefreshView?.();
+        }
+      });
+    }
+
+    container.innerHTML = renderCharacterDossier(
+      inspectedChar,
+      dossierNavList,
+      account,
+      isReadOnly,
+      rosterFilter.dossierTab || 'loadout'
+    );
+
+    container.querySelector('[data-dossier-back]')?.addEventListener('click', () => {
+      handlers.onChangeRosterFilter({ inspectedKey: null });
+    });
+
+    container.querySelectorAll('[data-inspect-char]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.inspectChar) {
+          handlers.onChangeRosterFilter({ inspectedKey: btn.dataset.inspectChar });
+        }
+      });
+    });
+
+    container.querySelectorAll('[data-dossier-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        handlers.onChangeRosterFilter({ dossierTab: btn.dataset.dossierTab });
+      });
+    });
+
+    const form = container.querySelector('[data-inspector-form]');
+    if (form && !isReadOnly) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = form.querySelector('button[type="submit"]');
+        const origText = saveBtn?.textContent || 'Save to Sheet';
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+        }
+        try {
+          const fd = new FormData(form);
+          const clamp = (val, min, max, fallback) => {
+            const n = Number(val);
+            return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+          };
+          const rankRaw = String(fd.get('priorityRank') || '').trim();
+          await handlers.onSaveCharacterInspector(form.dataset.inspectorForm, {
+            status: String(fd.get('status') || 'Bench'),
+            priorityRank: rankRaw ? clamp(rankRaw, 1, 99, '') : '',
+            level: clamp(fd.get('level'), 1, 100, 1),
+            targetLevel: clamp(fd.get('targetLevel'), 1, 100, 90),
+            talent: {
+              auto: clamp(fd.get('tAuto'), 1, 10, 1),
+              skill: clamp(fd.get('tSkill'), 1, 10, 1),
+              burst: clamp(fd.get('tBurst'), 1, 10, 1)
+            },
+            targetTalents: String(fd.get('targetTalents') || '9/9/9').trim(),
+            notes: String(fd.get('notes') || '')
+          });
+        } finally {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = origText;
+          }
+        }
+      });
+    }
+    return;
+  }
 
   const filteredWeapons = [...(account.weapons || [])]
     .filter((w) => {
@@ -450,10 +755,6 @@ export function renderRosterTab(container, state, handlers) {
       return wm.name.toLowerCase().includes(q) || w.key.toLowerCase().includes(q) || (w.location || '').toLowerCase().includes(q);
     })
     .sort((a, b) => b.level - a.level || b.refinement - a.refinement);
-
-  const inspectedChar = rosterFilter.inspectedKey
-    ? combinedChars.find((c) => c.key === rosterFilter.inspectedKey) || null
-    : null;
 
   container.innerHTML = `
     <div class="section-header">
@@ -467,36 +768,35 @@ export function renderRosterTab(container, state, handlers) {
     </div>
 
     <article class="card">
-      <div class="roster-toolbar">
-        <div class="roster-pill-row">
+      <div class="roster-toolbar roster-toolbar-single">
+        <div class="roster-toolbar-left">
+          <div class="subtab-switch">
+            <button type="button" class="filter-pill ${rosterFilter.view === 'characters' ? 'active' : ''}" data-roster-view="characters">Characters (${filteredChars.length})</button>
+            <button type="button" class="filter-pill ${rosterFilter.view === 'weapons' ? 'active' : ''}" data-roster-view="weapons">Weapons (${filteredWeapons.length})</button>
+          </div>
           <div class="filter-pills">
             ${STATUS_PILLS.map(
-              (st) => `<button type="button" class="filter-pill ${statusFilter === st ? 'active' : ''}" data-roster-status="${st}">${st}</button>`
-            ).join('')}
-          </div>
-          <span class="roster-pill-divider"></span>
-          <div class="filter-pills">
-            ${ELEMENT_PILLS.map(
-              (el) => `<button type="button" class="filter-pill ${elementFilter === el ? 'active' : ''}" data-roster-element="${el}">${el === 'All' ? 'All Elements' : el}</button>`
+              (st) => `<button type="button" class="filter-pill ${statusFilter === st.id ? 'active' : ''}" data-roster-status="${st.id}">${st.label}</button>`
             ).join('')}
           </div>
         </div>
 
-        <div class="toolbar-right">
+        <div class="roster-toolbar-right">
+          <div class="filter-pills elem-pills-compact">
+            ${ELEMENT_PILLS.map(
+              (el) => `<button type="button" class="filter-pill ${elementFilter === el ? 'active' : ''}" data-roster-element="${el}">${el === 'All' ? 'All' : el}</button>`
+            ).join('')}
+          </div>
           <select class="select-sm mono roster-sort-select" data-roster-sort aria-label="Sort characters">
             ${SORT_OPTIONS.map(
               (opt) => `<option value="${opt.value}" ${sortBy === opt.value ? 'selected' : ''}>${opt.label}</option>`
             ).join('')}
           </select>
+          <input type="search" class="input-search input-search-sm" placeholder="Search..." value="${escapeHtml(rosterFilter.search || '')}" data-roster-search />
           <div class="subtab-switch">
-            <button type="button" class="filter-pill ${density === 'grid' ? 'active' : ''}" data-roster-density="grid">Portrait Grid</button>
-            <button type="button" class="filter-pill ${density === 'list' ? 'active' : ''}" data-roster-density="list">Compact List</button>
+            <button type="button" class="filter-pill ${density === 'grid' ? 'active' : ''}" data-roster-density="grid">Grid</button>
+            <button type="button" class="filter-pill ${density === 'list' ? 'active' : ''}" data-roster-density="list">List</button>
           </div>
-          <div class="subtab-switch">
-            <button type="button" class="filter-pill ${rosterFilter.view === 'characters' ? 'active' : ''}" data-roster-view="characters">Characters (${filteredChars.length})</button>
-            <button type="button" class="filter-pill ${rosterFilter.view === 'weapons' ? 'active' : ''}" data-roster-view="weapons">Weapons (${filteredWeapons.length})</button>
-          </div>
-          <input type="search" class="input-search" placeholder="Search character or weapon..." value="${escapeHtml(rosterFilter.search || '')}" data-roster-search />
         </div>
       </div>
 
@@ -548,13 +848,7 @@ export function renderRosterTab(container, state, handlers) {
         </div>`
       }
     </article>
-
-    ${renderInspectorDrawer(inspectedChar, isReadOnly)}
   `;
-
-  container.querySelector('[data-roster-sort]')?.addEventListener('change', (e) => {
-    handlers.onChangeRosterFilter({ sortBy: e.target.value });
-  });
 
   container.querySelectorAll('[data-roster-status]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onChangeRosterFilter({ status: btn.dataset.rosterStatus }));
@@ -562,6 +856,10 @@ export function renderRosterTab(container, state, handlers) {
 
   container.querySelectorAll('[data-roster-element]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onChangeRosterFilter({ element: btn.dataset.rosterElement }));
+  });
+
+  container.querySelector('[data-roster-sort]')?.addEventListener('change', (e) => {
+    handlers.onChangeRosterFilter({ sortBy: e.target.value });
   });
 
   container.querySelectorAll('[data-roster-density]').forEach((btn) => {
@@ -588,53 +886,7 @@ export function renderRosterTab(container, state, handlers) {
 
   container.querySelectorAll('[data-inspect-char]').forEach((card) => {
     card.addEventListener('click', () => {
-      handlers.onChangeRosterFilter({ inspectedKey: card.dataset.inspectChar });
+      handlers.onChangeRosterFilter({ inspectedKey: card.dataset.inspectChar, dossierTab: 'loadout' });
     });
   });
-
-  container.querySelectorAll('[data-close-drawer]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      if (e.target === el || el.tagName === 'BUTTON') {
-        handlers.onChangeRosterFilter({ inspectedKey: null });
-      }
-    });
-  });
-
-  const form = container.querySelector('[data-inspector-form]');
-  if (form && !isReadOnly) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const saveBtn = form.querySelector('button[type="submit"]');
-      const origText = saveBtn?.textContent || 'Save to Sheet';
-      if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-      }
-      try {
-        const fd = new FormData(form);
-        const clamp = (val, min, max, fallback) => {
-          const n = Number(val);
-          return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
-        };
-        const rankRaw = String(fd.get('priorityRank') || '').trim();
-        await handlers.onSaveCharacterInspector(form.dataset.inspectorForm, {
-          status: String(fd.get('status') || 'Bench'),
-          priorityRank: rankRaw ? clamp(rankRaw, 1, 99, '') : '',
-          level: clamp(fd.get('level'), 1, 100, 1),
-          targetLevel: clamp(fd.get('targetLevel'), 1, 100, 90),
-          talent: {
-            auto: clamp(fd.get('tAuto'), 1, 10, 1),
-            skill: clamp(fd.get('tSkill'), 1, 10, 1),
-            burst: clamp(fd.get('tBurst'), 1, 10, 1)
-          },
-          notes: String(fd.get('notes') || '')
-        });
-      } finally {
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.textContent = origText;
-        }
-      }
-    });
-  }
 }

@@ -1,4 +1,4 @@
-import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113x';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261113y';
 import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261113t';
 import {
   fetchPartnerAccount,
@@ -17,7 +17,7 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261113t';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261113t';
-import { renderRosterTab } from './ui-roster.js?v=20261113x';
+import { renderRosterTab } from './ui-roster.js?v=20261113y';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
@@ -35,10 +35,12 @@ const state = {
   rosterFilter: {
     status: 'All',
     element: 'All',
+    sortBy: 'priority',
     density: 'grid',
     view: 'characters',
     search: '',
     inspectedKey: null,
+    dossierTab: 'loadout',
     tiers: { active: true, built: true, archive: false }
   },
   pendingGoodImport: null // { raw, diff }
@@ -285,6 +287,7 @@ function renderActiveTab(options = {}) {
         state.rosterFilter = { ...state.rosterFilter, ...patch };
         if (!opts?.silent) renderActiveTab(opts);
       },
+      onRefreshView: () => renderActiveTab({ preserveScroll: true }),
       onUpdateCharacterField: async (charKey, field, val) => {
         const ch = (state.ownAccount.characters || []).find((c) => c.key === charKey);
         if (!ch) return;
@@ -319,6 +322,7 @@ function renderActiveTab(options = {}) {
         ch.targetLevel = updates.targetLevel;
         ch.priorityRank = updates.priorityRank;
         ch.talent = { ...updates.talent };
+        if (updates.targetTalents) ch.targetTalents = updates.targetTalents;
         ch.notes = updates.notes;
 
         await upsertRosterRow(state.sessionUser, charKey, {
@@ -329,6 +333,7 @@ function renderActiveTab(options = {}) {
           talent_auto: ch.talent.auto,
           talent_skill: ch.talent.skill,
           talent_burst: ch.talent.burst,
+          target_talents: ch.targetTalents || '9/9/9',
           status: ch.status,
           notes: ch.notes
         });
