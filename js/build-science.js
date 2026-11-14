@@ -1,4 +1,4 @@
-import { getCharacterMeta } from './catalog.js?v=20261113af';
+import { getCharacterMeta } from './catalog.js?v=20261113ag';
 
 const AVG_ROLL_VALUE = {
   hp: 254,
@@ -174,15 +174,20 @@ export function extractStatCaps(kitData, talentLevels = null) {
 }
 
 /**
- * Deterministically classify a character's combat role and Normal Attack / infusion relevance.
+ * Deterministically classify a character's combat role, utility vector, and conditional kit triggers.
  */
-export function classifyCharacterRole(charKey, kitData) {
+export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
+  const ownedCon = Number(constellation) || 0;
+  const activeCons = (kitData?.constellations || []).filter((c) => Number(c.level) <= ownedCon);
+
+  const burstName = talents.find((t) => t.kind === 'burst')?.name || '';
   const nonNormalText = talents
     .filter((t) => t.kind !== 'normal')
     .map((t) => `${t.name} ${t.description}`)
     .concat(passives.map((p) => `${p.name} ${p.description}`))
+    .concat(activeCons.map((c) => `${c.name} ${c.description}`))
     .join('\n');
   const labelText = talents.flatMap((t) => t.labels || []).join(' ');
 
@@ -192,10 +197,6 @@ export function classifyCharacterRole(charKey, kitData) {
     );
   const hasHeal = /heal|regeneration|restores?\s+(?:party\s+members'?\s+)?hp/i.test(`${labelText}\n${nonNormalText}`);
   const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield/i.test(`${labelText}\n${nonNormalText}`);
-  const hasBuff =
-    /all\s+(?:nearby\s+)?party\s+members|all\s+characters\s+in\s+the\s+party|increases?\s+(?:all\s+)?(?:nearby\s+)?party\s+members|res\s+is\s+decreased|decreases?\s+.*res/i.test(
-      nonNormalText
-    );
   const hasLongDuration = talents
     .filter((t) => t.kind !== 'normal')
     .some((t) =>
@@ -211,26 +212,69 @@ export function classifyCharacterRole(charKey, kitData) {
     ) ||
     (hasLongDuration && !usesNormalAttack && /deals?\s+.*dmg/i.test(nonNormalText));
 
-  let primaryRole = 'DPS';
-  if (usesNormalAttack && !hasHeal) primaryRole = 'On-Field DPS';
-  else if (hasHeal && hasBuff) primaryRole = 'Support / Healer';
-  else if (hasHeal) primaryRole = 'Healer';
-  else if (hasShield && hasOffField) primaryRole = 'Off-Field Shielder';
-  else if (hasShield) primaryRole = 'Shielder';
-  else if (hasOffField) primaryRole = 'Off-Field Sub-DPS';
-  else if (hasBuff) primaryRole = 'Support';
+  // Scan utility tags with magnitudes across talents, passives, and unlocked constellations
+  const utilityTags = [];
+  const emBuffMatch = nonNormalText.match(
+    /(?:nearby\s+party\s+members|all\s+(?:nearby\s+)?party\s+members|party\s+members)[\s\S]{0,100}?elemental\s+mastery\s+(?:is\s+)?increased\s+by\s+(\d+)/i
+  );
+  if (emBuffMatch) {
+    utilityTags.push(`EM Buffer (+${emBuffMatch[1]})`);
+  } else if (/(?:party|nearby\s+party\s+members)[\s\S]{0,80}?elemental\s+mastery/i.test(nonNormalText)) {
+    utilityTags.push('EM Buffer');
+  }
 
-  const tags = [];
-  if (usesNormalAttack) tags.push('Infusion · Normal Atk');
-  if (hasOffField) tags.push('Off-Field');
-  if (hasBuff) tags.push('Team Buffer');
-  if (hasShield) tags.push('Shielder');
-  if (hasHeal) tags.push('Healer');
+  const dmgBuffMatch = nonNormalText.match(
+    /(?:nearby\s+party\s+members|all\s+(?:nearby\s+)?party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,120}?(?:dmg|damage)\s+(?:dealt\s+)?(?:is\s+)?increased\s+by\s+([\d.]+%)/i
+  );
+  if (dmgBuffMatch) {
+    utilityTags.push(`DMG Buffer (+${dmgBuffMatch[1]})`);
+  } else if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,90}?(?:dmg\s+dealt|dmg\s+bonus|elemental\s+dmg)/i.test(nonNormalText)) {
+    utilityTags.push('DMG Buffer');
+  }
+
+  if (/(?:party\s+members|all\s+characters\s+in\s+the\s+party)[\s\S]{0,80}?(?:increases?\s+atk|atk\s+(?:is\s+)?increased)/i.test(nonNormalText)) {
+    utilityTags.push('ATK Buffer');
+  }
+  if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
+    utilityTags.push('RES Shred');
+  }
+  if (hasShield) utilityTags.push('Shielder');
+  if (hasHeal) utilityTags.push('Healer');
+
+  // Detect conditional Burst triggers in passives & unlocked constellations
+  const kitTriggers = [];
+  const sources = [
+    ...passives.map((p) => ({ source: p.slot, text: p.description || '' })),
+    ...activeCons.map((c) => ({ source: `C${c.level}`, text: c.description || '' }))
+  ];
+  for (const { source, text } of sources) {
+    const usesBurst =
+      /elemental\s+burst/i.test(text) ||
+      (burstName && new RegExp(burstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(text));
+    if (!usesBurst) continue;
+    const emM = text.match(/elemental\s+mastery[\s\S]{0,60}?by\s+(\d+)/i);
+    const dmgM = text.match(/(?:dmg|damage)[\s\S]{0,60}?by\s+([\d.]+%)/i);
+    const durM = text.match(/for\s+(\d+s)/i);
+    const dur = durM ? ` (${durM[1]})` : '';
+    if (emM) {
+      kitTriggers.push({ source, trigger: 'Burst', effect: `+${emM[1]} Team EM${dur}`, requiresBurst: true });
+    } else if (dmgM) {
+      kitTriggers.push({ source, trigger: 'Burst', effect: `+${dmgM[1]} Team DMG${dur}`, requiresBurst: true });
+    } else if (/party|nearby/i.test(text)) {
+      kitTriggers.push({ source, trigger: 'Burst', effect: `Team Buff${dur}`, requiresBurst: true });
+    }
+  }
+
+  let primaryRole = 'Quickswap DPS';
+  if (usesNormalAttack && !hasHeal) primaryRole = 'On-Field Carry';
+  else if (hasOffField) primaryRole = 'Off-Field Sub-DPS';
+  else if (hasHeal || hasShield || utilityTags.length > 0) primaryRole = 'Sustain / Support';
 
   return {
     charKey,
     primaryRole,
-    tags: tags.slice(0, 3),
+    utilityTags: utilityTags.slice(0, 3),
+    kitTriggers,
     usesNormalAttack
   };
 }
@@ -239,7 +283,7 @@ export function classifyCharacterRole(charKey, kitData) {
  * Deterministically inspect hydrated talents & passives to classify kit scaling,
  * non-crit mechanics, useful substats, role, and passive stat caps.
  */
-export function analyzeCharacterKit(charKey, kitData, talentLevels = null) {
+export function analyzeCharacterKit(charKey, kitData, talentLevels = null, constellation = 0) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
 
@@ -279,7 +323,7 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null) {
   }
 
   const statCaps = extractStatCaps(kitData, talentLevels);
-  const roleInfo = classifyCharacterRole(charKey, kitData);
+  const roleInfo = classifyCharacterRole(charKey, kitData, constellation);
 
   return {
     charKey,
@@ -294,13 +338,14 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null) {
 
 function pickCharBaseStats(char, kitData) {
   const lv = Number(char?.level) || 90;
+  const asc = Number(char?.ascension) || 0;
   const bs = kitData?.baseStats;
-  const valid = (s) => s && Number(s.hp) > 0 && Number(s.atk) > 0;
+  const valid = (s) => s && Number(s.hp) >= 4000 && Number(s.atk) >= 100 && Number(s.def) >= 300;
   if (!bs || (!valid(bs.lv90) && !valid(bs.lv80))) {
     const scale = lv <= 80 ? 0.89 : lv >= 95 ? 1.07 : 1;
     return { hp: Math.round(12200 * scale), atk: Math.round(280 * scale), def: Math.round(730 * scale) };
   }
-  const s80 = valid(bs.lv80) ? bs.lv80 : bs.lv90;
+  const s80 = asc >= 6 && valid(bs.lv80A6) ? bs.lv80A6 : valid(bs.lv80) ? bs.lv80 : bs.lv90;
   const s90 = valid(bs.lv90) ? bs.lv90 : bs.lv80;
   if (lv <= 80) return s80;
   if (lv >= 95 && valid(bs.lv95)) return bs.lv95;
@@ -378,7 +423,7 @@ export function computeEffectiveTalents(char, kitData) {
  */
 export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null) {
   const effectiveTalents = computeEffectiveTalents(char, kitData);
-  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, effectiveTalents.effective);
+  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, effectiveTalents.effective, char?.constellation || 0);
   const charBase = pickCharBaseStats(char, kitData);
   const wepBase = pickWeaponStats(weapon, weaponStats);
 
@@ -481,11 +526,12 @@ const BATTERY_WEAPON_RE = /^(Favonius|Sacrificial|ElegyForTheEnd|XiphosMoonlight
 /**
  * Evaluates team-context Energy Recharge comfort & endgame mode (Stygian Onslaught / IT) safety.
  */
-export function evaluateErComfort(char, combatStats, teams = [], weapons = [], kitData = null) {
+export function evaluateErComfort(char, combatStats, teams = [], weapons = [], kitData = null, kitAnalysis = null) {
   const burstCost = Number(kitData?.burstCost) || 60;
   const baseReq = BURST_COST_ER_BASE[burstCost] || Math.round(95 + burstCost * 0.9);
   const currentEr = Math.round(combatStats?.er || 100);
   const charElem = char?.meta?.element || '';
+  const burstTriggers = (kitAnalysis?.roleInfo?.kitTriggers || []).filter((t) => t.requiresBurst);
 
   const weaponByHolder = new Map();
   for (const w of weapons || []) {
@@ -545,6 +591,12 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
         : `${currentEr}% ER — ${Math.abs(delta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
   }
 
+  let burstTriggerNote = '';
+  if (burstTriggers.length) {
+    const first = burstTriggers[0];
+    burstTriggerNote = `Burst-Utility (${first.source}: ${first.effect}) requires ~${baseReq}% ER to Burst every rotation vs. 100% ER for Skill-Only.`;
+  }
+
   return {
     burstCost,
     currentEr,
@@ -553,6 +605,7 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     soloDelta,
     hasEndgameFlag,
     teamVerdicts,
+    burstTriggerNote,
     summary
   };
 }

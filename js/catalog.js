@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v5';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -756,7 +756,7 @@ function fetchCurve(kind) {
 }
 
 const AVATAR_CURVE_FALLBACK = {
-  80: { GROW_CURVE_HP_S4: 7.417, GROW_CURVE_ATTACK_S4: 7.417, GROW_CURVE_HP_S5: 7.756, GROW_CURVE_ATTACK_S5: 7.756 },
+  80: { GROW_CURVE_HP_S4: 7.523, GROW_CURVE_ATTACK_S4: 7.523, GROW_CURVE_HP_S5: 7.836, GROW_CURVE_ATTACK_S5: 7.836 },
   90: { GROW_CURVE_HP_S4: 8.349, GROW_CURVE_ATTACK_S4: 8.349, GROW_CURVE_HP_S5: 8.739, GROW_CURVE_ATTACK_S5: 8.739 }
 };
 
@@ -817,6 +817,7 @@ function extractYattaMultipliers(promoteObj) {
 function parseYattaAvatarKit(data, curveData) {
   const upgrade = data?.upgrade || {};
   const lv80 = calcYattaCharLevelStats(upgrade, curveData, 80, 5);
+  const lv80A6 = calcYattaCharLevelStats(upgrade, curveData, 80, 6);
   const lv90 = calcYattaCharLevelStats(upgrade, curveData, 90, 6);
   const lv95 = curveData?.['95']
     ? calcYattaCharLevelStats(upgrade, curveData, 95, 6)
@@ -885,7 +886,7 @@ function parseYattaAvatarKit(data, curveData) {
     .filter((c) => c.level >= 1 && c.level <= 6 && c.name);
 
   return {
-    baseStats: { lv80, lv90, lv95 },
+    baseStats: { lv80, lv80A6, lv90, lv95 },
     ascensionStat,
     burstCost: burstCost || 60,
     talents,

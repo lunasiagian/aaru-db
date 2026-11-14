@@ -8,13 +8,13 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261113af';
+} from './catalog.js?v=20261113ag';
 import {
   analyzeCharacterKit,
   computeCharacterCombatStats,
   computeEffectiveTalents,
   evaluateErComfort
-} from './build-science.js?v=20261113af';
+} from './build-science.js?v=20261113ag';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -533,7 +533,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   );
   const kitAnalysis = combat.kitAnalysis;
   const effTalents = computeEffectiveTalents(c, kitData);
-  const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData);
+  const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData, kitAnalysis);
 
   const idx = navList.findIndex((item) => item.key === c.key);
   const prevChar = idx > 0 ? navList[idx - 1] : null;
@@ -558,6 +558,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
               <span class="pill">${escapeHtml(c.meta.weaponType)}</span>
               <span class="pill pill-gold">${c.meta.rarity || 5}★</span>
               ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
+              ${(kitAnalysis.roleInfo?.utilityTags || []).map((tag) => `<span class="pill pill-violet">${escapeHtml(tag)}</span>`).join('')}
             </div>
           </div>
         </div>
@@ -638,6 +639,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-er-card">
               <div class="card-eyebrow">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
               <p class="dossier-er-summary">${escapeHtml(erReport.summary)}</p>
+              ${erReport.burstTriggerNote ? `<p class="dossier-er-summary text-amber">${escapeHtml(erReport.burstTriggerNote)}</p>` : ''}
               ${
                 erReport.teamVerdicts.length
                   ? `<div class="dossier-er-teams mono">
@@ -744,6 +746,7 @@ export function renderRosterTab(container, state, handlers) {
       meta,
       owned: true,
       level: Number(owned.level) || 1,
+      ascension: Number(owned.ascension) || 0,
       targetLevel: Number(owned.targetLevel) || 90,
       constellation: Number(owned.constellation) || 0,
       talent: owned.talent || { auto: 1, skill: 1, burst: 1 },
