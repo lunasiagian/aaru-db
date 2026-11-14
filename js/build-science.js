@@ -733,6 +733,147 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
   };
 }
 
+const SUPPORT_SET_NOTES = {
+  NoblesseOblige: '4pc Noblesse (+20% Team ATK)',
+  TenacityOfTheMillelith: '4pc Tenacity (+20% Team ATK & Shield)',
+  ScrollOfTheHeroOfCinderCity: '4pc Cinder City (+40% Elem DMG)',
+  Instructor: '4pc Instructor (+120 Team EM)',
+  DeepwoodMemories: '4pc Deepwood (-30% Dendro RES)',
+  ViridescentVenerer: '4pc Viridescent (-40% Elem RES)'
+};
+
+function mapStatWordToCombatKey(statWord) {
+  const up = String(statWord || '').toUpperCase();
+  if (up.includes('HP')) return { statKey: 'maxHp', statLabel: 'HP' };
+  if (up.includes('DEF')) return { statKey: 'totalDef', statLabel: 'DEF' };
+  if (up.includes('MASTERY') || up === 'EM') return { statKey: 'em', statLabel: 'EM' };
+  return { statKey: 'totalAtk', statLabel: 'ATK' };
+}
+
+/**
+ * Evaluates buff stat ceilings, team-buffing weapons/sets, and energy cadence together.
+ */
+export function evaluateTeamCapabilities(
+  char,
+  kitData,
+  combatStats,
+  weaponData = null,
+  artifacts = [],
+  erDiag = null
+) {
+  const talents = kitData?.talents || [];
+  const passives = kitData?.passives || [];
+  const ownedCon = Number(char?.constellation) || 0;
+  const activeCons = (kitData?.constellations || []).filter((c) => Number(c.level) <= ownedCon);
+
+  const scanSources = [
+    ...talents.filter((t) => t.kind !== 'normal').map((t) => ({ source: t.kind === 'skill' ? 'Skill' : 'Burst', text: stripMarkup(t.description) })),
+    ...passives.map((p) => ({ source: p.slot || 'Passive', text: stripMarkup(p.description) })),
+    ...activeCons.map((c) => ({ source: `C${c.level}`, text: stripMarkup(c.description) }))
+  ];
+
+  let buffCap = null;
+  for (const { source, text } of scanSources) {
+    // Pattern A: "for every X Stat ... by Y% ... up to Z%"
+    let m = text.match(
+      /for\s+every\s+([\d,]+)\s+(Max\s+HP|HP|DEF|ATK|Elemental\s+Mastery|EM)[^.]{0,140}?by\s+([\d.]+)%[^.]{0,120}?(?:up\s+to|maximum(?:\s+increase)?(?:\s+of|\s+is)?)\s+([\d.]+)%/i
+    );
+    let unitStep = 0;
+    let statWord = '';
+    let perUnit = 0;
+    let maxCap = 0;
+    if (m) {
+      unitStep = Number(m[1].replace(/,/g, ''));
+      statWord = m[2];
+      perUnit = Number(m[3]);
+      maxCap = Number(m[4]);
+    } else {
+      // Pattern B: "increases ... by Y% for every X Stat, up to Z%"
+      m = text.match(
+        /increases?[^.]{0,90}?by\s+([\d.]+)%\s+for\s+every\s+([\d,]+)\s+(Max\s+HP|HP|DEF|ATK|Elemental\s+Mastery|EM)[^.]{0,120}?(?:up\s+to|maximum(?:\s+increase)?(?:\s+of|\s+is)?)\s+([\d.]+)%/i
+      );
+      if (m) {
+        perUnit = Number(m[1]);
+        unitStep = Number(m[2].replace(/,/g, ''));
+        statWord = m[3];
+        maxCap = Number(m[4]);
+      }
+    }
+    if (unitStep > 0 && perUnit > 0 && maxCap > 0) {
+      const requiredStat = Math.round((maxCap / perUnit) * unitStep);
+      const { statKey, statLabel } = mapStatWordToCombatKey(statWord);
+      const currentStat = Math.round(Number(combatStats?.[statKey]) || 0);
+      const capPct = Math.min(100, Math.round((currentStat / requiredStat) * 100));
+      const gap = Math.max(0, requiredStat - currentStat);
+      buffCap = { source, statKey, statLabel, currentStat, requiredStat, capPct, gap };
+      break;
+    }
+  }
+
+  // Fallback to statCaps extracted from multiplier tables if no prose cap matched
+  if (!buffCap && combatStats?.kitAnalysis?.statCaps?.length) {
+    const first = combatStats.kitAnalysis.statCaps[0];
+    const statLabel =
+      first.statKey === 'maxHp' ? 'HP' : first.statKey === 'totalDef' ? 'DEF' : first.statKey === 'em' ? 'EM' : 'ATK';
+    const currentStat = Math.round(Number(combatStats?.[first.statKey]) || 0);
+    const requiredStat = Math.round(first.capValue);
+    if (requiredStat > 0) {
+      buffCap = {
+        source: 'Kit',
+        statKey: first.statKey,
+        statLabel,
+        currentStat,
+        requiredStat,
+        capPct: Math.min(100, Math.round((currentStat / requiredStat) * 100)),
+        gap: Math.max(0, requiredStat - currentStat)
+      };
+    }
+  }
+
+  // Utility summary when no capped stat-scaling buff exists
+  let utilitySummary = '';
+  if (!buffCap) {
+    const tags = combatStats?.kitAnalysis?.roleInfo?.utilityTags || [];
+    if (tags.length) utilitySummary = tags.join(' · ');
+  }
+
+  // Team-buffing weapons & 4pc sets
+  const supportGear = [];
+  const wepKey = weaponData?.key || char?.equippedWeapon?.key || '';
+  const wepRef = Math.max(1, Math.min(5, Number(char?.equippedWeapon?.refinement) || 1));
+  if (/ThrillingTales/i.test(wepKey)) {
+    const atkPct = [24, 30, 36, 42, 48][wepRef - 1] || 48;
+    supportGear.push(`R${wepRef} Thrilling Tales (+${atkPct}% ATK swap)`);
+  } else if (/Favonius/i.test(wepKey)) {
+    const cr = Math.round(Number(combatStats?.critRate) || 0);
+    supportGear.push(cr >= 45 ? `Favonius (${cr}% CR — Reliable procs)` : `Favonius (${cr}% CR — Needs ≥45% CR)`);
+  } else if (/ElegyForTheEnd/i.test(wepKey)) {
+    supportGear.push(`R${wepRef} Elegy (+${100 + (wepRef - 1) * 25} EM & +${20 + (wepRef - 1) * 5}% ATK)`);
+  } else if (/FreedomSworn/i.test(wepKey)) {
+    supportGear.push(`R${wepRef} Freedom-Sworn (+${16 + (wepRef - 1) * 4}% NA/CA & +${20 + (wepRef - 1) * 5}% ATK)`);
+  } else if (/PrototypeAmber/i.test(wepKey)) {
+    supportGear.push(`R${wepRef} Prototype Amber (Party Heal + Energy)`);
+  }
+
+  const setCounts = new Map();
+  for (const a of artifacts || []) {
+    if (!a?.setKey) continue;
+    setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
+  }
+  for (const [setKey, count] of setCounts.entries()) {
+    if (count >= 4 && SUPPORT_SET_NOTES[setKey]) {
+      supportGear.push(SUPPORT_SET_NOTES[setKey]);
+    }
+  }
+
+  return {
+    buffCap,
+    utilitySummary,
+    supportGear,
+    erSummary: erDiag?.summary || ''
+  };
+}
+
 function parsePrimaryMultiplierNumber(displayStr) {
   const cleaned = String(displayStr || '').replace(/,/g, '');
   const m = cleaned.match(/[-+]?\d+(?:\.\d+)?/);

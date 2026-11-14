@@ -3316,6 +3316,26 @@ textarea:focus {
   gap: 8px;
 }
 
+.dossier-cap-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dossier-cap-label {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.progress-track.sm {
+  height: 5px;
+}
+
 .er-status-pill {
   position: relative;
   flex-shrink: 0;

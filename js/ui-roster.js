@@ -15,8 +15,9 @@ import {
   computeCharacterCombatStats,
   computeEffectiveTalents,
   evaluateErComfort,
+  evaluateTeamCapabilities,
   generateKitInsights
-} from './build-science.js?v=20261114i';
+} from './build-science.js?v=20261114j';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -666,6 +667,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const kitAnalysis = combat.kitAnalysis;
   const effTalents = computeEffectiveTalents(c, kitData);
   const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData, kitAnalysis);
+  const teamCaps = evaluateTeamCapabilities(c, kitData, combat, weaponMeta, c.equippedArtifacts, erReport);
 
   const idx = navList.findIndex((item) => item.key === c.key);
   const prevChar = idx > 0 ? navList[idx - 1] : null;
@@ -800,7 +802,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
 
             <div class="dossier-er-card ${erCardStateClass}">
               <div class="dossier-er-head">
-                <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT ER &amp; ENDGAME DIAGNOSTICS</div>
+                <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT CAPABILITIES</div>
                 <span class="pill ${erPillClass} mono er-status-pill">
                   ${erPillLabel}
                   <span
@@ -811,7 +813,30 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   >${erReport.dataSource === 'KQM_TCL' ? '✓' : '?'}</span>
                 </span>
               </div>
-              <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}">${escapeHtml(erReport.summary)}</p>
+              ${
+                teamCaps.buffCap
+                  ? `<div class="dossier-cap-item">
+                      <div class="dossier-grade-head mono" style="font-size:12px;">
+                        <span class="dossier-cap-label">Buff Cap (${escapeHtml(teamCaps.buffCap.source)}): ${teamCaps.buffCap.capPct}%</span>
+                        <span>${teamCaps.buffCap.currentStat.toLocaleString()} / ${teamCaps.buffCap.requiredStat.toLocaleString()} ${teamCaps.buffCap.statLabel}</span>
+                      </div>
+                      <div class="progress-track sm"><div class="progress-fill ${teamCaps.buffCap.capPct >= 100 ? '' : 'is-cyan'}" style="width:${teamCaps.buffCap.capPct}%"></div></div>
+                      ${
+                        teamCaps.buffCap.gap > 0
+                          ? `<div class="muted mono" style="font-size:11.5px;">+${teamCaps.buffCap.gap.toLocaleString()} ${teamCaps.buffCap.statLabel} needed to max team buff</div>`
+                          : ''
+                      }
+                    </div>`
+                  : teamCaps.utilitySummary
+                    ? `<div class="dossier-cap-item"><span class="dossier-cap-label">Team Utility:</span> ${escapeHtml(teamCaps.utilitySummary)}</div>`
+                    : ''
+              }
+              ${
+                teamCaps.supportGear.length
+                  ? `<div class="dossier-cap-item"><span class="dossier-cap-label">Support Gear:</span> ${escapeHtml(teamCaps.supportGear.join(' · '))}</div>`
+                  : ''
+              }
+              <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}"><span class="dossier-cap-label">Energy:</span> ${escapeHtml(erReport.summary)}</p>
               ${erReport.particleNote ? `<p class="muted mono" style="margin:0;font-size:11.5px;">Particles: ${escapeHtml(erReport.particleNote)}</p>` : ''}
               ${erReport.burstTriggerNote ? `<p class="dossier-er-summary text-amber">${escapeHtml(erReport.burstTriggerNote)}</p>` : ''}
               ${
