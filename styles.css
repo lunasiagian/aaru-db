@@ -1229,6 +1229,12 @@ textarea:focus {
   gap: 12px;
 }
 
+.prefarm-char .item-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .rank-badge {
   padding: 4px 8px;
   border-radius: 5px;
