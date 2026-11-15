@@ -1215,3 +1215,352 @@ export function calcTalentUpgradeDiff(charKey, kitData, slot, currentLvl, target
     badgeTone
   };
 }
+
+/**
+ * Extracts primary & secondary stat dependencies from Skill/Burst/Normal multiplier
+ * formulas and A1/A4 ascension passives.
+ */
+export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
+  const talents = kitData?.talents || [];
+  const passives = kitData?.passives || [];
+  const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
+  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
+  const tags = analysis?.roleInfo?.utilityTags || [];
+  const isNonCrit = Boolean(analysis?.isNonCrit);
+  const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
+
+  const multEntries = [];
+  for (const t of talents) {
+    const kindLabel = t.kind === 'normal' ? 'Normal/Charged' : t.kind === 'skill' ? 'Skill' : 'Burst';
+    for (const [lbl, arr] of Object.entries(t.multipliers || {})) {
+      const sample = Array.isArray(arr) ? arr[0] : arr;
+      multEntries.push({ kind: t.kind, kindLabel, label: lbl, sample: String(sample || '') });
+    }
+  }
+
+  const passiveText = passives.map((p) => stripMarkup(p.description || '')).join('\n');
+  const talentDescText = talents.map((t) => stripMarkup(t.description || '')).join('\n');
+  const fullText = `${talentDescText}\n${passiveText}`;
+
+  let hpHits = 0;
+  let defHits = 0;
+  let emHits = 0;
+  let atkHits = 0;
+  let erHits = 0;
+
+  for (const m of multEntries) {
+    const combined = `${m.label} ${m.sample}`;
+    if (/\b(?:max\s*)?hp\b/i.test(combined)) hpHits += m.kind === 'normal' ? 1 : 2;
+    else if (/\bdef\b/i.test(combined)) defHits += m.kind === 'normal' ? 1 : 2;
+    else if (/\belemental\s+mastery\b|\bem\b/i.test(combined)) emHits += 2;
+    else if (/%/.test(m.sample) && !/duration|cd|cooldown|cost|stamina/i.test(m.label)) atkHits += 1;
+  }
+
+  if (/based\s+on[^.]{0,45}max\s+hp|scales?\s+(?:off|with)[^.]{0,30}hp/i.test(fullText)) hpHits += 3;
+  if (/based\s+on[^.]{0,45}\bdef\b|scales?\s+(?:off|with)[^.]{0,30}\bdef\b/i.test(fullText)) defHits += 3;
+  if (/based\s+on[^.]{0,45}elemental\s+mastery|scales?\s+(?:off|with)[^.]{0,30}elemental\s+mastery/i.test(fullText)) emHits += 3;
+  if (/based\s+on[^.]{0,45}energy\s+recharge|for\s+every\s+[\d.]+%[^.]{0,40}energy\s+recharge/i.test(fullText)) erHits += 3;
+
+  // Determine dominant stat
+  let primaryStatKey = 'atk_';
+  let primaryLabel = 'ATK';
+  if (hpHits >= 3 && hpHits >= defHits && hpHits >= emHits) {
+    primaryStatKey = 'hp_';
+    primaryLabel = 'Max HP';
+  } else if (defHits >= 3 && defHits >= hpHits && defHits >= emHits) {
+    primaryStatKey = 'def_';
+    primaryLabel = 'DEF';
+  } else if (emHits >= 3 && emHits >= hpHits && emHits >= defHits) {
+    primaryStatKey = 'eleMas';
+    primaryLabel = 'Elemental Mastery';
+  } else if (erHits >= 3 && atkHits <= 4) {
+    primaryStatKey = 'enerRech_';
+    primaryLabel = 'Energy Recharge';
+  } else if (analysis?.primaryStatKey && analysis.primaryStatKey !== 'atk_') {
+    primaryStatKey = analysis.primaryStatKey;
+    primaryLabel =
+      primaryStatKey === 'hp_' ? 'Max HP' : primaryStatKey === 'def_' ? 'DEF' : primaryStatKey === 'eleMas' ? 'Elemental Mastery' : 'ATK';
+  }
+
+  const isPureSupport =
+    role === 'Healer / Support' ||
+    (role === 'Sustain / Support' && !tags.some((t) => /Sub-DPS|Carry/i.test(t)));
+
+  const damageSources = [];
+  if (usesNormal) damageSources.push('Normal / Charged');
+  const hasSkillDmg = multEntries.some((m) => m.kind === 'skill' && /dmg/i.test(m.label));
+  const hasBurstDmg = multEntries.some((m) => m.kind === 'burst' && /dmg/i.test(m.label));
+  if (hasSkillDmg) damageSources.push('Elemental Skill');
+  if (hasBurstDmg) damageSources.push('Elemental Burst');
+  if (!damageSources.length) damageSources.push('Skill & Burst');
+
+  const elem = getCharacterMeta(charKey)?.element || '';
+  const reactionCarry =
+    !isPureSupport &&
+    (elem === 'Pyro' || elem === 'Hydro' || elem === 'Dendro' || elem === 'Electro' || elem === 'Anemo') &&
+    primaryStatKey !== 'def_';
+
+  const secondaryStats = [];
+  if ((analysis?.burstCost || 60) >= 60 || role !== 'On-Field Carry') secondaryStats.push('ER%');
+  if (reactionCarry && primaryStatKey !== 'eleMas') secondaryStats.push('EM');
+  if (role === 'Healer / Support' || tags.includes('Healer')) secondaryStats.push('Healing Bonus%');
+  if (!isNonCrit && !isPureSupport && primaryStatKey !== 'atk_') secondaryStats.push('CRIT Rate / DMG');
+
+  const primaryDisplay =
+    primaryStatKey === 'eleMas'
+      ? isNonCrit
+        ? 'EM'
+        : 'EM + CRIT'
+      : isPureSupport
+        ? primaryLabel
+        : `${primaryLabel}% + CRIT`;
+
+  return {
+    primaryStatKey,
+    primaryLabel,
+    primaryDisplay,
+    damageSources,
+    secondaryStats: [...new Set(secondaryStats)],
+    isNonCrit,
+    isPureSupport
+  };
+}
+
+/**
+ * Generates deterministic artifact main-stat & substat priority guidelines
+ * even for unowned/unbuilt characters with 0 equipped artifacts.
+ */
+export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
+  const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
+  const scaling = extractKitScaling(charKey, kitData, analysis);
+  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
+  const tags = analysis?.roleInfo?.utilityTags || [];
+  const meta = getCharacterMeta(charKey);
+  const elem = meta?.element || 'Elemental';
+  const isPhysical =
+    elem === 'Cryo' &&
+    Boolean(analysis?.roleInfo?.usesNormalAttack) &&
+    /physical\s+dmg/i.test((kitData?.talents || []).map((t) => t.description || '').join(' '));
+
+  const mainStatLabel =
+    scaling.primaryStatKey === 'hp_'
+      ? 'HP%'
+      : scaling.primaryStatKey === 'def_'
+        ? 'DEF%'
+        : scaling.primaryStatKey === 'eleMas'
+          ? 'EM'
+          : scaling.primaryStatKey === 'enerRech_'
+            ? 'ER%'
+            : 'ATK%';
+
+  let sands = mainStatLabel;
+  if (scaling.isPureSupport || role === 'Off-Field Sub-DPS') {
+    sands = mainStatLabel === 'ER%' ? 'ER%' : `${mainStatLabel} / ER%`;
+  } else if (scaling.primaryStatKey === 'atk_' && (elem === 'Pyro' || elem === 'Hydro' || elem === 'Dendro')) {
+    sands = 'ATK% / EM';
+  }
+
+  let goblet = isPhysical ? 'Physical DMG%' : `${elem} DMG%`;
+  if (scaling.isPureSupport || tags.includes('Shielder')) {
+    goblet = scaling.primaryStatKey === 'eleMas' ? 'EM' : `${mainStatLabel}${role === 'Off-Field Sub-DPS' ? ` / ${elem} DMG%` : ''}`;
+  } else if (scaling.primaryStatKey === 'eleMas' && scaling.isNonCrit) {
+    goblet = 'EM';
+  } else if (scaling.primaryStatKey === 'hp_' && role !== 'On-Field Carry') {
+    goblet = `${elem} DMG% / HP%`;
+  }
+
+  let circlet = 'CRIT Rate / CRIT DMG';
+  if (role === 'Healer / Support' || tags.includes('Healer')) {
+    circlet = `Healing Bonus% / ${mainStatLabel}`;
+  } else if (tags.includes('Shielder') && scaling.isPureSupport) {
+    circlet = `${mainStatLabel} (CRIT Rate if Favonius)`;
+  } else if (scaling.isNonCrit || (scaling.primaryStatKey === 'eleMas' && role !== 'On-Field Carry')) {
+    circlet = scaling.primaryStatKey === 'eleMas' ? 'EM' : mainStatLabel;
+  }
+
+  const sTier = [];
+  const aTier = [];
+  const situational = [];
+
+  if (!scaling.isNonCrit && !scaling.isPureSupport) {
+    sTier.push('CRIT Rate', 'CRIT DMG');
+  }
+  sTier.push(mainStatLabel === 'ER%' ? 'ER%' : mainStatLabel);
+  if ((analysis?.burstCost || 60) >= 70 || role !== 'On-Field Carry') {
+    if (!sTier.includes('ER%')) sTier.push('ER% (until cap)');
+  } else {
+    aTier.push('ER%');
+  }
+
+  if (scaling.secondaryStats.includes('EM') && !sTier.includes('EM')) {
+    aTier.push('Elemental Mastery');
+  }
+  if (scaling.primaryStatKey === 'hp_' || scaling.primaryStatKey === 'def_') {
+    situational.push(scaling.primaryStatKey === 'hp_' ? 'Flat HP' : 'Flat DEF');
+  } else if (!scaling.isPureSupport) {
+    if (!sTier.includes('ATK%') && !aTier.includes('ATK%')) aTier.push('ATK%');
+    situational.push('Flat ATK');
+  }
+  if (tags.includes('Shielder') || role === 'Healer / Support') {
+    if (!sTier.includes('CRIT Rate') && !aTier.includes('CRIT Rate (Favonius)')) {
+      situational.push('CRIT Rate (Favonius)');
+    }
+  }
+
+  return {
+    scaling,
+    mainStats: { sands, goblet, circlet },
+    substats: {
+      sTier: [...new Set(sTier)],
+      aTier: [...new Set(aTier)],
+      situational: [...new Set(situational)]
+    }
+  };
+}
+
+const CURATED_WEAPON_POOL = [
+  // Swords
+  { key: 'MistsplitterReforged', name: 'Mistsplitter Reforged', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'na_ca', 'elem_dmg', 'atk'], reason: 'High Base ATK, CRIT DMG, and Elemental DMG stacks for infused carries.' },
+  { key: 'SplendorOfTranquilWaters', name: 'Splendor of Tranquil Waters', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'skill'], reason: '88.2% CRIT DMG with Skill DMG & Max HP% passive.' },
+  { key: 'UrakuMisugiri', name: 'Uraku Misugiri', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'def', 'skill', 'na_ca'], reason: 'CRIT DMG stat stick boosting both Skill and Normal Attack DMG.' },
+  { key: 'KeyOfKhajNisut', name: 'Key of Khaj-Nisut', weaponType: 'Sword', rarity: 5, substat: 'HP%', tags: ['hp', 'em', 'party_buff'], reason: 'Massive HP% substat that converts HP into teamwide EM.' },
+  { key: 'FreedomSworn', name: 'Freedom-Sworn', weaponType: 'Sword', rarity: 5, substat: 'Elemental Mastery', tags: ['em', 'party_buff', 'support'], reason: 'High EM substat with teamwide NA/CA DMG & ATK% buff.' },
+  { key: 'FavoniusSword', name: 'Favonius Sword', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'ER% substat and white particles to lower team ER needs.' },
+  { key: 'SacrificialSword', name: 'Sacrificial Sword', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'sacrificial', 'skill', 'battery'], reason: 'Resets Skill cooldown for double particle generation.' },
+  { key: 'WolfFang', name: 'Wolf-Fang', weaponType: 'Sword', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'skill', 'burst'], reason: 'CRIT Rate substat with stacking Skill & Burst DMG.' },
+  { key: 'FleuveCendreFerryman', name: 'Fleuve Cendre Ferryman', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'crit', 'skill'], reason: 'Free R5 ER% sword with bonus Skill CRIT Rate.' },
+  { key: 'IronSting', name: 'Iron Sting', weaponType: 'Sword', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'elem_dmg'], reason: 'Craftable EM stat stick with Elemental DMG bonus.' },
+  { key: 'HarbingerOfDawn', name: 'Harbinger of Dawn', weaponType: 'Sword', rarity: 3, substat: 'CRIT DMG', tags: ['crit', 'hp', 'def', 'subdps'], reason: 'Huge 3★ CRIT Rate + CRIT DMG value for HP/DEF or off-field units.' },
+
+  // Claymores
+  { key: 'RedhornStonethresher', name: 'Redhorn Stonethresher', weaponType: 'Claymore', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'def', 'na_ca'], reason: '88.2% CRIT DMG and DEF-scaling Normal/Charged Attack DMG.' },
+  { key: 'BeaconOfTheReedSea', name: 'Beacon of the Reed Sea', weaponType: 'Claymore', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'atk', 'hp'], reason: 'Universal CRIT Rate claymore with ATK% & Max HP%.' },
+  { key: 'AThousandBlazingSuns', name: 'A Thousand Blazing Suns', weaponType: 'Claymore', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'atk', 'na_ca'], reason: 'High Base ATK and CRIT Rate/DMG boost on Skill & Burst.' },
+  { key: 'SerpentSpine', name: 'Serpent Spine', weaponType: 'Claymore', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'na_ca', 'skill', 'burst'], reason: 'CRIT Rate substat and up to +50% universal DMG Bonus.' },
+  { key: 'FavoniusGreatsword', name: 'Favonius Greatsword', weaponType: 'Claymore', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'High ER% substat and teamwide particle generation.' },
+  { key: 'Whiteblind', name: 'Whiteblind', weaponType: 'Claymore', rarity: 4, substat: 'DEF%', tags: ['def', 'na_ca', 'shield'], reason: 'Craftable DEF% claymore ideal for DEF-scaling carries & shielders.' },
+  { key: 'TidalShadow', name: 'Tidal Shadow', weaponType: 'Claymore', rarity: 4, substat: 'ATK%', tags: ['atk', 'na_ca'], reason: 'Craftable ATK% claymore with strong ATK% passive when healed.' },
+
+  // Polearms
+  { key: 'StaffOfHoma', name: 'Staff of Homa', weaponType: 'Polearm', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'atk', 'na_ca', 'burst'], reason: '66.2% CRIT DMG plus Max HP% and HP-to-ATK conversion.' },
+  { key: 'EngulfingLightning', name: 'Engulfing Lightning', weaponType: 'Polearm', rarity: 5, substat: 'Energy Recharge', tags: ['er', 'burst', 'atk'], reason: 'Converts excess ER% into ATK% for Burst-reliant polearm units.' },
+  { key: 'CrimsonMoonsSemblance', name: "Crimson Moon's Semblance", weaponType: 'Polearm', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'na_ca', 'atk'], reason: 'CRIT Rate polearm tailored for Normal/Charged Attack carries.' },
+  { key: 'Deathmatch', name: 'Deathmatch', weaponType: 'Polearm', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'atk', 'def'], reason: '36.8% CRIT Rate with ATK% and DEF% passive.' },
+  { key: 'TheCatch', name: '"The Catch"', weaponType: 'Polearm', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'burst', 'crit'], reason: 'Free R5 ER% polearm with +32% Burst DMG and +12% Burst CRIT Rate.' },
+  { key: 'FavoniusLance', name: 'Favonius Lance', weaponType: 'Polearm', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'Best-in-slot support polearm for ER% and white particles.' },
+  { key: 'DragonsBane', name: "Dragon's Bane", weaponType: 'Polearm', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'elem_dmg'], reason: 'High EM substat and DMG% for Pyro/Hydro reaction teams.' },
+  { key: 'BlackTassel', name: 'Black Tassel', weaponType: 'Polearm', rarity: 3, substat: 'HP%', tags: ['hp', 'shield', 'heal', 'support'], reason: '46.9% HP substat — premier budget option for HP shielders & healers.' },
+
+  // Bows
+  { key: 'AquaSimulacra', name: 'Aqua Simulacra', weaponType: 'Bow', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'na_ca', 'skill', 'burst'], reason: '88.2% CRIT DMG with +16% HP and universal +20% DMG.' },
+  { key: 'ElegyForTheEnd', name: 'Elegy for the End', weaponType: 'Bow', rarity: 5, substat: 'Energy Recharge', tags: ['er', 'em', 'party_buff', 'support'], reason: 'ER% support bow granting teamwide +100 EM & +20% ATK.' },
+  { key: 'PolarStar', name: 'Polar Star', weaponType: 'Bow', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'skill', 'burst', 'na_ca'], reason: 'CRIT Rate bow boosting Skill, Burst, and ATK% stacks.' },
+  { key: 'FavoniusWarbow', name: 'Favonius Warbow', weaponType: 'Bow', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'High ER% substat and reliable team particle battery.' },
+  { key: 'TheStringless', name: 'The Stringless', weaponType: 'Bow', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'skill', 'burst', 'subdps'], reason: 'EM substat with +48% Skill & Burst DMG at R5.' },
+  { key: 'SacrificialBow', name: 'Sacrificial Bow', weaponType: 'Bow', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'sacrificial', 'skill', 'shield'], reason: 'ER% substat and Skill reset for double particles or shield refresh.' },
+  { key: 'Slingshot', name: 'Slingshot', weaponType: 'Bow', rarity: 3, substat: 'CRIT Rate', tags: ['crit', 'na_ca'], reason: '31.2% CRIT Rate 3★ bow with strong Normal/Charged DMG.' },
+
+  // Catalysts
+  { key: 'TomeOfTheEternalFlow', name: 'Tome of the Eternal Flow', weaponType: 'Catalyst', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'na_ca'], reason: '88.2% CRIT DMG with Max HP% and Charged Attack DMG.' },
+  { key: 'AThousandFloatingDreams', name: 'A Thousand Floating Dreams', weaponType: 'Catalyst', rarity: 5, substat: 'Elemental Mastery', tags: ['em', 'party_buff', 'subdps'], reason: '265 EM stat stick with teamwide EM share & Elemental DMG.' },
+  { key: 'KagurasVerity', name: "Kagura's Verity", weaponType: 'Catalyst', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'skill', 'elem_dmg'], reason: '66.2% CRIT DMG and huge Skill + Elemental DMG bonus.' },
+  { key: 'TheWidsith', name: 'The Widsith', weaponType: 'Catalyst', rarity: 4, substat: 'CRIT DMG', tags: ['crit', 'em', 'atk', 'elem_dmg'], reason: '55.1% CRIT DMG with explosive ATK%, Elem DMG%, or EM buffs.' },
+  { key: 'SacrificialJade', name: 'Sacrificial Jade', weaponType: 'Catalyst', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'hp', 'em'], reason: '36.8% CRIT Rate with +32–64% Max HP and EM passive.' },
+  { key: 'PrototypeAmber', name: 'Prototype Amber', weaponType: 'Catalyst', rarity: 4, substat: 'HP%', tags: ['hp', 'heal', 'er', 'support'], reason: 'Craftable HP% catalyst providing teamwide healing & Energy refund.' },
+  { key: 'FavoniusCodex', name: 'Favonius Codex', weaponType: 'Catalyst', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'ER% substat and white particles to battery burst-heavy teams.' },
+  { key: 'ThrillingTalesOfDragonSlayers', name: 'Thrilling Tales of Dragon Slayers', weaponType: 'Catalyst', rarity: 3, substat: 'HP%', tags: ['hp', 'party_buff', 'support', 'ttds'], reason: 'R5 grants +48% ATK to the next character — unmatched 3★ support value.' }
+];
+
+/**
+ * Recommends top kit-matched weapons filtered strictly by character weaponType,
+ * cross-referenced against the user's Armory inventory.
+ */
+export function recommendWeaponsForCharacter(
+  charKey,
+  kitData,
+  kitAnalysis = null,
+  accountWeapons = [],
+  getWeaponMetaFn = null,
+  getWeaponStatsFn = null
+) {
+  const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
+  const scaling = extractKitScaling(charKey, kitData, analysis);
+  const meta = getCharacterMeta(charKey);
+  const weaponType = meta?.weaponType || 'Sword';
+  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
+  const tags = analysis?.roleInfo?.utilityTags || [];
+  const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
+  const burstCost = analysis?.burstCost || 60;
+
+  // Build owned armory lookup by normalized key -> best copy
+  const ownedByKey = new Map();
+  for (const w of accountWeapons || []) {
+    const k = String(w.key || '').toLowerCase();
+    if (!k) continue;
+    const prev = ownedByKey.get(k);
+    if (!prev || (Number(w.level) || 0) > (Number(prev.level) || 0) || (Number(w.refinement) || 1) > (Number(prev.refinement) || 1)) {
+      ownedByKey.set(k, w);
+    }
+  }
+
+  const scoreCandidate = (cand) => {
+    let score = cand.rarity === 5 ? 18 : cand.rarity === 4 ? 14 : 8;
+    const liveStats = getWeaponStatsFn ? getWeaponStatsFn(cand.key) : null;
+    const wMeta = getWeaponMetaFn ? getWeaponMetaFn(cand.key) : null;
+    const substat = cand.substat || liveStats?.substatKey || wMeta?.substat || '';
+    const wTags = new Set(cand.tags || []);
+
+    // 1. Substat Alignment with Primary Scaling
+    if (scaling.primaryStatKey === 'hp_') {
+      if (wTags.has('hp') || /hp/i.test(substat)) score += 30;
+    } else if (scaling.primaryStatKey === 'def_') {
+      if (wTags.has('def') || /def/i.test(substat)) score += 30;
+    } else if (scaling.primaryStatKey === 'eleMas') {
+      if (wTags.has('em') || /mastery|em/i.test(substat)) score += 30;
+    } else if (scaling.primaryStatKey === 'enerRech_') {
+      if (wTags.has('er') || /energy\s*recharge/i.test(substat)) score += 28;
+    } else {
+      if (wTags.has('atk') || /atk/i.test(substat)) score += 16;
+    }
+
+    if (!scaling.isNonCrit && !scaling.isPureSupport) {
+      if (/crit/i.test(substat) || wTags.has('crit')) score += 26;
+    } else if (/crit/i.test(substat) && scaling.isPureSupport && !wTags.has('favonius')) {
+      score -= 10;
+    }
+
+    // 2. Role & Passive Mechanic Match
+    if (usesNormal && wTags.has('na_ca')) score += 20;
+    if (role === 'Off-Field Sub-DPS' && (wTags.has('skill') || wTags.has('burst') || wTags.has('subdps'))) score += 18;
+    if (scaling.isPureSupport || role === 'Healer / Support' || role === 'Sustain / Support') {
+      if (wTags.has('support') || wTags.has('party_buff') || wTags.has('favonius') || wTags.has('ttds')) score += 26;
+      if (tags.includes('Healer') && wTags.has('heal')) score += 16;
+      if (tags.includes('Shielder') && wTags.has('shield')) score += 16;
+    }
+    if (burstCost >= 70 && (/energy\s*recharge/i.test(substat) || wTags.has('er'))) score += 14;
+    if (scaling.secondaryStats.includes('EM') && (/mastery/i.test(substat) || wTags.has('em'))) score += 10;
+
+    // Penalize pure support weapons on hypercarries
+    if (role === 'On-Field Carry' && (wTags.has('ttds') || wTags.has('favonius'))) score -= 22;
+
+    return {
+      ...cand,
+      substat: substat || 'ATK%',
+      score,
+      ownedMatch: ownedByKey.get(cand.key.toLowerCase()) || null
+    };
+  };
+
+  const candidates = CURATED_WEAPON_POOL.filter((w) => w.weaponType === weaponType).map(scoreCandidate);
+  candidates.sort((a, b) => b.score - a.score || b.rarity - a.rarity || a.name.localeCompare(b.name));
+
+  // Ensure up to 6 picks (including top 5★ and accessible 4★/3★ options)
+  const top5 = candidates.filter((c) => c.rarity === 5).slice(0, 3);
+  const top43 = candidates.filter((c) => c.rarity <= 4).slice(0, 4);
+  const combined = [...top5, ...top43]
+    .filter((item, idx, arr) => arr.findIndex((x) => x.key === item.key) === idx)
+    .sort((a, b) => b.score - a.score || b.rarity - a.rarity)
+    .slice(0, 6);
+
+  return combined;
+}

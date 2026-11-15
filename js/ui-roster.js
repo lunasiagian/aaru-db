@@ -16,8 +16,10 @@ import {
   computeEffectiveTalents,
   evaluateErComfort,
   evaluateTeamCapabilities,
-  generateKitInsights
-} from './build-science.js?v=20261115ac';
+  generateKitInsights,
+  getBuildStatGuidelines,
+  recommendWeaponsForCharacter
+} from './build-science.js?v=20261115ad';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -93,6 +95,8 @@ function renderCharacterCard(c, density) {
       ? `<span class="roster-portrait-pills">${prefarmBadge}${swapBadge}</span>`
       : '';
 
+  const weaponArchetypePill = `<span class="roster-weapon-pill mono">${escapeHtml(c.meta?.weaponType || 'Sword')}</span>`;
+
   if (density === 'list') {
     return `
       <button type="button" class="roster-list-row ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
@@ -101,6 +105,7 @@ function renderCharacterCard(c, density) {
             ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-sm')}
           </span>
           <span class="roster-list-name">${escapeHtml(c.meta.name)}</span>
+          ${weaponArchetypePill}
         </span>
         <span class="roster-list-right mono">
           ${prefarmBadge}
@@ -118,6 +123,7 @@ function renderCharacterCard(c, density) {
       </div>
       <div class="roster-portrait-footer">
         <span class="roster-portrait-name">${escapeHtml(c.meta.name)}</span>
+        <span class="roster-portrait-sub">${weaponArchetypePill}</span>
         ${actionableHtml}
       </div>
     </button>`;
@@ -569,7 +575,7 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
     </div>`;
 }
 
-function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta) {
+function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, accountWeapons = []) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
   const curTalents = {
     auto: Math.min(10, Math.max(1, Number(c.talent?.auto) || 1)),
@@ -587,6 +593,15 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
   };
 
   const insights = generateKitInsights(c, kitData, weaponMeta, erReport, kitAnalysis);
+  const guidelines = getBuildStatGuidelines(c.key, kitData, kitAnalysis);
+  const recWeapons = recommendWeaponsForCharacter(
+    c.key,
+    kitData,
+    kitAnalysis,
+    accountWeapons,
+    getWeaponMeta,
+    getWeaponStats
+  );
 
   return `
     <form class="roster-drawer-form dossier-targets-form" data-inspector-form="${c.key}">
@@ -648,6 +663,95 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
 
       <div class="dossier-roi-preview" id="dossier-roi-preview">
         ${renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTalents)}
+      </div>
+
+      <div class="dossier-guidelines-card">
+        <div class="card-eyebrow" style="margin-bottom:8px;">PRIMARY SCALING &amp; BUILD TARGETS</div>
+        <div class="guidelines-scaling-row">
+          <span class="guideline-label mono">KIT SCALES OFF</span>
+          <div class="guideline-chips">
+            <span class="pill pill-gold mono">${escapeHtml(guidelines.scaling.primaryDisplay)}</span>
+            ${guidelines.scaling.damageSources
+              .map((src) => `<span class="pill pill-sky mono">${escapeHtml(src)}</span>`)
+              .join('')}
+            ${guidelines.scaling.secondaryStats
+              .map((st) => `<span class="pill pill-muted mono">+ ${escapeHtml(st)}</span>`)
+              .join('')}
+          </div>
+        </div>
+        <div class="guidelines-mainstats-grid">
+          <div class="guideline-slot-box">
+            <span class="guideline-slot-lbl mono">SANDS</span>
+            <strong class="mono">${escapeHtml(guidelines.mainStats.sands)}</strong>
+          </div>
+          <div class="guideline-slot-box">
+            <span class="guideline-slot-lbl mono">GOBLET</span>
+            <strong class="mono">${escapeHtml(guidelines.mainStats.goblet)}</strong>
+          </div>
+          <div class="guideline-slot-box">
+            <span class="guideline-slot-lbl mono">CIRCLET</span>
+            <strong class="mono">${escapeHtml(guidelines.mainStats.circlet)}</strong>
+          </div>
+        </div>
+        <div class="guidelines-substats">
+          ${
+            guidelines.substats.sTier.length
+              ? `<div class="substat-tier-row">
+                  <span class="pill pill-mint mono">S-TIER</span>
+                  <div class="guideline-chips">${guidelines.substats.sTier.map((s) => `<span class="pill mono">${escapeHtml(s)}</span>`).join('')}</div>
+                </div>`
+              : ''
+          }
+          ${
+            guidelines.substats.aTier.length
+              ? `<div class="substat-tier-row">
+                  <span class="pill pill-sky mono">A-TIER</span>
+                  <div class="guideline-chips">${guidelines.substats.aTier.map((s) => `<span class="pill mono">${escapeHtml(s)}</span>`).join('')}</div>
+                </div>`
+              : ''
+          }
+          ${
+            guidelines.substats.situational.length
+              ? `<div class="substat-tier-row">
+                  <span class="pill pill-muted mono">SITUATIONAL</span>
+                  <div class="guideline-chips">${guidelines.substats.situational.map((s) => `<span class="pill pill-muted mono">${escapeHtml(s)}</span>`).join('')}</div>
+                </div>`
+              : ''
+          }
+        </div>
+      </div>
+
+      <div class="dossier-guidelines-card">
+        <div class="card-eyebrow" style="margin-bottom:8px;">SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · KIT-MATCHED)</div>
+        <div class="rec-weapon-grid">
+          ${recWeapons
+            .map(
+              (w) => `
+            <div class="rec-weapon-card">
+              <div class="rec-weapon-top">
+                <div class="rec-weapon-icon-wrap">
+                  ${renderAssetIcon('weapons', w.key, w.name, 'icon-sm')}
+                </div>
+                <div class="rec-weapon-meta">
+                  <div class="rec-weapon-title">
+                    <strong>${escapeHtml(w.name)}</strong>
+                    <span class="pill pill-gold mono">${w.rarity}★</span>
+                  </div>
+                  <div class="rec-weapon-badges mono">
+                    <span class="pill pill-sky">${escapeHtml(w.substat)}</span>
+                    ${
+                      w.ownedMatch
+                        ? `<span class="pill pill-mint">IN ARMORY (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`
+                        : '<span class="pill pill-muted">UNOWNED</span>'
+                    }
+                  </div>
+                </div>
+              </div>
+              <p class="rec-weapon-reason">${escapeHtml(w.reason)}</p>
+            </div>`
+            )
+            .join('')}
+        </div>
       </div>
 
       <div class="dossier-insights-card">
@@ -909,7 +1013,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 activeTab === 'talents'
                   ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
                   : activeTab === 'targets'
-                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta)
+                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, account.weapons || [])
                     : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
               }
             </div>
