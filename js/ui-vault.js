@@ -1,6 +1,6 @@
 import { renderAssetIcon } from './assets.js';
-import { getMaterialMeta } from './catalog.js?v=20261115w';
-import { upsertInventoryRow } from './api.js';
+import { getMaterialMeta } from './catalog.js?v=20261115y';
+import { upsertInventoryRow } from './api.js?v=20261115y';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

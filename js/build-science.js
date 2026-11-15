@@ -1,4 +1,4 @@
-import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261115w';
+import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261115y';
 import { calcTalentUpgradeCost } from './calculations.js?v=20261114w';
 
 const AVG_ROLL_VALUE = {

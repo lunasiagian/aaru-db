@@ -1,5 +1,5 @@
-import { getMaterialMeta } from './catalog.js?v=20261115w';
-import { postImportGoodJson } from './api.js';
+import { getMaterialMeta } from './catalog.js?v=20261115y';
+import { postImportGoodJson } from './api.js?v=20261115y';
 
 export function validateGoodV3(payload) {
   if (!payload || typeof payload !== 'object') {
