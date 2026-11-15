@@ -218,11 +218,19 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const ownKitText = [...talents, ...passives].map((x) => x.description || '').join('\n');
   const INFUSION_CONVERT_RE =
+    /converts?\s+(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+  const INFUSION_ALTF_RE =
     /(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_IMBUE_RE =
     /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s)?\s*(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
+  const INFUSION_OVERRIDE_RE =
+    /cannot\s+be\s+overridden\s+by\s+any\s+other\s+elemental\s+infusion/i;
 
-  const hasInfusion = INFUSION_CONVERT_RE.test(ownKitText) || INFUSION_IMBUE_RE.test(ownKitText);
+  const hasInfusion =
+    INFUSION_CONVERT_RE.test(ownKitText) ||
+    INFUSION_ALTF_RE.test(ownKitText) ||
+    INFUSION_IMBUE_RE.test(ownKitText) ||
+    INFUSION_OVERRIDE_RE.test(ownKitText);
   const usesNormalAttack = hasInfusion;
 
   const hasPartyHeal = sentences.some(
@@ -319,8 +327,10 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   if (sentences.some((s) => matchesAllyBuff(s, 'ATK'))) {
     utilityTags.push('ATK Buffer');
   }
-  if (sentences.some((s) => matchesAllyBuff(s, '(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)'))) {
-    utilityTags.push('Crit Buffer');
+  const critSentence = sentences.find((s) => matchesAllyBuff(s, '(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)'));
+  if (critSentence) {
+    const crM = critSentence.match(/crit\s+rate[^.]{0,30}?by\s+([\d.]+%)/i);
+    utilityTags.push(crM ? `+${crM[1]} Party CRIT Rate` : 'Crit Buffer');
   }
   if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
     utilityTags.push('RES Shred');
@@ -883,10 +893,13 @@ export function evaluateTeamCapabilities(
     }
   }
 
-  // Utility summary when no capped stat-scaling buff exists
+  // Utility summary when no capped stat-scaling buff exists (exclude self-only traits)
   let utilitySummary = '';
   if (!buffCap) {
-    const tags = combatStats?.kitAnalysis?.roleInfo?.utilityTags || [];
+    const SELF_ONLY_TAGS = new Set(['Self-Sustain', 'selfIR', 'selfHeal']);
+    const tags = (combatStats?.kitAnalysis?.roleInfo?.utilityTags || []).filter(
+      (t) => !SELF_ONLY_TAGS.has(t)
+    );
     if (tags.length) utilitySummary = tags.join(' · ');
   }
 
