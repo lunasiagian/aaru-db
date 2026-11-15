@@ -47,6 +47,16 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function formatWeaponRichText(text) {
+  let html = escapeHtml(String(text || '').replace(/\\n/g, '\n'));
+  html = html.replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/gi, '<em>$1</em>');
+  html = html.replace(
+    /&lt;color=#([0-9A-Fa-f]{6,8})&gt;([\s\S]*?)&lt;\/color&gt;/gi,
+    '<span class="text-cyan">$2</span>'
+  );
+  return html;
+}
+
 export function renderArmoryTab(container, viewState, handlers) {
   const { account, armoryFilter = {} } = viewState;
   const typeFilter = armoryFilter.weaponType || 'All';
@@ -331,14 +341,14 @@ function openWeaponModal(w) {
                         : ''
                     }
                   </div>
-                  <p class="weapon-passive-desc">${escapeHtml(passiveText)}</p>
+                  <p class="weapon-passive-desc">${formatWeaponRichText(passiveText)}</p>
                 </div>`
               : ''
           }
 
           ${
             stats.description
-              ? `<p class="weapon-lore-desc">${escapeHtml(stats.description)}</p>`
+              ? `<p class="weapon-lore-desc">${formatWeaponRichText(stats.description)}</p>`
               : ''
           }
           `
