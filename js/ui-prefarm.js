@@ -8,8 +8,8 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114u';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114u';
+} from './catalog.js?v=20261114v';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114v';
 
 const uiState = {
   openTargets: new Set(),
@@ -43,8 +43,11 @@ function renderReqChipHtml(r, targetStateKey = '') {
     : `+${formatCompactNumber(r.surplus)}`;
 
   const hints = [];
-  if (r.craftableHint > 0) hints.push(`<span class="req-hint-craft">${r.craftableHint} craftable</span>`);
-  else if (r.craftedIn > 0) hints.push(`<span class="req-hint-craft">+${r.craftedIn} crafted 3:1</span>`);
+  if (r.craftedIn > 0) {
+    hints.push(
+      `<span class="req-hint-craft">${r.craftedIn} craftable${isDef ? ` (net -${formatCompactNumber(r.deficit)})` : ''}</span>`
+    );
+  }
   if (r.reservedByPrev > 0) {
     hints.push(
       `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail (${formatCompactNumber(r.reservedByPrev)} used by ${escapeAttr(r.reservedByLabel || '#1')})</span>`
@@ -62,7 +65,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
       <div class="req-chip-body">
         <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
         <div class="req-nums mono">
-          <span class="prefarm-owned-text" title="${escapeAttr(fullRatio)}">${compactRatio}</span>
+          <span class="prefarm-owned-text prefarm-count" title="${escapeAttr(fullRatio)}">${compactRatio}</span>
           <span class="req-delta-badge prefarm-deficit-pill ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
         </div>
         ${hints.length ? `<div class="req-subnotes mono">${hints.join('')}</div>` : ''}
@@ -110,30 +113,31 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   // 2. Bosses & Crown (World Boss + Weekly Boss + Crown of Insight): span 6
   pushFamily('boss', 'Bosses & Crown', 6, take([charMeta?.bossMat, charMeta?.weeklyMat, 'CrownOfInsight']));
 
-  // 3. Common Enemy Drops (1★ -> 2★ -> 3★): span 6
-  const commonRows = [
-    ...(Array.isArray(charMeta?.commonMatTiers) ? take(charMeta.commonMatTiers) : []),
-    ...(Array.isArray(weaponMeta?.commonMatTiers) ? take(weaponMeta.commonMatTiers) : [])
-  ];
-  pushFamily('charCommon', 'Common Enemy Drops', 6, commonRows, true);
+  // 3. Common Enemy Drops — split Character vs Weapon 3-tier families into separate span-6 clusters
+  if (Array.isArray(charMeta?.commonMatTiers)) {
+    pushFamily('charCommon', 'Common Enemy Drops', 6, take(charMeta.commonMatTiers));
+  }
+  if (Array.isArray(weaponMeta?.commonMatTiers)) {
+    pushFamily('wepCommon', 'Weapon Common Drops', 6, take(weaponMeta.commonMatTiers));
+  }
 
-  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★) & Weapon Materials (separated)
+  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★): span 6
   if (Array.isArray(weaponMeta?.eliteMatTiers)) {
-    pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers), true);
-  }
-  if (weaponMeta?.domainMatExactKey) {
-    pushFamily('wepDomain', 'Weapon Materials', 6, take([weaponMeta.domainMatExactKey]));
+    pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers));
   }
 
-  // 5. Ascension Gems (Sliver -> Fragment -> Chunk -> Gemstone): span 7
-  if (Array.isArray(charMeta?.gemTiers)) {
-    pushFamily('gems', 'Ascension Gems', 7, take(charMeta.gemTiers), true);
-  }
-
-  // 6. Currency, XP & Specialty: span 5
+  // 5. Currency, XP & Specialty: span 6 (pairs beside Elite Drops)
   const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre', charMeta?.localSpecialty]);
   const restRows = valid.filter((r) => !used.has(r.key));
-  pushFamily('currency', 'Currency, XP & Specialty', 5, [...currencyRows, ...restRows]);
+  pushFamily('currency', 'Currency, XP & Specialty', 6, [...currencyRows, ...restRows]);
+
+  // 6. Ascension Gems (span 8) paired beside Weapon Materials (span 4)
+  if (Array.isArray(charMeta?.gemTiers)) {
+    pushFamily('gems', 'Ascension Gems', 8, take(charMeta.gemTiers));
+  }
+  if (weaponMeta?.domainMatExactKey) {
+    pushFamily('wepDomain', 'Weapon Materials', 4, take([weaponMeta.domainMatExactKey]));
+  }
 
   const activeFamilies = [];
   const readyRows = [];

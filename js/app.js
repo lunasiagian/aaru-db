@@ -1,5 +1,5 @@
-import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261114u';
-import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114u';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261114v';
+import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114v';
 import {
   fetchPartnerAccount,
   isOfflineMode,
@@ -14,9 +14,9 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261114u';
+import { renderHudTab } from './ui-hud.js?v=20261114v';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261114u';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261114v';
 import { renderRosterTab } from './ui-roster.js?v=20261114m';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 import { CHANGELOG } from './changelog.js?v=20261113ac';

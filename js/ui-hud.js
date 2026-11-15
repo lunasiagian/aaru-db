@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261114u';
+} from './catalog.js?v=20261114v';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,
@@ -19,7 +19,7 @@ import {
   calculateWaterfallPrefarm,
   getServerResetInfo,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261114u';
+} from './calculations.js?v=20261114v';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const PIP_DAYS = [

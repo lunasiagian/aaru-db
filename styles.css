@@ -1281,6 +1281,10 @@ textarea:focus {
   min-width: 0;
 }
 
+.prefarm-cluster.span-4 {
+  grid-column: span 4;
+}
+
 .prefarm-cluster.span-5 {
   grid-column: span 5;
 }
@@ -1291,6 +1295,10 @@ textarea:focus {
 
 .prefarm-cluster.span-7 {
   grid-column: span 7;
+}
+
+.prefarm-cluster.span-8 {
+  grid-column: span 8;
 }
 
 .prefarm-cluster-label {
@@ -1319,15 +1327,17 @@ textarea:focus {
 }
 
 .prefarm-owned-text,
+.prefarm-count,
 .prefarm-deficit-pill {
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 .prefarm-cluster-tiles .req-chip {
-  padding: 6px 8px 10px;
+  padding: 8px 9px 11px;
   gap: 7px;
   background: rgba(2, 6, 23, 0.42);
+  height: 100%;
 }
 
 .prefarm-cluster-tiles .req-name {
@@ -1497,9 +1507,11 @@ textarea:focus {
 }
 
 @media (max-width: 960px) {
+  .prefarm-cluster.span-4,
   .prefarm-cluster.span-5,
   .prefarm-cluster.span-6,
-  .prefarm-cluster.span-7 {
+  .prefarm-cluster.span-7,
+  .prefarm-cluster.span-8 {
     grid-column: span 12;
   }
 }
@@ -1559,7 +1571,7 @@ textarea:focus {
 }
 
 .req-hint-craft {
-  color: #c4b5fd;
+  color: #67e8f9;
 }
 
 .req-hint-cascade {
