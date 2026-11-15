@@ -1263,20 +1263,37 @@ textarea:focus {
   color: var(--text-muted);
 }
 
-.prefarm-families {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.prefarm-cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
   margin-top: 12px;
 }
 
-.prefarm-family-lane {
+.prefarm-cluster {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
 }
 
-.prefarm-family-label {
+.prefarm-cluster.span-5 {
+  grid-column: span 5;
+}
+
+.prefarm-cluster.span-6 {
+  grid-column: span 6;
+}
+
+.prefarm-cluster.span-7 {
+  grid-column: span 7;
+}
+
+.prefarm-cluster-label {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -1284,8 +1301,38 @@ textarea:focus {
   color: var(--text-muted);
 }
 
-.prefarm-family-lane .req-grid {
-  margin-top: 0;
+.prefarm-cluster-tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--cluster-cols, 3), minmax(0, 1fr));
+  gap: 8px;
+}
+
+.prefarm-cluster-tiles .req-chip {
+  padding: 6px 8px 10px;
+  gap: 7px;
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.prefarm-cluster-tiles .req-name {
+  font-size: 12px;
+}
+
+.prefarm-cluster-tiles .req-nums {
+  font-size: 11.5px;
+}
+
+@media (max-width: 960px) {
+  .prefarm-cluster.span-5,
+  .prefarm-cluster.span-6,
+  .prefarm-cluster.span-7 {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 600px) {
+  .prefarm-cluster-tiles {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
 }
 
 .req-grid {

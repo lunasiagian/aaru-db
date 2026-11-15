@@ -7,8 +7,8 @@ import {
   getCharacterMeta,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114r';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114r';
+} from './catalog.js?v=20261114s';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114s';
 
 const uiState = {
   openTargets: new Set(),
@@ -84,7 +84,7 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   };
 
   const families = [];
-  const pushFamily = (id, label, rows, addCraftHints = false) => {
+  const pushFamily = (id, label, span, rows, addCraftHints = false) => {
     if (!rows.length) return;
     if (addCraftHints) {
       for (let i = 1; i < rows.length; i++) {
@@ -94,10 +94,10 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
         }
       }
     }
-    families.push({ id, label, rows });
+    families.push({ id, label, span, rows });
   };
 
-  // 1. Talent Books Lane (Teachings -> Guide -> Philosophies)
+  // 1. Talent Books (Teachings -> Guide -> Philosophies): span 6
   const bookOrder = { TeachingsOf: 0, GuideTo: 1, PhilosophiesOf: 2 };
   const bookRows = valid
     .filter((r) => /^(TeachingsOf|GuideTo|PhilosophiesOf)/.test(r.key))
@@ -107,37 +107,34 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
       return (bookOrder[pa] ?? 9) - (bookOrder[pb] ?? 9);
     });
   bookRows.forEach((r) => used.add(r.key));
-  pushFamily('books', 'Talent Books', bookRows, true);
+  pushFamily('books', 'Talent Books', 6, bookRows, true);
 
-  // 2. Boss & Weekly Boss Lane
-  pushFamily('boss', 'Boss & Weekly', take([charMeta?.bossMat, charMeta?.weeklyMat, 'CrownOfInsight']));
+  // 2. Bosses & Crown (World Boss + Weekly Boss + Crown of Insight): span 6
+  pushFamily('boss', 'Bosses & Crown', 6, take([charMeta?.bossMat, charMeta?.weeklyMat, 'CrownOfInsight']));
 
-  // 3. Enemy Drops & Weapon Domain
-  if (Array.isArray(charMeta?.commonMatTiers)) {
-    pushFamily('charCommon', 'Enemy Drops', take(charMeta.commonMatTiers), true);
-  }
-  if (Array.isArray(weaponMeta?.commonMatTiers)) {
-    pushFamily('wepCommon', 'Weapon Enemy Drops', take(weaponMeta.commonMatTiers), true);
-  }
-  if (Array.isArray(weaponMeta?.eliteMatTiers)) {
-    pushFamily('wepElite', 'Elite Enemy Drops', take(weaponMeta.eliteMatTiers), true);
-  }
-  if (weaponMeta?.domainMatExactKey) {
-    pushFamily('wepDomain', 'Weapon Domain', take([weaponMeta.domainMatExactKey]));
-  }
+  // 3. Common Enemy Drops (1★ -> 2★ -> 3★): span 6
+  const commonRows = [
+    ...(Array.isArray(charMeta?.commonMatTiers) ? take(charMeta.commonMatTiers) : []),
+    ...(Array.isArray(weaponMeta?.commonMatTiers) ? take(weaponMeta.commonMatTiers) : [])
+  ];
+  pushFamily('charCommon', 'Common Enemy Drops', 6, commonRows, true);
 
-  // 4. Ascension Gems & Local Specialty
+  // 4. Elite / Weapon Drops (2★ -> 3★ -> 4★ + Weapon Domain): span 6
+  const eliteRows = [
+    ...(Array.isArray(weaponMeta?.eliteMatTiers) ? take(weaponMeta.eliteMatTiers) : []),
+    ...(weaponMeta?.domainMatExactKey ? take([weaponMeta.domainMatExactKey]) : [])
+  ];
+  pushFamily('wepElite', 'Elite & Weapon Drops', 6, eliteRows, true);
+
+  // 5. Ascension Gems (Sliver -> Fragment -> Chunk -> Gemstone): span 7
   if (Array.isArray(charMeta?.gemTiers)) {
-    pushFamily('gems', 'Ascension Gems', take(charMeta.gemTiers), true);
-  }
-  if (charMeta?.localSpecialty) {
-    pushFamily('specialty', 'Local Specialty', take([charMeta.localSpecialty]));
+    pushFamily('gems', 'Ascension Gems', 7, take(charMeta.gemTiers), true);
   }
 
-  // 5. XP & Currency (+ any remaining)
-  const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre']);
+  // 6. Currency, XP & Specialty: span 5
+  const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre', charMeta?.localSpecialty]);
   const restRows = valid.filter((r) => !used.has(r.key));
-  pushFamily('currency', 'XP & Currency', [...currencyRows, ...restRows]);
+  pushFamily('currency', 'Currency, XP & Specialty', 5, [...currencyRows, ...restRows]);
 
   const activeFamilies = [];
   const readyRows = [];
@@ -373,17 +370,18 @@ export function renderPrefarmTab(container, state, handlers) {
 
                 ${
                   activeFamilies.length
-                    ? `<div class="prefarm-families">
+                    ? `<div class="prefarm-cluster-grid">
                         ${activeFamilies
-                          .map(
-                            (fam) => `
-                          <div class="prefarm-family-lane">
-                            <div class="prefarm-family-label mono">${escapeAttr(fam.label)}</div>
-                            <div class="req-grid">
+                          .map((fam) => {
+                            const cols = Math.min(4, Math.max(1, fam.rows.length));
+                            return `
+                          <section class="prefarm-cluster span-${fam.span}">
+                            <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
+                            <div class="prefarm-cluster-tiles" style="--cluster-cols:${cols}">
                               ${fam.rows.map(renderReqChipHtml).join('')}
                             </div>
-                          </div>`
-                          )
+                          </section>`;
+                          })
                           .join('')}
                       </div>`
                     : ''
