@@ -52,6 +52,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
     );
   }
 
+  const isZero = r.owned === 0 && r.needed > 0;
   return `
     <div class="req-chip prefarm-tile ${isDef ? 'row-deficit' : 'row-surplus'}"
       role="button"
@@ -68,7 +69,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
         </div>
         ${hints.length ? `<div class="prefarm-tile-sub mono">${hints.join('')}</div>` : ''}
       </div>
-      <div class="req-progress ${barTone}"><span style="width:${pct}%"></span></div>
+      <div class="req-progress ${barTone} ${isZero ? 'is-zero' : ''}"><span style="width:${pct}%"></span></div>
     </div>`;
 }
 
@@ -435,8 +436,9 @@ export function renderPrefarmTab(container, state, handlers) {
                         ${activeFamilies
                           .map((fam) => {
                             const itemCount = Math.max(1, fam.rows.length);
+                            const singleCls = itemCount === 1 ? ' is-single' : '';
                             return `
-                          <section class="prefarm-cluster span-${fam.span}">
+                          <section class="prefarm-cluster span-${fam.span}${singleCls}">
                             <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
                             <div class="prefarm-cluster-tiles prefarm-tile-grid" style="--item-count:${itemCount}">
                               ${fam.rows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}
