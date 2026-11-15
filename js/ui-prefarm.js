@@ -5,10 +5,11 @@ import {
   getAllCharacterKeys,
   getAllWeaponKeys,
   getCharacterMeta,
+  getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114s';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114s';
+} from './catalog.js?v=20261114t';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114t';
 
 const uiState = {
   openTargets: new Set(),
@@ -31,7 +32,7 @@ function escapeAttr(str) {
     .replace(/>/g, '&gt;');
 }
 
-function renderReqChipHtml(r) {
+function renderReqChipHtml(r, targetStateKey = '') {
   const isDef = r.deficit > 0;
   const pct = r.needed > 0 ? Math.min(100, Math.round((r.owned / r.needed) * 100)) : 100;
   const barTone = pct >= 100 ? 'is-ready' : pct >= 50 ? 'is-mid' : 'is-low';
@@ -51,13 +52,18 @@ function renderReqChipHtml(r) {
   }
 
   return `
-    <div class="req-chip ${isDef ? 'row-deficit' : 'row-surplus'}" title="${escapeAttr(`${r.name}: ${fullRatio}`)}">
+    <div class="req-chip prefarm-tile ${isDef ? 'row-deficit' : 'row-surplus'}"
+      role="button"
+      tabindex="0"
+      data-pf-inspect="${escapeAttr(r.key)}"
+      data-pf-target="${escapeAttr(targetStateKey)}"
+      title="${escapeAttr(`${r.name}: ${fullRatio} — Click for description & drop locations`)}">
       ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
       <div class="req-chip-body">
         <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
         <div class="req-nums mono">
-          <span title="${escapeAttr(fullRatio)}">${compactRatio}</span>
-          <span class="req-delta-badge ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
+          <span class="prefarm-owned-text" title="${escapeAttr(fullRatio)}">${compactRatio}</span>
+          <span class="req-delta-badge prefarm-deficit-pill ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
         </div>
         ${hints.length ? `<div class="req-subnotes mono">${hints.join('')}</div>` : ''}
       </div>
@@ -119,12 +125,13 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   ];
   pushFamily('charCommon', 'Common Enemy Drops', 6, commonRows, true);
 
-  // 4. Elite / Weapon Drops (2★ -> 3★ -> 4★ + Weapon Domain): span 6
-  const eliteRows = [
-    ...(Array.isArray(weaponMeta?.eliteMatTiers) ? take(weaponMeta.eliteMatTiers) : []),
-    ...(weaponMeta?.domainMatExactKey ? take([weaponMeta.domainMatExactKey]) : [])
-  ];
-  pushFamily('wepElite', 'Elite & Weapon Drops', 6, eliteRows, true);
+  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★) & Weapon Materials (separated)
+  if (Array.isArray(weaponMeta?.eliteMatTiers)) {
+    pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers), true);
+  }
+  if (weaponMeta?.domainMatExactKey) {
+    pushFamily('wepDomain', 'Weapon Materials', 6, take([weaponMeta.domainMatExactKey]));
+  }
 
   // 5. Ascension Gems (Sliver -> Fragment -> Chunk -> Gemstone): span 7
   if (Array.isArray(charMeta?.gemTiers)) {
@@ -177,6 +184,18 @@ export function renderPrefarmTab(container, state, handlers) {
 
   const waterfallMap = calculateWaterfallPrefarm(queue, account.inventory || {}, account.wallet);
   const disabledAttr = isReadOnly ? 'disabled' : '';
+  const tileRowMap = new Map();
+  for (const t of queue) {
+    const tKey = String(t.id ?? t.characterKey);
+    const cm = getCharacterMeta(t.characterKey);
+    const wm = t.weaponKey ? getWeaponMeta(t.weaponKey) : null;
+    const rows = waterfallMap.get(t.id) || [];
+    const { activeFamilies, readyRows } = groupRequirementsIntoFamilies(rows, cm, wm);
+    for (const fam of activeFamilies) {
+      for (const r of fam.rows) tileRowMap.set(`${tKey}::${r.key}`, r);
+    }
+    for (const r of readyRows) tileRowMap.set(`${tKey}::${r.key}`, r);
+  }
 
   container.innerHTML = `
     <div class="section-header">
@@ -377,8 +396,8 @@ export function renderPrefarmTab(container, state, handlers) {
                             return `
                           <section class="prefarm-cluster span-${fam.span}">
                             <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
-                            <div class="prefarm-cluster-tiles" style="--cluster-cols:${cols}">
-                              ${fam.rows.map(renderReqChipHtml).join('')}
+                            <div class="prefarm-cluster-tiles">
+                              ${fam.rows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}
                             </div>
                           </section>`;
                           })
@@ -404,7 +423,7 @@ export function renderPrefarmTab(container, state, handlers) {
                         ${
                           surplusOpen
                             ? `<div class="req-grid prefarm-surplus-grid">
-                                ${surplusRows.map(renderReqChipHtml).join('')}
+                                ${surplusRows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}
                               </div>`
                             : ''
                         }
@@ -424,6 +443,112 @@ export function renderPrefarmTab(container, state, handlers) {
       if (uiState.expandedSurplus.has(key)) uiState.expandedSurplus.delete(key);
       else uiState.expandedSurplus.add(key);
       renderPrefarmTab(container, state, handlers);
+    });
+  });
+
+  const openMaterialModal = async (matKey, targetStateKey) => {
+    document.querySelector('.mat-inspector-backdrop')?.remove();
+    const row = tileRowMap.get(`${targetStateKey}::${matKey}`);
+    const meta = getMaterialMeta(matKey);
+    const rawBagCount =
+      matKey === 'Mora'
+        ? Number(account.wallet?.mora ?? account.inventory?.[matKey]?.count ?? 0)
+        : Number(account.inventory?.[matKey]?.count ?? 0);
+    const reserved = row?.reservedByPrev || 0;
+    const availHere = row?.owned ?? rawBagCount;
+    const required = row?.needed ?? 0;
+    const craftable = row?.craftableHint || row?.craftedIn || 0;
+    const rarity = Math.max(1, Math.min(5, Number(meta?.rarity) || 3));
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'mat-inspector-backdrop';
+    backdrop.innerHTML = `
+      <div class="mat-inspector-modal" role="dialog" aria-modal="true" aria-label="${escapeAttr(meta?.name || matKey)}">
+        <button type="button" class="mat-inspector-close" aria-label="Close">×</button>
+        <div class="mat-inspector-head">
+          <div class="mat-inspector-icon-wrap rarity-bg-${rarity}">
+            ${renderAssetIcon('materials', matKey, meta?.name || matKey, 'mat-inspector-icon')}
+          </div>
+          <div class="mat-inspector-title-wrap">
+            <h2 class="mat-inspector-title">${escapeAttr(meta?.name || matKey)}</h2>
+            <div class="mat-inspector-badges mono">
+              <span class="mat-inspector-stars">${'★'.repeat(rarity)}</span>
+              <span class="mat-inspector-cat">${escapeAttr(meta?.category || 'Material')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mat-inspector-section">
+          <div class="mat-inspector-label mono">INVENTORY &amp; QUEUE BREAKDOWN</div>
+          <div class="mat-inspector-stats mono">
+            <div class="mat-stat-box"><span>In Bag</span><strong>${rawBagCount.toLocaleString()}</strong></div>
+            <div class="mat-stat-box"><span>Reserved Upstream</span><strong>${reserved > 0 ? `-${reserved.toLocaleString()} (${escapeAttr(row?.reservedByLabel || '#1')})` : '0'}</strong></div>
+            <div class="mat-stat-box"><span>Available Here</span><strong>${availHere.toLocaleString()}</strong></div>
+            <div class="mat-stat-box"><span>Required</span><strong>${required.toLocaleString()}</strong></div>
+            <div class="mat-stat-box"><span>3:1 Alchemy</span><strong>${craftable > 0 ? `${craftable.toLocaleString()} craftable` : '—'}</strong></div>
+          </div>
+        </div>
+
+        <div class="mat-inspector-section">
+          <div class="mat-inspector-label mono">WHERE TO FIND</div>
+          <div class="mat-inspector-sources" data-mat-sources>
+            <span class="muted mono">Loading drop locations…</span>
+          </div>
+        </div>
+
+        <div class="mat-inspector-section">
+          <div class="mat-inspector-label mono">IN-GAME DESCRIPTION</div>
+          <p class="mat-inspector-desc muted" data-mat-desc>Loading description…</p>
+        </div>
+      </div>
+    `;
+
+    const close = () => {
+      backdrop.remove();
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+    };
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) close();
+    });
+    backdrop.querySelector('.mat-inspector-close')?.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(backdrop);
+
+    const details = await getMaterialDetails(matKey);
+    if (!document.body.contains(backdrop)) return;
+
+    const srcEl = backdrop.querySelector('[data-mat-sources]');
+    const descEl = backdrop.querySelector('[data-mat-desc]');
+    if (details?.rank) {
+      const starsEl = backdrop.querySelector('.mat-inspector-stars');
+      if (starsEl) starsEl.textContent = '★'.repeat(Math.max(1, Math.min(5, details.rank)));
+    }
+    if (details?.type) {
+      const catEl = backdrop.querySelector('.mat-inspector-cat');
+      if (catEl) catEl.textContent = details.type;
+    }
+    if (srcEl) {
+      const srcs = details?.sources?.length ? details.sources : [];
+      srcEl.innerHTML = srcs.length
+        ? srcs.map((s) => `<span class="mat-source-pill">${escapeAttr(s)}</span>`).join('')
+        : '<span class="muted">No drop location data listed in API.</span>';
+    }
+    if (descEl) {
+      descEl.textContent = details?.description ? details.description.replace(/\\n/g, '\n') : 'No description available.';
+    }
+  };
+
+  container.querySelectorAll('.prefarm-tile[data-pf-inspect]').forEach((tile) => {
+    const trigger = () => openMaterialModal(tile.dataset.pfInspect, tile.dataset.pfTarget || '');
+    tile.addEventListener('click', trigger);
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        trigger();
+      }
     });
   });
 

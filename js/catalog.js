@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v15';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v16';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
@@ -126,6 +126,7 @@ async function fetchYattaCatalog(forceRefresh = false) {
         if (norm) matNormById.set(String(id), { norm, name: item.name, rank: Number(item.rank) || 2 });
         if (!norm || !item.icon) continue;
         slim.materials[norm] = {
+          id: String(id),
           name: item.name,
           rarity: Number(item.rank) || 2,
           category: item.type || 'Material',
@@ -286,11 +287,16 @@ async function fetchYattaCatalog(forceRefresh = false) {
             if (!slim.materials[norm] && item.icon) {
               const qMap = { QUALITY_WHITE: 1, QUALITY_GRAY: 1, QUALITY_GREEN: 2, QUALITY_BLUE: 3, QUALITY_PURPLE: 4, QUALITY_ORANGE: 5 };
               slim.materials[norm] = {
+                id: String(id),
                 name,
                 rarity: qMap[item.qualityType] || 3,
                 category: item.type || 'Material',
+                description: item.enDescription || '',
+                sources: Array.isArray(item.enSources) ? item.enSources.filter(Boolean) : [],
                 icon: `https://api.lunaris.moe/data/assets/items/${item.icon}.webp`
               };
+            } else if (slim.materials[norm] && !slim.materials[norm].id) {
+              slim.materials[norm].id = String(id);
             }
             if (/^113\d+$/.test(String(id)) && Array.isArray(item.sourceMonsters) && slim.materials[norm]?.rarity === 4) {
               const monId = String(item.sourceMonsters?.[0]?.[0] || '');
@@ -553,7 +559,7 @@ export function getMaterialMeta(key) {
   const base = catalog?.materials?.[key];
   const live = getLiveAssetEntry('materials', key);
   if (base) {
-    return live ? { ...live, ...base, icon: base.icon || live.icon } : base;
+    return live ? { ...live, ...base, icon: base.icon || live.icon, id: base.id || live.id } : base;
   }
   return (
     (live ? { key, daysOfWeek: [], ...live } : null) || {
@@ -564,6 +570,108 @@ export function getMaterialMeta(key) {
       daysOfWeek: []
     }
   );
+}
+
+const materialDetailsCache = new Map();
+
+export async function getMaterialDetails(matKeyOrId) {
+  const raw = String(matKeyOrId || '').trim();
+  if (!raw) return null;
+  const cacheKey = normalizeAssetKey(raw) || raw;
+  if (materialDetailsCache.has(cacheKey)) return materialDetailsCache.get(cacheKey);
+
+  const meta = /^\d+$/.test(raw) ? null : getMaterialMeta(raw);
+  let matId = /^\d+$/.test(raw) ? raw : meta?.id || '';
+  if (!matId && yattaMaps.matIdLookup) {
+    const targetNorm = normalizeAssetKey(meta?.name || raw);
+    for (const [id, name] of Object.entries(yattaMaps.matIdLookup)) {
+      if (normalizeAssetKey(name) === targetNorm) {
+        matId = id;
+        break;
+      }
+    }
+  }
+
+  const fallbackResult = {
+    id: matId,
+    name: meta?.name || splitPascalCase(raw),
+    rank: Number(meta?.rarity) || 3,
+    type: meta?.category || 'Material',
+    description: meta?.description || '',
+    sources: Array.isArray(meta?.sources) ? [...meta.sources] : []
+  };
+
+  if (fallbackResult.description || fallbackResult.sources.length) {
+    materialDetailsCache.set(cacheKey, fallbackResult);
+    return fallbackResult;
+  }
+
+  const formatYattaSources = (srcList) =>
+    (Array.isArray(srcList) ? srcList : [])
+      .map((s) => {
+        if (!s) return '';
+        if (typeof s === 'string') return s;
+        const name = String(s.name || '').trim();
+        if (!name) return '';
+        if (Array.isArray(s.days) && s.days.length) {
+          const days = s.days.map((d) => String(d).slice(0, 3).replace(/^[a-z]/, (c) => c.toUpperCase())).join('/');
+          return `${name} (${days})`;
+        }
+        return name;
+      })
+      .filter(Boolean);
+
+  if (matId) {
+    try {
+      const res = await fetch(`https://gi.yatta.moe/api/v2/en/material/${encodeURIComponent(matId)}`);
+      if (res.ok) {
+        const json = await res.json();
+        const d = json?.data;
+        if (d) {
+          const parsed = {
+            id: matId,
+            name: d.name || fallbackResult.name,
+            rank: Number(d.rank) || fallbackResult.rank,
+            type: d.type || fallbackResult.type,
+            description: d.description || '',
+            sources: formatYattaSources(d.source)
+          };
+          materialDetailsCache.set(cacheKey, parsed);
+          return parsed;
+        }
+      }
+    } catch {
+      // Fall through to Lunaris fallback
+    }
+
+    if (yattaMaps.lunarisVer) {
+      try {
+        const res = await fetch(`https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/materiallist.json`);
+        if (res.ok) {
+          const list = await res.json();
+          const item = list?.[matId];
+          if (item) {
+            const qMap = { QUALITY_WHITE: 1, QUALITY_GRAY: 1, QUALITY_GREEN: 2, QUALITY_BLUE: 3, QUALITY_PURPLE: 4, QUALITY_ORANGE: 5 };
+            const parsed = {
+              id: matId,
+              name: item.enName || fallbackResult.name,
+              rank: qMap[item.qualityType] || fallbackResult.rank,
+              type: item.type || fallbackResult.type,
+              description: item.enDescription || '',
+              sources: Array.isArray(item.enSources) ? item.enSources.filter(Boolean) : []
+            };
+            materialDetailsCache.set(cacheKey, parsed);
+            return parsed;
+          }
+        }
+      } catch {
+        // Ignore fallback failure
+      }
+    }
+  }
+
+  materialDetailsCache.set(cacheKey, fallbackResult);
+  return fallbackResult;
 }
 
 export function getDomainScheduleForDay(dayName) {
