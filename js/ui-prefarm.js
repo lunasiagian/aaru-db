@@ -7,8 +7,8 @@ import {
   getCharacterMeta,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114o';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114o';
+} from './catalog.js?v=20261114p';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114p';
 
 const uiState = {
   openTargets: new Set(),

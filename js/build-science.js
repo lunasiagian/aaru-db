@@ -1,5 +1,5 @@
-import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261114o';
-import { calcTalentUpgradeCost } from './calculations.js?v=20261114o';
+import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261114p';
+import { calcTalentUpgradeCost } from './calculations.js?v=20261114p';
 
 const AVG_ROLL_VALUE = {
   hp: 254,

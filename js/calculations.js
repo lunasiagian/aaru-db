@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114o';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114p';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -228,6 +228,15 @@ const CHAR_COMMON_ASC_CURVE = {
   6: { tier: 2, count: 24 }
 };
 
+const CHAR_GEM_ASC_CURVE = {
+  1: { tier: 0, count: 1 },
+  2: { tier: 1, count: 3 },
+  3: { tier: 1, count: 6 },
+  4: { tier: 2, count: 3 },
+  5: { tier: 2, count: 6 },
+  6: { tier: 3, count: 6 }
+};
+
 const TALENT_COMMON_CURVE = {
   2: { tier: 0, count: 6 },
   3: { tier: 1, count: 3 },
@@ -318,6 +327,7 @@ function computeRawTargetRequirements(target) {
   };
 
   const commonTiers = Array.isArray(charMeta.commonMatTiers) && charMeta.commonMatTiers.length === 3 ? charMeta.commonMatTiers : null;
+  const gemTiers = Array.isArray(charMeta.gemTiers) && charMeta.gemTiers.length === 4 ? charMeta.gemTiers : null;
   for (let p = curPhase + 1; p <= tgtPhase; p++) {
     const step = ascCurve[p];
     if (!step) continue;
@@ -326,6 +336,8 @@ function computeRawTargetRequirements(target) {
     if (charMeta.localSpecialty && step.specialty) addReq(charMeta.localSpecialty, step.specialty);
     const cStep = CHAR_COMMON_ASC_CURVE[p];
     if (commonTiers && cStep) addReq(commonTiers[cStep.tier], cStep.count);
+    const gStep = CHAR_GEM_ASC_CURVE[p];
+    if (gemTiers && gStep) addReq(gemTiers[gStep.tier], gStep.count);
   }
 
   // 3. Talents (Auto / Skill / Burst)
@@ -427,68 +439,70 @@ export function sortAndLabelPrefarmQueue(prefarmQueue = []) {
   });
 }
 
-function allocateTieredWaterfall([k1, k2, k3], req, getPool, setPool) {
-  const o1 = getPool(k1);
-  const o2 = getPool(k2);
-  const o3 = getPool(k3);
-  const n1 = req[k1] || 0;
-  const n2 = req[k2] || 0;
-  const n3 = req[k3] || 0;
+function allocateTieredWaterfall(keys, req, getPool, setPool) {
+  const owned = keys.map((k) => getPool(k));
+  const needed = keys.map((k) => req[k] || 0);
+  const avail = owned.slice();
+  const eff = owned.slice();
 
-  const rem1 = Math.max(0, o1 - n1);
-  const short2 = Math.max(0, n2 - o2);
-  const short3 = Math.max(0, n3 - o3);
+  const maxAvail = (idx) => avail[idx] + (idx > 0 ? Math.floor(maxAvail(idx - 1) / 3) : 0);
+  const consumeFrom = (idx, want) => {
+    const direct = Math.min(avail[idx], want);
+    avail[idx] -= direct;
+    const rem = want - direct;
+    if (rem > 0 && idx > 0) {
+      consumeFrom(idx - 1, rem * 3);
+    }
+  };
 
-  const craft2For2 = Math.min(Math.floor(rem1 / 3), short2);
-  let avail1 = rem1 - craft2For2 * 3;
-  const eff2 = o2 + craft2For2;
-  const rem2 = Math.max(0, eff2 - n2);
+  for (let i = 0; i < keys.length; i++) {
+    const direct = Math.min(avail[i], needed[i]);
+    avail[i] -= direct;
+    const short = needed[i] - direct;
+    if (short > 0 && i > 0) {
+      const canCraft = Math.min(short, Math.floor(maxAvail(i - 1) / 3));
+      if (canCraft > 0) {
+        consumeFrom(i - 1, canCraft * 3);
+        eff[i] += canCraft;
+      }
+    }
+  }
 
-  const totalAvailT2For3 = rem2 + Math.floor(avail1 / 3);
-  const craft3 = Math.min(Math.floor(totalAvailT2For3 / 3), short3);
-  const t2NeededFor3 = craft3 * 3;
-  const usedRem2 = Math.min(rem2, t2NeededFor3);
-  const avail2 = rem2 - usedRem2;
-  const craft2For3 = t2NeededFor3 - usedRem2;
-  avail1 -= craft2For3 * 3;
-  const eff3 = o3 + craft3;
-  const avail3 = Math.max(0, eff3 - n3);
-
-  setPool(k1, avail1);
-  setPool(k2, avail2);
-  setPool(k3, avail3);
-  return { [k1]: o1, [k2]: eff2, [k3]: eff3 };
+  const out = {};
+  keys.forEach((k, i) => {
+    setPool(k, avail[i]);
+    out[k] = eff[i];
+  });
+  return out;
 }
 
-function resolveThreeTierSeries(oLow, oMid, oHigh, nLow, nMid, nHigh) {
-  const surplusLow = Math.max(0, oLow - nLow);
-  const craftMid = Math.floor(surplusLow / 3);
-  const netDefLow = Math.max(0, nLow - oLow);
-
-  const effMid = oMid + craftMid;
-  const surplusMid = Math.max(0, effMid - nMid);
-  const craftHigh = Math.floor(surplusMid / 3);
-  const netDefMid = Math.max(0, nMid - effMid);
-
-  const effHigh = oHigh + craftHigh;
-  const surplusHigh = Math.max(0, effHigh - nHigh);
-  const netDefHigh = Math.max(0, nHigh - effHigh);
-
-  const deficit = netDefLow + netDefMid + netDefHigh;
-  const equivDeficit = netDefHigh + netDefMid / 3 + netDefLow / 9;
-  const surplus = deficit === 0 ? surplusHigh : 0;
-
+function resolveTieredSeries(ownedArr, neededArr) {
+  let carryCraft = 0;
+  const eff = [];
+  const craftedIn = [];
+  const netDef = [];
+  let lastSurplus = 0;
+  for (let i = 0; i < ownedArr.length; i++) {
+    const o = ownedArr[i] || 0;
+    const n = neededArr[i] || 0;
+    const e = o + carryCraft;
+    eff.push(e);
+    craftedIn.push(carryCraft);
+    const surplus = Math.max(0, e - n);
+    netDef.push(Math.max(0, n - e));
+    carryCraft = Math.floor(surplus / 3);
+    lastSurplus = surplus;
+  }
+  const deficit = netDef.reduce((s, v) => s + v, 0);
+  const topIdx = ownedArr.length - 1;
+  const equivDeficit = netDef.reduce((s, d, i) => s + d / Math.pow(3, topIdx - i), 0);
   return {
-    netDefLow,
-    netDefMid,
-    netDefHigh,
-    craftMid,
-    craftHigh,
-    effMid,
-    effHigh,
+    eff,
+    craftedIn,
+    netDef,
     deficit,
     equivDeficit,
-    surplus
+    surplus: deficit === 0 ? lastSurplus : 0
   };
 }
 
@@ -526,19 +540,20 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
     if (Array.isArray(charMeta?.commonMatTiers) && charMeta.commonMatTiers.length === 3) {
       candidateTriples.push(charMeta.commonMatTiers);
     }
+    if (Array.isArray(charMeta?.gemTiers) && charMeta.gemTiers.length === 4) {
+      candidateTriples.push(charMeta.gemTiers);
+    }
     if (Array.isArray(weaponMeta?.commonMatTiers) && weaponMeta.commonMatTiers.length === 3) {
       const sameAsChar = candidateTriples.some((t) => t[0] === weaponMeta.commonMatTiers[0]);
       if (!sameAsChar) candidateTriples.push(weaponMeta.commonMatTiers);
     }
 
     const preOwnedSnapshot = {};
-    for (const [k1, k2, k3] of candidateTriples) {
-      if ((req[k1] || 0) + (req[k2] || 0) + (req[k3] || 0) <= 0) continue;
-      const eff = allocateTieredWaterfall([k1, k2, k3], req, getPool, (k, v) => pool.set(k, v));
+    for (const tiers of candidateTriples) {
+      if (tiers.reduce((s, k) => s + (req[k] || 0), 0) <= 0) continue;
+      const eff = allocateTieredWaterfall(tiers, req, getPool, (k, v) => pool.set(k, v));
       Object.assign(tieredOwned, eff);
-      tieredKeys.add(k1);
-      tieredKeys.add(k2);
-      tieredKeys.add(k3);
+      for (const k of tiers) tieredKeys.add(k);
     }
     for (const matKey of Object.keys(req)) {
       if (!tieredKeys.has(matKey)) {
@@ -638,6 +653,8 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
   const talentSeriesMap = new Map(); // base -> { base, byTier: { T2, T3, T4 }, byTarget: Map<rank, {T2,T3,T4}> }
   const commonSeriesMap = new Map(); // seriesId (T3 key) -> { keys: { T1, T2, T3 }, neededByTier: { T1, T2, T3 }, byRank }
   const commonKeyToSeries = new Map(); // matKey -> { seriesId, tierKey: 'T1'|'T2'|'T3', keys: { T1, T2, T3 } }
+  const gemSeriesMap = new Map(); // seriesId (T5 key) -> { keys: [T2, T3, T4, T5], neededByTier: [0,0,0,0], byRank }
+  const gemKeyToSeries = new Map(); // matKey -> { seriesId, idx: 0..3, keys }
   for (const { charMeta, weaponMeta } of targetReqs) {
     for (const tiers of [charMeta?.commonMatTiers, weaponMeta?.commonMatTiers]) {
       if (Array.isArray(tiers) && tiers.length === 3) {
@@ -647,6 +664,12 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
         commonKeyToSeries.set(tiers[1], { seriesId, tierKey: 'T2', keys });
         commonKeyToSeries.set(tiers[2], { seriesId, tierKey: 'T3', keys });
       }
+    }
+    if (Array.isArray(charMeta?.gemTiers) && charMeta.gemTiers.length === 4) {
+      const seriesId = charMeta.gemTiers[3];
+      charMeta.gemTiers.forEach((k, idx) => {
+        gemKeyToSeries.set(k, { seriesId, idx, keys: charMeta.gemTiers });
+      });
     }
   }
   const flatMap = new Map(); // matKey -> { key, kind, neededByRank: Map<rank, number> }
@@ -692,6 +715,22 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
         cSeries.neededByTier[commonInfo.tierKey] += needed;
         if (!cSeries.byRank.has(target.rank)) cSeries.byRank.set(target.rank, { T1: 0, T2: 0, T3: 0 });
         cSeries.byRank.get(target.rank)[commonInfo.tierKey] += needed;
+        continue;
+      }
+
+      const gemInfo = gemKeyToSeries.get(matKey);
+      if (gemInfo) {
+        if (!gemSeriesMap.has(gemInfo.seriesId)) {
+          gemSeriesMap.set(gemInfo.seriesId, {
+            keys: gemInfo.keys,
+            neededByTier: [0, 0, 0, 0],
+            byRank: new Map()
+          });
+        }
+        const gSeries = gemSeriesMap.get(gemInfo.seriesId);
+        gSeries.neededByTier[gemInfo.idx] += needed;
+        if (!gSeries.byRank.has(target.rank)) gSeries.byRank.set(target.rank, [0, 0, 0, 0]);
+        gSeries.byRank.get(target.rank)[gemInfo.idx] += needed;
         continue;
       }
 
@@ -756,7 +795,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     const n3 = series.neededByTier.T3;
     const n4 = series.neededByTier.T4;
 
-    const r = resolveThreeTierSeries(o2, o3, o4, n2, n3, n4);
+    const r = resolveTieredSeries([o2, o3, o4], [n2, n3, n4]);
     const domInfo = getDomainInfoForReward(series.keys.T4, todayName);
     const needEquivByRank = new Map();
     let totalNeedEquiv = 0;
@@ -778,14 +817,14 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       name: `${series.base} Series`,
       kind: 'talentSeries',
       rarity: 4,
-      owned: r.effHigh,
+      owned: r.eff[2],
       neededTotal: n4 + n3 + n2,
       deficit: r.deficit,
       surplus: r.surplus,
       tiers: [
-        { label: 'T2', key: series.keys.T2, owned: o2, needed: n2, netDeficit: r.netDefLow },
-        { label: 'T3', key: series.keys.T3, owned: r.effMid, rawOwned: o3, craftedIn: r.craftMid, needed: n3, netDeficit: r.netDefMid },
-        { label: 'T4', key: series.keys.T4, owned: r.effHigh, rawOwned: o4, craftedIn: r.craftHigh, needed: n4, netDeficit: r.netDefHigh }
+        { label: 'T2', key: series.keys.T2, owned: o2, needed: n2, netDeficit: r.netDef[0] },
+        { label: 'T3', key: series.keys.T3, owned: r.eff[1], rawOwned: o3, craftedIn: r.craftedIn[1], needed: n3, netDeficit: r.netDef[1] },
+        { label: 'T4', key: series.keys.T4, owned: r.eff[2], rawOwned: o4, craftedIn: r.craftedIn[2], needed: n4, netDeficit: r.netDef[2] }
       ],
       sourceLabel: domInfo.domainName || 'Talent Domain',
       scheduleDays: domInfo.days,
@@ -805,7 +844,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     const n2 = series.neededByTier.T2;
     const n3 = series.neededByTier.T3;
 
-    const r = resolveThreeTierSeries(o1, o2, o3, n1, n2, n3);
+    const r = resolveTieredSeries([o1, o2, o3], [n1, n2, n3]);
     const needEquivByRank = new Map();
     let totalNeedEquiv = 0;
     for (const [rank, t] of series.byRank.entries()) {
@@ -820,20 +859,62 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       name: t3Meta.name || series.keys.T3,
       kind: 'commonMat',
       rarity: 3,
-      owned: r.effHigh,
+      owned: r.eff[2],
       neededTotal: n3 + n2 + n1,
       deficit: r.deficit,
       surplus: r.surplus,
       tiers: [
-        { label: 'T1', key: series.keys.T1, owned: o1, needed: n1, netDeficit: r.netDefLow },
-        { label: 'T2', key: series.keys.T2, owned: r.effMid, rawOwned: o2, craftedIn: r.craftMid, needed: n2, netDeficit: r.netDefMid },
-        { label: 'T3', key: series.keys.T3, owned: r.effHigh, rawOwned: o3, craftedIn: r.craftHigh, needed: n3, netDeficit: r.netDefHigh }
+        { label: 'T1', key: series.keys.T1, owned: o1, needed: n1, netDeficit: r.netDef[0] },
+        { label: 'T2', key: series.keys.T2, owned: r.eff[1], rawOwned: o2, craftedIn: r.craftedIn[1], needed: n2, netDeficit: r.netDef[1] },
+        { label: 'T3', key: series.keys.T3, owned: r.eff[2], rawOwned: o3, craftedIn: r.craftedIn[2], needed: n3, netDeficit: r.netDef[2] }
       ],
       sourceLabel: 'Enemy Drop',
       scheduleDays: [],
       isToday: false,
       farmingCost: null,
       urgency: 5,
+      alloc: buildAlloc(needEquivByRank, totalNeedEquiv, r.equivDeficit)
+    });
+  }
+
+  // 1c. Elemental Ascension Gems (Sliver / Fragment / Chunk / Gemstone, 3-to-1 Alchemy Conversion)
+  const GEM_LABELS = ['T2', 'T3', 'T4', 'T5'];
+  for (const series of gemSeriesMap.values()) {
+    const ownedArr = series.keys.map((k) => getRawOwned(k));
+    const neededArr = series.neededByTier;
+    const r = resolveTieredSeries(ownedArr, neededArr);
+    const needEquivByRank = new Map();
+    let totalNeedEquiv = 0;
+    for (const [rank, arr] of series.byRank.entries()) {
+      const eq = arr[3] + arr[2] / 3 + arr[1] / 9 + arr[0] / 27;
+      needEquivByRank.set(rank, eq);
+      totalNeedEquiv += eq;
+    }
+
+    const t5Meta = getMaterialMeta(series.keys[3]);
+    results.push({
+      key: series.keys[3],
+      name: t5Meta.name || series.keys[3],
+      kind: 'gemSeries',
+      rarity: 5,
+      owned: r.eff[3],
+      neededTotal: neededArr.reduce((s, v) => s + v, 0),
+      deficit: r.deficit,
+      surplus: r.surplus,
+      tiers: series.keys.map((k, i) => ({
+        label: GEM_LABELS[i],
+        key: k,
+        owned: r.eff[i],
+        rawOwned: ownedArr[i],
+        craftedIn: r.craftedIn[i],
+        needed: neededArr[i],
+        netDeficit: r.netDef[i]
+      })),
+      sourceLabel: 'Boss / Weekly / Alchemy',
+      scheduleDays: [],
+      isToday: false,
+      farmingCost: null,
+      urgency: 4,
       alloc: buildAlloc(needEquivByRank, totalNeedEquiv, r.equivDeficit)
     });
   }

@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v13';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v14';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
@@ -142,6 +142,7 @@ async function fetchYattaCatalog(forceRefresh = false) {
         if (!norm || !item.items) continue;
         const upg = {};
         const monsterDrops = [];
+        const gemDrops = [];
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
           if (!mat) continue;
@@ -154,11 +155,17 @@ async function fetchYattaCatalog(forceRefresh = false) {
             else if (mat.rank === 5 && !upg.weeklyMat) upg.weeklyMat = pascalMat;
           } else if (/^112\d+$/.test(String(matId))) {
             monsterDrops.push({ id: Number(matId), rank: mat.rank, pascal: String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '') });
+          } else if (/^1041\d\d$/.test(String(matId))) {
+            gemDrops.push({ id: Number(matId), rank: mat.rank, pascal: String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '') });
           }
         }
         if (monsterDrops.length >= 3) {
           monsterDrops.sort((a, b) => a.id - b.id);
           upg.commonMatTiers = monsterDrops.slice(0, 3).map((m) => m.pascal);
+        }
+        if (gemDrops.length >= 4) {
+          gemDrops.sort((a, b) => a.id - b.id);
+          upg.gemTiers = gemDrops.slice(0, 4).map((g) => g.pascal);
         }
         if (Object.keys(upg).length) avatarUpgradeByNorm.set(norm, upg);
       }
@@ -490,7 +497,8 @@ export function getCharacterMeta(key) {
           talentBook: base.talentBook || live.talentBook,
           bossMat: base.bossMat || live.bossMat,
           weeklyMat: base.weeklyMat || live.weeklyMat,
-          commonMatTiers: base.commonMatTiers || live.commonMatTiers
+          commonMatTiers: base.commonMatTiers || live.commonMatTiers,
+          gemTiers: base.gemTiers || live.gemTiers
         }
       : base;
   }
@@ -574,7 +582,7 @@ const pendingDetailFetches = new Map();
 export async function ensureCharacterMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.characters.get(norm);
-  if (!entry || entry._hydrated || (entry.talentBook && entry.bossMat && entry.commonMatTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || (entry.talentBook && entry.bossMat && entry.commonMatTiers && entry.gemTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingDetailFetches.has(norm)) return pendingDetailFetches.get(norm);
 
   const task = (async () => {
@@ -613,7 +621,7 @@ export async function ensureCharacterMaterials(pascalKey) {
       const weeklyId = Object.keys(weeklyObj)[0];
       if (weeklyId && lookup[weeklyId]) entry.weeklyMat = toPascal(lookup[weeklyId]);
 
-      const skillMonsterIds = Object.keys(detail?.skills?.leveling?.monster || {})
+      const skillMonsterIds = Object.keys(detail?.skills?.leveling?.worldmonster || detail?.skills?.leveling?.monster || {})
         .filter((id) => /^112\d+$/.test(id))
         .map(Number)
         .sort((a, b) => a - b);
@@ -621,13 +629,23 @@ export async function ensureCharacterMaterials(pascalKey) {
         const tiers = skillMonsterIds.slice(0, 3).map((id) => toPascal(lookup[String(id)])).filter(Boolean);
         if (tiers.length === 3) entry.commonMatTiers = tiers;
       } else {
-        const lastMonsterId = lastAsc?.monster ? Number(Object.keys(lastAsc.monster)[0]) : null;
-        if (lastMonsterId && Number.isFinite(lastMonsterId)) {
-          const tiers = [lastMonsterId - 2, lastMonsterId - 1, lastMonsterId]
-            .map((id) => toPascal(lookup[String(id)]))
-            .filter(Boolean);
+        const ascMonsterIds = Object.keys(lastAsc?.worldmonster || lastAsc?.monster || {})
+          .filter((id) => /^112\d+$/.test(id))
+          .map(Number)
+          .sort((a, b) => a - b);
+        if (ascMonsterIds.length >= 3) {
+          const tiers = ascMonsterIds.slice(0, 3).map((id) => toPascal(lookup[String(id)])).filter(Boolean);
           if (tiers.length === 3) entry.commonMatTiers = tiers;
         }
+      }
+
+      const gemIds = Object.keys(lastAsc?.elemental || {})
+        .filter((id) => /^1041\d\d$/.test(id))
+        .map(Number)
+        .sort((a, b) => a - b);
+      if (gemIds.length >= 4) {
+        const gTiers = gemIds.slice(0, 4).map((id) => toPascal(lookup[String(id)])).filter(Boolean);
+        if (gTiers.length === 4) entry.gemTiers = gTiers;
       }
 
       // Persist updated entry back to localStorage cache
