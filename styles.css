@@ -2555,11 +2555,12 @@ textarea:focus {
 }
 
 .cmd-day-pip.is-today {
-  box-shadow: 0 0 0 1.5px var(--accent-electric);
-  color: var(--accent-electric);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.28);
+  color: var(--text-muted);
 }
 
 .cmd-day-pip.is-farmable.is-today {
+  box-shadow: 0 0 0 1.5px var(--accent-electric);
   background: rgba(56, 189, 248, 0.24);
   border-color: var(--accent-electric);
   color: var(--accent-electric);

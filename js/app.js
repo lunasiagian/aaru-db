@@ -14,7 +14,7 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261113t';
+import { renderHudTab } from './ui-hud.js?v=20261114n';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261114a';
 import { renderRosterTab } from './ui-roster.js?v=20261114m';

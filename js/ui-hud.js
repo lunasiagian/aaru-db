@@ -51,12 +51,13 @@ function getSourceBadgeHtml(item, todayName) {
     return '<span class="pill pill-coral mono">Unreleased 7.2</span>';
   }
   if (item.scheduleDays?.length) {
-    const farmSet = new Set(item.scheduleDays);
+    const farmSet = new Set(item.scheduleDays.map((d) => String(d).slice(0, 3).toLowerCase()));
     return `<div class="cmd-day-pips" title="Domain days: ${item.scheduleDays.join(', ')}">
-      ${PIP_DAYS.map(
-        ({ day, letter }) =>
-          `<span class="cmd-day-pip mono ${farmSet.has(day) ? 'is-farmable' : ''} ${day === todayName ? 'is-today' : ''}">${letter}</span>`
-      ).join('')}
+      ${PIP_DAYS.map(({ day, letter }) => {
+        const isFarmable = farmSet.has(day.slice(0, 3).toLowerCase());
+        const isToday = day === todayName;
+        return `<span class="cmd-day-pip mono ${isFarmable ? 'is-farmable' : ''} ${isToday ? 'is-today' : ''}">${letter}</span>`;
+      }).join('')}
     </div>`;
   }
   return `<span class="pill mono">${item.sourceLabel}</span>`;
