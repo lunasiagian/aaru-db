@@ -173,7 +173,7 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
     }
   }
 
-  // Balance each 12-column row proportionally so 4+1 pairs become 9+3 and solo 4-item rows expand to 12
+  // Pack active clusters into 12-column rows and distribute leftover columns cleanly
   let i = 0;
   while (i < activeFamilies.length) {
     let rowSum = 0;
@@ -183,14 +183,22 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
       rowSum += activeFamilies[i].span;
       i++;
     }
-    if (row.length === 2 && row[0].rows.length >= 4 && row[1].rows.length === 1) {
-      row[0].span = 9;
-      row[1].span = 3;
-    } else if (row.length === 2 && row[0].rows.length === 1 && row[1].rows.length >= 4) {
-      row[0].span = 3;
-      row[1].span = 9;
-    } else if (row.length === 1 && row[0].rows.length >= 4) {
-      row[0].span = 12;
+    let leftover = 12 - rowSum;
+    if (leftover > 0 && row.length) {
+      const singles = row.filter((f) => f.rows.length === 1);
+      for (const s of singles) {
+        if (leftover <= 0) break;
+        s.span += 1;
+        leftover -= 1;
+      }
+      const others = row.filter((f) => f.rows.length > 1);
+      const targets = others.length ? others : row;
+      let idx = 0;
+      while (leftover > 0) {
+        targets[idx % targets.length].span += 1;
+        leftover -= 1;
+        idx++;
+      }
     }
   }
   return { activeFamilies, readyRows };
@@ -436,9 +444,8 @@ export function renderPrefarmTab(container, state, handlers) {
                         ${activeFamilies
                           .map((fam) => {
                             const itemCount = Math.max(1, fam.rows.length);
-                            const singleCls = itemCount === 1 ? ' is-single' : '';
                             return `
-                          <section class="prefarm-cluster span-${fam.span}${singleCls}">
+                          <section class="prefarm-cluster span-${fam.span}">
                             <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
                             <div class="prefarm-cluster-tiles prefarm-tile-grid" style="--item-count:${itemCount}">
                               ${fam.rows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}

@@ -1414,37 +1414,6 @@ textarea:focus {
   letter-spacing: 0.01em;
 }
 
-.prefarm-cluster.is-single {
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.16s ease, transform 0.16s ease, background-color 0.16s ease;
-}
-
-.prefarm-cluster.is-single:hover {
-  border-color: rgba(148, 163, 184, 0.45);
-  transform: translateY(-1px);
-  background: rgba(15, 23, 42, 0.72);
-}
-
-.prefarm-cluster.is-single .prefarm-tile {
-  border: none;
-  background: transparent;
-  border-radius: 0;
-  padding: 4px 0 8px;
-  overflow: visible;
-}
-
-.prefarm-cluster.is-single .prefarm-tile:hover {
-  transform: none;
-  background: transparent;
-}
-
-.prefarm-cluster.is-single .req-progress {
-  left: -12px;
-  right: -12px;
-  bottom: -10px;
-}
-
 .prefarm-tile-stats {
   display: flex;
   align-items: center;
