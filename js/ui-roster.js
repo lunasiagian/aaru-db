@@ -1207,36 +1207,38 @@ export function renderRosterTab(container, state, handlers) {
           ${renderTierSection('archive', 'Bench & Unowned Archive', archiveTier, tiersState.archive, density)}
         </div>`
           : `
-        <div class="roster-grid">
+        <div class="armory-weapon-grid">
           ${filteredWeapons.length
             ? filteredWeapons
                 .map((w) => {
                   const wm = getWeaponMeta(w.key);
                   const holderMeta = w.location ? getCharacterMeta(w.location) : null;
                   return `
-                  <div class="roster-card">
-                    <div class="roster-card-top">
-                      <div class="roster-identity">
-                        ${renderAssetIcon('weapons', w.key, wm.name, 'icon-md')}
-                        <div>
+                  <div class="armory-weapon-card">
+                    <div class="armory-weapon-top">
+                      <div class="armory-weapon-id">
+                        <div class="armory-weapon-icon" data-rarity="${wm.rarity}">
+                          ${renderAssetIcon('weapons', w.key, wm.name, 'icon-md')}
+                        </div>
+                        <div style="min-width:0;">
                           <div class="item-name">${escapeHtml(wm.name)}</div>
-                          <div class="item-meta mono">${escapeHtml(wm.weaponType)} • ${wm.rarity}★</div>
+                          <div class="item-meta mono">${escapeHtml(wm.weaponType)} · ${wm.rarity}★</div>
                         </div>
                       </div>
                       <span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>
                     </div>
-                    <div class="roster-stats mono">
-                      <div class="stat-box">
-                        <span class="stat-label">REFINEMENT</span>
+                    <div class="armory-weapon-stats mono">
+                      <div class="armory-stat-box">
+                        <span class="stat-label">REFINE</span>
                         <span class="stat-val text-gold">R${w.refinement}</span>
                       </div>
-                      <div class="stat-box">
+                      <div class="armory-stat-box">
                         <span class="stat-label">ASC</span>
                         <span class="stat-val">A${w.ascension}</span>
                       </div>
-                      <div class="stat-box">
+                      <div class="armory-stat-box">
                         <span class="stat-label">EQUIPPED</span>
-                        <span class="stat-val">${holderMeta ? escapeHtml(holderMeta.name) : 'Unassigned'}</span>
+                        <span class="stat-val ${holderMeta ? 'text-cyan' : 'muted'}">${holderMeta ? escapeHtml(holderMeta.name) : 'Unassigned'}</span>
                       </div>
                     </div>
                   </div>`;

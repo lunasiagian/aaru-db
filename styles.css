@@ -1923,6 +1923,105 @@ textarea:focus {
   gap: 20px;
 }
 
+.armory-weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.armory-weapon-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-slate);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.armory-weapon-card:hover {
+  border-color: var(--glass-specular);
+  transform: translateY(-1px);
+}
+
+.armory-weapon-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.armory-weapon-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.armory-weapon-id .item-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.armory-weapon-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 9px;
+  border: 2px solid var(--border-slate);
+  background: rgba(2, 6, 23, 0.55);
+  flex-shrink: 0;
+}
+
+.armory-weapon-icon[data-rarity='5'] {
+  border-color: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
+}
+
+.armory-weapon-icon[data-rarity='4'] {
+  border-color: #c084fc;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.22);
+}
+
+.armory-weapon-icon[data-rarity='3'] {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.armory-weapon-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.armory-stat-box {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(7, 10, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.armory-stat-box .stat-label {
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+.armory-stat-box .stat-val {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .roster-portrait-card {
   position: relative;
   display: flex;
