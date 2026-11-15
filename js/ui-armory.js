@@ -1,4 +1,5 @@
-import { getCharacterMeta, getWeaponMeta, renderAssetIcon } from './catalog.js?v=20261115b';
+import { renderAssetIcon } from './assets.js';
+import { getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261115b';
 
 const WEAPON_TYPE_PILLS = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
 const ARMORY_FILTER_PILLS = [
