@@ -17,7 +17,7 @@ import {
   evaluateErComfort,
   evaluateTeamCapabilities,
   generateKitInsights
-} from './build-science.js?v=20261115o';
+} from './build-science.js?v=20261115z';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -576,13 +576,14 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
     skill: Math.min(10, Math.max(1, Number(c.talent?.skill) || 1)),
     burst: Math.min(10, Math.max(1, Number(c.talent?.burst) || 1))
   };
+  const effTalents = computeEffectiveTalents({ ...c, talent: curTalents }, kitData);
   const tgtParts = String(c.targetTalents || '9/9/9')
     .split('/')
     .map((n) => Math.min(10, Math.max(1, Number(n) || 9)));
   const tgtTalents = {
-    auto: tgtParts[0] || 9,
-    skill: tgtParts[1] || 9,
-    burst: tgtParts[2] || 9
+    auto: Math.max(curTalents.auto, tgtParts[0] || 9),
+    skill: Math.max(curTalents.skill, tgtParts[1] || 9),
+    burst: Math.max(curTalents.burst, tgtParts[2] || 9)
   };
 
   const insights = generateKitInsights(c, kitData, weaponMeta, erReport, kitAnalysis);
@@ -617,15 +618,15 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
 
       <div class="roster-drawer-talents">
         <label class="mini-field">
-          <span>A (NORMAL)</span>
+          <span>A (NORMAL)${effTalents.bonuses.auto ? ` <em class="text-cyan">+${effTalents.bonuses.auto}C</em>` : ''}</span>
           <input type="number" min="1" max="10" class="input-mono" name="tAuto" value="${curTalents.auto}" ${disabledAttr} />
         </label>
         <label class="mini-field">
-          <span>E (SKILL)</span>
+          <span>E (SKILL)${effTalents.bonuses.skill ? ` <em class="text-cyan">+${effTalents.bonuses.skill}C</em>` : ''}</span>
           <input type="number" min="1" max="10" class="input-mono" name="tSkill" value="${curTalents.skill}" ${disabledAttr} />
         </label>
         <label class="mini-field">
-          <span>Q (BURST)</span>
+          <span>Q (BURST)${effTalents.bonuses.burst ? ` <em class="text-cyan">+${effTalents.bonuses.burst}C</em>` : ''}</span>
           <input type="number" min="1" max="10" class="input-mono" name="tBurst" value="${curTalents.burst}" ${disabledAttr} />
         </label>
       </div>

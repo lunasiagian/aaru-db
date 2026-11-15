@@ -218,20 +218,25 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const ownKitText = [...talents, ...passives].map((x) => x.description || '').join('\n');
   const INFUSION_CONVERT_RE =
-    /converts?\s+(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /converts?\s+(?:[A-Za-z'’]+\s+){0,4}(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_ALTF_RE =
-    /(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /(?:[A-Za-z'’]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_IMBUE_RE =
-    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s)?\s*(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
+    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'’]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
   const INFUSION_OVERRIDE_RE =
-    /cannot\s+be\s+overridden\s+by\s+any\s+other\s+elemental\s+infusion/i;
+    /cannot\s+be\s+overridden(?:\s+by\s+any\s+other\s+elemental\s+infusion)?/i;
 
   const hasInfusion =
     INFUSION_CONVERT_RE.test(ownKitText) ||
     INFUSION_ALTF_RE.test(ownKitText) ||
     INFUSION_IMBUE_RE.test(ownKitText) ||
-    INFUSION_OVERRIDE_RE.test(ownKitText);
-  const usesNormalAttack = hasInfusion;
+    (INFUSION_OVERRIDE_RE.test(ownKitText) && /(?:normal|charged|plunging)\s+attacks?/i.test(ownKitText));
+  const hasChargedCarryFocus =
+    /(?:charged\s+attack\s+dmg|arataki\s+kesagiri|explosive\s+spark|superlative\s+superstrength)/i.test(nonNormalText) &&
+    !/(?:party|allies|teammates)/i.test(
+      sentences.find((s) => /charged\s+attack\s+dmg/i.test(s)) || ''
+    );
+  const usesNormalAttack = hasInfusion || hasChargedCarryFocus;
 
   const hasPartyHeal = sentences.some(
     (s) =>
@@ -296,9 +301,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     return true;
   };
 
-  const emSentence = sentences.find((s) => matchesAllyBuff(s, '(?:Elemental\\s+Mastery|EM)'));
+  const emSentence = sentences.find((s) => matchesAllyBuff(s, '\\b(?:Elemental\\s+Mastery|EM)\\b'));
   if (emSentence) {
-    const emM = emSentence.match(/(?:Elemental\s+Mastery|EM)[^.]{0,35}?by\s+(\d+)/i);
+    const emM = emSentence.match(/(?:Elemental\s+Mastery|\bEM\b)[^.]{0,35}?by\s+(\d+)/i);
     utilityTags.push(emM ? `EM Buffer (+${emM[1]})` : 'EM Buffer');
   }
 
@@ -324,10 +329,10 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     utilityTags.push(dmgM ? `DMG Buffer (+${dmgM[1]})` : 'DMG Buffer');
   }
 
-  if (sentences.some((s) => matchesAllyBuff(s, 'ATK'))) {
+  if (sentences.some((s) => matchesAllyBuff(s, '\\bATK\\b'))) {
     utilityTags.push('ATK Buffer');
   }
-  const critSentence = sentences.find((s) => matchesAllyBuff(s, '(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)'));
+  const critSentence = sentences.find((s) => matchesAllyBuff(s, '\\b(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)\\b'));
   if (critSentence) {
     const crM = critSentence.match(/crit\s+rate[^.]{0,30}?by\s+([\d.]+%)/i);
     utilityTags.push(crM ? `+${crM[1]} Party CRIT Rate` : 'Crit Buffer');
@@ -366,24 +371,50 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   // Detect conditional Burst triggers in passives & unlocked constellations
   const kitTriggers = [];
   const sources = [
-    ...passives.map((p) => ({ source: p.slot, text: p.description || '' })),
-    ...activeCons.map((c) => ({ source: `C${c.level}`, text: c.description || '' }))
+    ...passives.map((p) => ({ source: p.slot, text: stripMarkup(p.description || '') })),
+    ...activeCons.map((c) => ({ source: `C${c.level}`, text: stripMarkup(c.description || '') }))
   ];
   for (const { source, text } of sources) {
     const usesBurst =
       /elemental\s+burst/i.test(text) ||
       (burstName && new RegExp(burstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(text));
     if (!usesBurst) continue;
-    const emM = text.match(/elemental\s+mastery[\s\S]{0,60}?by\s+(\d+)/i);
-    const dmgM = text.match(/(?:dmg|damage)[\s\S]{0,60}?by\s+([\d.]+%)/i);
+    const trigSentences = text.split(/(?<=[.!?\n])\s+|\n+/);
+    const grantsEmToAlly = trigSentences.find((s) => matchesAllyBuff(s, '\\b(?:Elemental\\s+Mastery|EM)\\b'));
+    const grantsDmgToAlly = trigSentences.find((s) => matchesAllyBuff(s, '(?:DMG|Damage)'));
+    const grantsOtherAllyBuff = trigSentences.some(
+      (s) =>
+        matchesAllyBuff(s, '(?:ATK|DEF|CRIT\\s+Rate|CRIT\\s+DMG|Movement\\s+SPD|ATK\\s+SPD)') ||
+        /(?:all\s+party\s+members|nearby\s+party\s+members|allies)\s+(?:gain|receive|restore)/i.test(s)
+    );
+    const isSelfEnergyRefund =
+      !grantsOtherAllyBuff &&
+      !grantsEmToAlly &&
+      !grantsDmgToAlly &&
+      /(?:restores?|regenerates?)\s+[\d.]+\s+(?:Elemental\s+)?Energy/i.test(text);
+
     const durM = text.match(/for\s+(\d+s)/i);
     const dur = durM ? ` (${durM[1]})` : '';
-    if (emM) {
-      kitTriggers.push({ source, trigger: 'Burst', effect: `+${emM[1]} Team EM${dur}`, requiresBurst: true });
-    } else if (dmgM) {
-      kitTriggers.push({ source, trigger: 'Burst', effect: `+${dmgM[1]} Team DMG${dur}`, requiresBurst: true });
-    } else if (/party|nearby/i.test(text)) {
+    if (grantsEmToAlly) {
+      const emM = grantsEmToAlly.match(/(?:Elemental\s+Mastery|\bEM\b)[\s\S]{0,60}?by\s+(\d+)/i);
+      kitTriggers.push({
+        source,
+        trigger: 'Burst',
+        effect: emM ? `+${emM[1]} Team EM${dur}` : `Team EM Buff${dur}`,
+        requiresBurst: true
+      });
+    } else if (grantsDmgToAlly) {
+      const dmgM = grantsDmgToAlly.match(/(?:DMG|Damage)[\s\S]{0,60}?by\s+([\d.]+%)/i);
+      kitTriggers.push({
+        source,
+        trigger: 'Burst',
+        effect: dmgM ? `+${dmgM[1]} Team DMG${dur}` : `Team DMG Buff${dur}`,
+        requiresBurst: true
+      });
+    } else if (grantsOtherAllyBuff) {
       kitTriggers.push({ source, trigger: 'Burst', effect: `Team Buff${dur}`, requiresBurst: true });
+    } else if (isSelfEnergyRefund) {
+      kitTriggers.push({ source, trigger: 'Burst', effect: 'Self Energy / CD', requiresBurst: true });
     }
   }
 
@@ -407,7 +438,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       const charElem = getCharacterMeta(charKey)?.element || '';
       utilityTags.push(charElem ? `Off-Field ${charElem}` : 'Off-Field Sub-DPS');
     }
-  } else if (hasInfusion && !hasPartyHeal) {
+  } else if ((hasInfusion || usesNormalAttack) && !hasPartyHeal) {
     primaryRole = 'On-Field Carry';
   } else if (hasOffField) {
     primaryRole = 'Off-Field Sub-DPS';
