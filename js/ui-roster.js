@@ -97,7 +97,9 @@ function renderCharacterCard(c, density) {
     return `
       <button type="button" class="roster-list-row ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
         <span class="roster-list-left">
-          ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-sm')}
+          <span class="element-frame" data-element="${elemSlug}" title="${escapeHtml(c.meta.element)}">
+            ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-sm')}
+          </span>
           <span class="roster-list-name">${escapeHtml(c.meta.name)}</span>
         </span>
         <span class="roster-list-right mono">
@@ -111,7 +113,7 @@ function renderCharacterCard(c, density) {
   return `
     <button type="button" class="roster-portrait-card elem-glow-${elemSlug} ${!c.owned ? 'is-unowned' : ''}" data-inspect-char="${c.key}">
       ${cornerBadgeHtml}
-      <div class="roster-portrait-frame">
+      <div class="roster-portrait-frame element-frame" data-element="${elemSlug}" title="${escapeHtml(c.meta.name)} (${escapeHtml(c.meta.element)})">
         ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-portrait')}
       </div>
       <div class="roster-portrait-footer">
@@ -726,7 +728,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
         <aside class="dossier-left-col">
           <article class="card dossier-telemetry-card">
             <div class="dossier-hero-row">
-              <div class="dossier-portrait-wrap">
+              <div class="dossier-portrait-wrap element-frame" data-element="${escapeHtml(String(c.meta.element || '').toLowerCase())}" title="${escapeHtml(c.meta.name)} (${escapeHtml(c.meta.element)})">
                 ${renderAssetIcon('characters', c.key, c.meta.name, 'icon-lg')}
               </div>
               <div class="dossier-hero-stats">

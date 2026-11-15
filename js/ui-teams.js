@@ -82,7 +82,9 @@ export function renderTeamsTab(container, state, handlers) {
                       return `
                       <div class="squad-slot ${hasConflict ? 'slot-conflict' : ''}">
                         <div class="slot-char">
-                          ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
+                          <div class="element-frame" data-element="${String(cm.element || '').toLowerCase()}" title="${cm.name} (${cm.element})">
+                            ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
+                          </div>
                           <div>
                             <div class="item-name">${cm.name}</div>
                             <div class="item-meta mono">${m.role || cm.element}</div>
