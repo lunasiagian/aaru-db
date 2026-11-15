@@ -4064,6 +4064,18 @@ textarea:focus {
   font-weight: 700;
 }
 
+.talent-lore {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-style: italic;
+  color: var(--text-muted);
+  opacity: 0.85;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .dossier-timing-pills {
   display: flex;
   flex-wrap: wrap;

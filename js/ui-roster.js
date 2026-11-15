@@ -17,7 +17,7 @@ import {
   evaluateErComfort,
   evaluateTeamCapabilities,
   generateKitInsights
-} from './build-science.js?v=20261114m';
+} from './build-science.js?v=20261115l';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -289,17 +289,41 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
 const TIMING_LABEL_RE = /^(cd|.*duration|energy cost|.*stamina cost)$/i;
 
 function formatKitDescription(desc) {
-  let html = escapeHtml(String(desc || '').replace(/\\n/g, '\n'));
-  html = html.replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/gi, '<em class="kit-lore">$1</em>');
-  html = html.replace(
-    /&lt;color=#([0-9A-Fa-f]{6,8})&gt;([\s\S]*?)&lt;\/color&gt;/gi,
-    '<span style="color:#$1">$2</span>'
-  );
-  html = html.replace(
-    /^(Tap|Hold|Normal Attack|Charged Attack|Plunging Attack|Radiance:[^:\n]*:?)$/gm,
-    '<strong class="kit-subheading">$1</strong>'
-  );
-  return html;
+  const formatSegment = (text) => {
+    let html = escapeHtml(text);
+    html = html.replace(/&lt;i&gt;([\s\S]*?)&lt;\/i&gt;/gi, '<em class="kit-lore">$1</em>');
+    html = html.replace(
+      /&lt;color=#([0-9A-Fa-f]{6,8})&gt;([\s\S]*?)&lt;\/color&gt;/gi,
+      '<span style="color:#$1">$2</span>'
+    );
+    html = html.replace(
+      /^(Tap|Hold|Normal Attack|Charged Attack|Plunging Attack|Radiance:[^:\n]*:?)$/gm,
+      '<strong class="kit-subheading">$1</strong>'
+    );
+    return html;
+  };
+
+  const lines = String(desc || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .split('\n');
+  const mechLines = [];
+  const loreLines = [];
+
+  for (const line of lines) {
+    const loreMatch = line.match(/^\s*#+\s*(.*)$/);
+    if (loreMatch) {
+      if (loreMatch[1].trim()) loreLines.push(loreMatch[1]);
+    } else {
+      mechLines.push(line);
+    }
+  }
+
+  const mechHtml = formatSegment(mechLines.join('\n').trim());
+  const loreHtml = loreLines.length
+    ? `<span class="talent-lore">${formatSegment(loreLines.join('\n'))}</span>`
+    : '';
+  return `${mechHtml}${loreHtml}`;
 }
 
 function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
@@ -733,7 +757,11 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
               </div>
               <div class="dossier-hero-stats">
                 <div class="dossier-hero-lv mono">
-                  ${c.owned ? `Lv.${c.level} <span class="muted">/ ${c.targetLevel}</span>` : '<span class="muted">Unowned</span>'}
+                  ${
+                    c.owned
+                      ? `Lv.${c.level} <span class="muted">/ ${Math.max(Number(c.targetLevel) || 90, Number(c.level) || 1)}</span>`
+                      : '<span class="muted">Unowned</span>'
+                  }
                 </div>
                 <div class="dossier-hero-chips mono">
                   ${c.owned ? `<span class="pill pill-gold">C${c.constellation}</span>` : ''}

@@ -216,29 +216,14 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const hasCoordinatedTrigger = sentences.some(isCoordSentence);
   const nonCoordText = sentences.filter((s) => !isCoordSentence(s)).join('\n');
 
-  const hasStanceExitClause = /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(
-    nonNormalText
-  );
+  const ownKitText = [...talents, ...passives].map((x) => x.description || '').join('\n');
+  const INFUSION_CONVERT_RE =
+    /(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+  const INFUSION_IMBUE_RE =
+    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s)?\s*(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
 
-  const normalHasInfusion =
-    /(?:Normal|Charged|Plunging)(?:,\s*(?:Charged|Plunging))*(?:\s+and\s+(?:Charged|Plunging))?\s+Attacks?[^.]{0,100}(?:converted|infused|cannot\s+be\s+overridden)/i.test(
-      normalText
-    ) ||
-    (/bond\s+of\s+life/i.test(normalText) &&
-      /masque\s+of\s+the\s+red\s+death|infused|converted/i.test(normalText));
-
-  const usesNormalAttack =
-    normalHasInfusion ||
-    /infused\s+with|cannot\s+be\s+overridden|converted\s+to\s+.*dmg|normal\s+attack\s+dmg\s+bonus|special\s+normal\s+attack|normal,\s*charged,\s*and\s*plunging\s+attack\s+(?:dmg|infusion)/i.test(
-      nonCoordText
-    ) ||
-    /(?:Normal|Charged|Plunging)\s+(?:and\s+(?:Charged|Plunging)\s+)?Attack[^.]{0,80}(?:enhanced|enhances?|infused|converted|dmg\s+(?:is\s+)?increased)/i.test(
-      nonCoordText
-    ) ||
-    /(?:enhances?|increases?)\s+(?:his|her|their|\w+'s)?\s*(?:Normal|Charged|Plunging)\s+Attack/i.test(
-      nonCoordText
-    ) ||
-    hasStanceExitClause;
+  const hasInfusion = INFUSION_CONVERT_RE.test(ownKitText) || INFUSION_IMBUE_RE.test(ownKitText);
+  const usesNormalAttack = hasInfusion;
 
   const hasPartyHeal = sentences.some(
     (s) =>
@@ -379,6 +364,11 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const hasHealingLabel = /(?:heal|regeneration|hp\s+restored)/i.test(labelText);
   const isDedicatedHealer = hasPartyHeal && (hasHealingLabel || hasSustainAscension || !hasOffensiveSelfBuff);
 
+  const hasSupportIdentity =
+    hasShield ||
+    hasOffField ||
+    utilityTags.some((t) => t === 'RES Shred' || t === 'Shielder' || t.startsWith('Off-Field'));
+
   let primaryRole = 'Quickswap DPS';
   if (isDedicatedHealer) {
     primaryRole = 'Healer / Support';
@@ -386,11 +376,11 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       const charElem = getCharacterMeta(charKey)?.element || '';
       utilityTags.push(charElem ? `Off-Field ${charElem}` : 'Off-Field Sub-DPS');
     }
-  } else if (usesNormalAttack && !hasPartyHeal) {
+  } else if (hasInfusion && !hasPartyHeal) {
     primaryRole = 'On-Field Carry';
   } else if (hasOffField) {
     primaryRole = 'Off-Field Sub-DPS';
-  } else if (hasPartyHeal || hasShield || utilityTags.some((t) => t !== 'Self-Sustain')) {
+  } else if (hasPartyHeal || hasShield || hasSupportIdentity || utilityTags.some((t) => t !== 'Self-Sustain')) {
     primaryRole = 'Sustain / Support';
   }
 
