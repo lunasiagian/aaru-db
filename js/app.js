@@ -16,7 +16,7 @@ import {
 } from './good-importer.js';
 import { renderHudTab } from './ui-hud.js?v=20261114w';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261114w';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261114y';
 import { renderRosterTab } from './ui-roster.js?v=20261114m';
 import { renderTeamsTab } from './ui-teams.js?v=20261113t';
 import { CHANGELOG } from './changelog.js?v=20261113ac';

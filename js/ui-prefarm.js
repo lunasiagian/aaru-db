@@ -312,9 +312,11 @@ export function renderPrefarmTab(container, state, handlers) {
                 <div class="prefarm-head">
                   <div class="prefarm-char">
                     <span class="rank-badge mono ${target.tier <= 2 ? 'rank-top' : ''}">${target.tierLabel}</span>
-                    ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-lg')}
+                    <div class="prefarm-avatar" data-element="${escapeAttr(String(charMeta.element || '').toLowerCase())}" title="${escapeAttr(`${charMeta.name} (${charMeta.element})`)}">
+                      ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-lg')}
+                    </div>
                     <div>
-                      <div class="item-name">${charMeta.name} <span class="pill">${charMeta.element}</span></div>
+                      <div class="item-name">${charMeta.name}</div>
                       <div class="item-meta mono">
                         Lv.${target.currentLevel} → Lv.${target.targetLevel} •
                         Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} →
