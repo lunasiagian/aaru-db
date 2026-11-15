@@ -235,7 +235,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     sentences.some(
       (s) =>
         !/(?:active\s+character|party\s+members?|allies|teammates)/i.test(s) &&
-        /(?:charged\s+attack(?::|\s+(?:dmg|charging|stamina|crit))|charging\s+time|equitable\s+judgment|arataki\s+kesagiri|explosive\s+spark|superlative\s+superstrength|scarlet\s+seal)/i.test(
+        /(?:charged\s+attack(?::|\s+(?:dmg|charging|stamina|crit))|charging\s+time|equitable\s+judgment|arataki\s+kesagiri|explosive\s+spark|superlative\s+superstrength|scarlet\s+seal|(?:own|his|her|their)\s+normal\s+attack)/i.test(
           s
         )
     );
@@ -263,7 +263,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
         return sec >= 10;
       })
     );
-  const hasStanceExitClause = /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(
+  const hasStanceExitClause =
+    /(?:cleared|ends?|removed?|canceled|cancelled)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(nonNormalText) ||
+    /when\s+[^.]{1,30}\s+leaves\s+the\s+field[^.]{0,50}(?:explode|end|clear|cancel|disappear|removed?)/i.test(
+      nonNormalText
+    );
+  const hasPeriodicOffFieldDmg = /(?:every\s+[\d.]+\s*s|at\s+intervals|periodically|continuously|deals?\s+[^.]{0,40}\bdmg\b[^.]{0,40}(?:nearby|every|interval))/i.test(
     nonNormalText
   );
   const hasOffField =
@@ -280,7 +285,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       /while\s+[^.]{1,40}\s+is\s+on\s+the\s+field,?\s+(?:and\s+)?nearby\s+party\s+members/i.test(
         nonNormalText
       ) ||
-      (hasLongDuration && /deals?\s+.*dmg/i.test(nonNormalText)));
+      (hasLongDuration && hasPeriodicOffFieldDmg));
 
   // Scan utility tags with strict ally-recipient scope across sentences
   const utilityTags = [];
