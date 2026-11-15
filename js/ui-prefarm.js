@@ -19,7 +19,7 @@ const uiState = {
 function formatCompactNumber(n) {
   const num = Number(n) || 0;
   if (Math.abs(num) >= 1_000_000) {
-    return `${(num / 1_000_000).toFixed(2)}M`;
+    return `${(num / 1_000_000).toFixed(1)}M`;
   }
   return num.toLocaleString();
 }
