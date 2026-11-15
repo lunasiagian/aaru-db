@@ -4388,44 +4388,164 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
   .nav-rail {
     top: auto;
     left: 0;
     right: 0;
     bottom: 0;
     width: 100%;
-    height: 60px;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
     flex-direction: row;
-    padding: 4px 10px;
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px));
     border-right: none;
     border-top: 1px solid var(--glass-border);
+    background: rgba(10, 14, 22, 0.94);
+    backdrop-filter: blur(18px);
+    z-index: 50;
   }
   .rail-top {
     display: none;
   }
   .rail-nav {
+    flex: 1;
+    min-width: 0;
     flex-direction: row;
     justify-content: space-around;
     gap: 2px;
   }
   .nav-tab {
+    flex: 1;
+    min-width: 0;
     width: auto;
-    padding: 6px 10px;
+    padding: 5px 2px;
+    font-size: 9.5px;
+    gap: 2px;
+    border-radius: 8px;
+  }
+  .nav-tab svg {
+    width: 17px;
+    height: 17px;
   }
   .nav-tab.active::before {
     display: none;
   }
+  .rail-bottom {
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .rail-sys-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
   .shell-workspace {
     margin-left: 0;
-    padding-bottom: 68px;
+    min-width: 0;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
   }
   .telemetry-bar {
     height: auto;
-    padding: 10px 14px;
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .telemetry-left {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .telemetry-crumb {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .telemetry-server-pill {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    padding: 3px 8px;
+  }
+  .telemetry-right {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .telemetry-right .brand-sub {
+    margin-right: auto;
+    font-size: 11px;
+  }
+  .telemetry-right .btn-sm {
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+  #btn-changelog {
+    display: none;
+  }
+  .main-container {
+    padding: 12px 12px 28px;
+  }
+  .card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  .app-footer {
+    padding: 14px 14px 24px;
+    font-size: 11px;
+  }
+  .toast {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    text-align: center;
+  }
+
+  /* HUD Mobile */
+  .scarcity-strip {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .scarcity-tile {
+    padding: 12px;
+  }
+  .kpi-hero {
+    font-size: 24px;
+  }
+  .glass-popover {
+    left: 0;
+    right: 0;
+    padding: 12px;
+  }
+  .cmd-deck-header {
+    gap: 10px;
+  }
+  .cmd-reset-bar {
+    width: 100%;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .cmd-today-icons {
+    padding-left: 0;
+    border-left: none;
+    width: 100%;
     flex-wrap: wrap;
+  }
+  .cmd-intent-pill {
+    flex: 1 1 100%;
+    padding: 10px 12px;
+    gap: 12px;
   }
   .cmd-intent-divider {
     display: none;
+  }
+  .hud-cockpit-grid {
+    gap: 14px;
   }
   .hud-cockpit-grid .cmd-deck-grid,
   .hud-kpi-grid,
@@ -4434,7 +4554,167 @@ textarea:focus {
   .teams-grid {
     grid-template-columns: 1fr;
   }
-  .main-container {
-    padding: 16px 14px 36px;
+
+  /* Vault Mobile */
+  .vault-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .toolbar-right .input-mono {
+    flex: 1;
+    min-width: 0;
+  }
+  .data-table th:nth-child(2),
+  .data-table td:nth-child(2),
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3),
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6) {
+    display: none;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  .vault-raw-input {
+    width: 82px;
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+
+  /* Prefarm Mobile */
+  .prefarm-add-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .prefarm-add-form > *:first-child {
+    grid-column: span 2;
+  }
+  .prefarm-add-form > button[type="submit"] {
+    grid-column: span 2;
+    width: 100%;
+  }
+  .prefarm-head {
+    align-items: flex-start;
+  }
+  .prefarm-controls {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .prefarm-targets-edit {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .prefarm-cluster {
+    padding: 8px;
+  }
+  .prefarm-cluster-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .prefarm-tile {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* Roster & Dossier Mobile */
+  .roster-pill-row {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .roster-pill-row::-webkit-scrollbar {
+    display: none;
+  }
+  .roster-portrait-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .roster-portrait-card {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+  .icon-portrait {
+    width: 76px;
+    height: 76px;
+  }
+  .roster-tier-header {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .roster-tier-body {
+    padding: 4px 10px 10px;
+  }
+  .roster-drawer {
+    width: 100vw;
+    border-left: none;
+    padding: 16px;
+  }
+  .dossier-topbar {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .dossier-char-name {
+    font-size: 17px;
+  }
+  .dossier-artifact-grid {
+    grid-template-columns: 1fr;
+  }
+  .combat-stats-grid {
+    gap: 6px;
+  }
+  .combat-stat-box.is-span-2 {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .er-source-badge[data-tooltip]::after {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(3px);
+    max-width: 220px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* Teams Mobile */
+  .teams-grid {
+    gap: 12px;
+  }
+  .team-card-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .squad-slot {
+    padding: 8px;
+    gap: 6px;
+  }
+  .slot-char,
+  .slot-weapon {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Modals Mobile */
+  .modal-backdrop {
+    padding: 10px;
+  }
+  .modal-card {
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 440px) {
+  .diff-summary {
+    grid-template-columns: 1fr;
   }
 }
