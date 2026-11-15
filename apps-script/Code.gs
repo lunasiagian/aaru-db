@@ -48,19 +48,138 @@ function sanitizeTargetTalents_(val) {
   return /^\d+\/\d+\/\d+$/.test(s) ? s : '9/9/9';
 }
 
+const SYSTEM_SCHEMAS = {
+  Users: ['username', 'display_name', 'uid', 'is_public', 'salt', 'password_hash', 'role', 'created_at', 'last_sync'],
+  Invites: ['token', 'created_by', 'created_at', 'expires_at', 'status', 'claimed_by'],
+  UserStates: ['username', 'updated_at', 'state_json']
+};
+
+function ensureSystemTabs_(ss) {
+  Object.keys(SYSTEM_SCHEMAS).forEach(tabName => {
+    const expectedHeaders = SYSTEM_SCHEMAS[tabName];
+    const sheet = ss.getSheetByName(tabName) || ss.insertSheet(tabName);
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(expectedHeaders);
+      if (tabName === 'Users') {
+        const now = new Date().toISOString();
+        sheet.appendRow(['almondeluna', 'Luna', '', 'TRUE', '', '', 'admin', now, '']);
+        sheet.appendRow(['vanbrohenheim', 'Roy', '', 'TRUE', '', '', 'member', now, '']);
+      }
+    } else {
+      const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+      expectedHeaders.forEach(h => {
+        if (currentHeaders.indexOf(h) === -1) {
+          currentHeaders.push(h);
+          sheet.getRange(1, currentHeaders.length).setValue(h);
+        }
+      });
+    }
+  });
+}
+
+function hashPassword_(salt, password) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(salt) + ':' + String(password));
+  return bytes.map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+}
+
+function getUserRole_(ss, username) {
+  const users = sheetToObjects(ss.getSheetByName('Users'));
+  const row = users.find(u => String(u.username || '').trim().toLowerCase() === username);
+  if (row && String(row.role || '').trim()) {
+    return String(row.role).trim().toLowerCase();
+  }
+  return username === 'almondeluna' ? 'admin' : 'member';
+}
+
+function validateInviteToken_(ss, token) {
+  const clean = String(token || '').trim();
+  if (!clean) return { ok: false, error: 'Invite link is invalid or expired.' };
+  const invSheet = ss.getSheetByName('Invites');
+  if (!invSheet || invSheet.getLastRow() < 2) {
+    return { ok: false, error: 'Invite link is invalid or expired.' };
+  }
+  const values = invSheet.getDataRange().getValues();
+  const headers = values[0].map(h => String(h).trim());
+  const tokCol = headers.indexOf('token');
+  const expCol = headers.indexOf('expires_at');
+  const stCol = headers.indexOf('status');
+  const clmCol = headers.indexOf('claimed_by');
+  const nowMs = Date.now();
+
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][tokCol]).trim() === clean) {
+      const status = String(values[i][stCol] || '').trim().toUpperCase();
+      const expiresAt = Number(values[i][expCol]) || 0;
+      if (status !== 'ACTIVE' || nowMs >= expiresAt) {
+        if (status === 'ACTIVE' && nowMs >= expiresAt) {
+          invSheet.getRange(i + 1, stCol + 1).setValue('EXPIRED');
+        }
+        return { ok: false, error: 'Invite link is invalid or expired.' };
+      }
+      return {
+        ok: true,
+        rowIndex: i + 1,
+        stCol: stCol,
+        clmCol: clmCol
+      };
+    }
+  }
+  return { ok: false, error: 'Invite link is invalid or expired.' };
+}
+
+function readUserState_(ss, user) {
+  const sheet = ss.getSheetByName('UserStates');
+  if (!sheet || sheet.getLastRow() < 2) return null;
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0] || '').trim().toLowerCase() === user) {
+      try {
+        return JSON.parse(values[i][2] || '{}');
+      } catch (err) {
+        return {};
+      }
+    }
+  }
+  return null;
+}
+
+function writeUserState_(ss, user, mutatorFn, now) {
+  const sheet = ss.getSheetByName('UserStates') || ss.insertSheet('UserStates');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(SYSTEM_SCHEMAS.UserStates);
+  }
+  const values = sheet.getDataRange().getValues();
+  let targetRow = -1;
+  let current = {};
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0] || '').trim().toLowerCase() === user) {
+      targetRow = i + 1;
+      try {
+        current = JSON.parse(values[i][2] || '{}');
+      } catch (err) {
+        current = {};
+      }
+      break;
+    }
+  }
+  const next = mutatorFn(current || {}) || current;
+  const serialized = JSON.stringify(next);
+  if (targetRow === -1) {
+    sheet.appendRow([user, now, serialized]);
+  } else {
+    sheet.getRange(targetRow, 2, 1, 2).setValues([[now, serialized]]);
+  }
+  return next;
+}
+
 function setupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const profiles = ['almondeluna', 'vanbrohenheim'];
 
-  // 1. Users Tab (display metadata; passphrases live in Script Properties)
-  const usersSheet = ss.getSheetByName('Users') || ss.insertSheet('Users');
-  if (usersSheet.getLastRow() === 0) {
-    usersSheet.appendRow(['username', 'display_name', 'uid', 'is_public']);
-    usersSheet.appendRow(['almondeluna', 'Luna', '', 'TRUE']);
-    usersSheet.appendRow(['vanbrohenheim', 'Roy', '', 'TRUE']);
-  }
+  // 1. System Tabs (Users, Invites, UserStates)
+  ensureSystemTabs_(ss);
 
-  // 2. Per-Profile Flat Tables
+  // 2. Per-Profile Flat Tables for existing legacy accounts
   profiles.forEach(user => {
     Object.keys(TABLE_SCHEMAS).forEach(table => {
       ensureUserSheet_(ss, user, table);
@@ -92,6 +211,30 @@ function getVisibleUsers_(ss, currentUser) {
 function loadProfileAccount_(ss, targetUser) {
   const users = sheetToObjects(ss.getSheetByName('Users'));
   const profileMeta = users.find(u => String(u.username).toLowerCase() === targetUser) || {};
+  const role = String(profileMeta.role || '').trim().toLowerCase() || (targetUser === 'almondeluna' ? 'admin' : 'member');
+  const isLegacySheetUser = Boolean(ss.getSheetByName(`${targetUser}_Inventory`));
+
+  if (!isLegacySheetUser) {
+    const stateObj = readUserState_(ss, targetUser) || {};
+    return {
+      user: targetUser,
+      displayName: profileMeta.display_name || targetUser,
+      uid: profileMeta.uid || '',
+      isPublic: isUserPublic_(profileMeta),
+      role: role,
+      isAdmin: role === 'admin',
+      inventory: stateObj.inventory || {},
+      roster: Array.isArray(stateObj.roster) ? stateObj.roster : [],
+      weapons: Array.isArray(stateObj.weapons) ? stateObj.weapons : [],
+      artifacts: Array.isArray(stateObj.artifacts) ? stateObj.artifacts : [],
+      teams: Array.isArray(stateObj.teams) ? stateObj.teams : [],
+      tasks: Array.isArray(stateObj.tasks) ? stateObj.tasks : [],
+      wallet: stateObj.wallet || null,
+      checklist: stateObj.checklist || null,
+      prefarmQueue: stateObj.prefarmQueue || null,
+      characters: stateObj.characters || null
+    };
+  }
 
   const invRows = sheetToObjects(ss.getSheetByName(`${targetUser}_Inventory`));
   const inventory = {};
@@ -118,7 +261,8 @@ function loadProfileAccount_(ss, targetUser) {
     displayName: profileMeta.display_name || (targetUser === 'almondeluna' ? 'Luna' : 'Roy'),
     uid: profileMeta.uid || '',
     isPublic: isUserPublic_(profileMeta),
-    isAdmin: targetUser === 'almondeluna',
+    role: role,
+    isAdmin: role === 'admin',
     inventory: inventory,
     roster: sheetToObjects(ss.getSheetByName(`${targetUser}_Roster`)),
     weapons: sheetToObjects(ss.getSheetByName(`${targetUser}_Weapons`)),
@@ -135,11 +279,18 @@ function loadProfileAccount_(ss, targetUser) {
 function doGet(e) {
   try {
     const params = (e && e.parameter) || {};
-    const session = requireSession_(params.token);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    ensureSystemTabs_(ss);
     const action = params.action || 'getSheet';
 
-    if (action === 'getSheet' || action === 'loadProfile') {
+    if (action === 'validateInvite') {
+      const check = validateInviteToken_(ss, params.token);
+      return jsonResponse(check.ok ? { ok: true } : { ok: false, error: check.error });
+    }
+
+    const session = requireSession_(params.token);
+
+    if (action === 'getSheet' || action === 'loadProfile' || action === 'loadState') {
       const targetUser = String(params.user || params.profile || session.user).trim().toLowerCase();
       if (targetUser !== session.user) {
         const users = sheetToObjects(ss.getSheetByName('Users'));
@@ -164,21 +315,119 @@ function doGet(e) {
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  lock.waitLock(10000);
 
   try {
     const payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const action = payload.action || '';
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    ensureSystemTabs_(ss);
     const now = new Date().toISOString();
+
+    if (action === 'validateInvite') {
+      const check = validateInviteToken_(ss, payload.token);
+      return jsonResponse(check.ok ? { ok: true } : { ok: false, error: check.error });
+    }
+
+    if (action === 'registerWithInvite') {
+      const check = validateInviteToken_(ss, payload.inviteToken || payload.token);
+      if (!check.ok) {
+        return jsonResponse({ ok: false, error: check.error });
+      }
+      const username = String(payload.username || '').trim().toLowerCase();
+      const displayName = String(payload.displayName || '').trim().slice(0, 24);
+      const password = String(payload.password || '');
+      const confirmPassword = String(payload.confirmPassword || '');
+
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+        return jsonResponse({ ok: false, error: 'Username must be 3–20 lowercase letters, numbers, or underscores.' });
+      }
+      if (!displayName) {
+        return jsonResponse({ ok: false, error: 'Display Name is required.' });
+      }
+      if (password.length < 6) {
+        return jsonResponse({ ok: false, error: 'Password must be at least 6 characters.' });
+      }
+      if (password !== confirmPassword) {
+        return jsonResponse({ ok: false, error: 'Passwords do not match.' });
+      }
+
+      const usersSheet = ss.getSheetByName('Users');
+      const existingUsers = sheetToObjects(usersSheet);
+      if (existingUsers.some(u => String(u.username || '').trim().toLowerCase() === username)) {
+        return jsonResponse({ ok: false, error: 'Username is already taken.' });
+      }
+
+      const salt = Utilities.getUuid();
+      const passwordHash = hashPassword_(salt, password);
+      const headers = usersSheet.getRange(1, 1, 1, usersSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+      const rowMap = {
+        username: username,
+        display_name: displayName,
+        uid: '',
+        is_public: 'TRUE',
+        salt: salt,
+        password_hash: passwordHash,
+        role: 'member',
+        created_at: now,
+        last_sync: now
+      };
+      usersSheet.appendRow(headers.map(h => (rowMap[h] !== undefined ? rowMap[h] : '')));
+
+      writeUserState_(ss, username, () => ({
+        inventory: {},
+        roster: [],
+        weapons: [],
+        artifacts: [],
+        teams: [],
+        tasks: [],
+        wallet: null,
+        checklist: null,
+        prefarmQueue: null,
+        characters: null
+      }), now);
+
+      const invSheet = ss.getSheetByName('Invites');
+      invSheet.getRange(check.rowIndex, check.stCol + 1).setValue('USED');
+      if (check.clmCol !== -1) {
+        invSheet.getRange(check.rowIndex, check.clmCol + 1).setValue(username);
+      }
+
+      const sessionToken = createSessionToken_(username);
+      return jsonResponse({
+        ok: true,
+        sessionToken: sessionToken,
+        account: loadProfileAccount_(ss, username),
+        visibleUsers: getVisibleUsers_(ss, username)
+      });
+    }
 
     if (action === 'login') {
       const user = String(payload.user || payload.username || '').trim().toLowerCase();
       const passphrase = String(payload.passphrase || payload.password || '');
-      const expected = getExpectedPassphrase_(user);
+      const usersSheet = ss.getSheetByName('Users');
+      const users = sheetToObjects(usersSheet);
+      const userRowIdx = users.findIndex(u => String(u.username || '').trim().toLowerCase() === user);
+      const userMeta = userRowIdx !== -1 ? users[userRowIdx] : null;
 
-      if (!expected || passphrase !== expected) {
+      let authed = false;
+      if (userMeta && userMeta.salt && userMeta.password_hash) {
+        authed = hashPassword_(userMeta.salt, passphrase) === String(userMeta.password_hash).trim();
+      } else {
+        const expected = getExpectedPassphrase_(user);
+        authed = Boolean(expected && passphrase === expected);
+      }
+
+      if (!authed) {
         return jsonResponse({ ok: false, error: 'Invalid credentials' });
+      }
+
+      if (userRowIdx !== -1 && usersSheet) {
+        const headers = usersSheet.getRange(1, 1, 1, usersSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+        const syncCol = headers.indexOf('last_sync');
+        if (syncCol !== -1) {
+          usersSheet.getRange(userRowIdx + 2, syncCol + 1).setValue(now);
+        }
       }
 
       const sessionToken = createSessionToken_(user);
@@ -195,6 +444,18 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    if (action === 'createInvite') {
+      const session = requireSession_(payload.token);
+      if (getUserRole_(ss, session.user) !== 'admin') {
+        return jsonResponse({ ok: false, error: 'Forbidden: admin privilege required.' });
+      }
+      const invSheet = ss.getSheetByName('Invites');
+      const token = Utilities.getUuid().replace(/-/g, '');
+      const expiresAt = Date.now() + 48 * 60 * 60 * 1000;
+      invSheet.appendRow([token, session.user, now, expiresAt, 'ACTIVE', '']);
+      return jsonResponse({ ok: true, token: token, expiresAt: expiresAt });
+    }
+
     // All write actions require a valid session token matching the target user
     const session = requireSession_(payload.token);
     const user = String(payload.user || payload.profile || '').trim().toLowerCase();
@@ -202,9 +463,73 @@ function doPost(e) {
       return jsonResponse({ ok: false, error: 'Forbidden: cannot modify another user\'s sheet' });
     }
 
+    const isLegacySheetUser = Boolean(ss.getSheetByName(`${user}_Inventory`));
+
+    if (action === 'saveState') {
+      writeUserState_(ss, user, () => payload.state || {}, now);
+      return jsonResponse({ ok: true, updatedAt: now });
+    }
+
     // ACTION 1: Batch Import Irminsul GOOD v3 JSON
     if (action === 'importGoodJson') {
       const good = payload.good || payload.data || {};
+      if (!isLegacySheetUser) {
+        writeUserState_(ss, user, (st) => {
+          if (good.materials) {
+            st.inventory = st.inventory || {};
+            Object.keys(good.materials).forEach(k => {
+              st.inventory[k] = { count: Number(good.materials[k]) || 0 };
+            });
+          }
+          if (Array.isArray(good.characters)) {
+            const byKey = {};
+            (st.roster || []).forEach(r => { if (r.char_key || r.key) byKey[r.char_key || r.key] = r; });
+            st.roster = good.characters.map(c => {
+              const prev = byKey[c.key] || {};
+              return {
+                char_key: c.key,
+                owned: true,
+                level: c.level,
+                constellation: c.constellation,
+                ascension: c.ascension,
+                talent_auto: c.talent?.auto || 1,
+                talent_skill: c.talent?.skill || 1,
+                talent_burst: c.talent?.burst || 1,
+                target_lvl: prev.target_lvl || 90,
+                target_talents: prev.target_talents || '9/9/9',
+                status: prev.status || (c.level >= 90 ? 'Built' : c.level >= 70 ? 'In Progress' : 'Bench'),
+                priority_rank: prev.priority_rank || '',
+                notes: prev.notes || ''
+              };
+            });
+          }
+          if (Array.isArray(good.weapons)) {
+            st.weapons = good.weapons.map((w, idx) => ({
+              weapon_uid: `${w.key}_${idx + 1}`,
+              weapon_key: w.key,
+              level: w.level,
+              ascension: w.ascension,
+              refinement: w.refinement,
+              location: w.location || '',
+              target_lvl: 90,
+              status: w.level >= 90 ? 'Maxed' : 'Bench'
+            }));
+          }
+          if (Array.isArray(good.artifacts)) {
+            st.artifacts = good.artifacts.filter(a => a && a.location).map(a => ({
+              set_key: a.setKey || '',
+              slot_key: a.slotKey || '',
+              level: Number(a.level) || 0,
+              rarity: Number(a.rarity) || 5,
+              main_stat: a.mainStatKey || '',
+              location: a.location || '',
+              substats_json: JSON.stringify(Array.isArray(a.substats) ? a.substats : [])
+            }));
+          }
+          return st;
+        }, now);
+        return jsonResponse({ ok: true, importedAt: now });
+      }
 
       if (good.materials) {
         const invSheet = ensureUserSheet_(ss, user, 'Inventory');
@@ -282,12 +607,31 @@ function doPost(e) {
     if (action === 'upsertRow') {
       const sheetName = payload.sheet || `${user}_${payload.table || 'Inventory'}`;
       const inferredTable = payload.table || (sheetName.startsWith(`${user}_`) ? sheetName.slice(user.length + 1) : '');
+      const fields = payload.fields || payload.data || {};
+
+      if (!isLegacySheetUser) {
+        writeUserState_(ss, user, (st) => {
+          if (inferredTable === 'Inventory') {
+            st.inventory = st.inventory || {};
+            const cnt = fields.raw_count !== undefined ? fields.raw_count : fields.count;
+            st.inventory[payload.key] = { count: Number(cnt) || 0 };
+          } else if (inferredTable === 'Roster') {
+            st.roster = Array.isArray(st.roster) ? st.roster : [];
+            const idx = st.roster.findIndex(r => (r.char_key || r.key) === payload.key);
+            const nextRow = { ...(idx !== -1 ? st.roster[idx] : { char_key: payload.key }), ...fields, char_key: payload.key };
+            if (idx !== -1) st.roster[idx] = nextRow;
+            else st.roster.push(nextRow);
+          }
+          return st;
+        }, now);
+        return jsonResponse({ ok: true });
+      }
+
       const sheet = ss.getSheetByName(sheetName) || (TABLE_SCHEMAS[inferredTable] ? ensureUserSheet_(ss, user, inferredTable) : null);
       if (!sheet) {
         return jsonResponse({ ok: false, error: 'Sheet not found: ' + sheetName });
       }
 
-      const fields = payload.fields || payload.data || {};
       const normalizedFields = { ...fields };
       if (normalizedFields.raw_count === undefined && normalizedFields.count !== undefined) {
         normalizedFields.raw_count = normalizedFields.count;
@@ -329,6 +673,13 @@ function doPost(e) {
 
     // ACTION 3: Upsert JSON Section (wallet, checklist, prefarmQueue, characters, teams)
     if (action === 'upsertSection') {
+      if (!isLegacySheetUser) {
+        writeUserState_(ss, user, (st) => {
+          st[payload.section] = payload.data;
+          return st;
+        }, now);
+        return jsonResponse({ ok: true });
+      }
       const secSheet = ss.getSheetByName(`${user}_Sections`) || ss.insertSheet(`${user}_Sections`);
       if (secSheet.getLastRow() === 0) {
         secSheet.appendRow(['section_key', 'json_value', 'last_updated']);

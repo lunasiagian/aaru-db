@@ -9,7 +9,8 @@ import {
   saveAccountSection,
   updateProfileSettings,
   upsertRosterRow
-} from './api.js?v=20261115k';
+} from './api.js?v=20261115x';
+import { bindAdminInviteButton, initInviteRegistration } from './auth.js?v=20261115x';
 import {
   commitGoodImport,
   computeGoodImportDiff,
@@ -64,7 +65,11 @@ const state = {
 };
 
 function isAdminUser() {
-  return state.sessionUser === 'almondeluna' || Boolean(state.ownAccount?.isAdmin);
+  return (
+    state.ownAccount?.role === 'admin' ||
+    Boolean(state.ownAccount?.isAdmin) ||
+    state.sessionUser === 'almondeluna'
+  );
 }
 
 function getActiveAccount() {
@@ -107,6 +112,11 @@ function updateTopBar() {
   if (modeBadge) {
     modeBadge.textContent = isOfflineMode() ? 'OFFLINE / MOCK' : 'APPS SCRIPT SYNC';
     modeBadge.className = `pill mono ${isOfflineMode() ? 'pill-gold' : 'pill-mint'}`;
+  }
+
+  const inviteBtn = document.getElementById('btn-create-invite');
+  if (inviteBtn) {
+    inviteBtn.hidden = !state.sessionUser || !isAdminUser();
   }
 
   const switcher = document.getElementById('account-switcher');
@@ -958,6 +968,15 @@ async function bootstrap() {
   setupGoodImportModal();
   setupServerModal();
   setupSystemDrawer();
+  bindAdminInviteButton({ isAdmin: isAdminUser, showToast });
+
+  const registeredViaInvite = await initInviteRegistration({
+    onAuthenticated: applyAuthenticatedSession,
+    showToast
+  });
+  if (registeredViaInvite) {
+    return;
+  }
 
   // Restore session from sessionStorage
   try {

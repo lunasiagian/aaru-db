@@ -12,7 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261115t" />
+  <link rel="stylesheet" href="./styles.css?v=20261115x" />
 </head>
 <body>
   <!-- Login Screen -->
@@ -114,6 +114,7 @@
           <div class="brand-sub mono">
             <span id="active-user-badge"></span>
             <span id="sync-mode-badge" class="pill mono">OFFLINE / MOCK</span>
+            <button type="button" id="btn-create-invite" class="btn btn-outline btn-sm" hidden>+ Invite</button>
           </div>
           <button type="button" id="btn-changelog" class="btn btn-ghost btn-sm btn-changelog">
             Fixes &amp; Feats
@@ -221,9 +222,44 @@
     </aside>
   </div>
 
+  <!-- Invite Self-Service Registration Modal -->
+  <div id="register-modal" class="modal-backdrop" hidden>
+    <div class="modal-card card register-modal" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">AARUDB / INVITE REGISTRATION</div>
+          <h2 id="register-modal-title" class="card-title">Create Account</h2>
+        </div>
+        <button type="button" id="btn-close-register" class="btn btn-ghost btn-xs">✕</button>
+      </div>
+
+      <form id="register-form" class="login-form">
+        <label class="mini-field">
+          <span>USERNAME</span>
+          <input id="reg-username" type="text" autocomplete="username" placeholder="e.g. ceri_genshin" required class="input-mono" />
+          <span id="reg-username-hint" class="field-hint mono">3–20 chars: lowercase letters, numbers, or underscores</span>
+        </label>
+        <label class="mini-field">
+          <span>DISPLAY NAME</span>
+          <input id="reg-display-name" type="text" maxlength="24" placeholder="e.g. Ceri" required class="input-mono" />
+        </label>
+        <label class="mini-field">
+          <span>PASSWORD</span>
+          <input id="reg-password" type="password" autocomplete="new-password" minlength="6" placeholder="Min 6 characters" required class="input-mono" />
+        </label>
+        <label class="mini-field">
+          <span>VERIFY PASSWORD</span>
+          <input id="reg-confirm-password" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password" required class="input-mono" />
+        </label>
+        <div id="register-error" class="error-text"></div>
+        <button id="reg-submit-btn" type="submit" class="btn btn-gold full-width">Create Account &amp; Enter AaruDB</button>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261115w"></script>
+  <script type="module" src="./js/app.js?v=20261115x"></script>
 </body>
 </html>

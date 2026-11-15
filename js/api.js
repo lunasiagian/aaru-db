@@ -468,3 +468,72 @@ export async function updateProfileSettings(username, { displayName, isPublic })
     'updateProfileSettings failed'
   );
 }
+
+/**
+ * Generates a one-time 48h invite token (Admin-only).
+ */
+export async function createInviteLink() {
+  if (isOfflineMode()) {
+    const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    return { ok: true, mode: 'offline', token, expiresAt: Date.now() + 48 * 60 * 60 * 1000 };
+  }
+  const token = requireSessionToken();
+  return postAppsScript({ action: 'createInvite', token }, 'Failed to create invite');
+}
+
+/**
+ * Validates a one-time invite token before showing the registration modal.
+ */
+export async function validateInviteToken(inviteToken) {
+  if (isOfflineMode()) {
+    return inviteToken ? { ok: true, mode: 'offline' } : { ok: false, error: 'Invite link is invalid or expired.' };
+  }
+  return getAppsScript({ action: 'validateInvite', token: inviteToken }, 'Invite validation failed');
+}
+
+/**
+ * Registers a new user using a one-time invite token and returns an authenticated session.
+ */
+export async function registerWithInvite({ token, username, displayName, password, confirmPassword }) {
+  const normalized = (username || '').trim().toLowerCase();
+  if (isOfflineMode()) {
+    const fresh = loadLocalMock(normalized);
+    fresh.user = normalized;
+    fresh.displayName = displayName || normalized;
+    fresh.role = 'member';
+    fresh.isAdmin = false;
+    fresh.isPublic = true;
+    saveLocalMock(normalized, fresh);
+    return {
+      ok: true,
+      mode: 'offline',
+      account: fresh,
+      visibleUsers: [{ user: normalized, displayName: fresh.displayName, isPublic: true }]
+    };
+  }
+
+  const json = await postAppsScript(
+    {
+      action: 'registerWithInvite',
+      inviteToken: token,
+      username: normalized,
+      displayName,
+      password,
+      confirmPassword
+    },
+    'Account registration failed'
+  );
+
+  const sessionToken = json.sessionToken || json.token;
+  if (!sessionToken) {
+    throw new Error('Registration succeeded but server did not issue a session token.');
+  }
+  setSessionToken(sessionToken);
+
+  return {
+    ok: true,
+    mode: 'live',
+    account: normalizeAccount(json.account || json.data),
+    visibleUsers: json.visibleUsers || null
+  };
+}
