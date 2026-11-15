@@ -107,7 +107,7 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
     families.push({ id, label, span, rows: nextRows });
   };
 
-  // 1. Talent Books (Teachings -> Guide -> Philosophies): span 6
+  // 1. Talent Books (Teachings -> Guide -> Philosophies)
   const bookOrder = { TeachingsOf: 0, GuideTo: 1, PhilosophiesOf: 2 };
   const bookRows = valid
     .filter((r) => /^(TeachingsOf|GuideTo|PhilosophiesOf)/.test(r.key))
@@ -119,10 +119,12 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   bookRows.forEach((r) => used.add(r.key));
   pushFamily('books', 'Talent Books', 6, bookRows, true);
 
-  // 2. Bosses & Crown (World Boss + Weekly Boss + Crown of Insight): span 6
-  pushFamily('boss', 'Bosses & Crown', 6, take([charMeta?.bossMat, charMeta?.weeklyMat, 'CrownOfInsight']));
+  // 2. Strict Archival Boss & Crown Categories
+  pushFamily('worldBoss', 'World Boss', 2, take([charMeta?.bossMat]));
+  pushFamily('weeklyBoss', 'Weekly Boss', 2, take([charMeta?.weeklyMat]));
+  pushFamily('crown', 'Crown', 2, take(['CrownOfInsight']));
 
-  // 3. Common Enemy Drops — split Character vs Weapon 3-tier families into separate span-6 clusters
+  // 3. Common Enemy Drops — split Character vs Weapon 3-tier families
   if (Array.isArray(charMeta?.commonMatTiers)) {
     pushFamily('charCommon', 'Common Enemy Drops', 6, take(charMeta.commonMatTiers), true);
   }
@@ -130,12 +132,12 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
     pushFamily('wepCommon', 'Weapon Common Drops', 6, take(weaponMeta.commonMatTiers), true);
   }
 
-  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★): span 6
+  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★)
   if (Array.isArray(weaponMeta?.eliteMatTiers)) {
     pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers), true);
   }
 
-  // 5. Ascension Gems (span 8) paired beside Weapon Materials (span 4)
+  // 5. Ascension Gems & Weapon Domain
   const gemRegex = /^(AgnidusAgate|VarunadaLazurite|NagadusEmerald|VajradaAmethyst|VayudaTurquoise|ShivadaJade|PrithivaTopaz|BrilliantDiamond)(Sliver|Fragment|Chunk|Gemstone)$/;
   const gemRankOrder = { Sliver: 0, Fragment: 1, Chunk: 2, Gemstone: 3 };
   const gemRowsFromMeta = Array.isArray(charMeta?.gemTiers) ? take(charMeta.gemTiers) : [];
@@ -150,13 +152,13 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   pushFamily('gems', 'Ascension Gems', 8, [...gemRowsFromMeta, ...gemRowsFromRegex], true);
 
   if (weaponMeta?.domainMatExactKey) {
-    pushFamily('wepDomain', 'Weapon Materials', 4, take([weaponMeta.domainMatExactKey]));
+    pushFamily('wepDomain', 'Weapon Domain', 2, take([weaponMeta.domainMatExactKey]));
   }
 
-  // 6. Currency, XP & Specialty: span 6
+  // 6. Currency, XP & Specialty
   const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre', charMeta?.localSpecialty]);
   const restRows = valid.filter((r) => !used.has(r.key));
-  pushFamily('currency', 'Currency, XP & Specialty', 6, [...currencyRows, ...restRows]);
+  pushFamily('currency', 'Currency, XP & Specialty', 8, [...currencyRows, ...restRows]);
 
   const activeFamilies = [];
   const readyRows = [];
@@ -164,19 +166,30 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
     if (fam.rows.every((r) => r.deficit === 0)) {
       readyRows.push(...fam.rows);
     } else {
+      const c = fam.rows.length;
+      fam.span = c === 1 ? 2 : c === 2 ? 4 : c === 3 ? 6 : 8;
       activeFamilies.push(fam);
     }
   }
 
-  const gemsFam = activeFamilies.find((f) => f.id === 'gems');
-  const wepDomainFam = activeFamilies.find((f) => f.id === 'wepDomain');
-  const currencyFam = activeFamilies.find((f) => f.id === 'currency');
-  if (!gemsFam && currencyFam) {
-    if (wepDomainFam && wepDomainFam.rows.length <= 2 && currencyFam.rows.length >= 3) {
-      wepDomainFam.span = 4;
-      currencyFam.span = 8;
-    } else if (!wepDomainFam) {
-      currencyFam.span = 12;
+  // Balance each 12-column row proportionally so 4+1 pairs become 9+3 and solo 4-item rows expand to 12
+  let i = 0;
+  while (i < activeFamilies.length) {
+    let rowSum = 0;
+    const row = [];
+    while (i < activeFamilies.length && rowSum + activeFamilies[i].span <= 12) {
+      row.push(activeFamilies[i]);
+      rowSum += activeFamilies[i].span;
+      i++;
+    }
+    if (row.length === 2 && row[0].rows.length >= 4 && row[1].rows.length === 1) {
+      row[0].span = 9;
+      row[1].span = 3;
+    } else if (row.length === 2 && row[0].rows.length === 1 && row[1].rows.length >= 4) {
+      row[0].span = 3;
+      row[1].span = 9;
+    } else if (row.length === 1 && row[0].rows.length >= 4) {
+      row[0].span = 12;
     }
   }
   return { activeFamilies, readyRows };
@@ -421,11 +434,11 @@ export function renderPrefarmTab(container, state, handlers) {
                     ? `<div class="prefarm-cluster-grid">
                         ${activeFamilies
                           .map((fam) => {
-                            const cols = Math.min(4, Math.max(1, fam.rows.length));
+                            const itemCount = Math.max(1, fam.rows.length);
                             return `
                           <section class="prefarm-cluster span-${fam.span}">
                             <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
-                            <div class="prefarm-cluster-tiles">
+                            <div class="prefarm-cluster-tiles prefarm-tile-grid" style="--item-count:${itemCount}">
                               ${fam.rows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}
                             </div>
                           </section>`;

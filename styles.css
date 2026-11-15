@@ -1333,6 +1333,14 @@ textarea:focus {
   min-width: 0;
 }
 
+.prefarm-cluster.span-2 {
+  grid-column: span 2;
+}
+
+.prefarm-cluster.span-3 {
+  grid-column: span 3;
+}
+
 .prefarm-cluster.span-4 {
   grid-column: span 4;
 }
@@ -1353,12 +1361,12 @@ textarea:focus {
   grid-column: span 8;
 }
 
-.prefarm-cluster.span-12 {
-  grid-column: span 12;
+.prefarm-cluster.span-9 {
+  grid-column: span 9;
 }
 
-.prefarm-cluster.span-12 .prefarm-cluster-tiles {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.prefarm-cluster.span-12 {
+  grid-column: span 12;
 }
 
 .prefarm-cluster-label {
@@ -1369,9 +1377,10 @@ textarea:focus {
   color: var(--text-muted);
 }
 
-.prefarm-cluster-tiles {
+.prefarm-cluster-tiles,
+.prefarm-tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  grid-template-columns: repeat(var(--item-count, 1), minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1624,15 +1633,19 @@ textarea:focus {
 }
 
 @media (max-width: 960px) {
+  .prefarm-cluster.span-2,
+  .prefarm-cluster.span-3,
   .prefarm-cluster.span-4,
   .prefarm-cluster.span-5,
   .prefarm-cluster.span-6,
   .prefarm-cluster.span-7,
   .prefarm-cluster.span-8,
+  .prefarm-cluster.span-9,
   .prefarm-cluster.span-12 {
     grid-column: span 12;
   }
-  .prefarm-cluster.span-12 .prefarm-cluster-tiles {
+  .prefarm-cluster-tiles,
+  .prefarm-tile-grid {
     grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   }
 }
