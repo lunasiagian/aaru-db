@@ -574,6 +574,25 @@ export function getMaterialMeta(key) {
 
 const materialDetailsCache = new Map();
 
+const UNIVERSAL_CURRENCY_IDS = new Set(['202', '104001', '104002', '104003', '104011', '104012', '104013']);
+
+function cleanMaterialSources(matId, sources) {
+  const unique = [...new Set((Array.isArray(sources) ? sources : []).map((s) => String(s || '').trim()).filter(Boolean))];
+  if (!UNIVERSAL_CURRENCY_IDS.has(String(matId || ''))) return unique;
+  let hadDomain = false;
+  const filtered = unique.filter((s) => {
+    if (/^Domain of (Mastery|Forgery):/i.test(s)) {
+      hadDomain = true;
+      return false;
+    }
+    return true;
+  });
+  if (hadDomain && !filtered.some((s) => /Domains?\s*&?\s*Ley Line/i.test(s))) {
+    filtered.push('Domains & Ley Line Outcrops');
+  }
+  return filtered;
+}
+
 export async function getMaterialDetails(matKeyOrId) {
   const raw = String(matKeyOrId || '').trim();
   if (!raw) return null;
@@ -598,7 +617,7 @@ export async function getMaterialDetails(matKeyOrId) {
     rank: Number(meta?.rarity) || 3,
     type: meta?.category || 'Material',
     description: meta?.description || '',
-    sources: Array.isArray(meta?.sources) ? [...meta.sources] : []
+    sources: cleanMaterialSources(matId, meta?.sources)
   };
 
   if (fallbackResult.description || fallbackResult.sources.length) {
@@ -634,7 +653,7 @@ export async function getMaterialDetails(matKeyOrId) {
             rank: Number(d.rank) || fallbackResult.rank,
             type: d.type || fallbackResult.type,
             description: d.description || '',
-            sources: formatYattaSources(d.source)
+            sources: cleanMaterialSources(matId, formatYattaSources(d.source))
           };
           materialDetailsCache.set(cacheKey, parsed);
           return parsed;
@@ -658,7 +677,7 @@ export async function getMaterialDetails(matKeyOrId) {
               rank: qMap[item.qualityType] || fallbackResult.rank,
               type: item.type || fallbackResult.type,
               description: item.enDescription || '',
-              sources: Array.isArray(item.enSources) ? item.enSources.filter(Boolean) : []
+              sources: cleanMaterialSources(matId, item.enSources)
             };
             materialDetailsCache.set(cacheKey, parsed);
             return parsed;

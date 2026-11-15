@@ -1,4 +1,4 @@
-import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261114w';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261115b';
 import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114w';
 import {
   fetchPartnerAccount,
@@ -16,7 +16,7 @@ import {
 } from './good-importer.js';
 import { renderHudTab } from './ui-hud.js?v=20261114w';
 import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261114y';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261115b';
 import { renderRosterTab } from './ui-roster.js?v=20261115a';
 import { renderTeamsTab } from './ui-teams.js?v=20261115a';
 import { CHANGELOG } from './changelog.js?v=20261113ac';

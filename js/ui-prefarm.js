@@ -8,7 +8,7 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114w';
+} from './catalog.js?v=20261115b';
 import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114w';
 
 const uiState = {
@@ -550,9 +550,24 @@ export function renderPrefarmTab(container, state, handlers) {
     }
     if (srcEl) {
       const srcs = details?.sources?.length ? details.sources : [];
-      srcEl.innerHTML = srcs.length
-        ? srcs.map((s) => `<span class="mat-source-pill">${escapeAttr(s)}</span>`).join('')
-        : '<span class="muted">No drop location data listed in API.</span>';
+      if (!srcs.length) {
+        srcEl.innerHTML = '<span class="muted">No drop location data listed in API.</span>';
+      } else {
+        const cap = 8;
+        const renderSources = (expanded) => {
+          const shown = expanded ? srcs : srcs.slice(0, cap);
+          const extra = srcs.length - cap;
+          srcEl.innerHTML =
+            shown.map((s) => `<span class="mat-source-pill">${escapeAttr(s)}</span>`).join('') +
+            (extra > 0
+              ? `<button type="button" class="mat-source-pill mat-source-more mono" data-mat-src-toggle>${
+                  expanded ? 'Show less' : `+${extra} more`
+                }</button>`
+              : '');
+          srcEl.querySelector('[data-mat-src-toggle]')?.addEventListener('click', () => renderSources(!expanded));
+        };
+        renderSources(false);
+      }
     }
     if (descEl) {
       descEl.textContent = details?.description ? details.description.replace(/\\n/g, '\n') : 'No description available.';

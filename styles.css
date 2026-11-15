@@ -1550,6 +1550,17 @@ textarea:focus {
   color: #e0f2fe;
 }
 
+.mat-source-more {
+  cursor: pointer;
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+}
+
+.mat-source-more:hover {
+  background: rgba(148, 163, 184, 0.24);
+}
+
 .mat-inspector-desc {
   margin: 0;
   font-size: 12.5px;
