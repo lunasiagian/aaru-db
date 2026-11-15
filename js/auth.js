@@ -1,4 +1,4 @@
-import { createInviteLink, registerWithInvite, validateInviteToken } from './api.js?v=20261115x';
+import { createInviteLink, registerWithInvite, validateInviteToken } from './api.js?v=20261115y';
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 

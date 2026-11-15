@@ -53,6 +53,7 @@ const SYSTEM_SCHEMAS = {
   Invites: ['token', 'created_by', 'created_at', 'expires_at', 'status', 'claimed_by'],
   UserStates: ['username', 'updated_at', 'state_json']
 };
+const STATE_CHUNK_SIZE = 45000;
 
 function ensureSystemTabs_(ss) {
   Object.keys(SYSTEM_SCHEMAS).forEach(tabName => {
@@ -127,14 +128,26 @@ function validateInviteToken_(ss, token) {
   return { ok: false, error: 'Invite link is invalid or expired.' };
 }
 
+function readUserStateRow_(row) {
+  if (!row || row.length < 3) return '';
+  let combined = '';
+  for (let c = 2; c < row.length; c++) {
+    if (row[c] !== undefined && row[c] !== null && row[c] !== '') {
+      combined += String(row[c]);
+    }
+  }
+  return combined;
+}
+
 function readUserState_(ss, user) {
   const sheet = ss.getSheetByName('UserStates');
   if (!sheet || sheet.getLastRow() < 2) return null;
   const values = sheet.getDataRange().getValues();
   for (let i = 1; i < values.length; i++) {
     if (String(values[i][0] || '').trim().toLowerCase() === user) {
+      const raw = readUserStateRow_(values[i]);
       try {
-        return JSON.parse(values[i][2] || '{}');
+        return JSON.parse(raw || '{}');
       } catch (err) {
         return {};
       }
@@ -154,8 +167,9 @@ function writeUserState_(ss, user, mutatorFn, now) {
   for (let i = 1; i < values.length; i++) {
     if (String(values[i][0] || '').trim().toLowerCase() === user) {
       targetRow = i + 1;
+      const raw = readUserStateRow_(values[i]);
       try {
-        current = JSON.parse(values[i][2] || '{}');
+        current = JSON.parse(raw || '{}');
       } catch (err) {
         current = {};
       }
@@ -164,10 +178,32 @@ function writeUserState_(ss, user, mutatorFn, now) {
   }
   const next = mutatorFn(current || {}) || current;
   const serialized = JSON.stringify(next);
+  const chunks = [];
+  for (let offset = 0; offset < serialized.length; offset += STATE_CHUNK_SIZE) {
+    chunks.push(serialized.slice(offset, offset + STATE_CHUNK_SIZE));
+  }
+  if (chunks.length === 0) {
+    chunks.push('{}');
+  }
+
+  // Ensure chunk_1, chunk_2, ... headers exist when payload exceeds one cell
+  const neededCols = 2 + chunks.length;
+  const currentCols = Math.max(sheet.getLastColumn(), 3);
+  if (neededCols > currentCols) {
+    for (let c = currentCols + 1; c <= neededCols; c++) {
+      sheet.getRange(1, c).setValue('chunk_' + (c - 3));
+    }
+  }
+
+  const totalCols = Math.max(currentCols, neededCols);
   if (targetRow === -1) {
-    sheet.appendRow([user, now, serialized]);
+    const newRow = [user, now].concat(chunks);
+    while (newRow.length < totalCols) newRow.push('');
+    sheet.appendRow(newRow);
   } else {
-    sheet.getRange(targetRow, 2, 1, 2).setValues([[now, serialized]]);
+    const rowValues = [now].concat(chunks);
+    while (rowValues.length < totalCols - 1) rowValues.push('');
+    sheet.getRange(targetRow, 2, 1, rowValues.length).setValues([rowValues]);
   }
   return next;
 }
@@ -439,13 +475,15 @@ function doPost(e) {
       });
     }
 
+    const authToken = payload.sessionToken || payload.token;
+
     if (action === 'logout') {
-      revokeSession_(payload.token);
+      revokeSession_(authToken);
       return jsonResponse({ ok: true });
     }
 
     if (action === 'createInvite') {
-      const session = requireSession_(payload.token);
+      const session = requireSession_(authToken);
       if (getUserRole_(ss, session.user) !== 'admin') {
         return jsonResponse({ ok: false, error: 'Forbidden: admin privilege required.' });
       }
@@ -456,10 +494,16 @@ function doPost(e) {
       return jsonResponse({ ok: true, token: token, expiresAt: expiresAt });
     }
 
-    // All write actions require a valid session token matching the target user
-    const session = requireSession_(payload.token);
-    const user = String(payload.user || payload.profile || '').trim().toLowerCase();
-    if (!user || session.user !== user) {
+    // All write actions require a valid session token; force write target to session.user
+    // (ignoring any client-supplied targetUsername).
+    const session = requireSession_(authToken);
+    const user = String(session.user || '').trim().toLowerCase();
+    const usersList = sheetToObjects(ss.getSheetByName('Users'));
+    if (!user || !usersList.some(u => String(u.username || '').trim().toLowerCase() === user)) {
+      return jsonResponse({ ok: false, error: 'Unauthorized: account not found.' });
+    }
+    const requestedUser = String(payload.user || payload.profile || '').trim().toLowerCase();
+    if (requestedUser && requestedUser !== user) {
       return jsonResponse({ ok: false, error: 'Forbidden: cannot modify another user\'s sheet' });
     }
 
@@ -702,7 +746,7 @@ function doPost(e) {
     }
 
     // ACTION 4: Update Own Display Name & Privacy Setting
-    if (action === 'updateProfileSettings') {
+    if (action === 'updateProfileSettings' || action === 'updateAccount') {
       const usersSheet = ss.getSheetByName('Users');
       if (!usersSheet || usersSheet.getLastRow() < 2) {
         return jsonResponse({ ok: false, error: 'Users sheet not initialized' });

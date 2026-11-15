@@ -1,9 +1,23 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v16';
+const CATALOG_CACHE_PREFIX = 'aaru_catalog_v';
+const CATALOG_LATEST_PTR = 'aaru_catalog_latest_patch';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
-const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
+const CATALOG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
+
+function getActiveCatalogCacheKey() {
+  if (yattaMaps.lunarisVer) {
+    return `${CATALOG_CACHE_PREFIX}${yattaMaps.lunarisVer}`;
+  }
+  try {
+    const latestPatch = localStorage.getItem(CATALOG_LATEST_PTR);
+    if (latestPatch) return `${CATALOG_CACHE_PREFIX}${latestPatch}`;
+    return Object.keys(localStorage).find((k) => k.startsWith(CATALOG_CACHE_PREFIX)) || `${CATALOG_CACHE_PREFIX}live`;
+  } catch {
+    return `${CATALOG_CACHE_PREFIX}live`;
+  }
+}
 
 const ELEMENT_MAP = {
   Fire: 'Pyro',
@@ -82,10 +96,11 @@ async function loadSnapshotFallback() {
 async function fetchYattaCatalog(forceRefresh = false) {
   if (!forceRefresh) {
     try {
-      const cachedRaw = localStorage.getItem(YATTA_CACHE_KEY);
+      const cacheKey = getActiveCatalogCacheKey();
+      const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
         const parsed = JSON.parse(cachedRaw);
-        if (parsed?.ts && Date.now() - parsed.ts < YATTA_TTL_MS && parsed.data) {
+        if (parsed?.ts && Date.now() - parsed.ts < CATALOG_TTL_MS && parsed.data) {
           buildYattaMaps(parsed.data);
           catalogSource = 'cache';
           catalogSyncedAt = parsed.data._syncedAt || null;
@@ -382,12 +397,15 @@ async function fetchYattaCatalog(forceRefresh = false) {
     catalogSyncedAt = new Date().toISOString();
     lastCacheTs = Date.now();
     try {
+      const patchVer = slim._lunarisVer || 'live';
+      const cacheKey = `${CATALOG_CACHE_PREFIX}${patchVer}`;
       for (const k of Object.keys(localStorage)) {
-        if (k.startsWith('aaru_yatta_catalog_') && k !== YATTA_CACHE_KEY) {
+        if ((k.startsWith(CATALOG_CACHE_PREFIX) && k !== cacheKey) || k.startsWith('aaru_yatta_catalog_')) {
           localStorage.removeItem(k);
         }
       }
-      localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify({ ts: lastCacheTs, data: slim }));
+      localStorage.setItem(cacheKey, JSON.stringify({ ts: lastCacheTs, patch: patchVer, data: slim }));
+      localStorage.setItem(CATALOG_LATEST_PTR, patchVer);
     } catch {
       // Ignore quota errors
     }
@@ -412,7 +430,9 @@ export function getCatalogStatus() {
 export async function refreshLiveCatalog() {
   try {
     for (const k of Object.keys(localStorage)) {
-      if (k.startsWith('aaru_yatta_catalog_')) localStorage.removeItem(k);
+      if (k.startsWith(CATALOG_CACHE_PREFIX) || k.startsWith('aaru_yatta_catalog_') || k === CATALOG_LATEST_PTR) {
+        localStorage.removeItem(k);
+      }
     }
   } catch {
     // Ignore storage errors
@@ -789,10 +809,11 @@ export async function ensureCharacterMaterials(pascalKey) {
 
       // Persist updated entry back to localStorage cache
       try {
-        const cached = JSON.parse(localStorage.getItem(YATTA_CACHE_KEY) || '{}');
+        const cacheKey = getActiveCatalogCacheKey();
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || '{}');
         if (cached?.data?.characters?.[norm]) {
           cached.data.characters[norm] = entry;
-          localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify(cached));
+          localStorage.setItem(cacheKey, JSON.stringify(cached));
         }
       } catch {
         // Ignore storage errors
@@ -866,10 +887,11 @@ export async function ensureWeaponMaterials(pascalKey) {
       }
 
       try {
-        const cached = JSON.parse(localStorage.getItem(YATTA_CACHE_KEY) || '{}');
+        const cacheKey = getActiveCatalogCacheKey();
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || '{}');
         if (cached?.data?.weapons?.[norm]) {
           cached.data.weapons[norm] = entry;
-          localStorage.setItem(YATTA_CACHE_KEY, JSON.stringify(cached));
+          localStorage.setItem(cacheKey, JSON.stringify(cached));
         }
       } catch {
         // Ignore storage errors

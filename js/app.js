@@ -1,4 +1,4 @@
-import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261115w';
+import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } from './catalog.js?v=20261115y';
 import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114w';
 import {
   fetchPartnerAccount,
@@ -7,10 +7,11 @@ import {
   logoutAccount,
   restoreAccountSession,
   saveAccountSection,
+  setReadOnlyViewState,
   updateProfileSettings,
   upsertRosterRow
-} from './api.js?v=20261115x';
-import { bindAdminInviteButton, initInviteRegistration } from './auth.js?v=20261115x';
+} from './api.js?v=20261115y';
+import { bindAdminInviteButton, initInviteRegistration } from './auth.js?v=20261115y';
 import {
   commitGoodImport,
   computeGoodImportDiff,
@@ -38,6 +39,7 @@ const state = {
   partnerAccount: null,
   partnerUser: null,
   viewingPartner: false,
+  viewMode: 'owner',
   visibleUsers: [],
   activeTab: getTabFromHash(), // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams' | 'changelog'
   serverId: 'NA',
@@ -72,8 +74,16 @@ function isAdminUser() {
   );
 }
 
+function isReadOnlyMode() {
+  return (
+    state.viewingPartner ||
+    state.viewMode === 'readonly' ||
+    Boolean(state.partnerUser && state.partnerUser !== state.sessionUser)
+  );
+}
+
 function getActiveAccount() {
-  return state.viewingPartner && state.partnerAccount ? state.partnerAccount : state.ownAccount;
+  return isReadOnlyMode() && state.partnerAccount ? state.partnerAccount : state.ownAccount;
 }
 
 function setActiveTab(tab, { pushHash = true } = {}) {
@@ -191,7 +201,8 @@ function renderActiveTab(options = {}) {
 
   const viewState = {
     account,
-    isReadOnly: state.viewingPartner,
+    isReadOnly: isReadOnlyMode(),
+    viewMode: state.viewMode,
     serverId: state.serverId,
     hudDayOverride: state.hudDayOverride,
     hudShowAllDomains: state.hudShowAllDomains,
@@ -459,6 +470,8 @@ function applyAuthenticatedSession(res) {
   state.sessionUser = res.account.user;
   state.ownAccount = res.account;
   state.viewingPartner = false;
+  state.viewMode = 'owner';
+  setReadOnlyViewState(false);
   state.partnerAccount = null;
   state.partnerUser = null;
   const fallbackUsers = Object.values(window.GENSHIN_SHEET_CONFIG?.ACCOUNTS || {}).map((a) => ({
@@ -597,7 +610,7 @@ function setupGoodImportModal() {
   });
 
   commitBtn?.addEventListener('click', async () => {
-    if (!state.pendingGoodImport) return;
+    if (!state.pendingGoodImport || isReadOnlyMode()) return;
     commitBtn.disabled = true;
     commitBtn.textContent = 'Syncing...';
     try {
@@ -932,8 +945,10 @@ async function bootstrap() {
   document.getElementById('account-switcher')?.addEventListener('change', async (e) => {
     if (!state.sessionUser) return;
     const targetUser = e.currentTarget.value;
-    if (!targetUser) {
+    if (!targetUser || targetUser === state.sessionUser) {
       state.viewingPartner = false;
+      state.viewMode = 'owner';
+      setReadOnlyViewState(false);
       state.partnerUser = null;
       updateTopBar();
       renderActiveTab();
@@ -943,6 +958,8 @@ async function bootstrap() {
       state.partnerAccount = await fetchPartnerAccount(targetUser);
       state.partnerUser = targetUser;
       state.viewingPartner = true;
+      state.viewMode = 'readonly';
+      setReadOnlyViewState(true);
       updateTopBar();
       renderActiveTab();
       showToast(`Viewing ${state.partnerAccount.displayName}'s sheet (Read-Only)`, 'gold');
@@ -962,6 +979,8 @@ async function bootstrap() {
     state.partnerUser = null;
     state.visibleUsers = [];
     state.viewingPartner = false;
+    state.viewMode = 'owner';
+    setReadOnlyViewState(false);
     switchToLoginView();
   });
 

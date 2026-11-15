@@ -3,6 +3,66 @@ import { cloneMockAccount } from './mock-data.js';
 const STORAGE_PREFIX = 'genshin_sheet_mock_v1_';
 const SESSION_TOKEN_KEY = 'genshin_sheet_token_v1';
 
+let readOnlyViewActive = false;
+
+export function setReadOnlyViewState(isReadOnly) {
+  readOnlyViewActive = Boolean(isReadOnly);
+}
+
+function assertWritableSession() {
+  if (readOnlyViewActive) {
+    throw new Error('Read-only mode: cannot modify another user\'s data.');
+  }
+}
+
+const STATIC_CATALOG_KEYS = new Set([
+  'description', 'desc', 'lore', 'icon', 'sources', 'enSources',
+  'scaling', 'statCurve', 'passive', 'passiveDesc', 'substatsMeta',
+  'dropSources', 'bossName', 'bossIcon', 'bossUnreleased', 'region',
+  'element', 'weaponType', 'category', 'substat', 'baseAtk', 'stats',
+  'talentBook', 'bossMat', 'weeklyMat', 'localSpecialty', 'commonMatTiers',
+  'eliteMatTiers', 'gemTiers', 'domainMatKey', 'domainMatExactKey'
+]);
+
+export function stripStaticCatalogMetadata(value) {
+  if (Array.isArray(value)) {
+    return value.map(stripStaticCatalogMetadata);
+  }
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (STATIC_CATALOG_KEYS.has(k)) continue;
+      out[k] = stripStaticCatalogMetadata(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+function compactInventoryMap(inv) {
+  if (!inv || typeof inv !== 'object') return {};
+  const out = {};
+  for (const [k, v] of Object.entries(inv)) {
+    if (!k) continue;
+    const count = typeof v === 'number' ? v : Number(v?.count ?? v?.raw_count) || 0;
+    out[k] = { count };
+  }
+  return out;
+}
+
+export function buildCompactSyncState(account = {}) {
+  return {
+    characters: stripStaticCatalogMetadata(Array.isArray(account.characters) ? account.characters : []),
+    weapons: stripStaticCatalogMetadata(Array.isArray(account.weapons) ? account.weapons : []),
+    artifacts: stripStaticCatalogMetadata(Array.isArray(account.artifacts) ? account.artifacts : []),
+    inventory: compactInventoryMap(account.inventory),
+    prefarmQueue: stripStaticCatalogMetadata(Array.isArray(account.prefarmQueue) ? account.prefarmQueue : []),
+    teams: stripStaticCatalogMetadata(Array.isArray(account.teams) ? account.teams : []),
+    wallet: account.wallet || null,
+    checklist: account.checklist || null
+  };
+}
+
 function getConfig() {
   return window.GENSHIN_SHEET_CONFIG || { APPS_SCRIPT_URL: '' };
 }
@@ -335,12 +395,14 @@ export async function fetchPartnerAccount(partnerUsername) {
  * Sends a single upsertRow POST with Content-Type: text/plain to {user}_Inventory (or section).
  */
 export async function upsertInventoryRow(username, key, rowPayload) {
+  assertWritableSession();
+  const compactPayload = { count: Number(rowPayload?.count ?? rowPayload?.raw_count) || 0 };
   if (isOfflineMode()) {
     const current = loadLocalMock(username);
     current.inventory = current.inventory || {};
     current.inventory[key] = {
       ...(current.inventory[key] || {}),
-      ...rowPayload
+      ...compactPayload
     };
     saveLocalMock(username, current);
     return { ok: true, mode: 'offline', key, savedAt: Date.now() };
@@ -354,7 +416,7 @@ export async function upsertInventoryRow(username, key, rowPayload) {
       user: username,
       sheet: `${username}_Inventory`,
       key,
-      data: rowPayload
+      data: compactPayload
     },
     'upsertRow failed'
   );
@@ -365,13 +427,15 @@ export async function upsertInventoryRow(username, key, rowPayload) {
  * Sends a single upsertRow POST with Content-Type: text/plain to {user}_Roster.
  */
 export async function upsertRosterRow(username, charKey, rowPayload) {
+  assertWritableSession();
+  const compactPayload = stripStaticCatalogMetadata(rowPayload);
   if (isOfflineMode()) {
     const current = loadLocalMock(username);
     current.characters = current.characters || [];
     const idx = current.characters.findIndex((c) => c.key === charKey);
     const updated = {
       ...(idx >= 0 ? current.characters[idx] : { key: charKey }),
-      ...rowPayload
+      ...compactPayload
     };
     if (idx >= 0) current.characters[idx] = updated;
     else current.characters.push(updated);
@@ -387,7 +451,7 @@ export async function upsertRosterRow(username, charKey, rowPayload) {
       user: username,
       sheet: `${username}_Roster`,
       key: charKey,
-      data: rowPayload
+      data: compactPayload
     },
     'upsertRow failed'
   );
@@ -398,9 +462,11 @@ export async function upsertRosterRow(username, charKey, rowPayload) {
  * Persists non-inventory account sections (wallet, checklist, prefarmQueue, characters, teams).
  */
 export async function saveAccountSection(username, section, payload) {
+  assertWritableSession();
+  const compactPayload = stripStaticCatalogMetadata(payload);
   if (isOfflineMode()) {
     const current = loadLocalMock(username);
-    current[section] = payload;
+    current[section] = compactPayload;
     saveLocalMock(username, current);
     return { ok: true, mode: 'offline' };
   }
@@ -412,9 +478,33 @@ export async function saveAccountSection(username, section, payload) {
       token,
       user: username,
       section,
-      data: payload
+      data: compactPayload
     },
     'saveAccountSection failed'
+  );
+}
+
+/**
+ * Persists a full compact delta-only state snapshot to UserStates.
+ */
+export async function saveState(username, accountState) {
+  assertWritableSession();
+  const compact = buildCompactSyncState(accountState);
+  if (isOfflineMode()) {
+    const current = loadLocalMock(username);
+    saveLocalMock(username, { ...current, ...compact });
+    return { ok: true, mode: 'offline' };
+  }
+
+  const token = requireSessionToken();
+  return postAppsScript(
+    {
+      action: 'saveState',
+      token,
+      user: username,
+      state: compact
+    },
+    'saveState failed'
   );
 }
 
@@ -422,8 +512,19 @@ export async function saveAccountSection(username, section, payload) {
  * Sends a single POST (action: "importGoodJson", Content-Type: text/plain) to Apps Script.
  */
 export async function postImportGoodJson(username, goodPayload, mergedAccountData) {
+  assertWritableSession();
+  const compactGood = {
+    format: goodPayload?.format || 'GOOD',
+    version: goodPayload?.version || 3,
+    source: goodPayload?.source || '',
+    characters: stripStaticCatalogMetadata(Array.isArray(goodPayload?.characters) ? goodPayload.characters : []),
+    weapons: stripStaticCatalogMetadata(Array.isArray(goodPayload?.weapons) ? goodPayload.weapons : []),
+    artifacts: stripStaticCatalogMetadata(Array.isArray(goodPayload?.artifacts) ? goodPayload.artifacts : []),
+    materials: goodPayload?.materials || {}
+  };
+
   if (isOfflineMode()) {
-    saveLocalMock(username, mergedAccountData);
+    saveLocalMock(username, buildCompactSyncState(mergedAccountData));
     return { ok: true, mode: 'offline', syncedAt: Date.now() };
   }
 
@@ -433,7 +534,7 @@ export async function postImportGoodJson(username, goodPayload, mergedAccountDat
       action: 'importGoodJson',
       token,
       user: username,
-      good: goodPayload
+      good: compactGood
     },
     'importGoodJson failed'
   );
@@ -443,6 +544,7 @@ export async function postImportGoodJson(username, goodPayload, mergedAccountDat
  * Updates the signed-in user's Display Name and Read-Only visibility setting.
  */
 export async function updateProfileSettings(username, { displayName, isPublic }) {
+  assertWritableSession();
   if (isOfflineMode()) {
     const current = loadLocalMock(username);
     if (displayName) current.displayName = String(displayName).trim().slice(0, 24);
