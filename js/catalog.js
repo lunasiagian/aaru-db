@@ -235,7 +235,10 @@ async function fetchYattaCatalog(forceRefresh = false) {
           pascalKey,
           name: item.name,
           rarity: Number(item.rank) || 4,
-          weaponType: WEAPON_TYPE_MAP[item.type] || 'Sword',
+          weaponType:
+            WEAPON_TYPE_MAP[item.type] ||
+            WEAPON_TYPE_MAP[item.weaponType] ||
+            (['Sword', 'Claymore', 'Polearm', 'Catalyst', 'Bow'].includes(item.type) ? item.type : 'Sword'),
           icon: `${YATTA_UI_BASE}${item.icon}.png`,
           ...(upg || {})
         };
@@ -1323,18 +1326,54 @@ export async function ensureCharacterKitAndStats(pascalKey) {
 
 const pendingWeaponStatFetches = new Map();
 
+let yattaWeaponIdMapPromise = null;
+async function resolveYattaWeaponId(norm) {
+  const existing = yattaMaps.weapons.get(norm)?.id;
+  if (existing) return existing;
+  if (!yattaWeaponIdMapPromise) {
+    yattaWeaponIdMapPromise = fetch('https://gi.yatta.moe/api/v2/en/weapon')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        const items = json?.data?.items || {};
+        for (const [id, item] of Object.entries(items)) {
+          const n = normalizeAssetKey(item?.name);
+          if (!n) continue;
+          const prev = yattaMaps.weapons.get(n);
+          if (prev) {
+            prev.id = String(id);
+            if (!prev.weaponType || prev.weaponType === 'Sword') {
+              prev.weaponType = WEAPON_TYPE_MAP[item.type] || prev.weaponType;
+            }
+          } else {
+            yattaMaps.weapons.set(n, {
+              id: String(id),
+              name: item.name,
+              rarity: Number(item.rank) || 4,
+              weaponType: WEAPON_TYPE_MAP[item.type] || 'Sword',
+              icon: item.icon ? `${YATTA_UI_BASE}${item.icon}.png` : ''
+            });
+          }
+        }
+        return yattaMaps.weapons;
+      })
+      .catch(() => yattaMaps.weapons);
+  }
+  await yattaWeaponIdMapPromise;
+  return yattaMaps.weapons.get(norm)?.id || null;
+}
+
 export async function ensureWeaponStats(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const cache = loadKitCache();
   if (cache.weapons[norm] && cache.weapons[norm].description !== undefined) return cache.weapons[norm];
-  const entry = yattaMaps.weapons.get(norm);
-  if (!entry?.id) return null;
   if (pendingWeaponStatFetches.has(norm)) return pendingWeaponStatFetches.get(norm);
 
   const task = (async () => {
     try {
+      const weaponId = await resolveYattaWeaponId(norm);
+      if (!weaponId) return null;
       const [detailRes, curveData] = await Promise.all([
-        fetch(`https://gi.yatta.moe/api/v2/en/weapon/${encodeURIComponent(entry.id)}`).then((r) => (r.ok ? r.json() : null)),
+        fetch(`https://gi.yatta.moe/api/v2/en/weapon/${encodeURIComponent(weaponId)}`).then((r) => (r.ok ? r.json() : null)),
         fetchCurve('weapon')
       ]);
       if (detailRes?.data) {
