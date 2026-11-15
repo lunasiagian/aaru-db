@@ -17,7 +17,7 @@ import {
   evaluateErComfort,
   evaluateTeamCapabilities,
   generateKitInsights
-} from './build-science.js?v=20261115z';
+} from './build-science.js?v=20261115aa';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },

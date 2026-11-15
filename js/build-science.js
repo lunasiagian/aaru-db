@@ -232,9 +232,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     INFUSION_IMBUE_RE.test(ownKitText) ||
     (INFUSION_OVERRIDE_RE.test(ownKitText) && /(?:normal|charged|plunging)\s+attacks?/i.test(ownKitText));
   const hasChargedCarryFocus =
-    /(?:charged\s+attack\s+dmg|arataki\s+kesagiri|explosive\s+spark|superlative\s+superstrength)/i.test(nonNormalText) &&
-    !/(?:party|allies|teammates)/i.test(
-      sentences.find((s) => /charged\s+attack\s+dmg/i.test(s)) || ''
+    sentences.some(
+      (s) =>
+        !/(?:active\s+character|party\s+members?|allies|teammates)/i.test(s) &&
+        /(?:charged\s+attack(?::|\s+(?:dmg|charging|stamina|crit))|charging\s+time|equitable\s+judgment|arataki\s+kesagiri|explosive\s+spark|superlative\s+superstrength|scarlet\s+seal)/i.test(
+          s
+        )
     );
   const usesNormalAttack = hasInfusion || hasChargedCarryFocus;
 
