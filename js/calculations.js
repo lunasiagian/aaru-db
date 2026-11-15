@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114q';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114r';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -503,12 +503,14 @@ function allocateTieredWaterfall(keys, req, getPool, setPool) {
     }
   }
 
-  const out = {};
+  const effOut = {};
+  const craftedOut = {};
   keys.forEach((k, i) => {
     setPool(k, avail[i]);
-    out[k] = eff[i];
+    effOut[k] = eff[i];
+    craftedOut[k] = Math.max(0, eff[i] - owned[i]);
   });
-  return out;
+  return { eff: effOut, crafted: craftedOut };
 }
 
 function resolveTieredSeries(ownedArr, neededArr) {
@@ -550,6 +552,7 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
   const sorted = sortAndLabelPrefarmQueue(prefarmQueue);
   const effectiveWits = Math.floor(calcEffectiveHerosWit(inventory).effectiveTotal);
   const pool = new Map();
+  const reservedBy = new Map(); // matKey -> { total, byLabel: Map<label, amount> }
 
   const getPool = (matKey) => {
     if (pool.has(matKey)) return pool.get(matKey);
@@ -563,6 +566,14 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
     return initial;
   };
 
+  const recordReserved = (matKey, amount, tierLabel) => {
+    if (!amount || amount <= 0) return;
+    if (!reservedBy.has(matKey)) reservedBy.set(matKey, { total: 0, byLabel: new Map() });
+    const entry = reservedBy.get(matKey);
+    entry.total += amount;
+    entry.byLabel.set(tierLabel, (entry.byLabel.get(tierLabel) || 0) + amount);
+  };
+
   const results = new Map();
   for (const target of sorted) {
     const req = computeRawTargetRequirements(target);
@@ -570,6 +581,7 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
     const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
 
     const tieredOwned = {};
+    const tieredCrafted = {};
     const tieredKeys = new Set();
     const candidateTriples = [];
     if (Array.isArray(charMeta?.commonMatTiers) && charMeta.commonMatTiers.length === 3) {
@@ -586,12 +598,22 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
       candidateTriples.push(weaponMeta.eliteMatTiers);
     }
 
+    const prevReservedSnapshot = new Map();
+    for (const [k, info] of reservedBy.entries()) {
+      prevReservedSnapshot.set(k, { total: info.total, labels: [...info.byLabel.keys()].join(', ') });
+    }
+
     const preOwnedSnapshot = {};
     for (const tiers of candidateTriples) {
       if (tiers.reduce((s, k) => s + (req[k] || 0), 0) <= 0) continue;
-      const eff = allocateTieredWaterfall(tiers, req, getPool, (k, v) => pool.set(k, v));
+      const beforeTiers = tiers.map((k) => getPool(k));
+      const { eff, crafted } = allocateTieredWaterfall(tiers, req, getPool, (k, v) => pool.set(k, v));
       Object.assign(tieredOwned, eff);
-      for (const k of tiers) tieredKeys.add(k);
+      Object.assign(tieredCrafted, crafted);
+      tiers.forEach((k, idx) => {
+        tieredKeys.add(k);
+        recordReserved(k, beforeTiers[idx] - getPool(k), target.tierLabel);
+      });
     }
     for (const matKey of Object.keys(req)) {
       if (!tieredKeys.has(matKey)) {
@@ -601,10 +623,22 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
 
     const rows = formatRequirementRows(req, (matKey) =>
       tieredKeys.has(matKey) ? tieredOwned[matKey] : preOwnedSnapshot[matKey]
-    );
+    ).map((row) => {
+      const resInfo = prevReservedSnapshot.get(row.key);
+      return {
+        ...row,
+        craftedIn: tieredCrafted[row.key] || 0,
+        reservedByPrev: resInfo?.total || 0,
+        reservedByLabel: resInfo?.labels || ''
+      };
+    });
+
     for (const [matKey, needed] of Object.entries(req)) {
       if (!tieredKeys.has(matKey)) {
-        pool.set(matKey, Math.max(0, getPool(matKey) - needed));
+        const before = getPool(matKey);
+        const after = Math.max(0, before - needed);
+        pool.set(matKey, after);
+        recordReserved(matKey, before - after, target.tierLabel);
       }
     }
     results.set(target.id, rows);

@@ -7,8 +7,8 @@ import {
   getCharacterMeta,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114q';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114q';
+} from './catalog.js?v=20261114r';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114r';
 
 const uiState = {
   openTargets: new Set(),
@@ -33,11 +33,23 @@ function escapeAttr(str) {
 
 function renderReqChipHtml(r) {
   const isDef = r.deficit > 0;
+  const pct = r.needed > 0 ? Math.min(100, Math.round((r.owned / r.needed) * 100)) : 100;
+  const barTone = pct >= 100 ? 'is-ready' : pct >= 50 ? 'is-mid' : 'is-low';
   const fullRatio = `${r.owned.toLocaleString()} / ${r.needed.toLocaleString()}`;
   const compactRatio = `${formatCompactNumber(r.owned)} / ${formatCompactNumber(r.needed)}`;
   const compactDelta = isDef
     ? `-${formatCompactNumber(r.deficit)}`
     : `+${formatCompactNumber(r.surplus)}`;
+
+  const hints = [];
+  if (r.craftableHint > 0) hints.push(`<span class="req-hint-craft">${r.craftableHint} craftable</span>`);
+  else if (r.craftedIn > 0) hints.push(`<span class="req-hint-craft">+${r.craftedIn} crafted 3:1</span>`);
+  if (r.reservedByPrev > 0) {
+    hints.push(
+      `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail (${formatCompactNumber(r.reservedByPrev)} used by ${escapeAttr(r.reservedByLabel || '#1')})</span>`
+    );
+  }
+
   return `
     <div class="req-chip ${isDef ? 'row-deficit' : 'row-surplus'}" title="${escapeAttr(`${r.name}: ${fullRatio}`)}">
       ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
@@ -45,10 +57,98 @@ function renderReqChipHtml(r) {
         <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
         <div class="req-nums mono">
           <span title="${escapeAttr(fullRatio)}">${compactRatio}</span>
-          <span class="${isDef ? 'text-coral' : 'text-mint'}">${compactDelta}</span>
+          <span class="req-delta-badge ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
         </div>
+        ${hints.length ? `<div class="req-subnotes mono">${hints.join('')}</div>` : ''}
       </div>
+      <div class="req-progress ${barTone}"><span style="width:${pct}%"></span></div>
     </div>`;
+}
+
+function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
+  const valid = (reqRows || []).filter((r) => r.needed > 0);
+  const byKey = new Map(valid.map((r) => [r.key, r]));
+  const used = new Set();
+
+  const take = (keys) => {
+    const out = [];
+    for (const k of keys) {
+      if (!k || used.has(k)) continue;
+      const row = byKey.get(k);
+      if (row) {
+        used.add(k);
+        out.push(row);
+      }
+    }
+    return out;
+  };
+
+  const families = [];
+  const pushFamily = (id, label, rows, addCraftHints = false) => {
+    if (!rows.length) return;
+    if (addCraftHints) {
+      for (let i = 1; i < rows.length; i++) {
+        const prev = rows[i - 1];
+        if (prev.surplus >= 3 && rows[i].deficit > 0) {
+          rows[i] = { ...rows[i], craftableHint: Math.floor(prev.surplus / 3) };
+        }
+      }
+    }
+    families.push({ id, label, rows });
+  };
+
+  // 1. Talent Books Lane (Teachings -> Guide -> Philosophies)
+  const bookOrder = { TeachingsOf: 0, GuideTo: 1, PhilosophiesOf: 2 };
+  const bookRows = valid
+    .filter((r) => /^(TeachingsOf|GuideTo|PhilosophiesOf)/.test(r.key))
+    .sort((a, b) => {
+      const pa = a.key.match(/^(TeachingsOf|GuideTo|PhilosophiesOf)/)[1];
+      const pb = b.key.match(/^(TeachingsOf|GuideTo|PhilosophiesOf)/)[1];
+      return (bookOrder[pa] ?? 9) - (bookOrder[pb] ?? 9);
+    });
+  bookRows.forEach((r) => used.add(r.key));
+  pushFamily('books', 'Talent Books', bookRows, true);
+
+  // 2. Boss & Weekly Boss Lane
+  pushFamily('boss', 'Boss & Weekly', take([charMeta?.bossMat, charMeta?.weeklyMat, 'CrownOfInsight']));
+
+  // 3. Enemy Drops & Weapon Domain
+  if (Array.isArray(charMeta?.commonMatTiers)) {
+    pushFamily('charCommon', 'Enemy Drops', take(charMeta.commonMatTiers), true);
+  }
+  if (Array.isArray(weaponMeta?.commonMatTiers)) {
+    pushFamily('wepCommon', 'Weapon Enemy Drops', take(weaponMeta.commonMatTiers), true);
+  }
+  if (Array.isArray(weaponMeta?.eliteMatTiers)) {
+    pushFamily('wepElite', 'Elite Enemy Drops', take(weaponMeta.eliteMatTiers), true);
+  }
+  if (weaponMeta?.domainMatExactKey) {
+    pushFamily('wepDomain', 'Weapon Domain', take([weaponMeta.domainMatExactKey]));
+  }
+
+  // 4. Ascension Gems & Local Specialty
+  if (Array.isArray(charMeta?.gemTiers)) {
+    pushFamily('gems', 'Ascension Gems', take(charMeta.gemTiers), true);
+  }
+  if (charMeta?.localSpecialty) {
+    pushFamily('specialty', 'Local Specialty', take([charMeta.localSpecialty]));
+  }
+
+  // 5. XP & Currency (+ any remaining)
+  const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre']);
+  const restRows = valid.filter((r) => !used.has(r.key));
+  pushFamily('currency', 'XP & Currency', [...currencyRows, ...restRows]);
+
+  const activeFamilies = [];
+  const readyRows = [];
+  for (const fam of families) {
+    if (fam.rows.every((r) => r.deficit === 0)) {
+      readyRows.push(...fam.rows);
+    } else {
+      activeFamilies.push(fam);
+    }
+  }
+  return { activeFamilies, readyRows };
 }
 
 export function renderPrefarmTab(container, state, handlers) {
@@ -86,6 +186,7 @@ export function renderPrefarmTab(container, state, handlers) {
       <div>
         <div class="eyebrow">AARUDB / PREFARM</div>
         <h1 class="section-title">Prefarm Queue</h1>
+        <p class="section-subtitle muted">Shared bag cascades sequentially by priority (#1 → #2) · Lower tiers shown side-by-side for 3:1 crafting.</p>
       </div>
       <div class="header-meta mono">
         TARGETS: <span class="text-gold">${queue.length}</span> • #1 &amp; #2 FEED HUD
@@ -167,9 +268,9 @@ export function renderPrefarmTab(container, state, handlers) {
               const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
               const bossMeta = charMeta.bossMat ? getMaterialMeta(charMeta.bossMat) : null;
               const reqRows = waterfallMap.get(target.id) || [];
-              const deficitRows = reqRows.filter((r) => r.deficit > 0);
-              const surplusRows = reqRows.filter((r) => r.deficit <= 0);
-              const deficitCount = deficitRows.length;
+              const { activeFamilies, readyRows } = groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta);
+              const deficitCount = reqRows.filter((r) => r.needed > 0 && r.deficit > 0).length;
+              const surplusRows = readyRows;
               const targetStateKey = String(target.id ?? target.characterKey);
               const targetsOpen = uiState.openTargets.has(targetStateKey);
               const surplusOpen = uiState.expandedSurplus.has(targetStateKey);
@@ -271,9 +372,19 @@ export function renderPrefarmTab(container, state, handlers) {
                 }
 
                 ${
-                  deficitRows.length
-                    ? `<div class="req-grid">
-                        ${deficitRows.map(renderReqChipHtml).join('')}
+                  activeFamilies.length
+                    ? `<div class="prefarm-families">
+                        ${activeFamilies
+                          .map(
+                            (fam) => `
+                          <div class="prefarm-family-lane">
+                            <div class="prefarm-family-label mono">${escapeAttr(fam.label)}</div>
+                            <div class="req-grid">
+                              ${fam.rows.map(renderReqChipHtml).join('')}
+                            </div>
+                          </div>`
+                          )
+                          .join('')}
                       </div>`
                     : ''
                 }
