@@ -325,7 +325,25 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
     utilityTags.push('RES Shred');
   }
-  if (/interruption\s+resistance|resistance\s+to\s+interruption/i.test(nonNormalText)) {
+  const IR_RE = /interruption\s+resistance|resistance\s+to\s+interruption/i;
+  const TEAM_IR_TARGET_RE =
+    /\b(?:party\s+members?|nearby\s+(?:party\s+)?characters?|active\s+character|allies|allied\s+characters?|teammates?)\b/i;
+  const irSentences = sentences.filter((s) => IR_RE.test(s));
+  let teamIR = false;
+  let selfIR = false;
+  for (const s of irSentences) {
+    const isExplicitSelf = /(?:his|her|their)\s+own\b|paramita\s+papilio/i.test(s);
+    const grantsToTeam =
+      !isExplicitSelf &&
+      (TEAM_IR_TARGET_RE.test(s) ||
+        /(?:within\s+the\s+(?:area|field)|rain\s+swords?|stormbreaker|fiery\s+sanctum)/i.test(s));
+    if (grantsToTeam) {
+      teamIR = true;
+    } else {
+      selfIR = true;
+    }
+  }
+  if (teamIR) {
     utilityTags.push('Poise / IR');
   }
   if (/dmg\s+reduction|reduces?\s+dmg\s+taken|decreases?\s+dmg\s+taken/i.test(nonNormalText)) {
@@ -397,7 +415,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     primaryRole,
     utilityTags: [...new Set(finalTags)].slice(0, 4),
     kitTriggers,
-    usesNormalAttack
+    usesNormalAttack,
+    teamIR,
+    selfIR
   };
 }
 
