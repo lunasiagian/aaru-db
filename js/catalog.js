@@ -100,7 +100,7 @@ async function fetchYattaCatalog(forceRefresh = false) {
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) {
         const parsed = JSON.parse(cachedRaw);
-        if (parsed?.ts && Date.now() - parsed.ts < CATALOG_TTL_MS && parsed.data) {
+        if (parsed?.ts && Date.now() - parsed.ts < CATALOG_TTL_MS && parsed.data && parsed.data._lunarisVer) {
           buildYattaMaps(parsed.data);
           catalogSource = 'cache';
           catalogSyncedAt = parsed.data._syncedAt || null;
@@ -390,6 +390,27 @@ async function fetchYattaCatalog(forceRefresh = false) {
     if (!Object.keys(slim.characters).length && !Object.keys(slim.weapons).length) {
       const ok = await loadSnapshotFallback();
       if (ok) return;
+    }
+
+    // If Lunaris API was unreachable/slow, merge unreleased characters/weapons/materials from local snapshot
+    if (!slim._lunarisVer) {
+      try {
+        const snapRes = await fetch('./data/live-snapshot.json', { cache: 'no-cache' });
+        if (snapRes.ok) {
+          const snap = await snapRes.json();
+          if (snap) {
+            for (const bucket of ['characters', 'weapons', 'materials', 'artifacts']) {
+              for (const [k, v] of Object.entries(snap[bucket] || {})) {
+                if (!slim[bucket][k]) slim[bucket][k] = v;
+              }
+            }
+            if (snap._lunarisVer) slim._lunarisVer = snap._lunarisVer;
+            if (snap._matIdLookup) slim._matIdLookup = { ...snap._matIdLookup, ...(slim._matIdLookup || {}) };
+          }
+        }
+      } catch {
+        // Ignore snapshot merge errors
+      }
     }
 
     buildYattaMaps(slim);
