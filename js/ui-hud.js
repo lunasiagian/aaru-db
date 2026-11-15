@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261114e';
+} from './catalog.js?v=20261114o';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,
@@ -19,7 +19,7 @@ import {
   calculateWaterfallPrefarm,
   getServerResetInfo,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261113t';
+} from './calculations.js?v=20261114o';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const PIP_DAYS = [
@@ -332,7 +332,7 @@ export function renderHudTab(container, state, handlers) {
                   <div class="cmd-item-tiles">
                     ${item.tiers
                       .map((t) => {
-                        const rNum = t.label === 'T2' ? 2 : t.label === 'T3' ? 3 : t.label === 'T4' ? 4 : 5;
+                        const rNum = t.label === 'T1' ? 1 : t.label === 'T2' ? 2 : t.label === 'T3' ? 3 : t.label === 'T4' ? 4 : 5;
                         const matName = getMaterialMeta(t.key).name;
                         return `<div class="cmd-item-tile rarity-bg-${rNum} ${t.netDeficit === 0 ? 'is-complete' : ''}" title="${matName}: ${t.owned}/${t.needed}${t.craftedIn ? ` (+${t.craftedIn} crafted 3:1)` : ''}">
                           ${renderAssetIcon('materials', t.key, matName, 'icon-tile-img')}

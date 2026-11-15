@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114e';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114o';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -183,7 +183,62 @@ function addWeaponRequirements(addReq, weaponKey, curLvlRaw, tgtLvlRaw) {
     }
     if (goldCount > 0) addReq(wm.domainMatExactKey, goldCount);
   }
+  if (Array.isArray(wm.commonMatTiers) && wm.commonMatTiers.length === 3 && tgtPhase > curPhase) {
+    const wCurve = WEAPON_COMMON_BY_RARITY[is5Star ? 5 : rarity === 4 ? 4 : 3];
+    for (let p = curPhase; p < tgtPhase; p++) {
+      const step = wCurve[p];
+      if (step && wm.commonMatTiers[step.tier]) addReq(wm.commonMatTiers[step.tier], step.count);
+    }
+  }
 }
+
+const WEAPON_COMMON_BY_RARITY = {
+  5: [
+    { tier: 0, count: 3 },
+    { tier: 0, count: 12 },
+    { tier: 1, count: 9 },
+    { tier: 1, count: 14 },
+    { tier: 2, count: 9 },
+    { tier: 2, count: 18 }
+  ],
+  4: [
+    { tier: 0, count: 2 },
+    { tier: 0, count: 8 },
+    { tier: 1, count: 6 },
+    { tier: 1, count: 9 },
+    { tier: 2, count: 6 },
+    { tier: 2, count: 12 }
+  ],
+  3: [
+    { tier: 0, count: 1 },
+    { tier: 0, count: 5 },
+    { tier: 1, count: 4 },
+    { tier: 1, count: 6 },
+    { tier: 2, count: 4 },
+    { tier: 2, count: 8 }
+  ]
+};
+
+const CHAR_COMMON_ASC_CURVE = {
+  1: { tier: 0, count: 3 },
+  2: { tier: 0, count: 15 },
+  3: { tier: 1, count: 12 },
+  4: { tier: 1, count: 18 },
+  5: { tier: 2, count: 12 },
+  6: { tier: 2, count: 24 }
+};
+
+const TALENT_COMMON_CURVE = {
+  2: { tier: 0, count: 6 },
+  3: { tier: 1, count: 3 },
+  4: { tier: 1, count: 4 },
+  5: { tier: 1, count: 6 },
+  6: { tier: 1, count: 9 },
+  7: { tier: 2, count: 4 },
+  8: { tier: 2, count: 6 },
+  9: { tier: 2, count: 9 },
+  10: { tier: 2, count: 12 }
+};
 
 const DEFAULT_TALENT_CURVE = {
   2: { mora: 12500, bookTier: 'Teachings', bookCount: 3, weekly: 0, crown: 0 },
@@ -262,12 +317,15 @@ function computeRawTargetRequirements(target) {
     6: { mora: 120000, boss: 20, specialty: 60 }
   };
 
+  const commonTiers = Array.isArray(charMeta.commonMatTiers) && charMeta.commonMatTiers.length === 3 ? charMeta.commonMatTiers : null;
   for (let p = curPhase + 1; p <= tgtPhase; p++) {
     const step = ascCurve[p];
     if (!step) continue;
     addReq('Mora', step.mora || 0);
     if (charMeta.bossMat && step.boss) addReq(charMeta.bossMat, step.boss);
     if (charMeta.localSpecialty && step.specialty) addReq(charMeta.localSpecialty, step.specialty);
+    const cStep = CHAR_COMMON_ASC_CURVE[p];
+    if (commonTiers && cStep) addReq(commonTiers[cStep.tier], cStep.count);
   }
 
   // 3. Talents (Auto / Skill / Burst)
@@ -286,6 +344,8 @@ function computeRawTargetRequirements(target) {
       addReq(`${prefix}${bookBase}`, step.bookCount || 0);
       if (step.weekly && charMeta.weeklyMat) addReq(charMeta.weeklyMat, step.weekly);
       if (step.crown) addReq('CrownOfInsight', step.crown);
+      const tCommon = TALENT_COMMON_CURVE[lvl];
+      if (commonTiers && tCommon) addReq(commonTiers[tCommon.tier], tCommon.count);
     }
   }
 
@@ -367,10 +427,75 @@ export function sortAndLabelPrefarmQueue(prefarmQueue = []) {
   });
 }
 
+function allocateTieredWaterfall([k1, k2, k3], req, getPool, setPool) {
+  const o1 = getPool(k1);
+  const o2 = getPool(k2);
+  const o3 = getPool(k3);
+  const n1 = req[k1] || 0;
+  const n2 = req[k2] || 0;
+  const n3 = req[k3] || 0;
+
+  const rem1 = Math.max(0, o1 - n1);
+  const short2 = Math.max(0, n2 - o2);
+  const short3 = Math.max(0, n3 - o3);
+
+  const craft2For2 = Math.min(Math.floor(rem1 / 3), short2);
+  let avail1 = rem1 - craft2For2 * 3;
+  const eff2 = o2 + craft2For2;
+  const rem2 = Math.max(0, eff2 - n2);
+
+  const totalAvailT2For3 = rem2 + Math.floor(avail1 / 3);
+  const craft3 = Math.min(Math.floor(totalAvailT2For3 / 3), short3);
+  const t2NeededFor3 = craft3 * 3;
+  const usedRem2 = Math.min(rem2, t2NeededFor3);
+  const avail2 = rem2 - usedRem2;
+  const craft2For3 = t2NeededFor3 - usedRem2;
+  avail1 -= craft2For3 * 3;
+  const eff3 = o3 + craft3;
+  const avail3 = Math.max(0, eff3 - n3);
+
+  setPool(k1, avail1);
+  setPool(k2, avail2);
+  setPool(k3, avail3);
+  return { [k1]: o1, [k2]: eff2, [k3]: eff3 };
+}
+
+function resolveThreeTierSeries(oLow, oMid, oHigh, nLow, nMid, nHigh) {
+  const surplusLow = Math.max(0, oLow - nLow);
+  const craftMid = Math.floor(surplusLow / 3);
+  const netDefLow = Math.max(0, nLow - oLow);
+
+  const effMid = oMid + craftMid;
+  const surplusMid = Math.max(0, effMid - nMid);
+  const craftHigh = Math.floor(surplusMid / 3);
+  const netDefMid = Math.max(0, nMid - effMid);
+
+  const effHigh = oHigh + craftHigh;
+  const surplusHigh = Math.max(0, effHigh - nHigh);
+  const netDefHigh = Math.max(0, nHigh - effHigh);
+
+  const deficit = netDefLow + netDefMid + netDefHigh;
+  const equivDeficit = netDefHigh + netDefMid / 3 + netDefLow / 9;
+  const surplus = deficit === 0 ? surplusHigh : 0;
+
+  return {
+    netDefLow,
+    netDefMid,
+    netDefHigh,
+    craftMid,
+    craftHigh,
+    effMid,
+    effHigh,
+    deficit,
+    equivDeficit,
+    surplus
+  };
+}
+
 /**
  * Waterfall allocation across the ranked prefarmQueue (#1.1 -> #1.2 -> #2.1 ...).
- * Higher-priority targets consume shared resources (Mora, Hero's Wit, Crowns, Books, Weapon mats)
- * first, and only the remaining surplus flows down to lower-priority targets.
+ * Higher-priority targets consume shared resources (Mora, Hero's Wit, Crowns, Books, Weapon mats,
+ * and Common Enemy Drops with 3:1 crafting) first, and only remaining surplus flows down.
  */
 export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wallet = null) {
   const sorted = sortAndLabelPrefarmQueue(prefarmQueue);
@@ -392,9 +517,42 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
   const results = new Map();
   for (const target of sorted) {
     const req = computeRawTargetRequirements(target);
-    const rows = formatRequirementRows(req, (matKey) => getPool(matKey));
+    const charMeta = getCharacterMeta(target.characterKey);
+    const weaponMeta = target.weaponKey ? getWeaponMeta(target.weaponKey) : null;
+
+    const tieredOwned = {};
+    const tieredKeys = new Set();
+    const candidateTriples = [];
+    if (Array.isArray(charMeta?.commonMatTiers) && charMeta.commonMatTiers.length === 3) {
+      candidateTriples.push(charMeta.commonMatTiers);
+    }
+    if (Array.isArray(weaponMeta?.commonMatTiers) && weaponMeta.commonMatTiers.length === 3) {
+      const sameAsChar = candidateTriples.some((t) => t[0] === weaponMeta.commonMatTiers[0]);
+      if (!sameAsChar) candidateTriples.push(weaponMeta.commonMatTiers);
+    }
+
+    const preOwnedSnapshot = {};
+    for (const [k1, k2, k3] of candidateTriples) {
+      if ((req[k1] || 0) + (req[k2] || 0) + (req[k3] || 0) <= 0) continue;
+      const eff = allocateTieredWaterfall([k1, k2, k3], req, getPool, (k, v) => pool.set(k, v));
+      Object.assign(tieredOwned, eff);
+      tieredKeys.add(k1);
+      tieredKeys.add(k2);
+      tieredKeys.add(k3);
+    }
+    for (const matKey of Object.keys(req)) {
+      if (!tieredKeys.has(matKey)) {
+        preOwnedSnapshot[matKey] = getPool(matKey);
+      }
+    }
+
+    const rows = formatRequirementRows(req, (matKey) =>
+      tieredKeys.has(matKey) ? tieredOwned[matKey] : preOwnedSnapshot[matKey]
+    );
     for (const [matKey, needed] of Object.entries(req)) {
-      pool.set(matKey, Math.max(0, getPool(matKey) - needed));
+      if (!tieredKeys.has(matKey)) {
+        pool.set(matKey, Math.max(0, getPool(matKey) - needed));
+      }
     }
     results.set(target.id, rows);
   }
@@ -478,6 +636,19 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
 
   const matKindByKey = new Map();
   const talentSeriesMap = new Map(); // base -> { base, byTier: { T2, T3, T4 }, byTarget: Map<rank, {T2,T3,T4}> }
+  const commonSeriesMap = new Map(); // seriesId (T3 key) -> { keys: { T1, T2, T3 }, neededByTier: { T1, T2, T3 }, byRank }
+  const commonKeyToSeries = new Map(); // matKey -> { seriesId, tierKey: 'T1'|'T2'|'T3', keys: { T1, T2, T3 } }
+  for (const { charMeta, weaponMeta } of targetReqs) {
+    for (const tiers of [charMeta?.commonMatTiers, weaponMeta?.commonMatTiers]) {
+      if (Array.isArray(tiers) && tiers.length === 3) {
+        const keys = { T1: tiers[0], T2: tiers[1], T3: tiers[2] };
+        const seriesId = tiers[2];
+        commonKeyToSeries.set(tiers[0], { seriesId, tierKey: 'T1', keys });
+        commonKeyToSeries.set(tiers[1], { seriesId, tierKey: 'T2', keys });
+        commonKeyToSeries.set(tiers[2], { seriesId, tierKey: 'T3', keys });
+      }
+    }
+  }
   const flatMap = new Map(); // matKey -> { key, kind, neededByRank: Map<rank, number> }
 
   for (const { target, charMeta, weaponMeta, req } of targetReqs) {
@@ -505,6 +676,22 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
         series.neededByTier[tierKey] += needed;
         if (!series.byRank.has(target.rank)) series.byRank.set(target.rank, { T2: 0, T3: 0, T4: 0 });
         series.byRank.get(target.rank)[tierKey] += needed;
+        continue;
+      }
+
+      const commonInfo = commonKeyToSeries.get(matKey);
+      if (commonInfo) {
+        if (!commonSeriesMap.has(commonInfo.seriesId)) {
+          commonSeriesMap.set(commonInfo.seriesId, {
+            keys: commonInfo.keys,
+            neededByTier: { T1: 0, T2: 0, T3: 0 },
+            byRank: new Map()
+          });
+        }
+        const cSeries = commonSeriesMap.get(commonInfo.seriesId);
+        cSeries.neededByTier[commonInfo.tierKey] += needed;
+        if (!cSeries.byRank.has(target.rank)) cSeries.byRank.set(target.rank, { T1: 0, T2: 0, T3: 0 });
+        cSeries.byRank.get(target.rank)[commonInfo.tierKey] += needed;
         continue;
       }
 
@@ -569,23 +756,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     const n3 = series.neededByTier.T3;
     const n4 = series.neededByTier.T4;
 
-    const surplus2 = Math.max(0, o2 - n2);
-    const craft3 = Math.floor(surplus2 / 3);
-    const netDef2 = Math.max(0, n2 - o2);
-
-    const eff3 = o3 + craft3;
-    const surplus3 = Math.max(0, eff3 - n3);
-    const craft4 = Math.floor(surplus3 / 3);
-    const netDef3 = Math.max(0, n3 - eff3);
-
-    const eff4 = o4 + craft4;
-    const surplus4 = Math.max(0, eff4 - n4);
-    const netDef4 = Math.max(0, n4 - eff4);
-
-    const deficit = netDef2 + netDef3 + netDef4;
-    const goldEquivDeficit = netDef4 + netDef3 / 3 + netDef2 / 9;
-    const surplus = deficit === 0 ? surplus4 : 0;
-
+    const r = resolveThreeTierSeries(o2, o3, o4, n2, n3, n4);
     const domInfo = getDomainInfoForReward(series.keys.T4, todayName);
     const needEquivByRank = new Map();
     let totalNeedEquiv = 0;
@@ -596,8 +767,8 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     }
 
     let farmingCost = null;
-    if (deficit > 0) {
-      const runs = Math.max(1, Math.ceil(goldEquivDeficit / 2.2));
+    if (r.deficit > 0) {
+      const runs = Math.max(1, Math.ceil(r.equivDeficit / 2.2));
       const resin = runs * 20;
       farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
     }
@@ -607,21 +778,63 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       name: `${series.base} Series`,
       kind: 'talentSeries',
       rarity: 4,
-      owned: eff4,
+      owned: r.effHigh,
       neededTotal: n4 + n3 + n2,
-      deficit,
-      surplus,
+      deficit: r.deficit,
+      surplus: r.surplus,
       tiers: [
-        { label: 'T2', key: series.keys.T2, owned: o2, needed: n2, netDeficit: netDef2 },
-        { label: 'T3', key: series.keys.T3, owned: eff3, rawOwned: o3, craftedIn: craft3, needed: n3, netDeficit: netDef3 },
-        { label: 'T4', key: series.keys.T4, owned: eff4, rawOwned: o4, craftedIn: craft4, needed: n4, netDeficit: netDef4 }
+        { label: 'T2', key: series.keys.T2, owned: o2, needed: n2, netDeficit: r.netDefLow },
+        { label: 'T3', key: series.keys.T3, owned: r.effMid, rawOwned: o3, craftedIn: r.craftMid, needed: n3, netDeficit: r.netDefMid },
+        { label: 'T4', key: series.keys.T4, owned: r.effHigh, rawOwned: o4, craftedIn: r.craftHigh, needed: n4, netDeficit: r.netDefHigh }
       ],
       sourceLabel: domInfo.domainName || 'Talent Domain',
       scheduleDays: domInfo.days,
       isToday: domInfo.isToday,
       farmingCost,
       urgency: domInfo.isToday ? 2 : 3,
-      alloc: buildAlloc(needEquivByRank, totalNeedEquiv, goldEquivDeficit)
+      alloc: buildAlloc(needEquivByRank, totalNeedEquiv, r.equivDeficit)
+    });
+  }
+
+  // 1b. Common Enemy Drop Series (Non-Resin, with 3-to-1 Alchemy Conversion)
+  for (const series of commonSeriesMap.values()) {
+    const o1 = getRawOwned(series.keys.T1);
+    const o2 = getRawOwned(series.keys.T2);
+    const o3 = getRawOwned(series.keys.T3);
+    const n1 = series.neededByTier.T1;
+    const n2 = series.neededByTier.T2;
+    const n3 = series.neededByTier.T3;
+
+    const r = resolveThreeTierSeries(o1, o2, o3, n1, n2, n3);
+    const needEquivByRank = new Map();
+    let totalNeedEquiv = 0;
+    for (const [rank, t] of series.byRank.entries()) {
+      const eq = t.T3 + t.T2 / 3 + t.T1 / 9;
+      needEquivByRank.set(rank, eq);
+      totalNeedEquiv += eq;
+    }
+
+    const t3Meta = getMaterialMeta(series.keys.T3);
+    results.push({
+      key: series.keys.T3,
+      name: t3Meta.name || series.keys.T3,
+      kind: 'commonMat',
+      rarity: 3,
+      owned: r.effHigh,
+      neededTotal: n3 + n2 + n1,
+      deficit: r.deficit,
+      surplus: r.surplus,
+      tiers: [
+        { label: 'T1', key: series.keys.T1, owned: o1, needed: n1, netDeficit: r.netDefLow },
+        { label: 'T2', key: series.keys.T2, owned: r.effMid, rawOwned: o2, craftedIn: r.craftMid, needed: n2, netDeficit: r.netDefMid },
+        { label: 'T3', key: series.keys.T3, owned: r.effHigh, rawOwned: o3, craftedIn: r.craftHigh, needed: n3, netDeficit: r.netDefHigh }
+      ],
+      sourceLabel: 'Enemy Drop',
+      scheduleDays: [],
+      isToday: false,
+      farmingCost: null,
+      urgency: 5,
+      alloc: buildAlloc(needEquivByRank, totalNeedEquiv, r.equivDeficit)
     });
   }
 

@@ -8,7 +8,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261114e';
+} from './catalog.js?v=20261114o';
 import {
   analyzeCharacterKit,
   calcTalentUpgradeDiff,

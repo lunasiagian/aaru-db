@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v12';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v13';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
@@ -141,6 +141,7 @@ async function fetchYattaCatalog(forceRefresh = false) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.items) continue;
         const upg = {};
+        const monsterDrops = [];
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
           if (!mat) continue;
@@ -151,23 +152,39 @@ async function fetchYattaCatalog(forceRefresh = false) {
             const pascalMat = String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '');
             if (mat.rank === 4 && !upg.bossMat) upg.bossMat = pascalMat;
             else if (mat.rank === 5 && !upg.weeklyMat) upg.weeklyMat = pascalMat;
+          } else if (/^112\d+$/.test(String(matId))) {
+            monsterDrops.push({ id: Number(matId), rank: mat.rank, pascal: String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '') });
           }
+        }
+        if (monsterDrops.length >= 3) {
+          monsterDrops.sort((a, b) => a.id - b.id);
+          upg.commonMatTiers = monsterDrops.slice(0, 3).map((m) => m.pascal);
         }
         if (Object.keys(upg).length) avatarUpgradeByNorm.set(norm, upg);
       }
       for (const item of Object.values(upgradeRes.value.data.weapon || {})) {
         const norm = normalizeAssetKey(item.name);
         if (!norm || !item.items) continue;
+        const wUpg = {};
+        let commonT1Id = null;
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
-          if (mat && domainRewardNormSet.has(mat.norm)) {
-            weaponUpgradeByNorm.set(norm, {
-              domainMatKey: mat.norm,
-              domainMatExactKey: String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '')
-            });
-            break;
+          if (!mat) continue;
+          if (!wUpg.domainMatExactKey && domainRewardNormSet.has(mat.norm)) {
+            wUpg.domainMatKey = mat.norm;
+            wUpg.domainMatExactKey = String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '');
+          } else if (/^112\d+$/.test(String(matId)) && mat.rank === 1) {
+            commonT1Id = Number(matId);
           }
         }
+        if (commonT1Id !== null) {
+          const tiers = [commonT1Id, commonT1Id + 1, commonT1Id + 2]
+            .map((id) => matNormById.get(String(id))?.name)
+            .filter(Boolean)
+            .map((n) => String(n).replace(/[^a-zA-Z0-9]/g, ''));
+          if (tiers.length === 3) wUpg.commonMatTiers = tiers;
+        }
+        if (Object.keys(wUpg).length) weaponUpgradeByNorm.set(norm, wUpg);
       }
     }
 
@@ -252,9 +269,10 @@ async function fetchYattaCatalog(forceRefresh = false) {
             if (!norm) continue;
             matIdLookup[String(id)] = name;
             if (!slim.materials[norm] && item.icon) {
+              const qMap = { QUALITY_WHITE: 1, QUALITY_GRAY: 1, QUALITY_GREEN: 2, QUALITY_BLUE: 3, QUALITY_PURPLE: 4, QUALITY_ORANGE: 5 };
               slim.materials[norm] = {
                 name,
-                rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : item.qualityType === 'QUALITY_PURPLE' ? 4 : 3,
+                rarity: qMap[item.qualityType] || 3,
                 category: item.type || 'Material',
                 icon: `https://api.lunaris.moe/data/assets/items/${item.icon}.webp`
               };
@@ -471,7 +489,8 @@ export function getCharacterMeta(key) {
           domainMatKey: base.domainMatKey || live.domainMatKey,
           talentBook: base.talentBook || live.talentBook,
           bossMat: base.bossMat || live.bossMat,
-          weeklyMat: base.weeklyMat || live.weeklyMat
+          weeklyMat: base.weeklyMat || live.weeklyMat,
+          commonMatTiers: base.commonMatTiers || live.commonMatTiers
         }
       : base;
   }
@@ -492,7 +511,14 @@ export function getWeaponMeta(key) {
   const base = catalog?.weapons?.[key];
   const live = getLiveAssetEntry('weapons', key);
   if (base) {
-    return live ? { ...live, ...base, domainMatKey: base.domainMatKey || live.domainMatKey } : base;
+    return live
+      ? {
+          ...live,
+          ...base,
+          domainMatKey: base.domainMatKey || live.domainMatKey,
+          commonMatTiers: base.commonMatTiers || live.commonMatTiers
+        }
+      : base;
   }
   return (
     (live ? { key, substat: '', ...live } : null) || {
@@ -548,7 +574,7 @@ const pendingDetailFetches = new Map();
 export async function ensureCharacterMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.characters.get(norm);
-  if (!entry || entry._hydrated || (entry.talentBook && entry.bossMat) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || (entry.talentBook && entry.bossMat && entry.commonMatTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingDetailFetches.has(norm)) return pendingDetailFetches.get(norm);
 
   const task = (async () => {
@@ -587,6 +613,23 @@ export async function ensureCharacterMaterials(pascalKey) {
       const weeklyId = Object.keys(weeklyObj)[0];
       if (weeklyId && lookup[weeklyId]) entry.weeklyMat = toPascal(lookup[weeklyId]);
 
+      const skillMonsterIds = Object.keys(detail?.skills?.leveling?.monster || {})
+        .filter((id) => /^112\d+$/.test(id))
+        .map(Number)
+        .sort((a, b) => a - b);
+      if (skillMonsterIds.length >= 3) {
+        const tiers = skillMonsterIds.slice(0, 3).map((id) => toPascal(lookup[String(id)])).filter(Boolean);
+        if (tiers.length === 3) entry.commonMatTiers = tiers;
+      } else {
+        const lastMonsterId = lastAsc?.monster ? Number(Object.keys(lastAsc.monster)[0]) : null;
+        if (lastMonsterId && Number.isFinite(lastMonsterId)) {
+          const tiers = [lastMonsterId - 2, lastMonsterId - 1, lastMonsterId]
+            .map((id) => toPascal(lookup[String(id)]))
+            .filter(Boolean);
+          if (tiers.length === 3) entry.commonMatTiers = tiers;
+        }
+      }
+
       // Persist updated entry back to localStorage cache
       try {
         const cached = JSON.parse(localStorage.getItem(YATTA_CACHE_KEY) || '{}');
@@ -614,7 +657,7 @@ const pendingWeaponFetches = new Map();
 export async function ensureWeaponMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.weapons.get(norm);
-  if (!entry || entry._hydrated || entry.domainMatExactKey || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || (entry.domainMatExactKey && entry.commonMatTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingWeaponFetches.has(norm)) return pendingWeaponFetches.get(norm);
 
   const task = (async () => {
@@ -639,6 +682,23 @@ export async function ensureWeaponMaterials(pascalKey) {
       if (goldId && lookup[goldId]) {
         entry.domainMatExactKey = toPascal(lookup[goldId]);
         entry.domainMatKey = normalizeAssetKey(lookup[goldId]);
+      }
+
+      const monsterMats = asc
+        .map((a) => String(a?.icon || '').replace(/^UI_ItemIcon_/, ''))
+        .filter((id) => /^112\d+$/.test(id));
+      const commonT1Id = monsterMats.find((id) => {
+        const name = lookup[id];
+        if (!name) return false;
+        const mat = yattaMaps.materials.get(normalizeAssetKey(name));
+        return mat?.rarity === 1;
+      });
+      if (commonT1Id) {
+        const baseId = Number(commonT1Id);
+        const tiers = [baseId, baseId + 1, baseId + 2]
+          .map((id) => toPascal(lookup[String(id)]))
+          .filter(Boolean);
+        if (tiers.length === 3) entry.commonMatTiers = tiers;
       }
 
       try {
