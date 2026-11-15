@@ -18,12 +18,13 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261114w';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
-import { renderRosterTab } from './ui-roster.js?v=20261115q';
+import { renderRosterTab } from './ui-roster.js?v=20261115r';
+import { renderArmoryTab } from './ui-armory.js?v=20261115r';
 import { renderTeamsTab } from './ui-teams.js?v=20261115a';
 import { CHANGELOG } from './changelog.js?v=20261115i';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
-const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'teams', 'changelog']);
+const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'armory', 'teams', 'changelog']);
 
 function getTabFromHash() {
   const raw = window.location.hash.replace(/^#/, '').trim().toLowerCase();
@@ -47,11 +48,17 @@ const state = {
     element: 'All',
     sortBy: 'priority',
     density: 'grid',
-    view: 'characters',
     search: '',
     inspectedKey: null,
     dossierTab: 'loadout',
     tiers: { active: true, built: true, archive: false }
+  },
+  armoryFilter: {
+    weaponType: 'All',
+    filter: 'all',
+    sortBy: 'level',
+    density: 'grid',
+    search: ''
   },
   pendingGoodImport: null // { raw, diff }
 };
@@ -138,7 +145,8 @@ function updateTopBar() {
     hud: 'AARUDB / CENTRAL HUD',
     vault: 'AARUDB / INVENTORY VAULT',
     prefarm: 'AARUDB / PREFARM QUEUE',
-    roster: 'AARUDB / ROSTER & ARMORY',
+    roster: 'AARUDB / ROSTER',
+    armory: 'AARUDB / ARMORY',
     teams: 'AARUDB / TEAM COMPS',
     changelog: 'AARUDB / FIXES & FEATS'
   };
@@ -178,7 +186,8 @@ function renderActiveTab(options = {}) {
     hudDayOverride: state.hudDayOverride,
     hudShowAllDomains: state.hudShowAllDomains,
     vaultFilter: state.vaultFilter,
-    rosterFilter: state.rosterFilter
+    rosterFilter: state.rosterFilter,
+    armoryFilter: state.armoryFilter
   };
 
   const container = document.querySelector(`.tab-view[data-tab="${state.activeTab}"]`);
@@ -366,6 +375,13 @@ function renderActiveTab(options = {}) {
         });
         renderActiveTab();
         showToast(`Saved ${charKey} to Roster`, 'mint');
+      }
+    });
+  } else if (state.activeTab === 'armory') {
+    renderArmoryTab(container, viewState, {
+      onChangeArmoryFilter: (patch) => {
+        state.armoryFilter = { ...state.armoryFilter, ...patch };
+        renderActiveTab({ preserveScroll: true });
       }
     });
   } else if (state.activeTab === 'teams') {

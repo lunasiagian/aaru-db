@@ -1146,32 +1146,20 @@ export function renderRosterTab(container, state, handlers) {
     return;
   }
 
-  const filteredWeapons = [...(account.weapons || [])]
-    .filter((w) => {
-      if (!q) return true;
-      const wm = getWeaponMeta(w.key);
-      return wm.name.toLowerCase().includes(q) || w.key.toLowerCase().includes(q) || (w.location || '').toLowerCase().includes(q);
-    })
-    .sort((a, b) => b.level - a.level || b.refinement - a.refinement);
-
   container.innerHTML = `
     <div class="section-header">
       <div>
         <div class="eyebrow">AARUDB / ROSTER</div>
-        <h1 class="section-title">Roster &amp; Armory</h1>
+        <h1 class="section-title">Roster</h1>
       </div>
       <div class="header-meta mono">
-        OWNED: <span class="text-gold">${combinedChars.filter((c) => c.owned).length}</span> CHARS • <span class="text-mint">${(account.weapons || []).length}</span> WEAPONS
+        OWNED: <span class="text-gold">${combinedChars.filter((c) => c.owned).length}</span> CHARS · SHOWING <span class="text-mint">${filteredChars.length}</span>
       </div>
     </div>
 
     <article class="card">
       <div class="roster-toolbar roster-toolbar-single">
         <div class="roster-toolbar-left">
-          <div class="subtab-switch">
-            <button type="button" class="filter-pill ${rosterFilter.view === 'characters' ? 'active' : ''}" data-roster-view="characters">Characters (${filteredChars.length})</button>
-            <button type="button" class="filter-pill ${rosterFilter.view === 'weapons' ? 'active' : ''}" data-roster-view="weapons">Weapons (${filteredWeapons.length})</button>
-          </div>
           <div class="filter-pills">
             ${STATUS_PILLS.map(
               (st) => `<button type="button" class="filter-pill ${statusFilter === st.id ? 'active' : ''}" data-roster-status="${st.id}">${st.label}</button>`
@@ -1198,55 +1186,11 @@ export function renderRosterTab(container, state, handlers) {
         </div>
       </div>
 
-      ${
-        rosterFilter.view === 'characters'
-          ? `
-        <div class="roster-tiers">
-          ${renderTierSection('active', 'Active Prefarm & In Progress', activeTier, tiersState.active, density)}
-          ${renderTierSection('built', 'Combat Ready / Built', builtTier, tiersState.built, density)}
-          ${renderTierSection('archive', 'Bench & Unowned Archive', archiveTier, tiersState.archive, density)}
-        </div>`
-          : `
-        <div class="armory-weapon-grid">
-          ${filteredWeapons.length
-            ? filteredWeapons
-                .map((w) => {
-                  const wm = getWeaponMeta(w.key);
-                  const holderMeta = w.location ? getCharacterMeta(w.location) : null;
-                  return `
-                  <div class="armory-weapon-card">
-                    <div class="armory-weapon-top">
-                      <div class="armory-weapon-id">
-                        <div class="armory-weapon-icon">
-                          ${renderAssetIcon('weapons', w.key, wm.name, 'icon-md')}
-                        </div>
-                        <div style="min-width:0;">
-                          <div class="item-name">${escapeHtml(wm.name)}</div>
-                          <div class="item-meta mono">${escapeHtml(wm.weaponType)} · ${wm.rarity}★</div>
-                        </div>
-                      </div>
-                      <span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>
-                    </div>
-                    <div class="armory-weapon-stats mono">
-                      <div class="armory-stat-box">
-                        <span class="stat-label">REFINE</span>
-                        <span class="stat-val text-gold">R${w.refinement}</span>
-                      </div>
-                      <div class="armory-stat-box">
-                        <span class="stat-label">ASC</span>
-                        <span class="stat-val">A${w.ascension}</span>
-                      </div>
-                      <div class="armory-stat-box">
-                        <span class="stat-label">EQUIPPED</span>
-                        <span class="stat-val ${holderMeta ? 'text-cyan' : 'muted'}">${holderMeta ? escapeHtml(holderMeta.name) : 'Unassigned'}</span>
-                      </div>
-                    </div>
-                  </div>`;
-                })
-                .join('')
-            : '<div class="empty-state">No weapons match the search query.</div>'}
-        </div>`
-      }
+      <div class="roster-tiers">
+        ${renderTierSection('active', 'Active Prefarm & In Progress', activeTier, tiersState.active, density)}
+        ${renderTierSection('built', 'Combat Ready / Built', builtTier, tiersState.built, density)}
+        ${renderTierSection('archive', 'Bench & Unowned Archive', archiveTier, tiersState.archive, density)}
+      </div>
     </article>
   `;
 
@@ -1264,10 +1208,6 @@ export function renderRosterTab(container, state, handlers) {
 
   container.querySelectorAll('[data-roster-density]').forEach((btn) => {
     btn.addEventListener('click', () => handlers.onChangeRosterFilter({ density: btn.dataset.rosterDensity }));
-  });
-
-  container.querySelectorAll('[data-roster-view]').forEach((btn) => {
-    btn.addEventListener('click', () => handlers.onChangeRosterFilter({ view: btn.dataset.rosterView }));
   });
 
   container.querySelector('[data-roster-search]')?.addEventListener('input', (e) => {
