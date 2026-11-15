@@ -1217,7 +1217,7 @@ export function renderRosterTab(container, state, handlers) {
                   <div class="armory-weapon-card">
                     <div class="armory-weapon-top">
                       <div class="armory-weapon-id">
-                        <div class="armory-weapon-icon" data-rarity="${wm.rarity}">
+                        <div class="armory-weapon-icon">
                           ${renderAssetIcon('weapons', w.key, wm.name, 'icon-md')}
                         </div>
                         <div style="min-width:0;">

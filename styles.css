@@ -1972,24 +1972,10 @@ textarea:focus {
   justify-content: center;
   padding: 2px;
   border-radius: 9px;
-  border: 2px solid var(--border-slate);
-  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: none;
   flex-shrink: 0;
-}
-
-.armory-weapon-icon[data-rarity='5'] {
-  border-color: #fbbf24;
-  box-shadow: 0 0 10px rgba(251, 191, 36, 0.25);
-}
-
-.armory-weapon-icon[data-rarity='4'] {
-  border-color: #c084fc;
-  box-shadow: 0 0 10px rgba(192, 132, 252, 0.22);
-}
-
-.armory-weapon-icon[data-rarity='3'] {
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
 .armory-weapon-stats {
