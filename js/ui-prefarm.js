@@ -8,8 +8,8 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114v';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114v';
+} from './catalog.js?v=20261114w';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114w';
 
 const uiState = {
   openTargets: new Set(),
@@ -43,10 +43,9 @@ function renderReqChipHtml(r, targetStateKey = '') {
     : `+${formatCompactNumber(r.surplus)}`;
 
   const hints = [];
-  if (r.craftedIn > 0) {
-    hints.push(
-      `<span class="req-hint-craft">${r.craftedIn} craftable${isDef ? ` (net -${formatCompactNumber(r.deficit)})` : ''}</span>`
-    );
+  if (r.craftable > 0 && isDef) {
+    const netDeficit = Math.max(0, r.deficit - r.craftable);
+    hints.push(`<span class="req-hint-craft">${r.craftable} craftable (net -${formatCompactNumber(netDeficit)})</span>`);
   }
   if (r.reservedByPrev > 0) {
     hints.push(
@@ -93,9 +92,20 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   };
 
   const families = [];
-  const pushFamily = (id, label, span, rows) => {
+  const pushFamily = (id, label, span, rows, computeCraftable = false) => {
     if (!rows.length) return;
-    families.push({ id, label, span, rows });
+    const nextRows = rows.map((r) => ({ ...r }));
+    if (computeCraftable) {
+      for (let i = 1; i < nextRows.length; i++) {
+        const prev = nextRows[i - 1];
+        const prevTierSurplus = Math.max(0, prev.owned - prev.needed);
+        const craftable = Math.floor(prevTierSurplus / 3);
+        if (craftable > 0 && nextRows[i].deficit > 0) {
+          nextRows[i].craftable = craftable;
+        }
+      }
+    }
+    families.push({ id, label, span, rows: nextRows });
   };
 
   // 1. Talent Books (Teachings -> Guide -> Philosophies): span 6
@@ -115,29 +125,39 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
 
   // 3. Common Enemy Drops — split Character vs Weapon 3-tier families into separate span-6 clusters
   if (Array.isArray(charMeta?.commonMatTiers)) {
-    pushFamily('charCommon', 'Common Enemy Drops', 6, take(charMeta.commonMatTiers));
+    pushFamily('charCommon', 'Common Enemy Drops', 6, take(charMeta.commonMatTiers), true);
   }
   if (Array.isArray(weaponMeta?.commonMatTiers)) {
-    pushFamily('wepCommon', 'Weapon Common Drops', 6, take(weaponMeta.commonMatTiers));
+    pushFamily('wepCommon', 'Weapon Common Drops', 6, take(weaponMeta.commonMatTiers), true);
   }
 
   // 4. Elite Enemy Drops (2★ -> 3★ -> 4★): span 6
   if (Array.isArray(weaponMeta?.eliteMatTiers)) {
-    pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers));
+    pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers), true);
   }
 
-  // 5. Currency, XP & Specialty: span 6 (pairs beside Elite Drops)
-  const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre', charMeta?.localSpecialty]);
-  const restRows = valid.filter((r) => !used.has(r.key));
-  pushFamily('currency', 'Currency, XP & Specialty', 6, [...currencyRows, ...restRows]);
+  // 5. Ascension Gems (span 8) paired beside Weapon Materials (span 4)
+  const gemRegex = /^(AgnidusAgate|VarunadaLazurite|NagadusEmerald|VajradaAmethyst|VayudaTurquoise|ShivadaJade|PrithivaTopaz|BrilliantDiamond)(Sliver|Fragment|Chunk|Gemstone)$/;
+  const gemRankOrder = { Sliver: 0, Fragment: 1, Chunk: 2, Gemstone: 3 };
+  const gemRowsFromMeta = Array.isArray(charMeta?.gemTiers) ? take(charMeta.gemTiers) : [];
+  const gemRowsFromRegex = valid
+    .filter((r) => !used.has(r.key) && gemRegex.test(r.key))
+    .sort((a, b) => {
+      const ta = a.key.match(gemRegex)?.[2];
+      const tb = b.key.match(gemRegex)?.[2];
+      return (gemRankOrder[ta] ?? 9) - (gemRankOrder[tb] ?? 9);
+    });
+  gemRowsFromRegex.forEach((r) => used.add(r.key));
+  pushFamily('gems', 'Ascension Gems', 8, [...gemRowsFromMeta, ...gemRowsFromRegex], true);
 
-  // 6. Ascension Gems (span 8) paired beside Weapon Materials (span 4)
-  if (Array.isArray(charMeta?.gemTiers)) {
-    pushFamily('gems', 'Ascension Gems', 8, take(charMeta.gemTiers));
-  }
   if (weaponMeta?.domainMatExactKey) {
     pushFamily('wepDomain', 'Weapon Materials', 4, take([weaponMeta.domainMatExactKey]));
   }
+
+  // 6. Currency, XP & Specialty: span 6
+  const currencyRows = take(['Mora', 'HerosWit', 'MysticEnhancementOre', charMeta?.localSpecialty]);
+  const restRows = valid.filter((r) => !used.has(r.key));
+  pushFamily('currency', 'Currency, XP & Specialty', 6, [...currencyRows, ...restRows]);
 
   const activeFamilies = [];
   const readyRows = [];
