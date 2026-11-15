@@ -247,6 +247,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
         return sec >= 10;
       })
     );
+  const hasStanceExitClause = /(?:cleared|ends?|removed?)\s+when[^.]{0,40}leaves\s+the\s+field/i.test(
+    nonNormalText
+  );
   const hasOffField =
     !usesNormalAttack &&
     !hasStanceExitClause &&
