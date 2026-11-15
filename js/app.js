@@ -19,7 +19,7 @@ import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
 import { renderRosterTab } from './ui-roster.js?v=20261115a';
 import { renderTeamsTab } from './ui-teams.js?v=20261115a';
-import { CHANGELOG } from './changelog.js?v=20261113ac';
+import { CHANGELOG } from './changelog.js?v=20261115i';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
 
@@ -112,7 +112,8 @@ function updateTopBar() {
     vault: 'AARUDB / INVENTORY VAULT',
     prefarm: 'AARUDB / PREFARM QUEUE',
     roster: 'AARUDB / ROSTER & ARMORY',
-    teams: 'AARUDB / TEAM COMPS'
+    teams: 'AARUDB / TEAM COMPS',
+    changelog: 'AARUDB / FIXES & FEATS'
   };
   const crumbEl = document.getElementById('topbar-breadcrumb');
   if (crumbEl) crumbEl.textContent = crumbMap[state.activeTab] || 'AARUDB';
@@ -365,6 +366,8 @@ function renderActiveTab(options = {}) {
         renderActiveTab();
       }
     });
+  } else if (state.activeTab === 'changelog') {
+    renderFixesAndFeatsPage(container);
   }
 
   if (options?.preserveFocusSelector) {
@@ -704,51 +707,72 @@ function setupServerModal() {
   });
 }
 
+function renderFixesAndFeatsPage(container) {
+  const renderListBlock = (heading, badgeCls, items) => {
+    if (!items?.length) return '';
+    return `
+      <div class="fixes-section">
+        <div class="fixes-section-head">
+          <span class="pill mono ${badgeCls}">${heading}</span>
+        </div>
+        <ol class="fixes-ordered">
+          ${items.map((item) => `<li>${item}</li>`).join('')}
+        </ol>
+      </div>`;
+  };
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">AARUDB / RELEASE NOTES</div>
+        <h1 class="section-title">Fixes &amp; Feats</h1>
+        <p class="section-subtitle muted">Known bugs, recent fixes, and upcoming features.</p>
+      </div>
+      <div class="header-meta mono">
+        LATEST: <span class="text-gold">${CHANGELOG[0]?.date || '—'}</span>
+      </div>
+    </div>
+
+    <div class="fixes-page-list">
+      ${CHANGELOG.map(
+        (entry, idx) => `
+        <article class="card changelog-entry ${idx === 0 ? 'is-latest' : ''}">
+          <div class="changelog-entry-head">
+            <div>
+              <span class="pill mono ${idx === 0 ? 'pill-mint' : ''}">${entry.version}</span>
+              <strong class="changelog-title">${entry.title}</strong>
+            </div>
+            <span class="mono muted" style="font-size:12px;">${entry.date}</span>
+          </div>
+          ${renderListBlock('Known Bugs & Issues', 'pill-coral', entry.knownBugs)}
+          ${renderListBlock('Fixes', 'pill-mint', entry.fixes)}
+          ${renderListBlock('Planned Features', 'pill-sky', entry.plannedFeatures)}
+          ${
+            entry.highlights?.length
+              ? `<ul class="changelog-points">${entry.highlights.map((h) => `<li>${h}</li>`).join('')}</ul>`
+              : ''
+          }
+        </article>`
+      ).join('')}
+    </div>
+  `;
+}
+
 function initChangelogModal() {
   const btn = document.getElementById('btn-changelog');
   const dot = document.getElementById('changelog-dot');
-  const modal = document.getElementById('changelog-modal');
-  const body = document.getElementById('changelog-body');
-  const closeBtn = document.getElementById('btn-close-changelog');
-  if (!btn || !modal || !body) return;
-
   const latestVer = CHANGELOG[0]?.version || '';
   const seenVer = localStorage.getItem('aaru_changelog_seen');
   if (dot && latestVer && seenVer !== latestVer) {
     dot.hidden = false;
   }
 
-  const renderBody = () => {
-    body.innerHTML = CHANGELOG.map(
-      (entry, idx) => `
-      <article class="changelog-entry ${idx === 0 ? 'is-latest' : ''}">
-        <div class="changelog-entry-head">
-          <div>
-            <span class="pill mono ${idx === 0 ? 'pill-mint' : ''}">${entry.version}</span>
-            <strong class="changelog-title">${entry.title}</strong>
-          </div>
-          <span class="mono muted" style="font-size:11px;">${entry.date}</span>
-        </div>
-        <ul class="changelog-points">
-          ${entry.highlights.map((h) => `<li>${h}</li>`).join('')}
-        </ul>
-      </article>`
-    ).join('');
-  };
-
-  btn.addEventListener('click', () => {
-    renderBody();
-    modal.hidden = false;
+  btn?.addEventListener('click', () => {
+    state.activeTab = 'changelog';
     if (latestVer) localStorage.setItem('aaru_changelog_seen', latestVer);
     if (dot) dot.hidden = true;
-  });
-
-  const close = () => {
-    modal.hidden = true;
-  };
-  closeBtn?.addEventListener('click', close);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) close();
+    renderShellChrome();
+    renderActiveTab();
   });
 }
 

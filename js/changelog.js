@@ -4,6 +4,31 @@
  */
 export const CHANGELOG = [
   {
+    version: '2026.11.14',
+    date: 'Nov 14, 2026',
+    title: 'Fixes & Feats — Prefarm Overhaul, Element Frames & Known Edge Cases',
+    knownBugs: [
+      'Primogems count on HUD currently calculates Intertwined Fates and Acquaint Fates in the total fates, which, I believe, constitutes false promises—especially towards your primo counts. Sorry for that; working on a fix, scheduled to deploy within the week.',
+      'Hitting refresh from any page will return you to the HUD. Also scheduled to deploy a fix within the week.',
+      'I added a parser rule where if you have C3 and C5, it will immediately apply +3 to your Skill and Burst. This, of course, was inspired by my Zhongli when I used him as an edge case to stress test the website. However, it failed to take into account that HoYoverse are evolving devs, and for some carries like Skirk and Neuvillette, they instead applied +3 to their Normal Attacks. Trying to figure out the fix without breaking my entire codebase. Thank you so much for your patience!',
+      'This is not a bug, per se, but the Vault currently imports raw along with the GOOD tags (Genshin Open Object Description) and allows you to modify the amount you have. In the future, I plan to introduce a setting where you can either lock the manual input or allow it (if you don’t feel like importing the .json file of your inventory). Stay tuned!',
+      'Currently, in the Roster tab, you can see roles that characters have next to their name. I’ve been doing manual testing with edge cases. Because the parser logic sees that I have C4 Yanfei, it automatically applies the <code>shielder</code> tag next to <code>on-field carry</code>. Which... is not wrong. But also not right? So, definitely brainstorming a fix for that.'
+    ],
+    fixes: [
+      'Switched out the elemental tag next to the character name and instead created colour-coded frames for each character based on their element, which I think is a better visual cue for Genshin Impact players.',
+      'Fixed the calculation for talents, weapons, and enemy materials. Previously, it only calculated how many you are missing from each tier (e.g., Teachings, Guides, and Philosophies). It now calculates how many of all the tiers you can craft with the raw amount you have in your account—so if the website tells you that you need 5 of the gold books, let’s say, and you have 18 of the lowest tier, it’ll tell you that you need 3 more (because it applied the logic that 9 of the lowest-tier book is required to craft the highest-tier one).',
+      'Fixed the visual weight of the materials in the Prefarm Planner. Previously, material labels spilled over their containers; now, through some CSS jutsu, I’ve fixed that. It still doesn’t look the best to me, but I am very nitpicky.',
+      'Clickable materials in the Prefarm Planner: not necessarily a fix, but rather a feature I introduced so that you can click the material and a pop-up box will show you a detailed description of the material. Yay!',
+      'On that note: previously, if you clicked on Mora in the Prefarm Planner, it’d list literally all the ways you can get Mora (literally all the domains in Teyvat and chests). I removed the noise and made it so that it... literally doesn’t do that. Very sorry for that!'
+    ],
+    plannedFeatures: [
+      'Expanding the character kit knowledge base. Partially from my own knowledge of the characters and partially trying to understand Genshin Impact’s damage formula.',
+      'Revamp character ER requirement. Right now, it only alerts you if your character has low ER if run solo. This is done by cross-checking known ER requirements against character Burst cost <em>and</em> how many particles each character regenerates (taken from KeqingMains’ theorycrafting library). But what if your main DPS is Varka, who doesn’t need ER at all due to not needing to burst? What if you never run Yelan as a solo Hydro (which... many such cases) and therefore her ER requirements need to be reconfigured? I’m continually testing edge cases so that I can revamp this feature. Stay tuned!',
+      'Trying to configure a formula to calculate poise rating, which is interruption resistance and how it affects your team’s damage-dealing capabilities, inspired by Yoimiya (who I’ll never take out of my recurring teams and whose 3rd and 5th NA multiplier means she needs to complete her attack strings, therefore needing full interruption resistance—of which she innately has none).',
+      'Niche Teams Config: brainstorming a way to try and create team-building stats detection and damage-dealing capabilities for when you want to build teams for the laughs of it. Inspired by: 1) Critkomi DPS team; 2) my good friend, Ceri, who mentioned Critkomi being A Thing as “the beauty of Genshin”. Which I agree with.'
+    ]
+  },
+  {
     version: '2026.11.13-c',
     date: 'Nov 13, 2026',
     title: 'Constellation Telemetry & Effective Talents',
