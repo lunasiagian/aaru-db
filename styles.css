@@ -1353,6 +1353,14 @@ textarea:focus {
   grid-column: span 8;
 }
 
+.prefarm-cluster.span-12 {
+  grid-column: span 12;
+}
+
+.prefarm-cluster.span-12 .prefarm-cluster-tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .prefarm-cluster-label {
   font-size: 10px;
   font-weight: 600;
@@ -1376,6 +1384,11 @@ textarea:focus {
   border-color: rgba(148, 163, 184, 0.5);
   transform: translateY(-1px);
   background: rgba(15, 23, 42, 0.72);
+}
+
+.prefarm-tile-main {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .prefarm-owned-text,
@@ -1574,8 +1587,12 @@ textarea:focus {
   .prefarm-cluster.span-5,
   .prefarm-cluster.span-6,
   .prefarm-cluster.span-7,
-  .prefarm-cluster.span-8 {
+  .prefarm-cluster.span-8,
+  .prefarm-cluster.span-12 {
     grid-column: span 12;
+  }
+  .prefarm-cluster.span-12 .prefarm-cluster-tiles {
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   }
 }
 

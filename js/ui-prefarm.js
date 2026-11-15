@@ -49,7 +49,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
   }
   if (r.reservedByPrev > 0) {
     hints.push(
-      `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail (${formatCompactNumber(r.reservedByPrev)} used by ${escapeAttr(r.reservedByLabel || '#1')})</span>`
+      `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail · -${formatCompactNumber(r.reservedByPrev)} ${escapeAttr(r.reservedByLabel || '#1')}</span>`
     );
   }
 
@@ -61,7 +61,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
       data-pf-target="${escapeAttr(targetStateKey)}"
       title="${escapeAttr(`${r.name}: ${fullRatio} — Click for description & drop locations`)}">
       ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
-      <div class="req-chip-body">
+      <div class="req-chip-body prefarm-tile-main">
         <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
         <div class="req-nums mono">
           <span class="prefarm-owned-text prefarm-count" title="${escapeAttr(fullRatio)}">${compactRatio}</span>
@@ -166,6 +166,18 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
       readyRows.push(...fam.rows);
     } else {
       activeFamilies.push(fam);
+    }
+  }
+
+  const gemsFam = activeFamilies.find((f) => f.id === 'gems');
+  const wepDomainFam = activeFamilies.find((f) => f.id === 'wepDomain');
+  const currencyFam = activeFamilies.find((f) => f.id === 'currency');
+  if (!gemsFam && currencyFam) {
+    if (wepDomainFam && wepDomainFam.rows.length <= 2 && currencyFam.rows.length >= 3) {
+      wepDomainFam.span = 4;
+      currencyFam.span = 8;
+    } else if (!wepDomainFam) {
+      currencyFam.span = 12;
     }
   }
   return { activeFamilies, readyRows };
