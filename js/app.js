@@ -23,7 +23,7 @@ import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
 import { renderRosterTab } from './ui-roster.js?v=20261115aa';
 import { renderArmoryTab } from './ui-armory.js?v=20261115v';
 import { renderTeamsTab } from './ui-teams.js?v=20261115a';
-import { CHANGELOG } from './changelog.js?v=20261115i';
+import { CHANGELOG } from './changelog.js?v=20261115ab';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
 const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'armory', 'teams', 'changelog']);
