@@ -1,6 +1,6 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
-const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v14';
+const YATTA_CACHE_KEY = 'aaru_yatta_catalog_v15';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
 const YATTA_TTL_MS = 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
@@ -174,22 +174,30 @@ async function fetchYattaCatalog(forceRefresh = false) {
         if (!norm || !item.items) continue;
         const wUpg = {};
         let commonT1Id = null;
+        let eliteT4Id = null;
         for (const matId of Object.keys(item.items)) {
           const mat = matNormById.get(String(matId));
           if (!mat) continue;
           if (!wUpg.domainMatExactKey && domainRewardNormSet.has(mat.norm)) {
             wUpg.domainMatKey = mat.norm;
             wUpg.domainMatExactKey = String(mat.name || '').replace(/[^a-zA-Z0-9]/g, '');
-          } else if (/^112\d+$/.test(String(matId)) && mat.rank === 1) {
-            commonT1Id = Number(matId);
+          } else if (/^112\d+$/.test(String(matId))) {
+            if (mat.rank === 1) commonT1Id = Number(matId);
+            else if (mat.rank === 4) eliteT4Id = Number(matId);
           }
         }
-        if (commonT1Id !== null) {
-          const tiers = [commonT1Id, commonT1Id + 1, commonT1Id + 2]
+        const resolveTiers = (ids) =>
+          ids
             .map((id) => matNormById.get(String(id))?.name)
             .filter(Boolean)
             .map((n) => String(n).replace(/[^a-zA-Z0-9]/g, ''));
+        if (commonT1Id !== null) {
+          const tiers = resolveTiers([commonT1Id, commonT1Id + 1, commonT1Id + 2]);
           if (tiers.length === 3) wUpg.commonMatTiers = tiers;
+        }
+        if (eliteT4Id !== null) {
+          const tiers = resolveTiers([eliteT4Id - 2, eliteT4Id - 1, eliteT4Id]);
+          if (tiers.length === 3) wUpg.eliteMatTiers = tiers;
         }
         if (Object.keys(wUpg).length) weaponUpgradeByNorm.set(norm, wUpg);
       }
@@ -524,7 +532,8 @@ export function getWeaponMeta(key) {
           ...live,
           ...base,
           domainMatKey: base.domainMatKey || live.domainMatKey,
-          commonMatTiers: base.commonMatTiers || live.commonMatTiers
+          commonMatTiers: base.commonMatTiers || live.commonMatTiers,
+          eliteMatTiers: base.eliteMatTiers || live.eliteMatTiers
         }
       : base;
   }
@@ -675,7 +684,7 @@ const pendingWeaponFetches = new Map();
 export async function ensureWeaponMaterials(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const entry = yattaMaps.weapons.get(norm);
-  if (!entry || entry._hydrated || (entry.domainMatExactKey && entry.commonMatTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
+  if (!entry || entry._hydrated || (entry.domainMatExactKey && entry.commonMatTiers && entry.eliteMatTiers) || !entry.lunarisId || !yattaMaps.lunarisVer) return false;
   if (pendingWeaponFetches.has(norm)) return pendingWeaponFetches.get(norm);
 
   const task = (async () => {
@@ -705,18 +714,25 @@ export async function ensureWeaponMaterials(pascalKey) {
       const monsterMats = asc
         .map((a) => String(a?.icon || '').replace(/^UI_ItemIcon_/, ''))
         .filter((id) => /^112\d+$/.test(id));
-      const commonT1Id = monsterMats.find((id) => {
-        const name = lookup[id];
-        if (!name) return false;
-        const mat = yattaMaps.materials.get(normalizeAssetKey(name));
-        return mat?.rarity === 1;
-      });
+      const findRarityId = (r) =>
+        monsterMats.find((id) => {
+          const name = lookup[id];
+          if (!name) return false;
+          return yattaMaps.materials.get(normalizeAssetKey(name))?.rarity === r;
+        });
+      const resolveDropTiers = (ids) =>
+        ids.map((id) => toPascal(lookup[String(id)])).filter(Boolean);
+      const commonT1Id = findRarityId(1);
       if (commonT1Id) {
         const baseId = Number(commonT1Id);
-        const tiers = [baseId, baseId + 1, baseId + 2]
-          .map((id) => toPascal(lookup[String(id)]))
-          .filter(Boolean);
+        const tiers = resolveDropTiers([baseId, baseId + 1, baseId + 2]);
         if (tiers.length === 3) entry.commonMatTiers = tiers;
+      }
+      const eliteT4Id = findRarityId(4);
+      if (eliteT4Id) {
+        const topId = Number(eliteT4Id);
+        const tiers = resolveDropTiers([topId - 2, topId - 1, topId]);
+        if (tiers.length === 3) entry.eliteMatTiers = tiers;
       }
 
       try {
