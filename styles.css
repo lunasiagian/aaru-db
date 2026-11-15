@@ -589,6 +589,29 @@ textarea:focus {
   font-size: 12px;
 }
 
+.account-switcher {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--glass-border);
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 210px;
+}
+
+.account-switcher:hover {
+  border-color: var(--glass-specular);
+}
+
+.account-switcher.is-active {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.14);
+  color: var(--accent-gold);
+}
+
 .readonly-banner {
   background: rgba(248, 113, 113, 0.14);
   border-bottom: 1px solid rgba(248, 113, 113, 0.35);

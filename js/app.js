@@ -7,8 +7,9 @@ import {
   logoutAccount,
   restoreAccountSession,
   saveAccountSection,
+  updateProfileSettings,
   upsertRosterRow
-} from './api.js?v=20261114e';
+} from './api.js?v=20261115k';
 import {
   commitGoodImport,
   computeGoodImportDiff,
@@ -22,13 +23,21 @@ import { renderTeamsTab } from './ui-teams.js?v=20261115a';
 import { CHANGELOG } from './changelog.js?v=20261115i';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
+const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'teams', 'changelog']);
+
+function getTabFromHash() {
+  const raw = window.location.hash.replace(/^#/, '').trim().toLowerCase();
+  return VALID_TABS.has(raw) ? raw : 'hud';
+}
 
 const state = {
-  sessionUser: null, // 'almondeluna' | 'vanbrohenheim'
+  sessionUser: null, // authenticated account key
   ownAccount: null,
   partnerAccount: null,
+  partnerUser: null,
   viewingPartner: false,
-  activeTab: 'hud', // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams'
+  visibleUsers: [],
+  activeTab: getTabFromHash(), // 'hud' | 'vault' | 'prefarm' | 'roster' | 'teams' | 'changelog'
   serverId: 'NA',
   hudDayOverride: null,
   hudShowAllDomains: false,
@@ -47,13 +56,22 @@ const state = {
   pendingGoodImport: null // { raw, diff }
 };
 
+function isAdminUser() {
+  return state.sessionUser === 'almondeluna' || Boolean(state.ownAccount?.isAdmin);
+}
+
 function getActiveAccount() {
   return state.viewingPartner && state.partnerAccount ? state.partnerAccount : state.ownAccount;
 }
 
-function getPartnerUsername(username) {
-  const cfg = window.GENSHIN_SHEET_CONFIG?.ACCOUNTS?.[username];
-  return cfg?.partner || (username === 'almondeluna' ? 'vanbrohenheim' : 'almondeluna');
+function setActiveTab(tab, { pushHash = true } = {}) {
+  const next = VALID_TABS.has(tab) ? tab : 'hud';
+  state.activeTab = next;
+  if (pushHash && window.location.hash !== `#${next}`) {
+    window.location.hash = `#${next}`;
+  }
+  updateTopBar();
+  renderActiveTab();
 }
 
 function showToast(message, tone = 'info') {
@@ -70,11 +88,13 @@ function showToast(message, tone = 'info') {
 function updateTopBar() {
   const cfg = window.GENSHIN_SHEET_CONFIG;
   const userMeta = cfg?.ACCOUNTS?.[state.sessionUser];
-  const partnerName = cfg?.ACCOUNTS?.[getPartnerUsername(state.sessionUser)]?.displayName || 'Partner';
+  const ownDisplayName = state.ownAccount?.displayName || userMeta?.displayName || 'Account';
+  const partnerName = state.partnerAccount?.displayName || 'User';
 
-  document.getElementById('active-user-badge').textContent = userMeta
-    ? `${userMeta.displayName.toUpperCase()} (${userMeta.username})`
-    : '';
+  const badgeEl = document.getElementById('active-user-badge');
+  if (badgeEl) {
+    badgeEl.textContent = state.sessionUser ? ownDisplayName.toUpperCase() : '';
+  }
 
   const modeBadge = document.getElementById('sync-mode-badge');
   if (modeBadge) {
@@ -82,12 +102,19 @@ function updateTopBar() {
     modeBadge.className = `pill mono ${isOfflineMode() ? 'pill-gold' : 'pill-mint'}`;
   }
 
-  const partnerBtn = document.getElementById('btn-partner-toggle');
-  if (partnerBtn) {
-    partnerBtn.textContent = state.viewingPartner
-      ? `← Back to ${userMeta?.displayName || 'My'} Sheet`
-      : `View ${partnerName} (Read-Only)`;
-    partnerBtn.classList.toggle('is-active', state.viewingPartner);
+  const switcher = document.getElementById('account-switcher');
+  if (switcher) {
+    const others = (state.visibleUsers || []).filter(
+      (u) => u && u.user && u.user !== state.sessionUser && u.isPublic !== false
+    );
+    const options = [`<option value="">${ownDisplayName} (You)</option>`];
+    others.forEach((u) => {
+      options.push(`<option value="${u.user}">View ${u.displayName} (Read-Only)</option>`);
+    });
+    switcher.innerHTML = options.join('');
+    switcher.value = state.viewingPartner && state.partnerUser ? state.partnerUser : '';
+    switcher.hidden = options.length <= 1;
+    switcher.classList.toggle('is-active', state.viewingPartner);
   }
 
   const importBtn = document.getElementById('btn-open-import');
@@ -99,7 +126,7 @@ function updateTopBar() {
   if (roBanner) {
     roBanner.hidden = !state.viewingPartner;
     if (state.viewingPartner) {
-      roBanner.textContent = `READ-ONLY PARTNER VIEW — Inspecting ${partnerName}'s sheet (${getPartnerUsername(state.sessionUser)}). Editing & Imports are locked.`;
+      roBanner.textContent = `READ-ONLY VIEW — Inspecting ${partnerName}'s sheet. Editing & Imports are locked.`;
     }
   }
 
@@ -187,9 +214,7 @@ function renderActiveTab(options = {}) {
         renderActiveTab({ preserveScroll: true });
       },
       onNavigateTab: (tab) => {
-        state.activeTab = tab;
-        updateTopBar();
-        renderActiveTab();
+        setActiveTab(tab);
       },
       onOpenServerModal: () => openServerModal()
     });
@@ -409,6 +434,16 @@ function applyAuthenticatedSession(res) {
   state.ownAccount = res.account;
   state.viewingPartner = false;
   state.partnerAccount = null;
+  state.partnerUser = null;
+  const fallbackUsers = Object.values(window.GENSHIN_SHEET_CONFIG?.ACCOUNTS || {}).map((a) => ({
+    user: a.username,
+    displayName: a.displayName,
+    isPublic: true
+  }));
+  state.visibleUsers = Array.isArray(res.visibleUsers) && res.visibleUsers.length > 0
+    ? res.visibleUsers
+    : fallbackUsers;
+  state.activeTab = getTabFromHash();
 
   const savedServer = localStorage.getItem(`aaru_server_${state.sessionUser}`);
   state.serverId = savedServer && SERVER_REGIONS[savedServer] ? savedServer : 'NA';
@@ -582,8 +617,26 @@ function setupSystemDrawer() {
             : '<span class="pill pill-coral mono">MINIMAL FALLBACK</span>';
     const syncedText = st.syncedAt ? new Date(st.syncedAt).toLocaleString() : '—';
     const cacheText = st.cacheTs ? new Date(st.cacheTs).toLocaleString() : 'Not cached';
+    const ownName = state.ownAccount?.displayName || '';
+    const isPublic = state.ownAccount?.isPublic !== false;
+    const admin = isAdminUser();
 
     body.innerHTML = `
+      <div class="drawer-section">
+        <div class="card-eyebrow">PROFILE &amp; PRIVACY</div>
+        <label class="mini-field">
+          <span>DISPLAY NAME</span>
+          <input id="profile-display-name" type="text" maxlength="24" class="input-mono" value="${ownName.replace(/"/g, '&quot;')}" placeholder="Display Name" />
+        </label>
+        <label class="toggle-chip" style="margin-top:8px;">
+          <input id="profile-is-public" type="checkbox" ${isPublic ? 'checked' : ''} />
+          <span>Allow other users to view my sheet (Read-Only)</span>
+        </label>
+        <button type="button" id="btn-save-profile" class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;">
+          Save Profile Settings
+        </button>
+      </div>
+
       <div class="drawer-section">
         <div class="card-eyebrow">DATA VERSION &amp; SOURCE</div>
         <div class="drawer-stat-row">
@@ -608,8 +661,9 @@ function setupSystemDrawer() {
         </div>
       </div>
 
+      ${admin ? `
       <div class="drawer-section">
-        <div class="card-eyebrow">SYNC ACTIONS</div>
+        <div class="card-eyebrow">ADMIN · SYNC ACTIONS</div>
         <button type="button" id="btn-refresh-catalog" class="btn btn-gold" style="width:100%;">
           Check for API Updates &amp; Clear Cache
         </button>
@@ -633,7 +687,42 @@ function setupSystemDrawer() {
           Open GitHub Actions Sync ↗
         </a>
       </div>
+      ` : ''}
     `;
+
+    body.querySelector('#btn-save-profile')?.addEventListener('click', async (e) => {
+      if (!state.sessionUser || !state.ownAccount) return;
+      const btn = e.currentTarget;
+      const nextName = body.querySelector('#profile-display-name')?.value?.trim() || '';
+      const nextPublic = Boolean(body.querySelector('#profile-is-public')?.checked);
+      if (!nextName) {
+        showToast('Display name cannot be empty.', 'coral');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const res = await updateProfileSettings(state.sessionUser, {
+          displayName: nextName,
+          isPublic: nextPublic
+        });
+        state.ownAccount.displayName = res.displayName || nextName;
+        state.ownAccount.isPublic = res.isPublic !== undefined ? res.isPublic : nextPublic;
+        if (Array.isArray(res.visibleUsers)) {
+          state.visibleUsers = res.visibleUsers;
+        }
+        updateTopBar();
+        renderDrawer();
+        showToast('Profile settings saved.', 'mint');
+      } catch (err) {
+        showToast(err?.message || 'Failed to save profile settings', 'coral');
+      } finally {
+        if (btn.isConnected) {
+          btn.disabled = false;
+          btn.textContent = 'Save Profile Settings';
+        }
+      }
+    });
 
     body.querySelector('#btn-refresh-catalog')?.addEventListener('click', async (e) => {
       const btn = e.currentTarget;
@@ -768,11 +857,9 @@ function initChangelogModal() {
   }
 
   btn?.addEventListener('click', () => {
-    state.activeTab = 'changelog';
     if (latestVer) localStorage.setItem('aaru_changelog_seen', latestVer);
     if (dot) dot.hidden = true;
-    renderShellChrome();
-    renderActiveTab();
+    setActiveTab('changelog');
   });
 }
 
@@ -803,32 +890,38 @@ async function bootstrap() {
     btn.addEventListener('click', () => handleLogin(btn.dataset.quickUser));
   });
 
-  // Top-bar navigation tabs
+  // Top-bar & rail navigation tabs
   document.querySelectorAll('[data-tab-btn]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.activeTab = btn.dataset.tabBtn;
-      updateTopBar();
-      renderActiveTab();
+      setActiveTab(btn.dataset.tabBtn);
     });
   });
 
-  // Partner read-only toggle
-  document.getElementById('btn-partner-toggle')?.addEventListener('click', async () => {
+  window.addEventListener('hashchange', () => {
     if (!state.sessionUser) return;
-    if (state.viewingPartner) {
+    setActiveTab(getTabFromHash(), { pushHash: false });
+  });
+
+  // Multi-user read-only account switcher
+  document.getElementById('account-switcher')?.addEventListener('change', async (e) => {
+    if (!state.sessionUser) return;
+    const targetUser = e.currentTarget.value;
+    if (!targetUser) {
       state.viewingPartner = false;
+      state.partnerUser = null;
       updateTopBar();
       renderActiveTab();
       return;
     }
-    const partnerUser = getPartnerUsername(state.sessionUser);
     try {
-      state.partnerAccount = await fetchPartnerAccount(partnerUser);
+      state.partnerAccount = await fetchPartnerAccount(targetUser);
+      state.partnerUser = targetUser;
       state.viewingPartner = true;
       updateTopBar();
       renderActiveTab();
       showToast(`Viewing ${state.partnerAccount.displayName}'s sheet (Read-Only)`, 'gold');
     } catch (err) {
+      e.currentTarget.value = state.viewingPartner && state.partnerUser ? state.partnerUser : '';
       showToast(err.message, 'coral');
     }
   });
@@ -840,6 +933,8 @@ async function bootstrap() {
     state.sessionUser = null;
     state.ownAccount = null;
     state.partnerAccount = null;
+    state.partnerUser = null;
+    state.visibleUsers = [];
     state.viewingPartner = false;
     switchToLoginView();
   });

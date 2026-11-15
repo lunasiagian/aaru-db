@@ -55,9 +55,9 @@ function setupDatabase() {
   // 1. Users Tab (display metadata; passphrases live in Script Properties)
   const usersSheet = ss.getSheetByName('Users') || ss.insertSheet('Users');
   if (usersSheet.getLastRow() === 0) {
-    usersSheet.appendRow(['username', 'display_name', 'uid']);
-    usersSheet.appendRow(['almondeluna', 'Luna', '']);
-    usersSheet.appendRow(['vanbrohenheim', 'Roy', '']);
+    usersSheet.appendRow(['username', 'display_name', 'uid', 'is_public']);
+    usersSheet.appendRow(['almondeluna', 'Luna', '', 'TRUE']);
+    usersSheet.appendRow(['vanbrohenheim', 'Roy', '', 'TRUE']);
   }
 
   // 2. Per-Profile Flat Tables
@@ -66,6 +66,27 @@ function setupDatabase() {
       ensureUserSheet_(ss, user, table);
     });
   });
+}
+
+function isUserPublic_(profileMeta) {
+  if (!profileMeta) return false;
+  const raw = String(profileMeta.is_public === undefined ? 'TRUE' : profileMeta.is_public).trim().toLowerCase();
+  return raw !== 'false' && raw !== '0' && raw !== 'no';
+}
+
+function getVisibleUsers_(ss, currentUser) {
+  const users = sheetToObjects(ss.getSheetByName('Users'));
+  return users
+    .map(u => {
+      const user = String(u.username || '').trim().toLowerCase();
+      if (!user) return null;
+      return {
+        user: user,
+        displayName: String(u.display_name || user).trim(),
+        isPublic: isUserPublic_(u)
+      };
+    })
+    .filter(u => u && (u.user === currentUser || u.isPublic));
 }
 
 function loadProfileAccount_(ss, targetUser) {
@@ -96,6 +117,8 @@ function loadProfileAccount_(ss, targetUser) {
     user: targetUser,
     displayName: profileMeta.display_name || (targetUser === 'almondeluna' ? 'Luna' : 'Roy'),
     uid: profileMeta.uid || '',
+    isPublic: isUserPublic_(profileMeta),
+    isAdmin: targetUser === 'almondeluna',
     inventory: inventory,
     roster: sheetToObjects(ss.getSheetByName(`${targetUser}_Roster`)),
     weapons: sheetToObjects(ss.getSheetByName(`${targetUser}_Weapons`)),
@@ -118,10 +141,18 @@ function doGet(e) {
 
     if (action === 'getSheet' || action === 'loadProfile') {
       const targetUser = String(params.user || params.profile || session.user).trim().toLowerCase();
+      if (targetUser !== session.user) {
+        const users = sheetToObjects(ss.getSheetByName('Users'));
+        const targetMeta = users.find(u => String(u.username || '').trim().toLowerCase() === targetUser);
+        if (!targetMeta || !isUserPublic_(targetMeta)) {
+          return jsonResponse({ ok: false, error: 'This account is private.' });
+        }
+      }
       return jsonResponse({
         ok: true,
         profile: targetUser,
-        account: loadProfileAccount_(ss, targetUser)
+        account: loadProfileAccount_(ss, targetUser),
+        visibleUsers: getVisibleUsers_(ss, session.user)
       });
     }
 
@@ -154,7 +185,8 @@ function doPost(e) {
       return jsonResponse({
         ok: true,
         sessionToken: sessionToken,
-        account: loadProfileAccount_(ss, user)
+        account: loadProfileAccount_(ss, user),
+        visibleUsers: getVisibleUsers_(ss, user)
       });
     }
 
@@ -316,6 +348,52 @@ function doPost(e) {
         secSheet.getRange(targetRow, 2, 1, 2).setValues([[serialized, now]]);
       }
       return jsonResponse({ ok: true });
+    }
+
+    // ACTION 4: Update Own Display Name & Privacy Setting
+    if (action === 'updateProfileSettings') {
+      const usersSheet = ss.getSheetByName('Users');
+      if (!usersSheet || usersSheet.getLastRow() < 2) {
+        return jsonResponse({ ok: false, error: 'Users sheet not initialized' });
+      }
+      const range = usersSheet.getDataRange();
+      const values = range.getValues();
+      const headers = values[0].map(h => String(h).trim());
+      let dispCol = headers.indexOf('display_name');
+      let pubCol = headers.indexOf('is_public');
+      if (pubCol === -1) {
+        pubCol = headers.length;
+        usersSheet.getRange(1, pubCol + 1).setValue('is_public');
+      }
+      if (dispCol === -1) {
+        dispCol = headers.length + (pubCol === headers.length ? 1 : 0);
+        usersSheet.getRange(1, dispCol + 1).setValue('display_name');
+      }
+
+      let targetRow = -1;
+      for (let i = 1; i < values.length; i++) {
+        if (String(values[i][0]).trim().toLowerCase() === user) {
+          targetRow = i + 1;
+          break;
+        }
+      }
+      if (targetRow === -1) {
+        return jsonResponse({ ok: false, error: 'User profile row not found' });
+      }
+
+      const nextDisplay = String(payload.displayName || '').trim().slice(0, 24);
+      const nextPublic = payload.isPublic !== false;
+      if (nextDisplay) {
+        usersSheet.getRange(targetRow, dispCol + 1).setValue(nextDisplay);
+      }
+      usersSheet.getRange(targetRow, pubCol + 1).setValue(nextPublic ? 'TRUE' : 'FALSE');
+
+      return jsonResponse({
+        ok: true,
+        displayName: nextDisplay || undefined,
+        isPublic: nextPublic,
+        visibleUsers: getVisibleUsers_(ss, user)
+      });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown POST action: ' + action });

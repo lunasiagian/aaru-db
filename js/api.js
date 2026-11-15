@@ -203,15 +203,23 @@ export async function loginAccount(username, passphrase = '') {
   const cfg = getConfig();
   const normalized = (username || '').trim().toLowerCase();
 
-  if (!cfg.ACCOUNTS?.[normalized]) {
-    throw new Error('Invalid account key or passphrase.');
+  if (!normalized) {
+    throw new Error('Account key is required.');
   }
 
   if (isOfflineMode()) {
+    if (!cfg.ACCOUNTS?.[normalized]) {
+      throw new Error('Invalid account key or passphrase.');
+    }
     return {
       ok: true,
       mode: 'offline',
-      account: loadLocalMock(normalized)
+      account: loadLocalMock(normalized),
+      visibleUsers: Object.values(cfg.ACCOUNTS).map((a) => ({
+        user: a.username,
+        displayName: a.displayName,
+        isPublic: true
+      }))
     };
   }
 
@@ -237,7 +245,8 @@ export async function loginAccount(username, passphrase = '') {
   return {
     ok: true,
     mode: 'live',
-    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized)
+    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized),
+    visibleUsers: json.visibleUsers || null
   };
 }
 
@@ -248,15 +257,23 @@ export async function restoreAccountSession(username) {
   const cfg = getConfig();
   const normalized = (username || '').trim().toLowerCase();
 
-  if (!cfg.ACCOUNTS?.[normalized]) {
+  if (!normalized) {
     throw new Error('Unknown account.');
   }
 
   if (isOfflineMode()) {
+    if (!cfg.ACCOUNTS?.[normalized]) {
+      throw new Error('Unknown account.');
+    }
     return {
       ok: true,
       mode: 'offline',
-      account: loadLocalMock(normalized)
+      account: loadLocalMock(normalized),
+      visibleUsers: Object.values(cfg.ACCOUNTS).map((a) => ({
+        user: a.username,
+        displayName: a.displayName,
+        isPublic: true
+      }))
     };
   }
 
@@ -273,7 +290,8 @@ export async function restoreAccountSession(username) {
   return {
     ok: true,
     mode: 'live',
-    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized)
+    account: normalizeAccount(json.account || json.data) || loadLocalMock(normalized),
+    visibleUsers: json.visibleUsers || null
   };
 }
 
@@ -418,5 +436,35 @@ export async function postImportGoodJson(username, goodPayload, mergedAccountDat
       good: goodPayload
     },
     'importGoodJson failed'
+  );
+}
+
+/**
+ * Updates the signed-in user's Display Name and Read-Only visibility setting.
+ */
+export async function updateProfileSettings(username, { displayName, isPublic }) {
+  if (isOfflineMode()) {
+    const current = loadLocalMock(username);
+    if (displayName) current.displayName = String(displayName).trim().slice(0, 24);
+    current.isPublic = isPublic !== false;
+    saveLocalMock(username, current);
+    return {
+      ok: true,
+      mode: 'offline',
+      displayName: current.displayName,
+      isPublic: current.isPublic
+    };
+  }
+
+  const token = requireSessionToken();
+  return postAppsScript(
+    {
+      action: 'updateProfileSettings',
+      token,
+      user: username,
+      displayName,
+      isPublic
+    },
+    'updateProfileSettings failed'
   );
 }
