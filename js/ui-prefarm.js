@@ -8,8 +8,8 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261114t';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114t';
+} from './catalog.js?v=20261114u';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114u';
 
 const uiState = {
   openTargets: new Set(),
@@ -90,16 +90,8 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   };
 
   const families = [];
-  const pushFamily = (id, label, span, rows, addCraftHints = false) => {
+  const pushFamily = (id, label, span, rows) => {
     if (!rows.length) return;
-    if (addCraftHints) {
-      for (let i = 1; i < rows.length; i++) {
-        const prev = rows[i - 1];
-        if (prev.surplus >= 3 && rows[i].deficit > 0) {
-          rows[i] = { ...rows[i], craftableHint: Math.floor(prev.surplus / 3) };
-        }
-      }
-    }
     families.push({ id, label, span, rows });
   };
 

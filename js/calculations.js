@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114t';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261114u';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -584,6 +584,11 @@ export function calculateWaterfallPrefarm(prefarmQueue = [], inventory = {}, wal
     const tieredCrafted = {};
     const tieredKeys = new Set();
     const candidateTriples = [];
+    const bookMatchKey = Object.keys(req).find((k) => /^(TeachingsOf|GuideTo|PhilosophiesOf)(.+)$/.test(k));
+    if (bookMatchKey) {
+      const bookBase = bookMatchKey.replace(/^(TeachingsOf|GuideTo|PhilosophiesOf)/, '');
+      candidateTriples.push([`TeachingsOf${bookBase}`, `GuideTo${bookBase}`, `PhilosophiesOf${bookBase}`]);
+    }
     if (Array.isArray(charMeta?.commonMatTiers) && charMeta.commonMatTiers.length === 3) {
       candidateTriples.push(charMeta.commonMatTiers);
     }

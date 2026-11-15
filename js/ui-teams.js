@@ -1,6 +1,6 @@
 import { renderAssetIcon } from './assets.js';
-import { getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261114t';
-import { detectTeamWeaponConflicts } from './calculations.js?v=20261114t';
+import { getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261114u';
+import { detectTeamWeaponConflicts } from './calculations.js?v=20261114u';
 
 const ARCHETYPES = ['Hypercarry', 'Dual Carry', 'Chip Damage'];
 
