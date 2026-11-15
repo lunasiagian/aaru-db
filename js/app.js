@@ -18,8 +18,8 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261114w';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
-import { renderRosterTab } from './ui-roster.js?v=20261115s';
-import { renderArmoryTab } from './ui-armory.js?v=20261115s';
+import { renderRosterTab } from './ui-roster.js?v=20261115t';
+import { renderArmoryTab } from './ui-armory.js?v=20261115t';
 import { renderTeamsTab } from './ui-teams.js?v=20261115a';
 import { CHANGELOG } from './changelog.js?v=20261115i';
 

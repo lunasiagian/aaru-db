@@ -1938,6 +1938,11 @@ textarea:focus {
   border-radius: 10px;
   background: var(--bg-card-alt);
   border: 1px solid var(--border-slate);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -2023,7 +2028,17 @@ textarea:focus {
   border-radius: 10px;
   background: var(--bg-card-alt);
   border: 1px solid var(--border-slate);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
   flex-wrap: wrap;
+  transition: border-color 0.15s ease;
+}
+
+.armory-weapon-row:hover {
+  border-color: var(--glass-specular);
 }
 
 .armory-row-badges {
@@ -2031,6 +2046,48 @@ textarea:focus {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.weapon-modal-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weapon-passive-box {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(7, 10, 16, 0.58);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weapon-passive-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weapon-passive-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+
+.weapon-lore-desc {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--text-muted);
 }
 
 .roster-portrait-card {

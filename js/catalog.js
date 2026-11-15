@@ -1251,11 +1251,16 @@ function parseYattaWeaponStats(data, curveData) {
     return { atk, subKey, subVal };
   };
   const affixObj = data?.affix ? Object.values(data.affix)[0] : null;
+  const passiveUpgrades = ['0', '1', '2', '3', '4']
+    .map((k) => cleanYattaText(affixObj?.upgrade?.[k] || ''))
+    .filter(Boolean);
   return {
     lv80: calcAt(80, 5),
     lv90: calcAt(90, 6),
+    description: cleanYattaText(data?.description || ''),
     passiveName: affixObj?.name || '',
-    passiveDesc: cleanYattaText(affixObj?.upgrade?.['0'] || '')
+    passiveDesc: passiveUpgrades[0] || '',
+    passiveUpgrades
   };
 }
 
@@ -1321,7 +1326,7 @@ const pendingWeaponStatFetches = new Map();
 export async function ensureWeaponStats(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const cache = loadKitCache();
-  if (cache.weapons[norm]) return cache.weapons[norm];
+  if (cache.weapons[norm] && cache.weapons[norm].description !== undefined) return cache.weapons[norm];
   const entry = yattaMaps.weapons.get(norm);
   if (!entry?.id) return null;
   if (pendingWeaponStatFetches.has(norm)) return pendingWeaponStatFetches.get(norm);

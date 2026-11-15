@@ -1,5 +1,27 @@
 import { renderAssetIcon } from './assets.js';
-import { getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261115b';
+import {
+  ensureWeaponStats,
+  getCharacterMeta,
+  getWeaponMeta,
+  getWeaponStats
+} from './catalog.js?v=20261115t';
+
+const STAT_LABELS = {
+  atk_: 'ATK%',
+  hp_: 'HP%',
+  def_: 'DEF%',
+  enerRech_: 'Energy Recharge',
+  eleMas: 'Elemental Mastery',
+  critRate_: 'CRIT Rate',
+  critDMG_: 'CRIT DMG',
+  physical_dmg_: 'Physical DMG'
+};
+
+function formatSubstat(subKey, subVal) {
+  if (!subKey) return '—';
+  const label = STAT_LABELS[subKey] || subKey;
+  return subKey === 'eleMas' ? `${label} ${subVal}` : `${label} ${subVal}%`;
+}
 
 const WEAPON_TYPE_PILLS = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
 const ARMORY_FILTER_PILLS = [
@@ -88,16 +110,16 @@ export function renderArmoryTab(container, viewState, handlers) {
       );
     });
 
-  const renderWeaponCard = (w) => {
+  const renderWeaponCard = (w, idx) => {
     const holderLabel = w.holderName ? escapeHtml(w.holderName) : 'Unassigned';
     if (density === 'list') {
       return `
-      <div class="armory-weapon-row">
+      <button type="button" class="armory-weapon-row" data-armory-inspect="${idx}">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
             ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-sm')}
           </div>
-          <div style="min-width:0;">
+          <div style="min-width:0;text-align:left;">
             <div class="item-name">${escapeHtml(w.meta.name)}</div>
             <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
           </div>
@@ -107,17 +129,17 @@ export function renderArmoryTab(container, viewState, handlers) {
           <span class="pill pill-gold">R${w.refinement}</span>
           <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped: ${holderLabel}` : 'Unassigned'}</span>
         </div>
-      </div>`;
+      </button>`;
     }
 
     return `
-    <div class="armory-weapon-card">
+    <button type="button" class="armory-weapon-card" data-armory-inspect="${idx}">
       <div class="armory-weapon-top">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
             ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
           </div>
-          <div style="min-width:0;">
+          <div style="min-width:0;text-align:left;">
             <div class="item-name">${escapeHtml(w.meta.name)}</div>
             <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
           </div>
@@ -138,7 +160,7 @@ export function renderArmoryTab(container, viewState, handlers) {
           <span class="stat-val ${w.holderName ? 'text-cyan' : 'muted'}">${holderLabel}</span>
         </div>
       </div>
-    </div>`;
+    </button>`;
   };
 
   container.innerHTML = `
@@ -184,7 +206,7 @@ export function renderArmoryTab(container, viewState, handlers) {
       ${
         filteredWeapons.length
           ? `<div class="${density === 'list' ? 'armory-weapon-list' : 'armory-weapon-grid'}">
-              ${filteredWeapons.map(renderWeaponCard).join('')}
+              ${filteredWeapons.map((w, idx) => renderWeaponCard(w, idx)).join('')}
             </div>`
           : '<div class="empty-state">No weapons match the current filters.</div>'
       }
@@ -214,6 +236,133 @@ export function renderArmoryTab(container, viewState, handlers) {
         next.focus();
         next.setSelectionRange(pos, pos);
       }
+    });
+  }
+
+  container.querySelectorAll('[data-armory-inspect]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const w = filteredWeapons[Number(card.dataset.armoryInspect)];
+      if (w) openWeaponModal(w);
+    });
+  });
+}
+
+function openWeaponModal(w) {
+  document.getElementById('armory-weapon-modal')?.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'armory-weapon-modal';
+  backdrop.className = 'modal-backdrop';
+  document.body.appendChild(backdrop);
+
+  const close = () => {
+    backdrop.remove();
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('keydown', onKey);
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) close();
+  });
+
+  let activeRef = Math.max(1, Math.min(5, Number(w.refinement) || 1));
+
+  const renderModal = (stats, loading = false) => {
+    const lv80 = stats?.lv80;
+    const lv90 = stats?.lv90;
+    const upgrades = stats?.passiveUpgrades || [];
+    const passiveText = upgrades[activeRef - 1] || stats?.passiveDesc || '';
+    const holderLabel = w.holderName ? escapeHtml(w.holderName) : 'Unassigned';
+
+    backdrop.innerHTML = `
+      <div class="modal-card card weapon-inspector-modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(w.meta.name)}">
+        <div class="modal-head">
+          <div class="armory-weapon-id">
+            <div class="armory-weapon-icon">
+              ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
+            </div>
+            <div>
+              <div class="eyebrow">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+              <h2 class="card-title" style="margin:2px 0 0;">${escapeHtml(w.meta.name)}</h2>
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-xs" id="btn-close-weapon-modal">✕</button>
+        </div>
+
+        <div class="dossier-hero-chips mono">
+          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+          <span class="pill pill-gold">Owned R${w.refinement}</span>
+          <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped by ${holderLabel}` : 'Unassigned'}</span>
+        </div>
+
+        ${
+          loading
+            ? '<div class="empty-state mono"><span class="btn-spinner"></span> Fetching weapon stats &amp; passive from Project Amber...</div>'
+            : stats
+              ? `
+          <div class="weapon-modal-stats mono">
+            <div class="armory-stat-box">
+              <span class="stat-label">LV.80 BASE ATK / SUBSTAT</span>
+              <span class="stat-val">${lv80?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv80?.subKey, lv80?.subVal))}</span>
+            </div>
+            <div class="armory-stat-box">
+              <span class="stat-label">LV.90 BASE ATK / SUBSTAT</span>
+              <span class="stat-val text-gold">${lv90?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv90?.subKey, lv90?.subVal))}</span>
+            </div>
+          </div>
+
+          ${
+            stats.passiveName || passiveText
+              ? `<div class="weapon-passive-box">
+                  <div class="weapon-passive-head">
+                    <strong class="text-gold">${escapeHtml(stats.passiveName || 'Weapon Passive')}</strong>
+                    ${
+                      upgrades.length > 1
+                        ? `<div class="filter-pills">
+                            ${upgrades
+                              .map(
+                                (_, idx) =>
+                                  `<button type="button" class="filter-pill ${activeRef === idx + 1 ? 'active' : ''}" data-wep-ref="${idx + 1}">R${idx + 1}</button>`
+                              )
+                              .join('')}
+                          </div>`
+                        : ''
+                    }
+                  </div>
+                  <p class="weapon-passive-desc">${escapeHtml(passiveText)}</p>
+                </div>`
+              : ''
+          }
+
+          ${
+            stats.description
+              ? `<p class="weapon-lore-desc">${escapeHtml(stats.description)}</p>`
+              : ''
+          }
+          `
+              : '<div class="empty-state mono">Weapon stats unavailable offline.</div>'
+        }
+      </div>
+    `;
+
+    backdrop.querySelector('#btn-close-weapon-modal')?.addEventListener('click', close);
+    backdrop.querySelectorAll('[data-wep-ref]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeRef = Number(btn.dataset.wepRef) || 1;
+        renderModal(stats, false);
+      });
+    });
+  };
+
+  const cached = getWeaponStats(w.key);
+  if (cached && cached.description !== undefined) {
+    renderModal(cached, false);
+  } else {
+    renderModal(cached, true);
+    ensureWeaponStats(w.key).then((fresh) => {
+      if (backdrop.isConnected) renderModal(fresh || cached, false);
     });
   }
 }
