@@ -36,8 +36,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
   const isDef = r.deficit > 0;
   const pct = r.needed > 0 ? Math.min(100, Math.round((r.owned / r.needed) * 100)) : 100;
   const barTone = pct >= 100 ? 'is-ready' : pct >= 50 ? 'is-mid' : 'is-low';
-  const fullRatio = `${r.owned.toLocaleString()} / ${r.needed.toLocaleString()}`;
-  const compactRatio = `${formatCompactNumber(r.owned)} / ${formatCompactNumber(r.needed)}`;
+  const fullRatio = `${r.owned.toLocaleString()}/${r.needed.toLocaleString()}`;
   const compactDelta = isDef
     ? `-${formatCompactNumber(r.deficit)}`
     : `+${formatCompactNumber(r.surplus)}`;
@@ -61,13 +60,13 @@ function renderReqChipHtml(r, targetStateKey = '') {
       data-pf-target="${escapeAttr(targetStateKey)}"
       title="${escapeAttr(`${r.name}: ${fullRatio} — Click for description & drop locations`)}">
       ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
-      <div class="req-chip-body prefarm-tile-main">
-        <div class="req-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
-        <div class="req-nums mono">
-          <span class="prefarm-owned-text prefarm-count" title="${escapeAttr(fullRatio)}">${compactRatio}</span>
+      <div class="prefarm-tile-body">
+        <div class="prefarm-tile-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
+        <div class="prefarm-tile-stats mono">
+          <span class="prefarm-count" title="${escapeAttr(fullRatio)}">${formatCompactNumber(r.owned)}<span class="prefarm-count-denom">/${formatCompactNumber(r.needed)}</span></span>
           <span class="req-delta-badge prefarm-deficit-pill ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
         </div>
-        ${hints.length ? `<div class="req-subnotes mono">${hints.join('')}</div>` : ''}
+        ${hints.length ? `<div class="prefarm-tile-sub mono">${hints.join('')}</div>` : ''}
       </div>
       <div class="req-progress ${barTone}"><span style="width:${pct}%"></span></div>
     </div>`;

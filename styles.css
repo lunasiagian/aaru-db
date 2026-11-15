@@ -1376,6 +1376,7 @@ textarea:focus {
 }
 
 .prefarm-tile {
+  align-items: center;
   cursor: pointer;
   transition: border-color 0.16s ease, transform 0.16s ease, background-color 0.16s ease;
 }
@@ -1386,31 +1387,71 @@ textarea:focus {
   background: rgba(15, 23, 42, 0.72);
 }
 
-.prefarm-tile-main {
+.prefarm-tile-body {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
 }
 
-.prefarm-owned-text,
-.prefarm-count,
+.prefarm-tile-name {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #cbd5e1);
+  letter-spacing: 0.01em;
+}
+
+.prefarm-tile-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  min-width: 0;
+}
+
+.prefarm-count {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.prefarm-count-denom {
+  opacity: 0.65;
+  font-weight: 500;
+}
+
 .prefarm-deficit-pill {
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
+.prefarm-tile-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
 .prefarm-cluster-tiles .req-chip {
   padding: 8px 9px 11px;
-  gap: 7px;
+  gap: 8px;
   background: rgba(2, 6, 23, 0.42);
   height: 100%;
-}
-
-.prefarm-cluster-tiles .req-name {
-  font-size: 12px;
-}
-
-.prefarm-cluster-tiles .req-nums {
-  font-size: 11.5px;
 }
 
 /* Material Inspector Modal */
