@@ -1364,13 +1364,18 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
 
   for (const m of multEntries) {
     const combined = `${m.label} ${m.sample}`;
+    if (/\binherited\s+hp\b|\bendurance\b/i.test(m.label)) continue;
     if (/\b(?:max\s*)?hp\b/i.test(combined)) hpHits += m.kind === 'normal' ? 1 : 2;
     else if (/\bdef\b/i.test(combined)) defHits += m.kind === 'normal' ? 1 : 2;
     else if (/\belemental\s+mastery\b|\bem\b/i.test(combined)) emHits += 2;
     else if (/%/.test(m.sample) && !/duration|cd|cooldown|cost|stamina/i.test(m.label)) atkHits += 1;
   }
 
-  if (/based\s+on[^.]{0,45}max\s+hp|scales?\s+(?:off|with)[^.]{0,30}hp/i.test(fullText)) hpHits += 3;
+  const hpScaleText = `${passiveText}\n${talentDescText}`.replace(
+    /[^.\n]*(?:endurance|inherited\s+hp|ice\s+lotus|baron\s+bunny|bogglecat)[^.\n]*/gi,
+    ''
+  );
+  if (/based\s+on[^.]{0,45}max\s+hp|scales?\s+(?:off|with)[^.]{0,30}hp/i.test(hpScaleText)) hpHits += 3;
   if (/based\s+on[^.]{0,45}\bdef\b|scales?\s+(?:off|with)[^.]{0,30}\bdef\b/i.test(fullText)) defHits += 3;
   if (/based\s+on[^.]{0,45}elemental\s+mastery|scales?\s+(?:off|with)[^.]{0,30}elemental\s+mastery|for\s+every\s+point\s+of\s+elemental\s+mastery/i.test(fullText)) emHits += 3;
   if (/based\s+on[^.]{0,45}energy\s+recharge|for\s+every\s+[\d.]+%[^.]{0,40}energy\s+recharge/i.test(fullText)) erHits += 3;
@@ -1378,10 +1383,10 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   // Determine dominant stat
   let primaryStatKey = 'atk_';
   let primaryLabel = 'ATK';
-  if (hpHits >= 3 && hpHits >= defHits && hpHits >= emHits) {
+  if (hpHits >= 3 && hpHits >= defHits && hpHits >= emHits && (hpHits >= atkHits * 0.45 || analysis?.primaryStatKey === 'hp_')) {
     primaryStatKey = 'hp_';
     primaryLabel = 'Max HP';
-  } else if (defHits >= 3 && defHits >= hpHits && defHits >= emHits) {
+  } else if (defHits >= 3 && defHits >= hpHits && defHits >= emHits && (defHits >= atkHits * 0.45 || analysis?.primaryStatKey === 'def_')) {
     primaryStatKey = 'def_';
     primaryLabel = 'DEF';
   } else if (emHits >= 3 && emHits >= hpHits && emHits >= defHits) {
