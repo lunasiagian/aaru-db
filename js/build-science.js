@@ -1680,7 +1680,9 @@ export function buildKitProfile(charData, contextOverride = {}) {
     primaryScaling: primaryScalingMap[scaling.primaryStatKey] || 'ATK',
     primaryStatKey: scaling.primaryStatKey,
     scalingStats: scaling.scalingStats || [primaryScalingMap[scaling.primaryStatKey] || 'ATK'],
-    signatureWeapon: getSignatureWeapon(charKey),
+    signatureWeapon: getSignatureWeapon(charKey, fieldRole),
+    signatureDpsWeapon: getSignatureWeapon(charKey, 'dps'),
+    signatureSupportWeapon: getSignatureWeapon(charKey, 'support'),
     hasChargedFocus: /charged\s+attack|frostflake|equitable\s+judgment|arataki\s+kesagiri/i.test(kitTextForMechs),
     primaryAttackType,
     kitMechanics,
@@ -1826,7 +1828,7 @@ export const SIGNATURE_WEAPONS = {
   Tartaglia: 'Polar Star',
   Childe: 'Polar Star',
   Tighnari: "Hunter's Path",
-  Venti: 'Elegy for the End',
+  Venti: { dps: 'The Daybreak Chronicles', support: 'Elegy for the End' },
   Yelan: 'Aqua Simulacra',
   Yoimiya: 'Thundering Pulse',
 
@@ -1857,14 +1859,28 @@ export const SIGNATURE_WEAPONS = {
   Mizuki: 'Sunny Morning Sleep-In'
 };
 
-export function getSignatureWeapon(charKey) {
-  if (!charKey) return '';
+function lookupSignatureEntry(charKey) {
+  if (!charKey) return null;
   if (SIGNATURE_WEAPONS[charKey]) return SIGNATURE_WEAPONS[charKey];
   const norm = String(charKey).replace(/[^a-z0-9]/gi, '').toLowerCase();
   const match = Object.entries(SIGNATURE_WEAPONS).find(
     ([k]) => k.replace(/[^a-z0-9]/gi, '').toLowerCase() === norm
   );
-  return match ? match[1] : '';
+  return match ? match[1] : null;
+}
+
+export function getSignatureWeapon(charKey, roleOrMode = '') {
+  const entry = lookupSignatureEntry(charKey);
+  if (!entry) return '';
+  if (typeof entry === 'string') return entry;
+  const r = String(roleOrMode || '').toLowerCase();
+  if (r === 'dps' || r === 'on-field carry' || r === 'on-field driver') {
+    return entry.dps || entry.support || '';
+  }
+  if (r === 'support' || r === 'quickswap support') {
+    return entry.support || entry.dps || '';
+  }
+  return [entry.support, entry.dps].filter(Boolean).join(' / ');
 }
 
 function getEffectiveRefinement(cand, ownedMatch = null) {
@@ -2022,8 +2038,16 @@ export function recommendWeapons(
       if (mTags.has('ca_penalty') && profile.primaryAttackType === 'charged') {
         dpsScore -= 35;
       }
-      const isSignature = Boolean(profile.signatureWeapon && cand.name === profile.signatureWeapon);
-      if (isSignature && !missingMechanic && !isHealerLocked) {
+      const isDpsSignature = Boolean(
+        (profile.signatureDpsWeapon && cand.name === profile.signatureDpsWeapon) ||
+          (!profile.signatureDpsWeapon && profile.signatureWeapon && cand.name === profile.signatureWeapon)
+      );
+      const isSupSignature = Boolean(
+        (profile.signatureSupportWeapon && cand.name === profile.signatureSupportWeapon) ||
+          (!profile.signatureSupportWeapon && profile.signatureWeapon && cand.name === profile.signatureWeapon)
+      );
+      const isSignature = isDpsSignature || isSupSignature;
+      if (isDpsSignature && !missingMechanic && !isHealerLocked) {
         dpsPrimaryPts += 20;
       }
       if (reqMechs.includes('charged_attack') && role === 'Off-Field Sub-DPS' && profile.primaryAttackType !== 'charged' && profile.primaryAttackType !== 'mixed') {
@@ -2086,7 +2110,7 @@ export function recommendWeapons(
         (scalingStatsSet.has('HP') && isHpSubstat) ||
         (scalingStatsSet.has('EM') && /mastery|em/i.test(substat));
       const partyBuffScalingBonus = !isHealerLocked && !missingMechanic && mTags.has('party_buff') && hasSupportScalingMatch ? 20 : 0;
-      const sigSupportBonus = isSignature && !missingMechanic && !isHealerLocked && isSupportRole ? 12 : 0;
+      const sigSupportBonus = isSupSignature && !missingMechanic && !isHealerLocked && isSupportRole ? 12 : 0;
       const supportScore =
         ownedBonus + teamUtilityScore + defensiveScalingScore + erThresholdPts + partyBuffScalingBonus + sigSupportBonus + compatPenalty;
 
