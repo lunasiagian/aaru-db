@@ -927,7 +927,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 <span>BUILD EFFICIENCY (RV%)</span>
                 <span class="text-mint">${combat.rvPct}% (${combat.usefulRolls} / 38 useful rolls)</span>
               </div>
-              <div class="progress-track"><div class="progress-fill" style="width:${combat.rvPct}%"></div></div>
+              <div class="progress-track"><div class="progress-fill mint" style="width:${Math.min(100, Math.max(0, Number(combat.rvPct) || 0))}%"></div></div>
               ${
                 !kitAnalysis.isNonCrit
                   ? `<div class="dossier-cv-row mono"><span>Substat Crit Value</span><span class="text-sky">${combat.subCv.toFixed(1)} CV</span></div>`
