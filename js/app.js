@@ -153,7 +153,7 @@ function updateTopBar() {
   if (roBanner) {
     roBanner.hidden = !state.viewingPartner;
     if (state.viewingPartner) {
-      roBanner.textContent = `READ-ONLY VIEW â€” Inspecting ${partnerName}'s sheet. Editing & Imports are locked.`;
+      roBanner.textContent = `READ-ONLY VIEW — Inspecting ${partnerName}'s sheet. Editing & Imports are locked.`;
     }
   }
 
@@ -176,7 +176,7 @@ function updateTopBar() {
   const srvBtn = document.getElementById('btn-server-trigger');
   if (srvBtn) {
     const rInfo = getServerResetInfo(state.serverId || 'NA');
-    srvBtn.textContent = `${rInfo.server.short} Â· RESETS IN ${rInfo.countdownText.toUpperCase()}`;
+    srvBtn.textContent = `${rInfo.server.short} · RESETS IN ${rInfo.countdownText.toUpperCase()}`;
   }
 
   const sysDot = document.getElementById('system-status-dot');
@@ -566,8 +566,8 @@ function setupGoodImportModal() {
           <div class="diff-stat"><span class="mono">MATERIALS</span><strong>${diff.matChanges.length} synced</strong> / ${diff.materialsTotal} total</div>
         </div>
         <div class="diff-samples mono">
-          ${diff.charChanges.slice(0, 6).map((c) => `<div>CHAR [${c.type.toUpperCase()}]: ${c.key} ${c.fromLevel ? `Lv.${c.fromLevel} â†’ ` : ''}Lv.${c.toLevel}</div>`).join('')}
-          ${diff.matChanges.slice(0, 4).map((m) => `<div>MAT: ${m.key} ${m.from ?? 0} â†’ ${m.to}</div>`).join('')}
+          ${diff.charChanges.slice(0, 6).map((c) => `<div>CHAR [${c.type.toUpperCase()}]: ${c.key} ${c.fromLevel ? `Lv.${c.fromLevel} → ` : ''}Lv.${c.toLevel}</div>`).join('')}
+          ${diff.matChanges.slice(0, 4).map((m) => `<div>MAT: ${m.key} ${m.from ?? 0} → ${m.to}</div>`).join('')}
         </div>
       `;
       commitBtn.disabled = false;
@@ -661,7 +661,7 @@ function setupSystemDrawer() {
           : st.source === 'snapshot'
             ? '<span class="pill pill-gold mono">LOCAL SNAPSHOT</span>'
             : '<span class="pill pill-coral mono">MINIMAL FALLBACK</span>';
-    const syncedText = st.syncedAt ? new Date(st.syncedAt).toLocaleString() : 'â€”';
+    const syncedText = st.syncedAt ? new Date(st.syncedAt).toLocaleString() : '—';
     const cacheText = st.cacheTs ? new Date(st.cacheTs).toLocaleString() : 'Not cached';
     const ownName = state.ownAccount?.displayName || '';
     const isPublic = state.ownAccount?.isPublic !== false;
@@ -695,7 +695,7 @@ function setupSystemDrawer() {
         </div>
         <div class="drawer-stat-row mono">
           <span>Indexed Assets</span>
-          <span>${st.charCount} chars Â· ${st.weaponCount} wpns Â· ${st.materialCount} mats</span>
+          <span>${st.charCount} chars · ${st.weaponCount} wpns · ${st.materialCount} mats</span>
         </div>
         <div class="drawer-stat-row mono">
           <span>Last Synced</span>
@@ -709,7 +709,7 @@ function setupSystemDrawer() {
 
       ${admin ? `
       <div class="drawer-section">
-        <div class="card-eyebrow">ADMIN Â· SYNC ACTIONS</div>
+        <div class="card-eyebrow">ADMIN · SYNC ACTIONS</div>
         <button type="button" id="btn-refresh-catalog" class="btn btn-gold" style="width:100%;">
           Check for API Updates &amp; Clear Cache
         </button>
@@ -730,7 +730,7 @@ function setupSystemDrawer() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open GitHub Actions Sync â†—
+          Open GitHub Actions Sync ↗
         </a>
       </div>
       ` : ''}
@@ -778,7 +778,7 @@ function setupSystemDrawer() {
         const next = await refreshLiveCatalog();
         renderDrawer();
         renderActiveTab();
-        showToast(`Catalog refreshed (${next.lunarisVer} Â· ${next.source.toUpperCase()})`, 'mint');
+        showToast(`Catalog refreshed (${next.lunarisVer} · ${next.source.toUpperCase()})`, 'mint');
       } catch (err) {
         showToast(err?.message || 'Failed to refresh catalog', 'coral');
       } finally {
@@ -864,7 +864,7 @@ function renderFixesAndFeatsPage(container) {
         <p class="section-subtitle muted">Known bugs, recent fixes, and upcoming features.</p>
       </div>
       <div class="header-meta mono">
-        LATEST: <span class="text-gold">${CHANGELOG[0]?.date || 'â€”'}</span>
+        LATEST: <span class="text-gold">${CHANGELOG[0]?.date || '—'}</span>
       </div>
     </div>
 

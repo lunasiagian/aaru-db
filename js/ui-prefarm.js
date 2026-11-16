@@ -48,7 +48,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
   }
   if (r.reservedByPrev > 0) {
     hints.push(
-      `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail Â· -${formatCompactNumber(r.reservedByPrev)} ${escapeAttr(r.reservedByLabel || '#1')}</span>`
+      `<span class="req-hint-cascade">${formatCompactNumber(r.owned)} avail · -${formatCompactNumber(r.reservedByPrev)} ${escapeAttr(r.reservedByLabel || '#1')}</span>`
     );
   }
 
@@ -59,7 +59,7 @@ function renderReqChipHtml(r, targetStateKey = '') {
       tabindex="0"
       data-pf-inspect="${escapeAttr(r.key)}"
       data-pf-target="${escapeAttr(targetStateKey)}"
-      title="${escapeAttr(`${r.name}: ${fullRatio} â€” Click for description & drop locations`)}">
+      title="${escapeAttr(`${r.name}: ${fullRatio} — Click for description & drop locations`)}">
       ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
       <div class="prefarm-tile-body">
         <div class="prefarm-tile-name" title="${escapeAttr(r.name)}">${escapeAttr(r.name)}</div>
@@ -125,7 +125,7 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
   pushFamily('weeklyBoss', 'Weekly Boss', 2, take([charMeta?.weeklyMat]));
   pushFamily('crown', 'Crown', 2, take(['CrownOfInsight']));
 
-  // 3. Common Enemy Drops â€” split Character vs Weapon 3-tier families
+  // 3. Common Enemy Drops — split Character vs Weapon 3-tier families
   if (Array.isArray(charMeta?.commonMatTiers)) {
     pushFamily('charCommon', 'Common Enemy Drops', 6, take(charMeta.commonMatTiers), true);
   }
@@ -133,7 +133,7 @@ function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
     pushFamily('wepCommon', 'Weapon Common Drops', 6, take(weaponMeta.commonMatTiers), true);
   }
 
-  // 4. Elite Enemy Drops (2â˜… -> 3â˜… -> 4â˜…)
+  // 4. Elite Enemy Drops (2★ -> 3★ -> 4★)
   if (Array.isArray(weaponMeta?.eliteMatTiers)) {
     pushFamily('wepElite', 'Elite Enemy Drops', 6, take(weaponMeta.eliteMatTiers), true);
   }
@@ -251,10 +251,10 @@ export function renderPrefarmTab(container, state, handlers) {
       <div>
         <div class="eyebrow">AARUDB / PREFARM</div>
         <h1 class="section-title">Prefarm Queue</h1>
-        <p class="section-subtitle muted">Shared bag cascades sequentially by priority (#1 â†’ #2) Â· Lower tiers shown side-by-side for 3:1 crafting.</p>
+        <p class="section-subtitle muted">Shared bag cascades sequentially by priority (#1 → #2) · Lower tiers shown side-by-side for 3:1 crafting.</p>
       </div>
       <div class="header-meta mono">
-        TARGETS: <span class="text-gold">${queue.length}</span> â€¢ #1 &amp; #2 FEED HUD
+        TARGETS: <span class="text-gold">${queue.length}</span> • #1 &amp; #2 FEED HUD
       </div>
     </div>
 
@@ -299,7 +299,7 @@ export function renderPrefarmTab(container, state, handlers) {
           <label class="mini-field">
             <span>WEAPON (OPTIONAL)</span>
             <select name="weaponKey" class="select-sm">
-              <option value="">â€” None â€”</option>
+              <option value="">— None —</option>
               ${(() => {
                 const firstType = allCharKeys.length ? getCharacterMeta(allCharKeys[0]).weaponType : '';
                 return allWeaponKeys
@@ -351,9 +351,9 @@ export function renderPrefarmTab(container, state, handlers) {
                     <div>
                       <div class="item-name">${charMeta.name}</div>
                       <div class="item-meta mono">
-                        Lv.${target.currentLevel} â†’ Lv.${target.targetLevel} â€¢
-                        Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} â†’
-                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` â€¢ ${weaponMeta.name} (${target.weaponCurrentLevel || 1}â†’${target.weaponTargetLevel || 90})` : ''}
+                        Lv.${target.currentLevel} → Lv.${target.targetLevel} •
+                        Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} →
+                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` • ${weaponMeta.name} (${target.weaponCurrentLevel || 1}→${target.weaponTargetLevel || 90})` : ''}
                       </div>
                       ${
                         bossMeta?.bossName
@@ -374,9 +374,9 @@ export function renderPrefarmTab(container, state, handlers) {
                     ${
                       !isReadOnly
                         ? `
-                      <button type="button" class="btn btn-ghost btn-xs ${targetsOpen ? 'active' : ''}" data-pf-toggle-targets="${escapeAttr(targetStateKey)}">âš™ Targets</button>
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>â–²</button>
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>â–¼</button>
+                      <button type="button" class="btn btn-ghost btn-xs ${targetsOpen ? 'active' : ''}" data-pf-toggle-targets="${escapeAttr(targetStateKey)}">⚙ Targets</button>
+                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>▲</button>
+                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>▼</button>
                       <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id ?? ''}" data-pf-rank="${target.rank ?? idx + 1}">Remove</button>`
                         : ''
                     }
@@ -415,7 +415,7 @@ export function renderPrefarmTab(container, state, handlers) {
                   <label class="mini-field">
                     <span>WEAPON (${charMeta.weaponType})</span>
                     <select class="select-sm" data-pf-edit="weaponKey" data-pf-id="${target.id}" ${disabledAttr}>
-                      <option value="">â€” None â€”</option>
+                      <option value="">— None —</option>
                       ${allWeaponKeys
                         .filter((wk) => wk === target.weaponKey || getWeaponMeta(wk).weaponType === charMeta.weaponType)
                         .map((wk) => `<option value="${wk}" ${target.weaponKey === wk ? 'selected' : ''}>${getWeaponMeta(wk).name}</option>`)
@@ -461,11 +461,11 @@ export function renderPrefarmTab(container, state, handlers) {
                   surplusRows.length
                     ? `<div class="prefarm-surplus-bar">
                         <div class="prefarm-surplus-summary mono">
-                          <span class="text-mint">âœ“ Ready in Bag (${surplusRows.length}):</span>
+                          <span class="text-mint">✓ Ready in Bag (${surplusRows.length}):</span>
                           <span class="prefarm-surplus-inline muted">
                             ${surplusRows
                               .map((r) => `${escapeAttr(r.name)} (+${formatCompactNumber(r.surplus)})`)
-                              .join(' Â· ')}
+                              .join(' · ')}
                           </span>
                           <button type="button" class="btn btn-ghost btn-xs prefarm-surplus-toggle" data-pf-toggle-surplus="${escapeAttr(targetStateKey)}">
                             ${surplusOpen ? 'Hide' : 'Inspect'}
@@ -515,7 +515,7 @@ export function renderPrefarmTab(container, state, handlers) {
     backdrop.className = 'mat-inspector-backdrop';
     backdrop.innerHTML = `
       <div class="mat-inspector-modal" role="dialog" aria-modal="true" aria-label="${escapeAttr(meta?.name || matKey)}">
-        <button type="button" class="mat-inspector-close" aria-label="Close">Ã—</button>
+        <button type="button" class="mat-inspector-close" aria-label="Close">×</button>
         <div class="mat-inspector-head">
           <div class="mat-inspector-icon-wrap rarity-bg-${rarity}">
             ${renderAssetIcon('materials', matKey, meta?.name || matKey, 'mat-inspector-icon')}
@@ -523,7 +523,7 @@ export function renderPrefarmTab(container, state, handlers) {
           <div class="mat-inspector-title-wrap">
             <h2 class="mat-inspector-title">${escapeAttr(meta?.name || matKey)}</h2>
             <div class="mat-inspector-badges mono">
-              <span class="mat-inspector-stars">${'â˜…'.repeat(rarity)}</span>
+              <span class="mat-inspector-stars">${'★'.repeat(rarity)}</span>
               <span class="mat-inspector-cat">${escapeAttr(meta?.category || 'Material')}</span>
             </div>
           </div>
@@ -536,20 +536,20 @@ export function renderPrefarmTab(container, state, handlers) {
             <div class="mat-stat-box"><span>Reserved Upstream</span><strong>${reserved > 0 ? `-${reserved.toLocaleString()} (${escapeAttr(row?.reservedByLabel || '#1')})` : '0'}</strong></div>
             <div class="mat-stat-box"><span>Available Here</span><strong>${availHere.toLocaleString()}</strong></div>
             <div class="mat-stat-box"><span>Required</span><strong>${required.toLocaleString()}</strong></div>
-            <div class="mat-stat-box"><span>3:1 Alchemy</span><strong>${craftable > 0 ? `${craftable.toLocaleString()} craftable` : 'â€”'}</strong></div>
+            <div class="mat-stat-box"><span>3:1 Alchemy</span><strong>${craftable > 0 ? `${craftable.toLocaleString()} craftable` : '—'}</strong></div>
           </div>
         </div>
 
         <div class="mat-inspector-section">
           <div class="mat-inspector-label mono">WHERE TO FIND</div>
           <div class="mat-inspector-sources" data-mat-sources>
-            <span class="muted mono">Loading drop locationsâ€¦</span>
+            <span class="muted mono">Loading drop locations…</span>
           </div>
         </div>
 
         <div class="mat-inspector-section">
           <div class="mat-inspector-label mono">IN-GAME DESCRIPTION</div>
-          <p class="mat-inspector-desc muted" data-mat-desc>Loading descriptionâ€¦</p>
+          <p class="mat-inspector-desc muted" data-mat-desc>Loading description…</p>
         </div>
       </div>
     `;
@@ -575,7 +575,7 @@ export function renderPrefarmTab(container, state, handlers) {
     const descEl = backdrop.querySelector('[data-mat-desc]');
     if (details?.rank) {
       const starsEl = backdrop.querySelector('.mat-inspector-stars');
-      if (starsEl) starsEl.textContent = 'â˜…'.repeat(Math.max(1, Math.min(5, details.rank)));
+      if (starsEl) starsEl.textContent = '★'.repeat(Math.max(1, Math.min(5, details.rank)));
     }
     if (details?.type) {
       const catEl = backdrop.querySelector('.mat-inspector-cat');
@@ -634,7 +634,7 @@ export function renderPrefarmTab(container, state, handlers) {
     charSel?.addEventListener('change', () => {
       if (!wepSel) return;
       const cType = getCharacterMeta(charSel.value).weaponType;
-      const options = ['<option value="">â€” None â€”</option>'].concat(
+      const options = ['<option value="">— None —</option>'].concat(
         allWeaponKeys
           .filter((wk) => !cType || getWeaponMeta(wk).weaponType === cType)
           .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)

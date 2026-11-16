@@ -218,11 +218,11 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const ownKitText = [...talents, ...passives].map((x) => x.description || '').join('\n');
   const INFUSION_CONVERT_RE =
-    /converts?\s+(?:[A-Za-z'â€™]+\s+){0,4}(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /converts?\s+(?:[A-Za-z'’]+\s+){0,4}(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_ALTF_RE =
-    /(?:[A-Za-z'â€™]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /(?:[A-Za-z'’]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_IMBUE_RE =
-    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'â€™]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
+    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'’]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
   const INFUSION_OVERRIDE_RE =
     /cannot\s+be\s+overridden(?:\s+by\s+any\s+other\s+elemental\s+infusion)?/i;
 
@@ -315,7 +315,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     if (/(?:her|his|their)\s+own\s+/i.test(s)) return false;
     const allyNoun =
       '(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members|allies|all\\s+characters\\s+in\\s+the\\s+party|the\\s+active\\s+character)';
-    const pPossessive = new RegExp(`${allyNoun}(?:'|â€™s)?\\s+${statRe}`, 'i');
+    const pPossessive = new RegExp(`${allyNoun}(?:'|’s)?\\s+${statRe}`, 'i');
     const pGrantTo = new RegExp(
       `(?:increases?|grant(?:s|ing)?|gain(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to|for)\\s+${allyNoun}`,
       'i'
@@ -331,7 +331,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     if (!pPossessive.test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s) && !pHaveTheir.test(s)) {
       return false;
     }
-    if (new RegExp(`\\b[A-Z][a-z]+(?:'|â€™s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s)) {
+    if (new RegExp(`\\b[A-Z][a-z]+(?:'|’s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s)) {
       return false;
     }
     return true;
@@ -404,8 +404,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const isReactionEnabler =
     /converted\s+into\s+(?:the\s+)?Lunar[- ]/i.test(nonNormalText) ||
-    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|â€™s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(nonNormalText) ||
-    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|â€™s)?\s+Base\s+DMG/i.test(nonNormalText);
+    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(nonNormalText) ||
+    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG/i.test(nonNormalText);
   if (isReactionEnabler || (hasOffField && functionTags.length === 0)) {
     functionTags.push('Reaction Enabler');
   }
@@ -897,25 +897,25 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     erDelta = best.delta;
     const reasons = [];
     if (best.hasSameElemBattery) reasons.push(`Double ${charElem}`);
-    if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}Ã— Energy Weapon`);
+    if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}× Energy Weapon`);
     const via = reasons.length ? ` via ${reasons.join(' + ')}` : '';
     if (best.delta >= 0 && hasEndgameFlag && soloDelta < 0) {
       erStatus = 'warn';
-      summary = `${currentEr}% ER â€” Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
+      summary = `${currentEr}% ER — Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
     } else if (best.delta >= 0) {
       erStatus = 'ok';
-      summary = `${currentEr}% ER â€” Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
+      summary = `${currentEr}% ER — Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     } else {
       erStatus = best.delta >= -12 ? 'warn' : 'short';
-      summary = `${currentEr}% ER â€” ${Math.abs(best.delta)}% short even in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
+      summary = `${currentEr}% ER — ${Math.abs(best.delta)}% short even in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     }
   } else {
     erDelta = currentEr - baseReq;
     erStatus = erDelta >= 0 ? 'ok' : erDelta >= -12 ? 'warn' : 'short';
     summary =
       erDelta >= 0
-        ? `${currentEr}% ER â€” Meets solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`
-        : `${currentEr}% ER â€” ${Math.abs(erDelta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
+        ? `${currentEr}% ER — Meets solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`
+        : `${currentEr}% ER — ${Math.abs(erDelta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
   }
 
   let burstTriggerNote = '';
@@ -1046,7 +1046,7 @@ export function evaluateTeamCapabilities(
     const tags = (combatStats?.kitAnalysis?.roleInfo?.utilityTags || []).filter(
       (t) => !SELF_ONLY_TAGS.has(t)
     );
-    if (tags.length) utilitySummary = tags.join(' Â· ');
+    if (tags.length) utilitySummary = tags.join(' · ');
   }
 
   // Team-buffing weapons & 4pc sets
@@ -1058,7 +1058,7 @@ export function evaluateTeamCapabilities(
     supportGear.push(`R${wepRef} Thrilling Tales (+${atkPct}% ATK swap)`);
   } else if (/Favonius/i.test(wepKey)) {
     const cr = Math.round(Number(combatStats?.critRate) || 0);
-    supportGear.push(cr >= 45 ? `Favonius (${cr}% CR â€” Reliable procs)` : `Favonius (${cr}% CR â€” Needs â‰¥45% CR)`);
+    supportGear.push(cr >= 45 ? `Favonius (${cr}% CR — Reliable procs)` : `Favonius (${cr}% CR — Needs ≥45% CR)`);
   } else if (/ElegyForTheEnd/i.test(wepKey)) {
     supportGear.push(`R${wepRef} Elegy (+${100 + (wepRef - 1) * 25} EM & +${20 + (wepRef - 1) * 5}% ATK)`);
   } else if (/FreedomSworn/i.test(wepKey)) {
@@ -1121,8 +1121,8 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     return {
       tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
       orderText: skillFavored
-        ? 'Normal (A) > Skill (E) â‰¥ Burst (Q)'
-        : 'Normal (A) > Burst (Q) â‰¥ Skill (E)',
+        ? 'Normal (A) > Skill (E) ≥ Burst (Q)'
+        : 'Normal (A) > Burst (Q) ≥ Skill (E)',
       lowValueNote: 'All 3 talents contribute to on-field rotations; prioritize Normal (A) first.'
     };
   }
@@ -1136,7 +1136,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
       orderText: eFirst
         ? 'Skill (E) > Burst (Q) >> Normal (A)'
         : 'Burst (Q) > Skill (E) >> Normal (A)',
-      lowValueNote: 'Normal (A) is a low-value Mora sink â€” leave at Lv.1.'
+      lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1.'
     };
   }
 
@@ -1146,7 +1146,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     orderText: skillFavored
       ? 'Skill (E) > Burst (Q) >> Normal (A)'
       : 'Burst (Q) > Skill (E) >> Normal (A)',
-    lowValueNote: 'Normal (A) is a low-value Mora sink â€” leave at Lv.1 unless on-fielding.'
+    lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1 unless on-fielding.'
   };
 }
 
@@ -1163,8 +1163,8 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
     utilityTags: [],
     kitTriggers: []
   };
-  const tags = roleInfo.utilityTags?.length ? ` Â· ${roleInfo.utilityTags.join(' Â· ')}` : '';
-  const critNote = analysis.isNonCrit ? ' (Non-Crit scaling â€” Crit Rate/DMG bypassed)' : '';
+  const tags = roleInfo.utilityTags?.length ? ` · ${roleInfo.utilityTags.join(' · ')}` : '';
+  const critNote = analysis.isNonCrit ? ' (Non-Crit scaling — Crit Rate/DMG bypassed)' : '';
   const weaponNote = weaponData?.name ? ` Paired with ${weaponData.name}.` : '';
 
   const kqm = getKqmEntry(char?.key);
@@ -1216,7 +1216,7 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
   }
   const uniqueHighlights = [...new Set(highlights.map(stripMarkup))].slice(0, 5);
   const highlightText = uniqueHighlights.length
-    ? uniqueHighlights.join(' Â· ')
+    ? uniqueHighlights.join(' · ')
     : ownedCon === 0
       ? 'C0 baseline kit; check A1/A4 passives for rotation triggers.'
       : `C${ownedCon} unlocked; standard kit scaling active.`;
@@ -1649,8 +1649,8 @@ export function recommendWeaponsForCharacter(
     if (ownedMatch) score += 4;
 
     // 4. Tiered Recommendation Label & Dynamic Reason
-    let tierLabel = cand.rarity === 5 ? '5â˜… Stat Match' : 'Accessible Option';
-    let reason = `${substat ? `${substatValue ? `${substatValue} ` : ''}${substat}` : `Base ATK ${cand.baseAtk || 'â€”'}`} aligned with ${scaling.primaryLabel} scaling.`;
+    let tierLabel = cand.rarity === 5 ? '5★ Stat Match' : 'Accessible Option';
+    let reason = `${substat ? `${substatValue ? `${substatValue} ` : ''}${substat}` : `Base ATK ${cand.baseAtk || '—'}`} aligned with ${scaling.primaryLabel} scaling.`;
 
     if (mTags.has('skill_reset') && isHighBurstOffField) {
       tierLabel = 'BiS Utility / Battery';
@@ -1709,7 +1709,7 @@ export function recommendWeaponsForCharacter(
   const candidates = [...fullPool, ...extraOwned].map(scoreCandidate);
   candidates.sort((a, b) => b.score - a.score || b.rarity - a.rarity || a.name.localeCompare(b.name));
 
-  // Ensure up to 6 picks (including top 5â˜… and accessible 4â˜…/3â˜… options)
+  // Ensure up to 6 picks (including top 5★ and accessible 4★/3★ options)
   const top5 = candidates.filter((c) => c.rarity === 5).slice(0, 3);
   const top43 = candidates.filter((c) => c.rarity <= 4).slice(0, 4);
   const combined = [...top5, ...top43]

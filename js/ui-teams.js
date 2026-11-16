@@ -22,7 +22,7 @@ export function renderTeamsTab(container, state, handlers) {
         <h1 class="section-title">Team Comps</h1>
       </div>
       <div class="header-meta mono">
-        SQUADS: <span class="text-gold">${teams.length}</span> â€¢
+        SQUADS: <span class="text-gold">${teams.length}</span> •
         CONFLICTS: <span class="${conflicts.length ? 'text-coral' : 'text-mint'}">${conflicts.length}</span>
       </div>
     </div>
@@ -31,7 +31,7 @@ export function renderTeamsTab(container, state, handlers) {
       conflicts.length
         ? `
       <article class="card conflict-banner">
-        <div class="card-eyebrow text-coral">âš  WEAPON CONFLICT DETECTOR</div>
+        <div class="card-eyebrow text-coral">⚠ WEAPON CONFLICT DETECTOR</div>
         <div class="conflict-list">
           ${conflicts
             .map((c) => {
@@ -105,7 +105,7 @@ export function renderTeamsTab(container, state, handlers) {
                           </div>
                           <div>
                             <div class="item-name">${cm.name}</div>
-                            <div class="item-meta mono">${cm.element}${roleInfo.functionTags.length ? ` Â· ${roleInfo.functionTags.slice(0, 2).join(' Â· ')}` : ''}</div>
+                            <div class="item-meta mono">${cm.element}${roleInfo.functionTags.length ? ` · ${roleInfo.functionTags.slice(0, 2).join(' · ')}` : ''}</div>
                             <select class="select-xs mono slot-role-select" data-team-role="${team.id}" data-member-idx="${idx}" ${disabledAttr}>
                               <option value="" ${!explicitRole ? 'selected' : ''}>Auto: ${autoRole}</option>
                               ${roleOptions

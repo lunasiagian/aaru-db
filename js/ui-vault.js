@@ -119,12 +119,12 @@ export function renderVaultTab(container, state, handlers) {
                         ${renderAssetIcon('materials', row.key, row.name, 'icon-sm')}
                         <div>
                           <div class="item-name">${row.name}</div>
-                          <div class="item-meta mono">${row.key}${row.availableToday ? ' â€¢ <span class="text-mint">OPEN TODAY</span>' : ''}</div>
+                          <div class="item-meta mono">${row.key}${row.availableToday ? ' • <span class="text-mint">OPEN TODAY</span>' : ''}</div>
                         </div>
                       </div>
                     </td>
                     <td><span class="pill">${row.category}</span></td>
-                    <td class="mono muted">${row.target ? row.target.toLocaleString() : 'â€”'}</td>
+                    <td class="mono muted">${row.target ? row.target.toLocaleString() : '—'}</td>
                     <td>
                       ${
                         row.isLowStock
@@ -197,7 +197,7 @@ export function renderVaultTab(container, state, handlers) {
             handlers.onInventoryRowSaved(key, payload);
             const liveBadge = container.querySelector(`[data-saved-badge="${key}"]`);
             if (liveBadge) {
-              liveBadge.textContent = 'Saved âœ“';
+              liveBadge.textContent = 'Saved ✓';
               liveBadge.className = 'saved-badge mono is-saved';
             }
           } catch (err) {
