@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AaruDB — Build Science Test Runner</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 24px; max-width: 980px; margin: 0 auto; }
+    .test-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .test-summary { font-size: 13px; color: #cbd5e1; margin-bottom: 14px; }
+    .test-list { display: flex; flex-direction: column; gap: 10px; }
+    .test-row { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 14px; }
+    .test-row.pass { border-color: rgba(52, 211, 153, 0.35); }
+    .test-row.fail { border-color: rgba(248, 113, 113, 0.55); }
+    .test-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+    .test-detail { margin-top: 6px; font-size: 11px; color: #94a3b8; line-height: 1.45; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <div>
+      <div class="eyebrow">AARUDB / LOCAL VERIFICATION</div>
+      <h1 class="section-title" style="margin: 4px 0 0;">Build Science Stress-Test Suite</h1>
+    </div>
+    <button id="rerun-btn" class="btn-primary mono">Re-run Tests</button>
+  </div>
+  <div id="test-summary" class="test-summary mono">Running tests...</div>
+  <div id="test-list" class="test-list"></div>
+
+  <script type="module">
+    import { runBuildScienceTests } from './tests/build-science.test.js';
+
+    const summaryEl = document.getElementById('test-summary');
+    const listEl = document.getElementById('test-list');
+    const rerunBtn = document.getElementById('rerun-btn');
+
+    function render(rows) {
+      const passed = rows.filter((r) => r.ok).length;
+      const failed = rows.length - passed;
+      summaryEl.innerHTML = `TOTAL: ${rows.length} · <span class="text-mint">PASS: ${passed}</span> · <span class="${failed ? 'text-coral' : 'text-mint'}">FAIL: ${failed}</span>`;
+      listEl.innerHTML = rows
+        .map(
+          (r) => `
+          <div class="test-row ${r.ok ? 'pass' : 'fail'}">
+            <div class="test-row-top">
+              <span>${r.ok ? 'PASS' : 'FAIL'} — ${r.name}</span>
+              <span class="mono" style="font-size:11px;color:#94a3b8;">${r.ms} ms</span>
+            </div>
+            <div class="test-detail mono">${r.detail}</div>
+          </div>`
+        )
+        .join('');
+    }
+
+    async function run() {
+      rerunBtn.disabled = true;
+      summaryEl.textContent = 'Hydrating character kits & running assertions...';
+      const finalRows = await runBuildScienceTests(render);
+      render(finalRows);
+      rerunBtn.disabled = false;
+    }
+
+    rerunBtn.addEventListener('click', run);
+    run();
+  </script>
+</body>
+</html>
