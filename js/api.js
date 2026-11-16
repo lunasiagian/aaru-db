@@ -426,69 +426,6 @@ export async function restoreAccountSession(username) {
   };
 }
 
-const SWR_ACCOUNT_PREFIX = 'aaru_swr_account_v1:';
-
-function readSwrAccount(username) {
-  const normalized = (username || '').trim().toLowerCase();
-  if (!normalized) return null;
-  try {
-    const raw = localStorage.getItem(`${SWR_ACCOUNT_PREFIX}${normalized}`);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSwrAccount(username, account, visibleUsers = null) {
-  const normalized = (username || '').trim().toLowerCase();
-  if (!normalized || !account) return;
-  try {
-    const prev = readSwrAccount(normalized);
-    localStorage.setItem(
-      `${SWR_ACCOUNT_PREFIX}${normalized}`,
-      JSON.stringify({
-        account,
-        visibleUsers: visibleUsers || prev?.visibleUsers || null,
-        syncedAt: Date.now()
-      })
-    );
-  } catch {
-    // Ignore storage quota errors
-  }
-}
-
-/**
- * Returns the last synced account payload from localStorage for instant SWR hydration.
- */
-export function getCachedAccountSession(username) {
-  const normalized = (username || '').trim().toLowerCase();
-  if (!normalized) return null;
-  if (isOfflineMode()) {
-    const cfg = getConfig();
-    if (!cfg.ACCOUNTS?.[normalized]) return null;
-    return {
-      ok: true,
-      mode: 'offline',
-      account: loadLocalMock(normalized),
-      visibleUsers: Object.values(cfg.ACCOUNTS).map((a) => ({
-        user: a.username,
-        displayName: a.displayName,
-        isPublic: true
-      }))
-    };
-  }
-  if (!getSessionToken()) return null;
-  const cached = readSwrAccount(normalized);
-  if (!cached?.account) return null;
-  return {
-    ok: true,
-    mode: 'swr-cache',
-    account: normalizeAccount(cached.account) || cached.account,
-    visibleUsers: cached.visibleUsers || null,
-    syncedAt: cached.syncedAt || 0
-  };
-}
-
 /**
  * Clears the local session token and best-effort revokes it on the backend.
  */
