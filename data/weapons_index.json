@@ -81,7 +81,8 @@
                         "substatValue":  "44.1%",
                         "mechanicTags":  [
                                              "na_ca_dmg",
-                                             "em_scale"
+                                             "em_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -312,7 +313,8 @@
                         "substatValue":  "49.6%",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "hp_scale"
+                                             "hp_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -325,7 +327,8 @@
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
                         "mechanicTags":  [
-                                             "skill_dmg"
+                                             "skill_dmg",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -338,7 +341,7 @@
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -404,7 +407,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "33.1%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -694,7 +697,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "16.5%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -985,7 +988,8 @@
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+                                             "na_ca_dmg",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1040,7 +1044,7 @@
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1055,7 +1059,8 @@
                         "mechanicTags":  [
                                              "party_buff",
                                              "na_ca_dmg",
-                                             "def_scale"
+                                             "def_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1425,7 +1430,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1517,7 +1522,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
                         "mechanicTags":  [
-
+                                             "healer_trigger"
                                          ]
                     },
                     {
@@ -1755,7 +1760,8 @@
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
                         "mechanicTags":  [
-                                             "hp_scale"
+                                             "hp_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1794,7 +1800,8 @@
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
                         "mechanicTags":  [
-                                             "er_battery"
+                                             "er_battery",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1820,7 +1827,8 @@
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
                         "mechanicTags":  [
-                                             "em_scale"
+                                             "em_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -1943,7 +1951,8 @@
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
                         "mechanicTags":  [
-                                             "em_scale"
+                                             "em_scale",
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -2349,7 +2358,7 @@
                         "substat":  "CRIT Rate",
                         "substatValue":  "18.4%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {
@@ -2375,7 +2384,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
                         "mechanicTags":  [
-
+                                             "healer_trigger"
                                          ]
                     },
                     {
@@ -2482,7 +2491,8 @@
                         "substatValue":  "41.3%",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "hp_scale"
+                                             "hp_scale",
+                                             "healer_trigger"
                                          ]
                     },
                     {
@@ -2628,7 +2638,7 @@
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
                         "mechanicTags":  [
-
+                                             "elem_dmg"
                                          ]
                     },
                     {

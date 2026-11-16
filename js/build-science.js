@@ -232,19 +232,19 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     INFUSION_IMBUE_RE.test(ownKitText) ||
     (INFUSION_OVERRIDE_RE.test(ownKitText) && /(?:normal|charged|plunging)\s+attacks?/i.test(ownKitText));
 
-  // Distinguish sustained infusion stances (>= 6s) from brief plunge/dash animations (<= 2s, e.g. Kazuha Midare Ranzan)
+  // Distinguish sustained infusion stances (>= 5s) from brief plunge/dash animations (<= 2s, e.g. Kazuha Midare Ranzan)
   const isBriefPlungeOrTap =
-    /plunging\s+attack:\s*midare\s+ranzan/i.test(ownKitText) ||
-    (/(?:plunging\s+attack|dash)/i.test(ownKitText) && !/(?:normal\s+attack|stance|lasts?\s+(?:[6-9]|1\d)s)/i.test(ownKitText));
+    /plunging\s+attack:\s*midare\s+ranzan/i.test(nonNormalText) &&
+    !/(?:lasts?\s+(?:[5-9]|1\d)s|infusion\s+for\s+(?:[5-9]|1\d)s)/i.test(nonNormalText);
 
-  // Check if infusion/stance duration >= 6s (or explicit sustained carry kit)
+  // Check if infusion/stance duration >= 5s (or explicit sustained carry kit)
   const hasSustainedDuration = talents
     .filter((t) => t.kind !== 'normal')
     .some((t) =>
       Object.entries(t.multipliers || {}).some(([lbl, arr]) => {
         if (!/duration/i.test(lbl) || /cd|cooldown/i.test(lbl)) return false;
         const sec = parseFirstNumber(Array.isArray(arr) ? arr[0] : arr);
-        return sec >= 6;
+        return sec >= 5;
       })
     );
 
@@ -367,7 +367,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   if (/def\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?def\b|ignores?\s+[\d.]+%\s+of\s+opponents'?\s+def/i.test(nonNormalText)) {
     functionTags.push('DEF Shred');
   }
-  if (/pulls?\s+opponents|pulling\s+opponents|vacuum|vortex|gather(?:s|ing)?\s+opponents/i.test(nonNormalText)) {
+  if (/pulls?\s+(?:in\s+)?(?:nearby\s+)?(?:objects\s+and\s+)?opponents|draws?\s+(?:in\s+)?opponents|pulling\s+(?:objects\s+and\s+)?opponents|vacuum|vortex|gather(?:s|ing)?\s+opponents|creates?\s+a\s+wind\s+tunnel/i.test(nonNormalText)) {
     functionTags.push('Crowd Control');
   }
 
@@ -537,6 +537,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
         condition: 'Off-meta on-field DPS / driver build'
       });
     }
+  } else if (normChar === 'ganyu') {
+    fieldRole = 'On-Field Carry';
+    flexModes.push(
+      { id: 'On-Field Carry', label: 'On-Field Carry (Melt / Freeze)', unlocked: true, condition: 'Charged Attack Frostflake Arrow carry' },
+      { id: 'Off-Field Sub-DPS', label: 'Off-Field Sub-DPS (Burst)', unlocked: true, condition: 'Cryo Burst sub-DPS & Freeze support' }
+    );
   } else if (fieldRole === 'On-Field Driver') {
     flexModes.push({
       id: 'Quickswap Support',
@@ -1765,11 +1771,15 @@ export function recommendWeapons(
     const lowerName = String(cand.name || '').toLowerCase();
     const isFavonius = lowerName.includes('favonius');
     const isTtds = lowerName.includes('thrilling tales');
-    const isHpWeapon = mTags.has('hp_scale') || /hp/i.test(substat);
-    const isDefWeapon = mTags.has('def_scale') || /def/i.test(substat);
+    const isHpSubstat = /hp/i.test(substat);
+    const isDefSubstat = /def/i.test(substat);
+    const isHpWeapon = mTags.has('hp_scale') || isHpSubstat;
+    const isDefWeapon = mTags.has('def_scale') || isDefSubstat;
     const isEmWeapon = mTags.has('em_scale') || /mastery|em/i.test(substat);
     const isErWeapon = mTags.has('er_battery') || /energy\s*recharge/i.test(substat);
     const isCritWeapon = /crit/i.test(substat);
+    const isHealerLocked = mTags.has('healer_trigger') && !isHealer;
+    const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM');
 
     const rarityBase = cand.rarity === 5 ? 16 : cand.rarity === 4 ? 12 : 6;
     const ownedMatch = ownedByKey.get(String(cand.key || '').toLowerCase()) || null;
@@ -1783,10 +1793,10 @@ export function recommendWeapons(
     let dpsErPts = 0;
 
     if (profile.primaryStatKey === 'hp_') dpsPrimaryPts += isHpWeapon ? 30 : 0;
-    else if (isHpWeapon && !scalingStatsSet.has('HP')) dpsScore -= 35;
+    else if (isHpSubstat && !scalingStatsSet.has('HP')) dpsScore -= 35;
 
     if (profile.primaryStatKey === 'def_') dpsPrimaryPts += isDefWeapon ? 30 : 0;
-    else if (isDefWeapon && !scalingStatsSet.has('DEF')) dpsScore -= 35;
+    else if (isDefSubstat && !scalingStatsSet.has('DEF')) dpsScore -= 35;
 
     if (profile.primaryStatKey === 'eleMas') dpsPrimaryPts += isEmWeapon ? 28 : 0;
     else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) dpsPrimaryPts += 14;
@@ -1795,13 +1805,19 @@ export function recommendWeapons(
     if (profile.primaryStatKey !== 'hp_' && scalingStatsSet.has('HP') && isHpWeapon) dpsHybridPts += 22;
     if (profile.primaryStatKey !== 'def_' && scalingStatsSet.has('DEF') && isDefWeapon) dpsHybridPts += 22;
     if (profile.primaryStatKey !== 'eleMas' && scalingStatsSet.has('EM') && isEmWeapon) dpsHybridPts += 22;
-    else if (profile.scaling?.secondaryStats?.includes('EM') && isEmWeapon) dpsHybridPts += 10;
 
     if (!profile.isNonCrit && isCritWeapon) dpsCritPts += 28;
-    if (profile.infusionType === 'na_ca' && mTags.has('na_ca_dmg')) dpsPrimaryPts += 18;
-    if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsPrimaryPts += 12;
-    if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsPrimaryPts += 12;
-    if (isErWeapon && erNeedGate > 0) dpsErPts += Math.round(10 * erNeedGate);
+    if (mTags.has('elem_dmg')) dpsPrimaryPts += 14;
+    if (profile.primaryStatKey === 'atk_' && Number(cand.baseAtk) >= 608) dpsPrimaryPts += 6;
+    if (!emPassiveMismatch) {
+      if (profile.infusionType === 'na_ca' && mTags.has('na_ca_dmg')) dpsPrimaryPts += 18;
+      if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsPrimaryPts += 12;
+      if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsPrimaryPts += 12;
+    } else {
+      dpsScore -= 10;
+    }
+    if (!isHealerLocked && isErWeapon && erNeedGate > 0) dpsErPts += Math.round(10 * erNeedGate);
+    if (isHealerLocked) dpsScore -= 20;
     if (isTtds || (isFavonius && role === 'On-Field Carry')) dpsScore -= 25;
 
     dpsScore += dpsPrimaryPts + dpsHybridPts + dpsCritPts + dpsErPts;
@@ -1820,7 +1836,7 @@ export function recommendWeapons(
     let teamParticlesPts = 0;
     let skillResetPts = 0;
 
-    if (mTags.has('party_buff') || isTtds) partyBuffPts = 34;
+    if (!isHealerLocked && (mTags.has('party_buff') || isTtds)) partyBuffPts = 34;
     if (isFavonius) teamParticlesPts = 30;
     if (mTags.has('skill_reset')) {
       skillResetPts = 28 + (profile.skillCd >= 15 && profile.skillParticles >= 4 ? 12 : profile.skillCd >= 15 ? 6 : 0);
@@ -1828,19 +1844,19 @@ export function recommendWeapons(
     teamUtilityScore = partyBuffPts + teamParticlesPts + skillResetPts;
 
     let defensiveScalingScore = 0;
-    if (isShielder || isHealer) {
+    if ((isShielder || isHealer) && !isHealerLocked) {
       if (scalingStatsSet.has('HP') && isHpWeapon) defensiveScalingScore += 30;
       if (scalingStatsSet.has('DEF') && isDefWeapon) defensiveScalingScore += 30;
       if (scalingStatsSet.has('EM') && isEmWeapon) defensiveScalingScore += 22;
       if (isHealer && mTags.has('healer_utility')) defensiveScalingScore += 18;
     }
 
-    // Penalize non-matching HP/DEF weapons on non-HP/DEF characters (except TTDS)
-    let compatPenalty = 0;
-    if (!scalingStatsSet.has('HP') && isHpWeapon && !isTtds) compatPenalty -= 35;
-    if (!scalingStatsSet.has('DEF') && isDefWeapon) compatPenalty -= 35;
+    // Penalize non-matching HP/DEF substat weapons on non-HP/DEF characters (except TTDS) & healer-locked triggers
+    let compatPenalty = isHealerLocked ? -20 : 0;
+    if (!scalingStatsSet.has('HP') && isHpSubstat && !isTtds) compatPenalty -= 35;
+    if (!scalingStatsSet.has('DEF') && isDefSubstat) compatPenalty -= 35;
 
-    const erThresholdPts = isErWeapon ? Math.round((24 + (erBelowTarget ? 8 : 0)) * erNeedGate) : 0;
+    const erThresholdPts = !isHealerLocked && isErWeapon ? Math.round((24 + (erBelowTarget ? 8 : 0)) * erNeedGate) : 0;
     const supportScore = rarityBase + ownedBonus + teamUtilityScore + defensiveScalingScore + erThresholdPts + compatPenalty;
 
     const supFactors = [

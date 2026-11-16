@@ -115,6 +115,10 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("em_scale")
     if re.search(r"healing\s+bonus|regenerates?\s+[\d.]+%?\s+(?:of\s+)?max\s+hp|restore[s]?\s+hp\s+for\s+all\s+party", text, re.I):
         tags.append("healer_utility")
+    if re.search(r"when\s+the\s+wielder\s+performs?\s+healing|after\s+(?:the\s+wielder\s+)?(?:is\s+|performs?\s+)?heal(?:ed|ing)", text, re.I):
+        tags.append("healer_trigger")
+    if re.search(r"elemental\s+dmg\s+bonus|all\s+elemental\s+dmg|gains?\s+[\d.]+%\s+elemental\s+dmg", text, re.I):
+        tags.append("elem_dmg")
 
     return list(dict.fromkeys(tags))
 

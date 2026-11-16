@@ -70,7 +70,14 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     assert(profile.scalingStats.includes('HP'), `Expected HP in scalingStats, got ${profile.scalingStats.join(', ')}`);
     assert(profile.burstCost === 40, `Expected 40-cost burst, got ${profile.burstCost}`);
     const recs = recommendWeapons(profile, weaponsIndex, []);
+    const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
+    const accSup = recs.find((w) => w.tierLabel === 'Accessible Support');
     const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
+    assert(bisDps?.name === 'Staff of Homa', `Expected BiS DPS Staff of Homa, got ${bisDps?.name}`);
+    assert(
+      accSup?.name === 'Favonius Lance' || accSup?.name === 'Black Tassel',
+      `Expected Accessible Support Favonius Lance or Black Tassel, got ${accSup?.name}`
+    );
     assert(!/40-cost Burst ER/i.test(bisSup?.reason || ''), `Lying ER blurb on 40-cost Zhongli: ${bisSup?.reason}`);
     return verifyFourUniqueBuckets(profile, recs);
   });
@@ -96,6 +103,8 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const recs = recommendWeapons(profile, weaponsIndex, []);
     const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
     assert(!/HP%/i.test(bisDps?.substat || ''), `HP% bow recommended as BiS DPS for Ganyu: ${bisDps?.name}`);
+    assert(profile.flexModes.some((m) => m.id === 'On-Field Carry'), 'Ganyu flexModes missing On-Field Carry');
+    assert(profile.flexModes.some((m) => m.id === 'Off-Field Sub-DPS'), 'Ganyu flexModes missing Off-Field Sub-DPS');
     return verifyFourUniqueBuckets(profile, recs);
   });
 
@@ -118,8 +127,13 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const profile = buildKitProfile({ key: 'Xingqiu', kitData: kit });
     assert(profile.fieldRole === 'Off-Field Sub-DPS', `Expected Off-Field Sub-DPS, got ${profile.fieldRole}`);
     const recs = recommendWeapons(profile, weaponsIndex, []);
-    const hasSac = recs.some((w) => w.key === 'SacrificialSword' && /Support/.test(w.tierLabel));
-    assert(hasSac, `Expected Sacrificial Sword in Support buckets, got ${recs.map((w) => w.name).join(', ')}`);
+    const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
+    const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
+    assert(bisSup?.name === 'Sacrificial Sword', `Expected BiS Support Sacrificial Sword, got ${bisSup?.name}`);
+    assert(
+      bisDps?.name === 'Mistsplitter Reforged' || bisDps?.name === 'Primordial Jade Cutter',
+      `Expected BiS DPS Mistsplitter Reforged or Primordial Jade Cutter, got ${bisDps?.name}`
+    );
     return verifyFourUniqueBuckets(profile, recs);
   });
 
