@@ -49,6 +49,8 @@ export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-ic
       src="${primarySrc}"
       alt="${safeAlt}"
       class="asset-img${fallbackSrc ? '' : ' is-custom-pixel'}"
+      loading="lazy"
+      decoding="async"
       referrerpolicy="no-referrer"
       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
     />

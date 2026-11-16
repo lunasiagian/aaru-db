@@ -1,6 +1,8 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
 let cachedWeaponsIndex = [];
+const CATALOG_VERSION = '20261116a';
+const STATIC_CATALOG_CACHE_KEY = `aaru_static_catalog_${CATALOG_VERSION}`;
 const CATALOG_CACHE_PREFIX = 'aaru_catalog_v';
 const CATALOG_LATEST_PTR = 'aaru_catalog_latest_patch';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
@@ -480,6 +482,25 @@ export function getWeaponsIndex() {
 
 export async function loadCatalog() {
   if (cachedCatalog) return cachedCatalog;
+
+  // Fast path: hydrate parsed static JSONs from versioned localStorage cache (< 20ms)
+  try {
+    const cachedRaw = localStorage.getItem(STATIC_CATALOG_CACHE_KEY);
+    if (cachedRaw) {
+      const parsed = JSON.parse(cachedRaw);
+      if (parsed?.catalog && Array.isArray(parsed?.weaponsIndex) && parsed.weaponsIndex.length > 0) {
+        cachedCatalog = parsed.catalog;
+        cachedKqmTcl = parsed.kqmTcl || {};
+        cachedWeaponsIndex = parsed.weaponsIndex;
+        // Hydrate Yatta maps synchronously from cache or snapshot; refresh live API in background
+        fetchYattaCatalog(false).catch(() => {});
+        return cachedCatalog;
+      }
+    }
+  } catch {
+    // Ignore cache read/parse errors and fetch fresh
+  }
+
   const [catRes, kqmRes, wepIdxRes] = await Promise.allSettled([
     fetch('./data/catalog.json', { cache: 'no-cache' }),
     fetch('./data/kqm-tcl.json', { cache: 'no-cache' }),
@@ -508,6 +529,23 @@ export async function loadCatalog() {
       throw new Error(`HTTP ${catRes.value?.status || 'fetch error'}`);
     }
     cachedCatalog = await catRes.value.json();
+    try {
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith('aaru_static_catalog_') && k !== STATIC_CATALOG_CACHE_KEY) {
+          localStorage.removeItem(k);
+        }
+      }
+      localStorage.setItem(
+        STATIC_CATALOG_CACHE_KEY,
+        JSON.stringify({
+          catalog: cachedCatalog,
+          kqmTcl: cachedKqmTcl,
+          weaponsIndex: cachedWeaponsIndex
+        })
+      );
+    } catch {
+      // Ignore storage quota errors
+    }
   } catch (err) {
     console.warn('Failed to fetch data/catalog.json, using minimal fallback.', err);
     cachedCatalog = {
@@ -531,7 +569,8 @@ export async function loadCatalog() {
       }
     };
   }
-  await fetchYattaCatalog();
+  // Do not block initial render on 7 external API calls if Yatta cache is cold
+  fetchYattaCatalog(false).catch(() => {});
   return cachedCatalog;
 }
 

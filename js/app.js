@@ -2,6 +2,7 @@ import { getCatalogStatus, getCharacterMeta, loadCatalog, refreshLiveCatalog } f
 import { getServerResetInfo, SERVER_REGIONS, sortAndLabelPrefarmQueue } from './calculations.js?v=20261114w';
 import {
   fetchPartnerAccount,
+  getCachedAccountSession,
   isOfflineMode,
   loginAccount,
   logoutAccount,
@@ -10,8 +11,8 @@ import {
   setReadOnlyViewState,
   updateProfileSettings,
   upsertRosterRow
-} from './api.js?v=20261115y';
-import { bindAdminInviteButton, initInviteRegistration } from './auth.js?v=20261115y';
+} from './api.js?v=20261116a';
+import { bindAdminInviteButton, initInviteRegistration } from './auth.js?v=20261116a';
 import {
   commitGoodImport,
   computeGoodImportDiff,
@@ -1004,12 +1005,35 @@ async function bootstrap() {
     return;
   }
 
-  // Restore session from sessionStorage
+  // Restore session from sessionStorage (Stale-While-Revalidate: instant localStorage render + background cloud sync)
   try {
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed?.user) {
+        const swrCached = getCachedAccountSession(parsed.user);
+        if (swrCached) {
+          applyAuthenticatedSession(swrCached);
+          if (!isOfflineMode()) {
+            restoreAccountSession(parsed.user)
+              .then((freshRes) => {
+                if (!state.sessionUser || state.sessionUser !== parsed.user) return;
+                const prevSnapshot = JSON.stringify({
+                  account: state.ownAccount,
+                  visibleUsers: state.visibleUsers
+                });
+                const nextSnapshot = JSON.stringify({
+                  account: freshRes.account,
+                  visibleUsers: freshRes.visibleUsers || state.visibleUsers
+                });
+                if (prevSnapshot !== nextSnapshot) {
+                  applyAuthenticatedSession(freshRes);
+                }
+              })
+              .catch((err) => console.warn('Background cloud revalidation failed:', err));
+          }
+          return;
+        }
         const res = await restoreAccountSession(parsed.user);
         applyAuthenticatedSession(res);
         return;
