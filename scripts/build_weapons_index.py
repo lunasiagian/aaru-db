@@ -103,9 +103,11 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("skill_dmg")
     if re.search(r"elemental\s+burst\s+dmg|burst\s+dmg\s+increased|elemental\s+burst\s+crit\s+rate|dmg\s+dealt\s+by[^.]{0,45}elemental\s+bursts?", text, re.I):
         tags.append("burst_dmg")
-    if re.search(r"normal(?:\s+and\s+|\s*,\s*|\s+or\s+)?charged\s+attack|normal\s+attack\s+dmg|charged\s+attack\s+dmg|plunge|plunging\s+attack|dmg\s+dealt\s+by\s+normal\s+attacks?", text, re.I):
-        tags.append("na_ca_dmg")
-    if re.search(r"charged\s+attack\s+dmg|normal\s+(?:and|or)\s+charged\s+attack\s+dmg", text, re.I):
+    if re.search(r"(?<!decreases\s)(?:normal\s+(?:and\s+(?:charged|plunging)\s+)?attack\s+dmg|dmg\s+dealt\s+by\s+normal\s+attacks?|increases?\s+normal\s+attack)", text, re.I):
+        tags.append("na_dmg")
+    if re.search(r"decreases?\s+charged\s+attack\s+dmg", text, re.I):
+        tags.append("ca_penalty")
+    elif re.search(r"charged\s+attack\s+dmg|normal\s+(?:and|or)\s+charged\s+attack\s+dmg|charged\s+attack\s+crit|aimed\s+shot\s+dmg", text, re.I):
         tags.append("ca_dmg")
     if re.search(r"increases?\s+atk\s+by|atk\s+(?:is\s+)?increased\s+by|gains?\s+[\d.]+%\s+atk", text, re.I):
         tags.append("atk_buff")
@@ -123,6 +125,8 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("healer_trigger")
     if re.search(r"elemental\s+dmg\s+bonus|all\s+elemental\s+dmg|gains?\s+[\d.]+%\s+elemental\s+dmg", text, re.I):
         tags.append("elem_dmg")
+    if re.search(r"after\s+defeating\s+an\s+(?:opponent|enemy)", text, re.I):
+        tags.append("on_kill")
 
     return list(dict.fromkeys(tags))
 
@@ -135,7 +139,7 @@ def extract_required_mechanics(passive_text: str) -> list[str]:
         reqs.append("nightsoul")
     if re.search(r"hp\s+(?:increases\s+or\s+decreases|decreases\s+or\s+increases|changes)", passive_text, re.I):
         reqs.append("hp_fluctuation")
-    if re.search(r"when\s+the\s+wielder\s+performs?\s+healing|performs?\s+healing", passive_text, re.I):
+    if re.search(r"when\s+the\s+wielder\s+performs?\s+healing|performs?\s+healing|when\s+the\s+wielder\s+is\s+healed\s+or\s+performs\s+healing", passive_text, re.I):
         reqs.append("healing_performed")
     if re.search(r"\blunar(?:[- ]?(?:charged|bloom|crystallize|reaction))?\b", passive_text, re.I):
         reqs.append("lunar")
@@ -203,11 +207,31 @@ F2P_CRAFT_FISH_KEYS = {
 }
 
 
-def classify_acquisition(pascal_key: str, rarity: int) -> str:
+PLATFORM_EXCLUSIVE_KEYS = {
+    "Predator", "SwordOfDescension",
+}
+
+
+LIMITED_4_KEYS = {
+    "RangeGauge", "ProspectorsDrill", "PortablePowerSaw", "TheDockhandsAssistant",
+    "XiphosMoonlight", "WanderingEvenstar", "MakhairaAquamarine", "WavebreakersFin",
+    "MouunsMoon", "Akuoumaru", "LithicBlade", "LithicSpear", "FlowerWreathedFeathers",
+    "WaveridingWhirl", "FruitfulHook", "MountainBracingBolt", "SturdyBone",
+    "MitternachtsWaltz", "AlleyHunter", "TheAlleyFlash", "WineAndSong",
+}
+
+
+def classify_acquisition(pascal_key: str, rarity: int, passive_text: str = "") -> str:
+    if pascal_key in PLATFORM_EXCLUSIVE_KEYS or re.search(r"playstation\s+network", passive_text, re.I):
+        return "platform_exclusive"
+    if re.match(r"^(?:Blackcliff|Royal)", pascal_key):
+        return "starglitter"
     if pascal_key in BP_KEYS:
         return "bp"
     if pascal_key in EVENT_LIMITED_KEYS:
         return "event_limited"
+    if pascal_key in LIMITED_4_KEYS:
+        return "limited_4"
     if rarity == 3 or pascal_key in F2P_CRAFT_FISH_KEYS:
         return "f2p_craft_fish"
     if rarity == 5:
@@ -249,7 +273,7 @@ def process_weapon(item: dict, curve_data: dict) -> dict | None:
         "baseAtk": base_atk,
         "substat": substat,
         "substatValue": substat_val,
-        "acquisition": classify_acquisition(pascal_key, rarity),
+        "acquisition": classify_acquisition(pascal_key, rarity, passive_text),
         "mechanicTags": mechanic_tags,
         "requiresMechanics": requires_mechanics,
     }

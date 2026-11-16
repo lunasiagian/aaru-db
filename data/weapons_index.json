@@ -15,7 +15,7 @@
                         "substatValue":  "49.6%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -103,7 +103,6 @@
                         "substatValue":  "44.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "ca_dmg",
                                              "em_scale",
                                              "elem_dmg"
@@ -228,7 +227,7 @@
                         "substatValue":  "66.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -298,7 +297,7 @@
                         "substatValue":  "22.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg",
                                              "atk_buff"
                                          ],
@@ -318,8 +317,7 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "party_buff",
-                                             "na_ca_dmg"
+                                             "party_buff"
                                          ],
                         "requiresMechanics":  [
 
@@ -354,7 +352,7 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "hp_scale",
                                              "healer_utility"
                                          ],
@@ -599,7 +597,7 @@
                         "substatValue":  "88.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "hp_scale"
                                          ],
                         "requiresMechanics":  [
@@ -617,7 +615,6 @@
                         "substatValue":  "88.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -635,7 +632,7 @@
                         "substatValue":  "44.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+                                             "na_dmg"
                                          ],
                         "requiresMechanics":  [
 
@@ -652,7 +649,6 @@
                         "substatValue":  "44.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -687,7 +683,6 @@
                         "substatValue":  "11%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -773,7 +768,7 @@
                         "substatValue":  "88.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg",
                                              "def_scale"
                                          ],
@@ -809,8 +804,7 @@
                         "substatValue":  "36.8%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "er_battery",
-                                             "na_ca_dmg"
+                                             "er_battery"
                                          ],
                         "requiresMechanics":  [
 
@@ -828,7 +822,6 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
-                                             "na_ca_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -952,7 +945,6 @@
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg",
-                                             "na_ca_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -1058,8 +1050,7 @@
                         "substatValue":  "36.8%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "er_battery",
-                                             "na_ca_dmg"
+                                             "er_battery"
                                          ],
                         "requiresMechanics":  [
 
@@ -1264,7 +1255,6 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
-                                             "na_ca_dmg",
                                              "atk_buff",
                                              "em_scale"
                                          ],
@@ -1300,7 +1290,7 @@
                         "substatValue":  "33.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "elem_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -1337,7 +1327,7 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "skill_dmg",
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "em_scale"
                                          ],
                         "requiresMechanics":  [
@@ -1390,7 +1380,6 @@
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
-                                             "na_ca_dmg",
                                              "def_scale",
                                              "elem_dmg"
                                          ],
@@ -1497,7 +1486,7 @@
                         "mechanicTags":  [
                                              "party_buff",
                                              "skill_dmg",
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "def_scale"
                                          ],
                         "requiresMechanics":  [
@@ -1530,7 +1519,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
 
                                          ],
@@ -1547,9 +1536,10 @@
                         "baseAtk":  565,
                         "substat":  "CRIT DMG",
                         "substatValue":  "36.8%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
-                                             "atk_buff"
+                                             "atk_buff",
+                                             "on_kill"
                                          ],
                         "requiresMechanics":  [
 
@@ -1701,7 +1691,7 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
 
                                          ],
@@ -1720,7 +1710,7 @@
                         "substatValue":  "55.1%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -1787,10 +1777,10 @@
                         "baseAtk":  510,
                         "substat":  "Physical DMG",
                         "substatValue":  "51.7%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "skill_dmg",
-                                             "na_ca_dmg"
+                                             "na_dmg"
                                          ],
                         "requiresMechanics":  [
 
@@ -1805,7 +1795,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "burst_dmg"
                                          ],
@@ -1822,9 +1812,9 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "platform_exclusive",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg",
                                              "atk_buff"
                                          ],
@@ -1876,7 +1866,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "atk_buff",
                                              "elem_dmg"
@@ -1894,7 +1884,7 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
 
                                          ],
@@ -1913,8 +1903,8 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
-                                             "ca_dmg"
+                                             "na_dmg",
+                                             "ca_penalty"
                                          ],
                         "requiresMechanics":  [
 
@@ -1949,7 +1939,6 @@
                         "substatValue":  "18.4%",
                         "acquisition":  "bp",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -2054,7 +2043,7 @@
                         "substatValue":  "27.6%",
                         "acquisition":  "bp",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -2123,7 +2112,7 @@
                         "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -2139,9 +2128,10 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
-                                             "atk_buff"
+                                             "atk_buff",
+                                             "on_kill"
                                          ],
                         "requiresMechanics":  [
 
@@ -2226,7 +2216,6 @@
                         "substatValue":  "55.1%",
                         "acquisition":  "event_limited",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "ca_dmg",
                                              "atk_buff"
                                          ],
@@ -2280,7 +2269,7 @@
                         "substatValue":  "55.1%",
                         "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -2332,7 +2321,7 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -2472,7 +2461,7 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "hp_scale"
                                          ],
                         "requiresMechanics":  [
@@ -2488,7 +2477,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
 
                                          ],
@@ -2544,7 +2533,7 @@
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg",
-                                             "na_ca_dmg"
+                                             "na_dmg"
                                          ],
                         "requiresMechanics":  [
 
@@ -2578,7 +2567,7 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -2595,7 +2584,7 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "hp_scale"
@@ -2613,7 +2602,7 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "atk_buff"
@@ -2667,7 +2656,7 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "burst_dmg"
                                          ],
@@ -2701,9 +2690,10 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
-                                             "atk_buff"
+                                             "atk_buff",
+                                             "on_kill"
                                          ],
                         "requiresMechanics":  [
 
@@ -2820,9 +2810,9 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -2855,7 +2845,7 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
 
                                          ],
@@ -2906,7 +2896,7 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -2940,7 +2930,7 @@
                         "baseAtk":  454,
                         "substat":  "HP%",
                         "substatValue":  "55.1%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "hp_scale"
                                          ],
@@ -2959,7 +2949,7 @@
                         "substatValue":  "27.6%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -2991,7 +2981,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
 
                                          ],
@@ -3062,7 +3052,7 @@
                         "substatValue":  "34.5%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -3164,7 +3154,6 @@
                         "substatValue":  "51.7%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "def_scale"
                                          ],
                         "requiresMechanics":  [
@@ -3215,9 +3204,10 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
-                                             "atk_buff"
+                                             "atk_buff",
+                                             "on_kill"
                                          ],
                         "requiresMechanics":  [
 
@@ -3234,7 +3224,7 @@
                         "substatValue":  "34.5%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -3305,7 +3295,7 @@
                         "substatValue":  "69%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -3390,7 +3380,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
 
                                          ],
@@ -3442,7 +3432,7 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg"
@@ -3460,7 +3450,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "atk_buff",
                                              "elem_dmg"
@@ -3498,7 +3488,7 @@
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "na_ca_dmg",
+                                             "na_dmg",
                                              "ca_dmg"
                                          ],
                         "requiresMechanics":  [
@@ -3532,7 +3522,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
 
                                          ],
@@ -3636,7 +3626,7 @@
                         "baseAtk":  620,
                         "substat":  "ATK%",
                         "substatValue":  "13.8%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "burst_dmg"
                                          ],
@@ -3687,9 +3677,10 @@
                         "baseAtk":  565,
                         "substat":  "CRIT DMG",
                         "substatValue":  "36.8%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
-                                             "atk_buff"
+                                             "atk_buff",
+                                             "on_kill"
                                          ],
                         "requiresMechanics":  [
 
@@ -3706,7 +3697,7 @@
                         "substatValue":  "27.6%",
                         "acquisition":  "event_limited",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+                                             "ca_dmg"
                                          ],
                         "requiresMechanics":  [
 
@@ -3930,7 +3921,7 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -3998,7 +3989,7 @@
                         "substatValue":  "34.5%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4013,7 +4004,7 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "starglitter",
                         "mechanicTags":  [
 
                                          ],
@@ -4116,9 +4107,9 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+                                             "na_dmg"
                                          ],
                         "requiresMechanics":  [
 
@@ -4133,9 +4124,8 @@
                         "baseAtk":  440,
                         "substat":  "ATK%",
                         "substatValue":  "35.2%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "platform_exclusive",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -4153,7 +4143,7 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4168,7 +4158,7 @@
                         "baseAtk":  620,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "55",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -4187,7 +4177,7 @@
                         "substatValue":  "27.6%",
                         "acquisition":  "bp",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4202,7 +4192,7 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "hp_scale"
                                          ],
@@ -4221,7 +4211,7 @@
                         "substatValue":  "41.3%",
                         "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4271,7 +4261,7 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -4358,7 +4348,7 @@
                         "substatValue":  "31.2%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4480,7 +4470,7 @@
                         "substatValue":  "35.2%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+
                                          ],
                         "requiresMechanics":  [
 
@@ -4497,7 +4487,6 @@
                         "substatValue":  "35.2%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "ca_dmg",
                                              "hp_scale"
                                          ],
@@ -4516,7 +4505,6 @@
                         "substatValue":  "43.9%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg",
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
@@ -4585,7 +4573,7 @@
                         "substatValue":  "23.4%",
                         "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
+                                             "na_dmg"
                                          ],
                         "requiresMechanics":  [
 

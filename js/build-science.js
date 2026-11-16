@@ -1635,6 +1635,23 @@ export function buildKitProfile(charData, contextOverride = {}) {
     kitMechanics.push('healing_performed');
   }
 
+  const tNormal = talents.find((t) => t.kind === 'normal');
+  const normalMultKeys = Object.keys(tNormal?.multipliers || {}).join(' ');
+  const isChargedSpecialist =
+    /frostflake|undivided\s+heart|equitable\s+judgment|arataki\s+kesagiri|explosive\s+spark|scarlet\s+seal|prop\s+arrow|wreath\s+arrow|charged\s+attack\s+(?:dmg|crit|charging)/i.test(
+      `${normalMultKeys}\n${kitTextForMechs}`
+    );
+  const isNormalSpecialist =
+    /blazing\s+arrow|shunsuiken|windfavored|searing\s+onslaught|masque\s+of\s+the\s+red\s+death|normal\s+attack\s+(?:dmg|spd)/i.test(
+      kitTextForMechs
+    );
+  let primaryAttackType = 'none';
+  if (fieldRole === 'On-Field Carry' || fieldRole === 'On-Field Driver') {
+    if (isChargedSpecialist && !isNormalSpecialist) primaryAttackType = 'charged';
+    else if (isNormalSpecialist && !isChargedSpecialist) primaryAttackType = 'normal';
+    else primaryAttackType = 'mixed';
+  }
+
   return {
     charKey,
     name: meta?.name || charKey,
@@ -1652,6 +1669,7 @@ export function buildKitProfile(charData, contextOverride = {}) {
     scalingStats: scaling.scalingStats || [primaryScalingMap[scaling.primaryStatKey] || 'ATK'],
     signatureWeapon: getSignatureWeapon(charKey),
     hasChargedFocus: /charged\s+attack|frostflake|equitable\s+judgment|arataki\s+kesagiri/i.test(kitTextForMechs),
+    primaryAttackType,
     kitMechanics,
     isNonCrit: scaling.isNonCrit,
     isPureSupport: fieldRole === 'Quickswap Support' && scaling.isPureSupport,
@@ -1824,7 +1842,9 @@ export function recommendWeapons(
   }
 
   const indexPool = (Array.isArray(weaponsIndex) && weaponsIndex.length ? weaponsIndex : getWeaponsIndex()).filter(
-    (w) => w.weaponType === weaponType
+    (w) =>
+      w.weaponType === weaponType &&
+      (w.acquisition !== 'platform_exclusive' || ownedByKey.has(String(w.key || '').toLowerCase()))
   );
   const poolKeys = new Set(indexPool.map((w) => String(w.key || '').toLowerCase()));
   const extraOwned = [];
@@ -1866,6 +1886,7 @@ export function recommendWeapons(
     const isErWeapon = mTags.has('er_battery') || /energy\s*recharge/i.test(substat);
     const isCritWeapon = /crit/i.test(substat);
     const isHealerLocked = (mTags.has('healer_trigger') || reqMechs.includes('healing_performed')) && !isHealer;
+    const isPlatformExclusive = cand.acquisition === 'platform_exclusive';
     const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM');
 
     const rarityBase = cand.rarity === 5 ? 16 : cand.rarity === 4 ? 12 : 6;
@@ -1875,7 +1896,16 @@ export function recommendWeapons(
     const substatMag = parsePrimaryMultiplierNumber(cand.substatValue) || 0;
 
     // --- Linear DPS Score ---
-    let dpsScore = rarityBase + ownedBonus + Math.min(4, effectiveRef - 1) + (missingMechanic ? -25 : 0);
+    const starglitterPenalty = !ownedMatch && cand.acquisition === 'starglitter' ? -12 : 0;
+    const onKillPenalty = mTags.has('on_kill') ? -10 : 0;
+    let dpsScore =
+      rarityBase +
+      ownedBonus +
+      Math.min(4, effectiveRef - 1) +
+      (missingMechanic ? -25 : 0) +
+      (isPlatformExclusive ? -10 : 0) +
+      starglitterPenalty +
+      onKillPenalty;
     let dpsPrimaryPts = 0;
     let dpsHybridPts = 0;
     let dpsCritPts = 0;
@@ -1904,26 +1934,29 @@ export function recommendWeapons(
       const baseAtkPts = Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
       dpsPrimaryPts += baseAtkPts;
     }
-    if (!emPassiveMismatch) {
-      if ((role === 'On-Field Carry' || role === 'On-Field Driver') && mTags.has('na_ca_dmg')) {
+    if (!emPassiveMismatch && !isPlatformExclusive) {
+      if ((profile.primaryAttackType === 'normal' || profile.primaryAttackType === 'mixed') && mTags.has('na_dmg')) {
         dpsPrimaryPts += 18;
       }
-      if (mTags.has('ca_dmg') && (profile.hasChargedFocus || role === 'On-Field Carry')) {
-        dpsPrimaryPts += profile.hasChargedFocus ? 18 : 12;
+      if ((profile.primaryAttackType === 'charged' || profile.primaryAttackType === 'mixed') && mTags.has('ca_dmg')) {
+        dpsPrimaryPts += profile.primaryAttackType === 'charged' ? 24 : 18;
       }
       if (mTags.has('atk_buff') && scalingStatsSet.has('ATK')) {
         dpsPrimaryPts += 10;
       }
       if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsPrimaryPts += 12;
       if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsPrimaryPts += 12;
-    } else {
+    } else if (emPassiveMismatch) {
       dpsScore -= 10;
+    }
+    if (mTags.has('ca_penalty') && profile.primaryAttackType === 'charged') {
+      dpsScore -= 35;
     }
     const isSignature = Boolean(profile.signatureWeapon && cand.name === profile.signatureWeapon);
     if (isSignature && !missingMechanic && !isHealerLocked) {
       if (!isSupportRole) dpsPrimaryPts += 12;
     }
-    if (role === 'Off-Field Sub-DPS' && mTags.has('na_ca_dmg') && !mTags.has('burst_dmg') && !mTags.has('skill_dmg')) {
+    if (role === 'Off-Field Sub-DPS' && (mTags.has('na_dmg') || mTags.has('ca_dmg')) && !mTags.has('burst_dmg') && !mTags.has('skill_dmg')) {
       dpsScore -= 10;
     }
     if (!isHealerLocked && isErWeapon && erNeedGate > 0) dpsErPts += Math.round(10 * erNeedGate);
@@ -1947,12 +1980,12 @@ export function recommendWeapons(
     let skillResetPts = 0;
 
     if (!isHealerLocked && !missingMechanic && (mTags.has('party_buff') || isTtds)) {
-      partyBuffPts = 34 + (isTtds && effectiveRef >= 5 ? 6 : Math.min(4, effectiveRef - 1));
+      partyBuffPts = 65 + (isTtds && effectiveRef >= 5 ? 6 : Math.min(4, effectiveRef - 1));
     }
-    if (isFavonius) teamParticlesPts = 30 + Math.min(4, effectiveRef - 1);
+    if (isFavonius) teamParticlesPts = 48 + Math.min(4, effectiveRef - 1);
     if (mTags.has('skill_reset')) {
       skillResetPts =
-        28 +
+        46 +
         (profile.skillCd >= 15 && profile.skillParticles >= 4 ? 12 : profile.skillCd >= 15 ? 6 : 0) +
         Math.min(4, effectiveRef - 1);
     }
@@ -1967,14 +2000,23 @@ export function recommendWeapons(
       if (isHealer && mTags.has('healer_utility')) defensiveScalingScore += 18;
     }
 
-    // Penalize non-matching HP/DEF substat weapons on non-HP/DEF characters (except TTDS) & missing mechanic prerequisites
+    // Penalize non-matching HP/DEF/ATK substat weapons on supports & missing mechanic prerequisites
     let compatPenalty = (isHealerLocked ? -20 : 0) + (missingMechanic ? -25 : 0);
     if (!scalingStatsSet.has('HP') && isHpSubstat && !isTtds) compatPenalty -= 35;
     if (!scalingStatsSet.has('DEF') && isDefSubstat) compatPenalty -= 35;
+    if (!scalingStatsSet.has('ATK') && (scalingStatsSet.has('DEF') || scalingStatsSet.has('HP')) && /atk/i.test(substat)) {
+      compatPenalty -= 20;
+    }
 
     const erThresholdPts = !isHealerLocked && isErWeapon ? Math.round((24 + (erBelowTarget ? 8 : 0)) * erNeedGate) : 0;
+    const hasSupportScalingMatch =
+      (scalingStatsSet.has('DEF') && isDefSubstat) ||
+      (scalingStatsSet.has('HP') && isHpSubstat) ||
+      (scalingStatsSet.has('EM') && /mastery|em/i.test(substat));
+    const partyBuffScalingBonus = !isHealerLocked && !missingMechanic && mTags.has('party_buff') && hasSupportScalingMatch ? 20 : 0;
     const sigSupportBonus = isSignature && !missingMechanic && !isHealerLocked && isSupportRole ? 12 : 0;
-    const supportScore = ownedBonus + teamUtilityScore + defensiveScalingScore + erThresholdPts + sigSupportBonus + compatPenalty;
+    const supportScore =
+      ownedBonus + teamUtilityScore + defensiveScalingScore + erThresholdPts + partyBuffScalingBonus + sigSupportBonus + compatPenalty;
 
     const supFactors = [
       { key: 'party_buff', pts: partyBuffPts },
@@ -2037,10 +2079,14 @@ export function recommendWeapons(
 
   const isAccessible = (w) =>
     w.rarity <= 4 &&
-    (Boolean(w.ownedMatch) || w.acquisition === 'f2p_craft_fish' || w.acquisition === 'gacha_4' || !w.acquisition);
+    (Boolean(w.ownedMatch) || w.acquisition === 'f2p_craft_fish' || w.acquisition === 'gacha_4');
 
+  const craftBonus = (w) => (w.acquisition === 'f2p_craft_fish' ? 6 : 0);
   const byDps = [...scored].sort((a, b) => b.dpsScore - a.dpsScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
-  const byDpsAcc = byDps.filter(isAccessible);
+  const byDpsAcc = [...scored]
+    .filter(isAccessible)
+    .sort((a, b) => (b.dpsScore + craftBonus(b)) - (a.dpsScore + craftBonus(a)) || b.rarity - a.rarity || a.name.localeCompare(b.name));
+
   const bySup = [...scored].sort((a, b) => b.supportScore - a.supportScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
   const bySupAcc = bySup.filter(isAccessible);
 
