@@ -1535,6 +1535,7 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
 
 const CURATED_WEAPON_POOL = [
   // Swords
+  { key: 'LightOfFoliarIncision', name: 'Light of Foliar Incision', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'em', 'na_ca', 'skill'], reason: '88.2% CRIT DMG with CRIT Rate and EM-scaling Normal Attack & Skill DMG.' },
   { key: 'MistsplitterReforged', name: 'Mistsplitter Reforged', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'na_ca', 'elem_dmg', 'atk'], reason: 'High Base ATK, CRIT DMG, and Elemental DMG stacks for infused carries.' },
   { key: 'SplendorOfTranquilWaters', name: 'Splendor of Tranquil Waters', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'skill'], reason: '88.2% CRIT DMG with Skill DMG & Max HP% passive.' },
   { key: 'UrakuMisugiri', name: 'Uraku Misugiri', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'def', 'skill', 'na_ca'], reason: 'CRIT DMG stat stick boosting both Skill and Normal Attack DMG.' },
@@ -1648,6 +1649,7 @@ export function recommendWeaponsForCharacter(
     // 2. Role & Passive Mechanic Match
     if (usesNormal && wTags.has('na_ca')) score += 20;
     if (role === 'Off-Field Sub-DPS' && (wTags.has('skill') || wTags.has('burst') || wTags.has('subdps'))) score += 18;
+    if (role === 'On-Field Carry' && wTags.has('skill') && scaling.damageSources.includes('Elemental Skill')) score += 8;
     if (scaling.isPureSupport || role === 'Quickswap Support') {
       if (wTags.has('support') || wTags.has('party_buff') || wTags.has('favonius') || wTags.has('ttds')) score += 26;
       if ((tags.includes('Team Healer') || tags.includes('Single-Target Healer')) && wTags.has('heal')) score += 16;
@@ -1659,15 +1661,46 @@ export function recommendWeaponsForCharacter(
     // Penalize pure support weapons on hypercarries
     if (role === 'On-Field Carry' && (wTags.has('ttds') || wTags.has('favonius'))) score -= 22;
 
+    const ownedMatch = ownedByKey.get(cand.key.toLowerCase()) || null;
+    if (ownedMatch) score += 4;
+
     return {
       ...cand,
       substat: substat || 'ATK%',
       score,
-      ownedMatch: ownedByKey.get(cand.key.toLowerCase()) || null
+      ownedMatch
     };
   };
 
-  const candidates = CURATED_WEAPON_POOL.filter((w) => w.weaponType === weaponType).map(scoreCandidate);
+  const curatedPool = CURATED_WEAPON_POOL.filter((w) => w.weaponType === weaponType);
+  const curatedKeys = new Set(curatedPool.map((w) => w.key.toLowerCase()));
+  const dynamicOwnedPool = [];
+  for (const [kLower, w] of ownedByKey.entries()) {
+    if (curatedKeys.has(kLower)) continue;
+    const wMeta = getWeaponMetaFn ? getWeaponMetaFn(w.key) : null;
+    const liveStats = getWeaponStatsFn ? getWeaponStatsFn(w.key) : null;
+    const wType = wMeta?.weaponType || liveStats?.weaponType || '';
+    if (wType !== weaponType) continue;
+    const substat = liveStats?.substatKey || wMeta?.substat || 'ATK%';
+    const inferredTags = [];
+    if (/crit/i.test(substat)) inferredTags.push('crit');
+    if (/mastery|em/i.test(substat)) inferredTags.push('em');
+    if (/hp/i.test(substat)) inferredTags.push('hp');
+    if (/def/i.test(substat)) inferredTags.push('def');
+    if (/energy\s*recharge/i.test(substat)) inferredTags.push('er');
+    if (/atk/i.test(substat)) inferredTags.push('atk');
+    dynamicOwnedPool.push({
+      key: w.key,
+      name: wMeta?.name || w.key,
+      weaponType,
+      rarity: Number(wMeta?.rarity || liveStats?.rarity || 4),
+      substat,
+      tags: inferredTags,
+      reason: `Owned in your Armory (${substat} substat) — compatible with ${weaponType} builds.`
+    });
+  }
+
+  const candidates = [...curatedPool, ...dynamicOwnedPool].map(scoreCandidate);
   candidates.sort((a, b) => b.score - a.score || b.rarity - a.rarity || a.name.localeCompare(b.name));
 
   // Ensure up to 6 picks (including top 5★ and accessible 4★/3★ options)
