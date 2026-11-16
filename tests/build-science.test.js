@@ -8,6 +8,7 @@ import {
 import {
   analyzeCharacterKit,
   buildKitProfile,
+  classifyBurstCadence,
   computeSubstatWeights,
   deriveTalentPriority,
   evaluateBuild,
@@ -329,6 +330,98 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     assert(erReport.erStatus === 'warn' && erReport.soloDelta < 0, `Expected warn & negative soloDelta, got ${JSON.stringify(erReport)}`);
     assert(/Stygian\s*\/\s*Theatre/i.test(erReport.summary), `Expected Stygian/Theatre shortfall in summary: ${erReport.summary}`);
     return erReport.summary;
+  });
+
+  await runCase('Burst Cadence: Yae Miko (C1, 100% ER) -> skill-core, optional & 0-Energy immune', async () => {
+    await ensureCharacterKitAndStats('YaeMiko').catch(() => null);
+    const kit = getCharacterKit('YaeMiko');
+    assert(kit, 'Yae Miko kit failed to load');
+    const yaeChar = { key: 'YaeMiko', constellation: 1, talent: { auto: 6, skill: 10, burst: 8 }, meta: { element: 'Electro' } };
+    const analysis = analyzeCharacterKit('YaeMiko', kit, yaeChar.talent, 1);
+    const cadence = classifyBurstCadence(yaeChar, kit, analysis, []);
+    assert(cadence.mode === 'skill-core', `Expected skill-core mode, got ${cadence.mode}`);
+    assert(cadence.burstDependency === 'optional' && cadence.zeroEnergyImmune === true, `Expected optional + zeroEnergyImmune, got ${JSON.stringify(cadence)}`);
+    const erReport = evaluateErComfort(yaeChar, { er: 100 }, [], [], kit, analysis);
+    assert(erReport.erStatus === 'ok', `Expected erStatus ok (not LOW ER), got ${erReport.erStatus}: ${erReport.summary}`);
+    return erReport.summary;
+  });
+
+  await runCase('Support Utility Weighting: Gorou -> Favonius Warbow BiS, Venti -> Elegy for the End BiS', async () => {
+    await Promise.all([
+      ensureCharacterKitAndStats('Gorou').catch(() => null),
+      ensureCharacterKitAndStats('Venti').catch(() => null)
+    ]);
+    const gorouKit = getCharacterKit('Gorou');
+    const ventiKit = getCharacterKit('Venti');
+    assert(gorouKit && ventiKit, 'Gorou or Venti kit failed to load');
+
+    const gorouRes = evaluateBuild({ key: 'Gorou', kitData: gorouKit });
+    const gorouBisSup = gorouRes.weapons?.bestOverall?.bisSupport?.name;
+    assert(gorouBisSup === 'Favonius Warbow', `Expected Favonius Warbow BiS Support for Gorou, got ${gorouBisSup}`);
+
+    const ventiRes = evaluateBuild({ key: 'Venti', kitData: ventiKit });
+    const ventiBisSup = ventiRes.weapons?.bestOverall?.bisSupport?.name;
+    assert(ventiBisSup === 'Elegy for the End', `Expected Elegy for the End BiS Support for Venti, got ${ventiBisSup}`);
+
+    return `Gorou BiS Support: ${gorouBisSup} | Venti BiS Support: ${ventiBisSup}`;
+  });
+
+  await runCase('Deterministic F2P Accessible Gate + Notable 4★ Gacha: Fischl', async () => {
+    await ensureCharacterKitAndStats('Fischl').catch(() => null);
+    const fischlKit = getCharacterKit('Fischl');
+    assert(fischlKit, 'Fischl kit failed to load');
+
+    const res = evaluateBuild(
+      { key: 'Fischl', kitData: fischlKit },
+      { armory: [{ key: 'TheStringless', level: 90, refinement: 5 }] }
+    );
+    const { bestOverall, inArmory } = res.weapons;
+    const stringlessInAcc = bestOverall.accessibleDps?.name === 'The Stringless';
+    const stringlessInNotable =
+      Array.isArray(bestOverall.notableGacha4) && bestOverall.notableGacha4.some((w) => w.name === 'The Stringless');
+    assert(
+      bestOverall.accessibleDps?.acquisition === 'f2p_craft_fish' || bestOverall.accessibleDps?.acquisition === 'gacha_4',
+      `Expected f2p_craft_fish or gacha_4 Accessible DPS for Fischl, got ${bestOverall.accessibleDps?.name} (${bestOverall.accessibleDps?.acquisition})`
+    );
+    assert(
+      stringlessInAcc || stringlessInNotable,
+      `Expected The Stringless in Accessible DPS or notableGacha4, got Acc=${bestOverall.accessibleDps?.name}, Notable=${JSON.stringify(bestOverall.notableGacha4?.map((w) => w.name))}`
+    );
+    assert(
+      inArmory.visibleSlots?.[0]?.name === 'The Stringless' && inArmory.visibleSlots?.[0]?.tierLabel === 'Best Owned DPS',
+      `Expected R5 The Stringless as Best Owned DPS in Armory, got ${inArmory.visibleSlots?.[0]?.name} (${inArmory.visibleSlots?.[0]?.tierLabel})`
+    );
+    return `Accessible DPS: ${bestOverall.accessibleDps.name} | Notable 4★ Gacha: ${(bestOverall.notableGacha4 || []).map((w) => w.name).join(', ') || 'none'} | Armory #1: ${inArmory.visibleSlots[0].name}`;
+  });
+
+  await runCase('Build-Aware Stat-Cap Compensation (EM scaler with ER covered)', async () => {
+    await Promise.all([
+      ensureCharacterKitAndStats('Lauma').catch(() => null),
+      ensureCharacterKitAndStats('Nahida').catch(() => null)
+    ]);
+    const targetKey = getCharacterKit('Lauma') ? 'Lauma' : 'Nahida';
+    const kit = getCharacterKit(targetKey);
+    assert(kit, `Failed to load kit for ${targetKey}`);
+
+    const res = evaluateBuild(
+      { key: targetKey, kitData: kit },
+      {
+        hasEquippedArtifacts: true,
+        erReport: { currentEr: 195, erDelta: 20, soloDelta: 5, hasEndgameFlag: false },
+        combatStats: { em: 620, er: 195 },
+        teamCaps: { buffCap: { statKey: 'em', statLabel: 'EM', gap: 180 } }
+      }
+    );
+    const recs = res.weapons?.bestOverall?.visibleSlots || res.weapons?.bestOverall || [];
+    const topWep = recs[0];
+    assert(topWep, `Expected top weapon for ${targetKey}, got none`);
+    const isEmTop =
+      /mastery|em/i.test(topWep.substat || '') || (topWep.mechanicTags || []).includes('em_scale');
+    assert(
+      isEmTop,
+      `Expected EM weapon to outrank ER weapons for ${targetKey} when ER is covered (+20%) & EM gap is +180, got ${topWep.name} (${topWep.substat})`
+    );
+    return `${targetKey} Top Rec: ${topWep.name} (${topWep.substat}) — ${topWep.reason}`;
   });
 
   const fuzzRows = await runRandomFuzzTests(5, (partialFuzz) => onProgress([...results, ...partialFuzz]));

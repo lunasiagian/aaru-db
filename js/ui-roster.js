@@ -579,7 +579,17 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
     </div>`;
 }
 
-function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, accountWeapons = []) {
+function renderDossierTargetsTab(
+  c,
+  isReadOnly,
+  kitData,
+  kitAnalysis,
+  erReport,
+  weaponMeta,
+  accountWeapons = [],
+  combatStats = null,
+  teamCaps = null
+) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
   const curTalents = {
     auto: Math.min(10, Math.max(1, Number(c.talent?.auto) || 1)),
@@ -605,10 +615,14 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       armory: accountWeapons,
       getWeaponMetaFn: getWeaponMeta,
       getWeaponStatsFn: getWeaponStats,
-      erReport
+      erReport,
+      combatStats,
+      teamCaps,
+      hasEquippedArtifacts: Array.isArray(c.equippedArtifacts) && c.equippedArtifacts.length > 0
     }
   );
   const recWeapons = evalRes.weapons.bestOverall.visibleSlots || evalRes.weapons.bestOverall;
+  const notableGacha4 = evalRes.weapons.bestOverall.notableGacha4 || [];
   const armoryWeapons = evalRes.weapons.inArmory.visibleSlots || evalRes.weapons.inArmory;
 
   const renderWeaponCardList = (list, emptyMsg) => {
@@ -778,6 +792,19 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
         <div id="rec-weapons-best" class="rec-weapon-grid">
           ${renderWeaponCardList(recWeapons, 'No compatible weapons found.')}
         </div>
+        ${
+          notableGacha4.length
+            ? `<div id="rec-weapons-notable-gacha" class="notable-gacha-strip">
+                 <span class="notable-gacha-label mono">NOTABLE 4★ GACHA STANDOUTS:</span>
+                 ${notableGacha4
+                   .map(
+                     (w) =>
+                       `<span class="pill pill-sky notable-gacha-pill mono" title="${escapeHtml(w.reason || '')}">${escapeHtml(w.name)} (${escapeHtml(w.substat)})</span>`
+                   )
+                   .join('')}
+               </div>`
+            : ''
+        }
         <div id="rec-weapons-armory" class="rec-weapon-grid" style="display:none;">
           ${renderWeaponCardList(armoryWeapons, `No ${c.meta?.weaponType || 'matching'} weapons currently in your Armory.`)}
         </div>
@@ -840,11 +867,15 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const erPillClass =
     erReport.erStatus === 'short' ? 'pill-coral' : erReport.erStatus === 'warn' ? 'pill-gold' : 'pill-mint';
   const erPillLabel =
-    erReport.erStatus === 'short'
-      ? `LOW ER (${erReport.erDelta}%)`
-      : erReport.erStatus === 'warn'
-        ? 'BORDERLINE'
-        : 'ON TARGET';
+    erReport.cadence?.mode === 'shimenawa-cycle'
+      ? 'SHIMENAWA · OK'
+      : erReport.cadence?.burstDependency === 'optional'
+        ? 'SKILL-CORE · OK'
+        : erReport.erStatus === 'short'
+          ? `LOW ER (${erReport.erDelta}%)`
+          : erReport.erStatus === 'warn'
+            ? 'BORDERLINE'
+            : 'ON TARGET';
   const erCardStateClass =
     erReport.erStatus === 'short' ? 'is-er-short' : erReport.erStatus === 'warn' ? 'is-er-warn' : 'is-er-ok';
 
@@ -1037,12 +1068,17 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   : ''
               }
               ${
-                erReport.hasEndgameFlag || erReport.soloDelta < 0
+                erReport.zeroEnergyImmune
                   ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
-                      <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
-                      <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                      <span>Stygian / Theatre</span>
+                      <span class="pill pill-mint">0-ENERGY IMMUNE</span>
                     </div>`
-                  : ''
+                  : erReport.hasEndgameFlag || erReport.soloDelta < 0
+                    ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
+                        <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
+                        <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                      </div>`
+                    : ''
               }
             </div>
           </article>
@@ -1060,7 +1096,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 activeTab === 'talents'
                   ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
                   : activeTab === 'targets'
-                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, account.weapons || [])
+                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, account.weapons || [], combat, teamCaps)
                     : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
               }
             </div>
@@ -1228,8 +1264,10 @@ export function renderRosterTab(container, state, handlers) {
           b.classList.toggle('active', b.dataset.recTab === target);
         });
         const bestEl = container.querySelector('#rec-weapons-best');
+        const notableEl = container.querySelector('#rec-weapons-notable-gacha');
         const armoryEl = container.querySelector('#rec-weapons-armory');
         if (bestEl) bestEl.style.display = target === 'best' ? '' : 'none';
+        if (notableEl) notableEl.style.display = target === 'best' ? '' : 'none';
         if (armoryEl) armoryEl.style.display = target === 'armory' ? '' : 'none';
       });
     });

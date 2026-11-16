@@ -4190,9 +4190,9 @@ textarea:focus {
 }
 
 .substat-chip.is-secondary {
-  color: var(--accent-gold, #fbbf24);
-  background: rgba(251, 191, 36, 0.1);
-  border-color: rgba(251, 191, 36, 0.3);
+  color: var(--telemetry-cyan, #38bdf8);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 .substat-chip.is-dead {
@@ -5033,6 +5033,28 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.notable-gacha-strip {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.notable-gacha-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.notable-gacha-pill {
+  cursor: help;
 }
 
 .rec-weapon-card {
