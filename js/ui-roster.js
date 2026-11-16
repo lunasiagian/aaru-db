@@ -19,7 +19,7 @@ import {
   generateKitInsights,
   getBuildStatGuidelines,
   recommendWeaponsForCharacter
-} from './build-science.js?v=20261115ag';
+} from './build-science.js?v=20261115ah';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -739,12 +739,12 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
                     <span class="pill pill-gold mono">${w.rarity}★</span>
                   </div>
                   <div class="rec-weapon-badges mono">
-                    ${w.tierLabel ? `<span class="pill pill-violet">${escapeHtml(w.tierLabel)}</span>` : ''}
-                    <span class="pill pill-sky">${escapeHtml(w.substat)}</span>
+                    <span class="pill ${String(w.tierLabel || '').startsWith('BiS') ? 'pill-violet' : 'pill-sky'}">${escapeHtml(w.tierLabel || 'Option')}</span>
+                    <span class="rec-substat">• ${escapeHtml(w.substat)}</span>
                     ${
                       w.ownedMatch
-                        ? `<span class="pill pill-mint">IN ARMORY (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`
-                        : '<span class="pill pill-muted">UNOWNED</span>'
+                        ? `<span class="pill pill-mint">In Armory (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`
+                        : ''
                     }
                   </div>
                 </div>

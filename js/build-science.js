@@ -222,7 +222,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const INFUSION_ALTF_RE =
     /(?:[A-Za-z'’]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_IMBUE_RE =
-    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'’]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
+    /(?:infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'’]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)|(?:gains?|obtains?)\s+(?:an?\s+)?(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+infusion)/i;
   const INFUSION_OVERRIDE_RE =
     /cannot\s+be\s+overridden(?:\s+by\s+any\s+other\s+elemental\s+infusion)?/i;
 
@@ -1106,48 +1106,18 @@ function scoreTalentScalingWeight(talent) {
   return labels.length * 15 + maxPct;
 }
 
-export function getTalentPriorityInfo(kitData, kitAnalysis) {
-  const role = kitAnalysis?.roleInfo?.fieldRole || kitAnalysis?.roleInfo?.primaryRole || 'Quickswap Support';
-  const usesNormal = Boolean(kitAnalysis?.roleInfo?.usesNormalAttack);
-  const talents = kitData?.talents || [];
-  const tSkill = talents.find((t) => t.kind === 'skill');
-  const tBurst = talents.find((t) => t.kind === 'burst');
-
-  const skillWeight = scoreTalentScalingWeight(tSkill);
-  const burstWeight = scoreTalentScalingWeight(tBurst);
-  const skillFavored = skillWeight >= burstWeight;
-
-  if (role === 'On-Field Carry' || role === 'On-Field Driver' || usesNormal) {
-    return {
-      tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
-      orderText: skillFavored
-        ? 'Normal (A) > Skill (E) ≥ Burst (Q)'
-        : 'Normal (A) > Burst (Q) ≥ Skill (E)',
-      lowValueNote: 'All 3 talents contribute to on-field rotations; prioritize Normal (A) first.'
-    };
-  }
-
-  if (role === 'Quickswap Support') {
-    const skillSupport = /heal|shield|absorption|bonus/i.test((tSkill?.labels || []).join(' '));
-    const burstSupport = /heal|shield|absorption|bonus/i.test((tBurst?.labels || []).join(' '));
-    const eFirst = skillSupport && !burstSupport ? true : !skillSupport && burstSupport ? false : skillFavored;
-    return {
-      tiers: { auto: 'low', skill: eFirst ? 'high' : 'medium', burst: eFirst ? 'medium' : 'high' },
-      orderText: eFirst
-        ? 'Skill (E) > Burst (Q) >> Normal (A)'
-        : 'Burst (Q) > Skill (E) >> Normal (A)',
-      lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1.'
-    };
-  }
-
-  // Off-Field Sub-DPS or Quickswap DPS
-  return {
-    tiers: { auto: 'low', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
-    orderText: skillFavored
-      ? 'Skill (E) > Burst (Q) >> Normal (A)'
-      : 'Burst (Q) > Skill (E) >> Normal (A)',
-    lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1 unless on-fielding.'
-  };
+export function getTalentPriorityInfo(kitData, kitAnalysis, profile = null) {
+  const resolvedProfile =
+    profile ||
+    buildKitProfile(
+      {
+        key: kitAnalysis?.charKey || '',
+        kitData,
+        constellation: 0
+      },
+      {}
+    );
+  return deriveTalentPriority(resolvedProfile);
 }
 
 /**
@@ -1538,9 +1508,330 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
   };
 }
 
+// ============================================================================
+// Context-Aware 4-Stage Pipeline (Dossier + Teams Lab)
+// ============================================================================
+
+function extractTalentDuration(talent) {
+  if (!talent?.multipliers) return 0;
+  const durKey = Object.keys(talent.multipliers).find((k) => /duration/i.test(k) && !/cd|cooldown/i.test(k));
+  if (!durKey) return 0;
+  const arr = talent.multipliers[durKey];
+  return parsePrimaryMultiplierNumber(Array.isArray(arr) ? arr[0] : arr) || 0;
+}
+
+function extractTalentCd(talent) {
+  if (!talent?.multipliers) return 0;
+  const cdKey = Object.keys(talent.multipliers).find((k) => /^(?:cd|cooldown)$/i.test(k));
+  if (!cdKey) return 0;
+  const arr = talent.multipliers[cdKey];
+  return parsePrimaryMultiplierNumber(Array.isArray(arr) ? arr[0] : arr) || 0;
+}
+
 /**
- * Recommends top kit-matched weapons from the full data/weapons_index.json catalog
- * filtered strictly by character weaponType, with energy-gated scoring & Armory matching.
+ * Stage 1: Builds a deterministic, context-aware KitProfile contract.
+ * Accepts optional contextOverride from Teams Lab:
+ *   { forcedRole, effectiveElement, teamErReq, externalInfusion, hasTeamPoise, erReport }
+ */
+export function buildKitProfile(charData, contextOverride = {}) {
+  const charKey = charData?.key || charData?.charKey || '';
+  const kitData = charData?.kitData || charData || null;
+  const constellation = Number(charData?.constellation) || 0;
+  const talentLevels = charData?.talent || null;
+  const meta = getCharacterMeta(charKey);
+  const kqm = getKqmEntry(charKey);
+
+  const analysis = analyzeCharacterKit(charKey, kitData, talentLevels, constellation);
+  const scaling = extractKitScaling(charKey, kitData, analysis);
+  const roleInfo = analysis.roleInfo || {};
+
+  const talents = kitData?.talents || [];
+  const tSkill = talents.find((t) => t.kind === 'skill');
+  const tBurst = talents.find((t) => t.kind === 'burst');
+
+  const fieldRole = contextOverride.forcedRole || roleInfo.fieldRole || 'Quickswap Support';
+  const nativeElement = meta?.element || 'Physical';
+  const damageElement = contextOverride.effectiveElement || nativeElement;
+  const weaponType = meta?.weaponType || 'Sword';
+  const burstCost = Number(kitData?.burstCost) || 60;
+  const skillCd = extractTalentCd(tSkill);
+  const skillDuration = extractTalentDuration(tSkill);
+  const burstDuration = extractTalentDuration(tBurst);
+  const skillParticles = kqm?.particlesPerCast ? parsePrimaryMultiplierNumber(kqm.particlesPerCast) || 0 : 0;
+
+  // Detect whether on-field attacks scale off Normal (A) talent or Skill/Burst stance multipliers
+  const stanceMultText = [tSkill, tBurst]
+    .filter(Boolean)
+    .flatMap((t) => Object.keys(t.multipliers || {}))
+    .join(' ');
+  const hasStanceMultipliers = /1-hit\s*dmg|musou\s*isshin|pactsworn|raging\s*tide/i.test(stanceMultText);
+  let infusionType = 'none';
+  if (contextOverride.externalInfusion) {
+    infusionType = 'na_ca';
+  } else if (fieldRole === 'On-Field Carry' || fieldRole === 'On-Field Driver') {
+    infusionType = hasStanceMultipliers ? 'stance_multiplier' : 'na_ca';
+  }
+
+  const primaryScalingMap = {
+    hp_: 'HP',
+    def_: 'DEF',
+    eleMas: 'EM',
+    enerRech_: 'ER',
+    atk_: 'ATK'
+  };
+
+  return {
+    charKey,
+    name: meta?.name || charKey,
+    nativeElement,
+    damageElement,
+    weaponType,
+    constellation,
+    burstCost,
+    skillCd,
+    skillDuration,
+    burstDuration,
+    skillParticles,
+    primaryScaling: primaryScalingMap[scaling.primaryStatKey] || 'ATK',
+    primaryStatKey: scaling.primaryStatKey,
+    isNonCrit: scaling.isNonCrit,
+    isPureSupport: fieldRole === 'Quickswap Support' && scaling.isPureSupport,
+    infusionType,
+    fieldRole,
+    functionTags: roleInfo.functionTags || [],
+    utilityTags: roleInfo.utilityTags || [],
+    flexModes: roleInfo.flexModes || [],
+    selfDurability: roleInfo.selfDurability || { selfHeal: false, selfEnergy: false, selfIR: false },
+    kitTriggers: roleInfo.kitTriggers || [],
+    statCaps: analysis.statCaps || [],
+    usefulSubstats: analysis.usefulSubstats || [],
+    teamErReq: contextOverride.teamErReq != null ? Number(contextOverride.teamErReq) : null,
+    hasTeamPoise: Boolean(contextOverride.hasTeamPoise),
+    erReport: contextOverride.erReport || null,
+    scaling,
+    analysis,
+    kitData
+  };
+}
+
+/**
+ * Stage 2: Deterministic Talent Priority strictly derived from profile.fieldRole + profile.infusionType.
+ */
+export function deriveTalentPriority(profile) {
+  const role = profile?.fieldRole || 'Quickswap Support';
+  const infusionType = profile?.infusionType || 'none';
+  const talents = profile?.kitData?.talents || [];
+  const tSkill = talents.find((t) => t.kind === 'skill');
+  const tBurst = talents.find((t) => t.kind === 'burst');
+
+  const skillWeight = scoreTalentScalingWeight(tSkill);
+  const burstWeight = scoreTalentScalingWeight(tBurst);
+  const skillFavored = skillWeight >= burstWeight;
+
+  if ((role === 'On-Field Carry' || role === 'On-Field Driver') && infusionType === 'na_ca') {
+    return {
+      tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
+      orderText: skillFavored
+        ? 'Normal (A) ≈ Skill (E) ≥ Burst (Q)'
+        : 'Normal (A) ≈ Burst (Q) ≥ Skill (E)',
+      lowValueNote: 'Infused Normal/Charged Attacks drive on-field damage — prioritize Normal (A) alongside core abilities.'
+    };
+  }
+
+  if (role === 'On-Field Carry' || role === 'On-Field Driver') {
+    return {
+      tiers: { auto: 'low', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
+      orderText: skillFavored
+        ? 'Skill (E) / Burst (Q) > Normal (A)'
+        : 'Burst (Q) / Skill (E) > Normal (A)',
+      lowValueNote: 'Stance attacks scale off Skill/Burst multipliers; Normal (A) can remain Lv.1–6.'
+    };
+  }
+
+  if (role === 'Off-Field Sub-DPS') {
+    return {
+      tiers: { auto: 'low', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
+      orderText: skillFavored
+        ? 'Skill (E) > Burst (Q) >> Normal (A)'
+        : 'Burst (Q) > Skill (E) >> Normal (A)',
+      lowValueNote: 'Off-field damage scales off Skill & Burst; Normal (A) can remain Lv.1–6.'
+    };
+  }
+
+  // Quickswap Support / Healer / Shielder
+  const skillSupport = /heal|shield|absorption|bonus|buff/i.test((tSkill?.labels || []).join(' '));
+  const burstSupport = /heal|shield|absorption|bonus|buff/i.test((tBurst?.labels || []).join(' '));
+  const eFirst = skillSupport && !burstSupport ? true : !skillSupport && burstSupport ? false : skillFavored;
+  return {
+    tiers: { auto: 'low', skill: eFirst ? 'high' : 'medium', burst: eFirst ? 'medium' : 'high' },
+    orderText: eFirst
+      ? 'Skill (E) > Burst (Q) >> Normal (A)'
+      : 'Burst (Q) > Skill (E) >> Normal (A)',
+    lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1.'
+  };
+}
+
+/**
+ * Stage 3: Single-pass linear weapon scorer returning strictly 4 unique slots:
+ *   BiS DPS, Accessible DPS, BiS Support, Accessible Support
+ * Ordered DPS pair first for Carries/Drivers/Sub-DPS, Support pair first for Supports.
+ */
+export function recommendWeapons(
+  profile,
+  weaponsIndex = null,
+  armory = [],
+  getWeaponMetaFn = null,
+  getWeaponStatsFn = null
+) {
+  const weaponType = profile?.weaponType || 'Sword';
+  const role = profile?.fieldRole || 'Quickswap Support';
+  const tags = profile?.functionTags || [];
+  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
+  const isShielder = tags.includes('Shielder');
+  const isSupportRole = role === 'Quickswap Support' || isHealer || isShielder;
+  const burstCost = profile?.burstCost || 60;
+  const erReport = profile?.erReport || null;
+  const erBelowTarget = profile?.teamErReq
+    ? (erReport?.currentEr || 100) < profile.teamErReq
+    : erReport
+      ? Number(erReport.erDelta) < 0
+      : burstCost >= 70 && (role === 'Off-Field Sub-DPS' || role === 'Quickswap Support');
+
+  const ownedByKey = new Map();
+  for (const w of armory || []) {
+    const k = String(w.key || '').toLowerCase();
+    if (!k) continue;
+    const prev = ownedByKey.get(k);
+    if (!prev || (Number(w.level) || 0) > (Number(prev.level) || 0) || (Number(w.refinement) || 1) > (Number(prev.refinement) || 1)) {
+      ownedByKey.set(k, w);
+    }
+  }
+
+  const indexPool = (Array.isArray(weaponsIndex) && weaponsIndex.length ? weaponsIndex : getWeaponsIndex()).filter(
+    (w) => w.weaponType === weaponType
+  );
+  const poolKeys = new Set(indexPool.map((w) => String(w.key || '').toLowerCase()));
+  const extraOwned = [];
+  for (const [kLower, w] of ownedByKey.entries()) {
+    if (poolKeys.has(kLower)) continue;
+    const wMeta = getWeaponMetaFn ? getWeaponMetaFn(w.key) : null;
+    const liveStats = getWeaponStatsFn ? getWeaponStatsFn(w.key) : null;
+    if ((wMeta?.weaponType || liveStats?.weaponType || '') !== weaponType) continue;
+    const substat = liveStats?.substatKey || wMeta?.substat || 'ATK%';
+    extraOwned.push({
+      key: w.key,
+      name: wMeta?.name || w.key,
+      weaponType,
+      rarity: Number(wMeta?.rarity || liveStats?.rarity || 4),
+      baseAtk: Number(liveStats?.baseAtk || 510),
+      substat,
+      substatValue: '',
+      mechanicTags: []
+    });
+  }
+
+  const scored = [...indexPool, ...extraOwned].map((cand) => {
+    const substat = cand.substat || 'ATK%';
+    const mTags = new Set(cand.mechanicTags || []);
+    const lowerName = String(cand.name || '').toLowerCase();
+    const isFavonius = lowerName.includes('favonius');
+    const isTtds = lowerName.includes('thrilling tales');
+    const isHpWeapon = mTags.has('hp_scale') || /hp/i.test(substat);
+    const isDefWeapon = mTags.has('def_scale') || /def/i.test(substat);
+    const isEmWeapon = mTags.has('em_scale') || /mastery|em/i.test(substat);
+    const isErWeapon = mTags.has('er_battery') || /energy\s*recharge/i.test(substat);
+    const isCritWeapon = /crit/i.test(substat);
+
+    const rarityBase = cand.rarity === 5 ? 16 : cand.rarity === 4 ? 12 : 6;
+    const ownedMatch = ownedByKey.get(String(cand.key || '').toLowerCase()) || null;
+    const ownedBonus = ownedMatch ? 3 : 0;
+
+    // --- Linear DPS Score ---
+    let dpsScore = rarityBase + ownedBonus;
+    if (profile.primaryStatKey === 'hp_') dpsScore += isHpWeapon ? 30 : 0;
+    else if (isHpWeapon) dpsScore -= 35;
+
+    if (profile.primaryStatKey === 'def_') dpsScore += isDefWeapon ? 30 : 0;
+    else if (isDefWeapon) dpsScore -= 35;
+
+    if (profile.primaryStatKey === 'eleMas') dpsScore += isEmWeapon ? 28 : 0;
+    else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) dpsScore += 14;
+
+    if (!profile.isNonCrit && isCritWeapon) dpsScore += 28;
+    if (profile.infusionType === 'na_ca' && mTags.has('na_ca_dmg')) dpsScore += 18;
+    if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsScore += 12;
+    if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsScore += 12;
+    if (profile.scaling?.secondaryStats?.includes('EM') && isEmWeapon) dpsScore += 10;
+    if (isTtds || (isFavonius && role === 'On-Field Carry')) dpsScore -= 25;
+
+    // --- Linear Support / Utility Score ---
+    let supportScore = rarityBase + ownedBonus;
+    if (profile.primaryStatKey !== 'hp_' && isHpWeapon && !isTtds) supportScore -= 35;
+    if (profile.primaryStatKey !== 'def_' && isDefWeapon) supportScore -= 35;
+
+    if (mTags.has('party_buff') || isTtds) supportScore += 32;
+    if (isErWeapon || isFavonius) {
+      supportScore += 26;
+      if (burstCost >= 70) supportScore += 10;
+      if (erBelowTarget) supportScore += 12;
+    }
+    if (mTags.has('skill_reset')) {
+      supportScore += 28;
+      if (profile.skillCd >= 15 && profile.skillParticles >= 4) supportScore += 14;
+      else if (profile.skillCd >= 15) supportScore += 8;
+    }
+    if (isHealer && mTags.has('healer_utility')) supportScore += 18;
+    if (profile.primaryStatKey === 'hp_' && isHpWeapon) supportScore += 20;
+    if (profile.primaryStatKey === 'def_' && isDefWeapon) supportScore += 20;
+    if (profile.primaryStatKey === 'eleMas' && isEmWeapon) supportScore += 20;
+
+    return {
+      ...cand,
+      substat,
+      dpsScore,
+      supportScore,
+      ownedMatch
+    };
+  });
+
+  const usedKeys = new Set();
+  const pickTop = (sortedList, tierLabel, reasonFn) => {
+    const found = sortedList.find((w) => !usedKeys.has(w.key));
+    if (!found) return null;
+    usedKeys.add(found.key);
+    return {
+      ...found,
+      tierLabel,
+      reason: reasonFn(found)
+    };
+  };
+
+  const byDps = [...scored].sort((a, b) => b.dpsScore - a.dpsScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
+  const byDpsAcc = byDps.filter((w) => w.rarity <= 4);
+  const bySup = [...scored].sort((a, b) => b.supportScore - a.supportScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
+  const bySupAcc = bySup.filter((w) => w.rarity <= 4);
+
+  const dpsReason = (w) =>
+    `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat} aligned with ${profile.primaryScaling} scaling${profile.infusionType === 'na_ca' ? ' & on-field NA/CA damage' : ''}.`;
+  const supReason = (w) => {
+    const mTags = new Set(w.mechanicTags || []);
+    if (mTags.has('skill_reset')) return `Resets ${profile.skillCd ? `${profile.skillCd}s ` : ''}Skill CD & solves ${burstCost}-cost Burst ER.`;
+    if (mTags.has('party_buff')) return `Teamwide party buff & ${w.substat} utility.`;
+    if (mTags.has('er_battery') || /energy\s*recharge/i.test(w.substat)) return `Solves ${burstCost}-cost Burst ER with reliable particle generation.`;
+    return `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat} support utility.`;
+  };
+
+  const bisDps = pickTop(byDps, 'BiS DPS', dpsReason);
+  const accDps = pickTop(byDpsAcc, 'Accessible DPS', dpsReason);
+  const bisSup = pickTop(bySup, 'BiS Support', supReason);
+  const accSup = pickTop(bySupAcc, 'Accessible Support', supReason);
+
+  const ordered = isSupportRole ? [bisSup, accSup, bisDps, accDps] : [bisDps, accDps, bisSup, accSup];
+  return ordered.filter(Boolean);
+}
+
+/**
+ * Legacy wrapper delegating to buildKitProfile + recommendWeapons.
  */
 export function recommendWeaponsForCharacter(
   charKey,
@@ -1551,176 +1842,29 @@ export function recommendWeaponsForCharacter(
   getWeaponStatsFn = null,
   erReport = null
 ) {
-  const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
-  const scaling = extractKitScaling(charKey, kitData, analysis);
-  const meta = getCharacterMeta(charKey);
-  const weaponType = meta?.weaponType || 'Sword';
-  const role = analysis?.roleInfo?.fieldRole || analysis?.roleInfo?.primaryRole || 'Quickswap Support';
-  const tags = analysis?.roleInfo?.functionTags || analysis?.roleInfo?.utilityTags || [];
-  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
-  const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
-  const burstCost = analysis?.burstCost || 60;
-  const kqm = getKqmEntry(charKey);
+  const profile = buildKitProfile({ key: charKey, kitData }, { erReport });
+  return recommendWeapons(profile, getWeaponsIndex(), accountWeapons, getWeaponMetaFn, getWeaponStatsFn);
+}
 
-  const isOffFieldOrSupport = role === 'Off-Field Sub-DPS' || role === 'Quickswap Support';
-  const isHighBurstOffField = burstCost >= 70 && isOffFieldOrSupport;
-  const erBelowTarget = erReport ? Number(erReport.erDelta) < 0 : isHighBurstOffField;
-
-  const tSkill = (kitData?.talents || []).find((t) => t.kind === 'skill');
-  let skillCd = 0;
-  if (tSkill?.multipliers) {
-    const cdKey = Object.keys(tSkill.multipliers).find((k) => /^(?:cd|cooldown)$/i.test(k));
-    if (cdKey && Array.isArray(tSkill.multipliers[cdKey]) && tSkill.multipliers[cdKey].length) {
-      skillCd = parsePrimaryMultiplierNumber(tSkill.multipliers[cdKey][0]) || 0;
-    }
-  }
-  const skillParticles = kqm?.particlesPerCast ? parsePrimaryMultiplierNumber(kqm.particlesPerCast) || 0 : 0;
-
-  // Build owned armory lookup by normalized key -> best copy
-  const ownedByKey = new Map();
-  for (const w of accountWeapons || []) {
-    const k = String(w.key || '').toLowerCase();
-    if (!k) continue;
-    const prev = ownedByKey.get(k);
-    if (!prev || (Number(w.level) || 0) > (Number(prev.level) || 0) || (Number(w.refinement) || 1) > (Number(prev.refinement) || 1)) {
-      ownedByKey.set(k, w);
-    }
-  }
-
-  const scoreCandidate = (cand) => {
-    let score = cand.rarity === 5 ? 18 : cand.rarity === 4 ? 14 : 8;
-    const liveStats = getWeaponStatsFn ? getWeaponStatsFn(cand.key) : null;
-    const wMeta = getWeaponMetaFn ? getWeaponMetaFn(cand.key) : null;
-    const substat = cand.substat || liveStats?.substatKey || wMeta?.substat || '';
-    const substatValue = cand.substatValue || '';
-    const mTags = new Set(cand.mechanicTags || []);
-    const lowerName = String(cand.name || '').toLowerCase();
-    const isFavonius = lowerName.includes('favonius');
-    const isTtds = lowerName.includes('thrilling tales');
-
-    // 1. Substat Alignment with Primary Scaling
-    if (scaling.primaryStatKey === 'hp_') {
-      if (mTags.has('hp_scale') || /hp/i.test(substat)) score += 30;
-    } else if (scaling.primaryStatKey === 'def_') {
-      if (mTags.has('def_scale') || /def/i.test(substat)) score += 30;
-    } else if (scaling.primaryStatKey === 'eleMas') {
-      if (mTags.has('em_scale') || /mastery|em/i.test(substat)) score += 30;
-    } else if (scaling.primaryStatKey === 'enerRech_') {
-      if (mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) score += 28;
-    } else {
-      if (/atk/i.test(substat)) score += 16;
-    }
-
-    if (!scaling.isNonCrit && !scaling.isPureSupport) {
-      if (/crit/i.test(substat)) score += 26;
-    } else if (/crit/i.test(substat) && scaling.isPureSupport && !isFavonius) {
-      score -= 10;
-    }
-
-    // 2. Role & Passive Mechanic Match
-    if (usesNormal && mTags.has('na_ca_dmg')) score += 20;
-    if (role === 'Off-Field Sub-DPS' && (mTags.has('skill_dmg') || mTags.has('burst_dmg'))) score += 18;
-    if (role === 'On-Field Carry' && mTags.has('skill_dmg') && scaling.damageSources.includes('Elemental Skill')) score += 8;
-    if (role === 'On-Field Carry' && mTags.has('burst_dmg') && scaling.damageSources.includes('Elemental Burst')) score += 6;
-
-    if (scaling.isPureSupport || role === 'Quickswap Support') {
-      if (mTags.has('party_buff') || mTags.has('er_battery') || isFavonius || isTtds) score += 24;
-      if (isHealer && mTags.has('healer_utility')) score += 16;
-    }
-
-    // 3. Energy-Gated Scoring for High-Burst Off-Field & Support Units
-    if (isHighBurstOffField) {
-      if (mTags.has('skill_reset')) {
-        score += 24;
-        if (skillCd >= 15 && skillParticles >= 4) score += 14;
-        else if (skillCd >= 15) score += 8;
-        if (erBelowTarget) score += 10;
-      }
-      if (mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) {
-        score += 22;
-        if (erBelowTarget) score += 12;
-        if (isFavonius || mTags.has('burst_dmg')) score += 6;
-      }
-    } else if (burstCost >= 70 && (/energy\s*recharge/i.test(substat) || mTags.has('er_battery'))) {
-      score += erBelowTarget ? 20 : 14;
-    }
-
-    if (scaling.secondaryStats.includes('EM') && (/mastery/i.test(substat) || mTags.has('em_scale'))) score += 10;
-
-    // Penalize pure support weapons on hypercarries
-    if (role === 'On-Field Carry' && (isTtds || isFavonius)) score -= 22;
-
-    const ownedMatch = ownedByKey.get(String(cand.key || '').toLowerCase()) || null;
-    if (ownedMatch) score += 4;
-
-    // 4. Tiered Recommendation Label & Dynamic Reason
-    let tierLabel = cand.rarity === 5 ? '5★ Stat Match' : 'Accessible Option';
-    let reason = `${substat ? `${substatValue ? `${substatValue} ` : ''}${substat}` : `Base ATK ${cand.baseAtk || '—'}`} aligned with ${scaling.primaryLabel} scaling.`;
-
-    if (mTags.has('skill_reset') && isHighBurstOffField) {
-      tierLabel = 'BiS Utility / Battery';
-      reason = skillCd >= 15
-        ? `Resets ${skillCd}s Skill CD & solves ${burstCost}-cost Burst ER.`
-        : `Resets Skill CD for double particle generation & ${burstCost}-cost Burst ER.`;
-    } else if ((mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) && (isHighBurstOffField || scaling.isPureSupport)) {
-      tierLabel = mTags.has('party_buff') ? 'BiS Support / Battery' : 'BiS Utility / Battery';
-      reason = `Solves ${burstCost}-cost Burst ER${mTags.has('burst_dmg') ? ' while boosting Burst DMG' : mTags.has('party_buff') ? ' with teamwide buffs' : ' with reliable particle generation'}.`;
-    } else if (mTags.has('party_buff') && (scaling.isPureSupport || role === 'Quickswap Support')) {
-      tierLabel = 'BiS Team Buffer';
-      reason = `Teamwide utility & ${substat || 'ATK'} scaling for ${role} rotations.`;
-    } else if (/crit/i.test(substat) && !scaling.isNonCrit && !scaling.isPureSupport) {
-      tierLabel = isHighBurstOffField ? 'BiS Damage Ceiling' : 'BiS Personal DPS';
-      reason = isHighBurstOffField
-        ? `Max personal DPS (${substatValue ? `${substatValue} ` : ''}${substat}) once ER threshold is met.`
-        : `Top CRIT stat-stick (${substatValue ? `${substatValue} ` : ''}${substat}) aligned with ${scaling.primaryLabel} scaling.`;
-    }
-
-    return {
-      ...cand,
-      substat: substat || 'ATK%',
-      tierLabel,
-      reason,
-      score,
-      ownedMatch
-    };
+/**
+ * Stage 4: Single-pass pipeline orchestrator for Character Dossier & Teams Lab.
+ */
+export function evaluateCharacterBuild(charData, contextOverride = {}) {
+  const profile = buildKitProfile(charData, contextOverride);
+  const talentPriority = deriveTalentPriority(profile);
+  const guidelines = getBuildStatGuidelines(profile.charKey, profile.kitData, profile.analysis);
+  const weaponRecommendations = recommendWeapons(
+    profile,
+    contextOverride.weaponsIndex || getWeaponsIndex(),
+    contextOverride.armory || [],
+    contextOverride.getWeaponMetaFn || null,
+    contextOverride.getWeaponStatsFn || null
+  );
+  return {
+    profile,
+    talentPriority,
+    guidelines,
+    weaponRecommendations,
+    erVerdict: profile.erReport || null
   };
-
-  const fullPool = getWeaponsIndex().filter((w) => w.weaponType === weaponType);
-  const poolKeys = new Set(fullPool.map((w) => String(w.key || '').toLowerCase()));
-  const extraOwned = [];
-  for (const [kLower, w] of ownedByKey.entries()) {
-    if (poolKeys.has(kLower)) continue;
-    const wMeta = getWeaponMetaFn ? getWeaponMetaFn(w.key) : null;
-    const liveStats = getWeaponStatsFn ? getWeaponStatsFn(w.key) : null;
-    const wType = wMeta?.weaponType || liveStats?.weaponType || '';
-    if (wType !== weaponType) continue;
-    const substat = liveStats?.substatKey || wMeta?.substat || 'ATK%';
-    const mechanicTags = [];
-    if (/mastery|em/i.test(substat)) mechanicTags.push('em_scale');
-    if (/hp/i.test(substat)) mechanicTags.push('hp_scale');
-    if (/def/i.test(substat)) mechanicTags.push('def_scale');
-    if (/energy\s*recharge/i.test(substat)) mechanicTags.push('er_battery');
-    extraOwned.push({
-      key: w.key,
-      name: wMeta?.name || w.key,
-      weaponType,
-      rarity: Number(wMeta?.rarity || liveStats?.rarity || 4),
-      substat,
-      substatValue: '',
-      mechanicTags
-    });
-  }
-
-  const candidates = [...fullPool, ...extraOwned].map(scoreCandidate);
-  candidates.sort((a, b) => b.score - a.score || b.rarity - a.rarity || a.name.localeCompare(b.name));
-
-  // Ensure up to 6 picks (including top 5★ and accessible 4★/3★ options)
-  const top5 = candidates.filter((c) => c.rarity === 5).slice(0, 3);
-  const top43 = candidates.filter((c) => c.rarity <= 4).slice(0, 4);
-  const combined = [...top5, ...top43]
-    .filter((item, idx, arr) => arr.findIndex((x) => x.key === item.key) === idx)
-    .sort((a, b) => b.score - a.score || b.rarity - a.rarity)
-    .slice(0, 6);
-
-  return combined;
 }
