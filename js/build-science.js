@@ -1,4 +1,4 @@
-import { getCharacterMeta, getKqmEntry } from './catalog.js?v=20261115ae';
+import { getCharacterMeta, getKqmEntry, getWeaponsIndex } from './catalog.js?v=20261115ag';
 import { calcTalentUpgradeCost } from './calculations.js?v=20261114w';
 
 const AVG_ROLL_VALUE = {
@@ -218,11 +218,11 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const ownKitText = [...talents, ...passives].map((x) => x.description || '').join('\n');
   const INFUSION_CONVERT_RE =
-    /converts?\s+(?:[A-Za-z'’]+\s+){0,4}(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /converts?\s+(?:[A-Za-z'â€™]+\s+){0,4}(?:(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+)?attacks?(?:\s+dmg)?\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_ALTF_RE =
-    /(?:[A-Za-z'’]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
+    /(?:[A-Za-z'â€™]+\s+){0,4}(?:normal|charged|plunging)(?:,\s*(?:charged|plunging))*(?:\s+and\s+(?:charged|plunging))?\s+attacks?\s+(?:dmg\s+is\s+|will\s+be\s+)?converted\s+(?:into|to)\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)\s+dmg/i;
   const INFUSION_IMBUE_RE =
-    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'’]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
+    /infus(?:es?|ing)\s+(?:his|her|their|the\s+character'?s|(?:[A-Za-z'â€™]+\s+){1,3})?(?:weapons?|normal|charged|plunging|attacks?)\s+with\s+(?:pyro|hydro|electro|cryo|dendro|anemo|geo)/i;
   const INFUSION_OVERRIDE_RE =
     /cannot\s+be\s+overridden(?:\s+by\s+any\s+other\s+elemental\s+infusion)?/i;
 
@@ -315,7 +315,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     if (/(?:her|his|their)\s+own\s+/i.test(s)) return false;
     const allyNoun =
       '(?:all\\s+)?(?:nearby\\s+)?(?:party\\s+members|allies|all\\s+characters\\s+in\\s+the\\s+party|the\\s+active\\s+character)';
-    const pPossessive = new RegExp(`${allyNoun}(?:'|’s)?\\s+${statRe}`, 'i');
+    const pPossessive = new RegExp(`${allyNoun}(?:'|â€™s)?\\s+${statRe}`, 'i');
     const pGrantTo = new RegExp(
       `(?:increases?|grant(?:s|ing)?|gain(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to|for)\\s+${allyNoun}`,
       'i'
@@ -331,7 +331,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     if (!pPossessive.test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s) && !pHaveTheir.test(s)) {
       return false;
     }
-    if (new RegExp(`\\b[A-Z][a-z]+(?:'|’s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s)) {
+    if (new RegExp(`\\b[A-Z][a-z]+(?:'|â€™s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s)) {
       return false;
     }
     return true;
@@ -404,8 +404,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
 
   const isReactionEnabler =
     /converted\s+into\s+(?:the\s+)?Lunar[- ]/i.test(nonNormalText) ||
-    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(nonNormalText) ||
-    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG/i.test(nonNormalText);
+    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|â€™s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(nonNormalText) ||
+    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|â€™s)?\s+Base\s+DMG/i.test(nonNormalText);
   if (isReactionEnabler || (hasOffField && functionTags.length === 0)) {
     functionTags.push('Reaction Enabler');
   }
@@ -897,25 +897,25 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     erDelta = best.delta;
     const reasons = [];
     if (best.hasSameElemBattery) reasons.push(`Double ${charElem}`);
-    if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}× Energy Weapon`);
+    if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}Ã— Energy Weapon`);
     const via = reasons.length ? ` via ${reasons.join(' + ')}` : '';
     if (best.delta >= 0 && hasEndgameFlag && soloDelta < 0) {
       erStatus = 'warn';
-      summary = `${currentEr}% ER — Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
+      summary = `${currentEr}% ER â€” Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
     } else if (best.delta >= 0) {
       erStatus = 'ok';
-      summary = `${currentEr}% ER — Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
+      summary = `${currentEr}% ER â€” Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     } else {
       erStatus = best.delta >= -12 ? 'warn' : 'short';
-      summary = `${currentEr}% ER — ${Math.abs(best.delta)}% short even in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
+      summary = `${currentEr}% ER â€” ${Math.abs(best.delta)}% short even in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
     }
   } else {
     erDelta = currentEr - baseReq;
     erStatus = erDelta >= 0 ? 'ok' : erDelta >= -12 ? 'warn' : 'short';
     summary =
       erDelta >= 0
-        ? `${currentEr}% ER — Meets solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`
-        : `${currentEr}% ER — ${Math.abs(erDelta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
+        ? `${currentEr}% ER â€” Meets solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`
+        : `${currentEr}% ER â€” ${Math.abs(erDelta)}% below solo baseline (~${baseReq}% for ${burstCost}-cost Burst).`;
   }
 
   let burstTriggerNote = '';
@@ -1046,7 +1046,7 @@ export function evaluateTeamCapabilities(
     const tags = (combatStats?.kitAnalysis?.roleInfo?.utilityTags || []).filter(
       (t) => !SELF_ONLY_TAGS.has(t)
     );
-    if (tags.length) utilitySummary = tags.join(' · ');
+    if (tags.length) utilitySummary = tags.join(' Â· ');
   }
 
   // Team-buffing weapons & 4pc sets
@@ -1058,7 +1058,7 @@ export function evaluateTeamCapabilities(
     supportGear.push(`R${wepRef} Thrilling Tales (+${atkPct}% ATK swap)`);
   } else if (/Favonius/i.test(wepKey)) {
     const cr = Math.round(Number(combatStats?.critRate) || 0);
-    supportGear.push(cr >= 45 ? `Favonius (${cr}% CR — Reliable procs)` : `Favonius (${cr}% CR — Needs ≥45% CR)`);
+    supportGear.push(cr >= 45 ? `Favonius (${cr}% CR â€” Reliable procs)` : `Favonius (${cr}% CR â€” Needs â‰¥45% CR)`);
   } else if (/ElegyForTheEnd/i.test(wepKey)) {
     supportGear.push(`R${wepRef} Elegy (+${100 + (wepRef - 1) * 25} EM & +${20 + (wepRef - 1) * 5}% ATK)`);
   } else if (/FreedomSworn/i.test(wepKey)) {
@@ -1121,8 +1121,8 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     return {
       tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
       orderText: skillFavored
-        ? 'Normal (A) > Skill (E) ≥ Burst (Q)'
-        : 'Normal (A) > Burst (Q) ≥ Skill (E)',
+        ? 'Normal (A) > Skill (E) â‰¥ Burst (Q)'
+        : 'Normal (A) > Burst (Q) â‰¥ Skill (E)',
       lowValueNote: 'All 3 talents contribute to on-field rotations; prioritize Normal (A) first.'
     };
   }
@@ -1136,7 +1136,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
       orderText: eFirst
         ? 'Skill (E) > Burst (Q) >> Normal (A)'
         : 'Burst (Q) > Skill (E) >> Normal (A)',
-      lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1.'
+      lowValueNote: 'Normal (A) is a low-value Mora sink â€” leave at Lv.1.'
     };
   }
 
@@ -1146,7 +1146,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     orderText: skillFavored
       ? 'Skill (E) > Burst (Q) >> Normal (A)'
       : 'Burst (Q) > Skill (E) >> Normal (A)',
-    lowValueNote: 'Normal (A) is a low-value Mora sink — leave at Lv.1 unless on-fielding.'
+    lowValueNote: 'Normal (A) is a low-value Mora sink â€” leave at Lv.1 unless on-fielding.'
   };
 }
 
@@ -1163,8 +1163,8 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
     utilityTags: [],
     kitTriggers: []
   };
-  const tags = roleInfo.utilityTags?.length ? ` · ${roleInfo.utilityTags.join(' · ')}` : '';
-  const critNote = analysis.isNonCrit ? ' (Non-Crit scaling — Crit Rate/DMG bypassed)' : '';
+  const tags = roleInfo.utilityTags?.length ? ` Â· ${roleInfo.utilityTags.join(' Â· ')}` : '';
+  const critNote = analysis.isNonCrit ? ' (Non-Crit scaling â€” Crit Rate/DMG bypassed)' : '';
   const weaponNote = weaponData?.name ? ` Paired with ${weaponData.name}.` : '';
 
   const kqm = getKqmEntry(char?.key);
@@ -1216,7 +1216,7 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
   }
   const uniqueHighlights = [...new Set(highlights.map(stripMarkup))].slice(0, 5);
   const highlightText = uniqueHighlights.length
-    ? uniqueHighlights.join(' · ')
+    ? uniqueHighlights.join(' Â· ')
     : ownedCon === 0
       ? 'C0 baseline kit; check A1/A4 passives for rotation triggers.'
       : `C${ownedCon} unlocked; standard kit scaling active.`;
@@ -1533,63 +1533,9 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
   };
 }
 
-const CURATED_WEAPON_POOL = [
-  // Swords
-  { key: 'LightOfFoliarIncision', name: 'Light of Foliar Incision', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'em', 'na_ca', 'skill'], reason: '88.2% CRIT DMG with CRIT Rate and EM-scaling Normal Attack & Skill DMG.' },
-  { key: 'MistsplitterReforged', name: 'Mistsplitter Reforged', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'na_ca', 'elem_dmg', 'atk'], reason: 'High Base ATK, CRIT DMG, and Elemental DMG stacks for infused carries.' },
-  { key: 'SplendorOfTranquilWaters', name: 'Splendor of Tranquil Waters', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'skill'], reason: '88.2% CRIT DMG with Skill DMG & Max HP% passive.' },
-  { key: 'UrakuMisugiri', name: 'Uraku Misugiri', weaponType: 'Sword', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'def', 'skill', 'na_ca'], reason: 'CRIT DMG stat stick boosting both Skill and Normal Attack DMG.' },
-  { key: 'KeyOfKhajNisut', name: 'Key of Khaj-Nisut', weaponType: 'Sword', rarity: 5, substat: 'HP%', tags: ['hp', 'em', 'party_buff'], reason: 'Massive HP% substat that converts HP into teamwide EM.' },
-  { key: 'FreedomSworn', name: 'Freedom-Sworn', weaponType: 'Sword', rarity: 5, substat: 'Elemental Mastery', tags: ['em', 'party_buff', 'support'], reason: 'High EM substat with teamwide NA/CA DMG & ATK% buff.' },
-  { key: 'FavoniusSword', name: 'Favonius Sword', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'ER% substat and white particles to lower team ER needs.' },
-  { key: 'SacrificialSword', name: 'Sacrificial Sword', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'sacrificial', 'skill', 'battery'], reason: 'Resets Skill cooldown for double particle generation.' },
-  { key: 'WolfFang', name: 'Wolf-Fang', weaponType: 'Sword', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'skill', 'burst'], reason: 'CRIT Rate substat with stacking Skill & Burst DMG.' },
-  { key: 'FleuveCendreFerryman', name: 'Fleuve Cendre Ferryman', weaponType: 'Sword', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'crit', 'skill'], reason: 'Free R5 ER% sword with bonus Skill CRIT Rate.' },
-  { key: 'IronSting', name: 'Iron Sting', weaponType: 'Sword', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'elem_dmg'], reason: 'Craftable EM stat stick with Elemental DMG bonus.' },
-  { key: 'HarbingerOfDawn', name: 'Harbinger of Dawn', weaponType: 'Sword', rarity: 3, substat: 'CRIT DMG', tags: ['crit', 'hp', 'def', 'subdps'], reason: 'Huge 3★ CRIT Rate + CRIT DMG value for HP/DEF or off-field units.' },
-
-  // Claymores
-  { key: 'RedhornStonethresher', name: 'Redhorn Stonethresher', weaponType: 'Claymore', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'def', 'na_ca'], reason: '88.2% CRIT DMG and DEF-scaling Normal/Charged Attack DMG.' },
-  { key: 'BeaconOfTheReedSea', name: 'Beacon of the Reed Sea', weaponType: 'Claymore', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'atk', 'hp'], reason: 'Universal CRIT Rate claymore with ATK% & Max HP%.' },
-  { key: 'AThousandBlazingSuns', name: 'A Thousand Blazing Suns', weaponType: 'Claymore', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'atk', 'na_ca'], reason: 'High Base ATK and CRIT Rate/DMG boost on Skill & Burst.' },
-  { key: 'SerpentSpine', name: 'Serpent Spine', weaponType: 'Claymore', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'na_ca', 'skill', 'burst'], reason: 'CRIT Rate substat and up to +50% universal DMG Bonus.' },
-  { key: 'FavoniusGreatsword', name: 'Favonius Greatsword', weaponType: 'Claymore', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'High ER% substat and teamwide particle generation.' },
-  { key: 'Whiteblind', name: 'Whiteblind', weaponType: 'Claymore', rarity: 4, substat: 'DEF%', tags: ['def', 'na_ca', 'shield'], reason: 'Craftable DEF% claymore ideal for DEF-scaling carries & shielders.' },
-  { key: 'TidalShadow', name: 'Tidal Shadow', weaponType: 'Claymore', rarity: 4, substat: 'ATK%', tags: ['atk', 'na_ca'], reason: 'Craftable ATK% claymore with strong ATK% passive when healed.' },
-
-  // Polearms
-  { key: 'StaffOfHoma', name: 'Staff of Homa', weaponType: 'Polearm', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'atk', 'na_ca', 'burst'], reason: '66.2% CRIT DMG plus Max HP% and HP-to-ATK conversion.' },
-  { key: 'EngulfingLightning', name: 'Engulfing Lightning', weaponType: 'Polearm', rarity: 5, substat: 'Energy Recharge', tags: ['er', 'burst', 'atk'], reason: 'Converts excess ER% into ATK% for Burst-reliant polearm units.' },
-  { key: 'CrimsonMoonsSemblance', name: "Crimson Moon's Semblance", weaponType: 'Polearm', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'na_ca', 'atk'], reason: 'CRIT Rate polearm tailored for Normal/Charged Attack carries.' },
-  { key: 'Deathmatch', name: 'Deathmatch', weaponType: 'Polearm', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'atk', 'def'], reason: '36.8% CRIT Rate with ATK% and DEF% passive.' },
-  { key: 'TheCatch', name: '"The Catch"', weaponType: 'Polearm', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'burst', 'crit'], reason: 'Free R5 ER% polearm with +32% Burst DMG and +12% Burst CRIT Rate.' },
-  { key: 'FavoniusLance', name: 'Favonius Lance', weaponType: 'Polearm', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'Best-in-slot support polearm for ER% and white particles.' },
-  { key: 'DragonsBane', name: "Dragon's Bane", weaponType: 'Polearm', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'elem_dmg'], reason: 'High EM substat and DMG% for Pyro/Hydro reaction teams.' },
-  { key: 'BlackTassel', name: 'Black Tassel', weaponType: 'Polearm', rarity: 3, substat: 'HP%', tags: ['hp', 'shield', 'heal', 'support'], reason: '46.9% HP substat — premier budget option for HP shielders & healers.' },
-
-  // Bows
-  { key: 'AquaSimulacra', name: 'Aqua Simulacra', weaponType: 'Bow', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'na_ca', 'skill', 'burst'], reason: '88.2% CRIT DMG with +16% HP and universal +20% DMG.' },
-  { key: 'ElegyForTheEnd', name: 'Elegy for the End', weaponType: 'Bow', rarity: 5, substat: 'Energy Recharge', tags: ['er', 'em', 'party_buff', 'support'], reason: 'ER% support bow granting teamwide +100 EM & +20% ATK.' },
-  { key: 'PolarStar', name: 'Polar Star', weaponType: 'Bow', rarity: 5, substat: 'CRIT Rate', tags: ['crit', 'skill', 'burst', 'na_ca'], reason: 'CRIT Rate bow boosting Skill, Burst, and ATK% stacks.' },
-  { key: 'FavoniusWarbow', name: 'Favonius Warbow', weaponType: 'Bow', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'High ER% substat and reliable team particle battery.' },
-  { key: 'TheStringless', name: 'The Stringless', weaponType: 'Bow', rarity: 4, substat: 'Elemental Mastery', tags: ['em', 'skill', 'burst', 'subdps'], reason: 'EM substat with +48% Skill & Burst DMG at R5.' },
-  { key: 'SacrificialBow', name: 'Sacrificial Bow', weaponType: 'Bow', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'sacrificial', 'skill', 'shield'], reason: 'ER% substat and Skill reset for double particles or shield refresh.' },
-  { key: 'Slingshot', name: 'Slingshot', weaponType: 'Bow', rarity: 3, substat: 'CRIT Rate', tags: ['crit', 'na_ca'], reason: '31.2% CRIT Rate 3★ bow with strong Normal/Charged DMG.' },
-
-  // Catalysts
-  { key: 'TomeOfTheEternalFlow', name: 'Tome of the Eternal Flow', weaponType: 'Catalyst', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'hp', 'na_ca'], reason: '88.2% CRIT DMG with Max HP% and Charged Attack DMG.' },
-  { key: 'AThousandFloatingDreams', name: 'A Thousand Floating Dreams', weaponType: 'Catalyst', rarity: 5, substat: 'Elemental Mastery', tags: ['em', 'party_buff', 'subdps'], reason: '265 EM stat stick with teamwide EM share & Elemental DMG.' },
-  { key: 'KagurasVerity', name: "Kagura's Verity", weaponType: 'Catalyst', rarity: 5, substat: 'CRIT DMG', tags: ['crit', 'skill', 'elem_dmg'], reason: '66.2% CRIT DMG and huge Skill + Elemental DMG bonus.' },
-  { key: 'TheWidsith', name: 'The Widsith', weaponType: 'Catalyst', rarity: 4, substat: 'CRIT DMG', tags: ['crit', 'em', 'atk', 'elem_dmg'], reason: '55.1% CRIT DMG with explosive ATK%, Elem DMG%, or EM buffs.' },
-  { key: 'SacrificialJade', name: 'Sacrificial Jade', weaponType: 'Catalyst', rarity: 4, substat: 'CRIT Rate', tags: ['crit', 'hp', 'em'], reason: '36.8% CRIT Rate with +32–64% Max HP and EM passive.' },
-  { key: 'PrototypeAmber', name: 'Prototype Amber', weaponType: 'Catalyst', rarity: 4, substat: 'HP%', tags: ['hp', 'heal', 'er', 'support'], reason: 'Craftable HP% catalyst providing teamwide healing & Energy refund.' },
-  { key: 'FavoniusCodex', name: 'Favonius Codex', weaponType: 'Catalyst', rarity: 4, substat: 'Energy Recharge', tags: ['er', 'support', 'favonius', 'battery'], reason: 'ER% substat and white particles to battery burst-heavy teams.' },
-  { key: 'ThrillingTalesOfDragonSlayers', name: 'Thrilling Tales of Dragon Slayers', weaponType: 'Catalyst', rarity: 3, substat: 'HP%', tags: ['hp', 'party_buff', 'support', 'ttds'], reason: 'R5 grants +48% ATK to the next character — unmatched 3★ support value.' }
-];
-
 /**
- * Recommends top kit-matched weapons filtered strictly by character weaponType,
- * cross-referenced against the user's Armory inventory.
+ * Recommends top kit-matched weapons from the full data/weapons_index.json catalog
+ * filtered strictly by character weaponType, with energy-gated scoring & Armory matching.
  */
 export function recommendWeaponsForCharacter(
   charKey,
@@ -1597,7 +1543,8 @@ export function recommendWeaponsForCharacter(
   kitAnalysis = null,
   accountWeapons = [],
   getWeaponMetaFn = null,
-  getWeaponStatsFn = null
+  getWeaponStatsFn = null,
+  erReport = null
 ) {
   const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
   const scaling = extractKitScaling(charKey, kitData, analysis);
@@ -1608,6 +1555,21 @@ export function recommendWeaponsForCharacter(
   const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
   const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
   const burstCost = analysis?.burstCost || 60;
+  const kqm = getKqmEntry(charKey);
+
+  const isOffFieldOrSupport = role === 'Off-Field Sub-DPS' || role === 'Quickswap Support';
+  const isHighBurstOffField = burstCost >= 70 && isOffFieldOrSupport;
+  const erBelowTarget = erReport ? Number(erReport.erDelta) < 0 : isHighBurstOffField;
+
+  const tSkill = (kitData?.talents || []).find((t) => t.kind === 'skill');
+  let skillCd = 0;
+  if (tSkill?.multipliers) {
+    const cdKey = Object.keys(tSkill.multipliers).find((k) => /^(?:cd|cooldown)$/i.test(k));
+    if (cdKey && Array.isArray(tSkill.multipliers[cdKey]) && tSkill.multipliers[cdKey].length) {
+      skillCd = parsePrimaryMultiplierNumber(tSkill.multipliers[cdKey][0]) || 0;
+    }
+  }
+  const skillParticles = kqm?.particlesPerCast ? parsePrimaryMultiplierNumber(kqm.particlesPerCast) || 0 : 0;
 
   // Build owned armory lookup by normalized key -> best copy
   const ownedByKey = new Map();
@@ -1625,85 +1587,129 @@ export function recommendWeaponsForCharacter(
     const liveStats = getWeaponStatsFn ? getWeaponStatsFn(cand.key) : null;
     const wMeta = getWeaponMetaFn ? getWeaponMetaFn(cand.key) : null;
     const substat = cand.substat || liveStats?.substatKey || wMeta?.substat || '';
-    const wTags = new Set(cand.tags || []);
+    const substatValue = cand.substatValue || '';
+    const mTags = new Set(cand.mechanicTags || []);
+    const lowerName = String(cand.name || '').toLowerCase();
+    const isFavonius = lowerName.includes('favonius');
+    const isTtds = lowerName.includes('thrilling tales');
 
     // 1. Substat Alignment with Primary Scaling
     if (scaling.primaryStatKey === 'hp_') {
-      if (wTags.has('hp') || /hp/i.test(substat)) score += 30;
+      if (mTags.has('hp_scale') || /hp/i.test(substat)) score += 30;
     } else if (scaling.primaryStatKey === 'def_') {
-      if (wTags.has('def') || /def/i.test(substat)) score += 30;
+      if (mTags.has('def_scale') || /def/i.test(substat)) score += 30;
     } else if (scaling.primaryStatKey === 'eleMas') {
-      if (wTags.has('em') || /mastery|em/i.test(substat)) score += 30;
+      if (mTags.has('em_scale') || /mastery|em/i.test(substat)) score += 30;
     } else if (scaling.primaryStatKey === 'enerRech_') {
-      if (wTags.has('er') || /energy\s*recharge/i.test(substat)) score += 28;
+      if (mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) score += 28;
     } else {
-      if (wTags.has('atk') || /atk/i.test(substat)) score += 16;
+      if (/atk/i.test(substat)) score += 16;
     }
 
     if (!scaling.isNonCrit && !scaling.isPureSupport) {
-      if (/crit/i.test(substat) || wTags.has('crit')) score += 26;
-    } else if (/crit/i.test(substat) && scaling.isPureSupport && !wTags.has('favonius')) {
+      if (/crit/i.test(substat)) score += 26;
+    } else if (/crit/i.test(substat) && scaling.isPureSupport && !isFavonius) {
       score -= 10;
     }
 
     // 2. Role & Passive Mechanic Match
-    if (usesNormal && wTags.has('na_ca')) score += 20;
-    if (role === 'Off-Field Sub-DPS' && (wTags.has('skill') || wTags.has('burst') || wTags.has('subdps'))) score += 18;
-    if (role === 'On-Field Carry' && wTags.has('skill') && scaling.damageSources.includes('Elemental Skill')) score += 8;
+    if (usesNormal && mTags.has('na_ca_dmg')) score += 20;
+    if (role === 'Off-Field Sub-DPS' && (mTags.has('skill_dmg') || mTags.has('burst_dmg'))) score += 18;
+    if (role === 'On-Field Carry' && mTags.has('skill_dmg') && scaling.damageSources.includes('Elemental Skill')) score += 8;
+    if (role === 'On-Field Carry' && mTags.has('burst_dmg') && scaling.damageSources.includes('Elemental Burst')) score += 6;
+
     if (scaling.isPureSupport || role === 'Quickswap Support') {
-      if (wTags.has('support') || wTags.has('party_buff') || wTags.has('favonius') || wTags.has('ttds')) score += 26;
-      if ((tags.includes('Team Healer') || tags.includes('Single-Target Healer')) && wTags.has('heal')) score += 16;
-      if (tags.includes('Shielder') && wTags.has('shield')) score += 16;
+      if (mTags.has('party_buff') || mTags.has('er_battery') || isFavonius || isTtds) score += 24;
+      if (isHealer && mTags.has('healer_utility')) score += 16;
     }
-    if (burstCost >= 70 && (/energy\s*recharge/i.test(substat) || wTags.has('er'))) score += 14;
-    if (scaling.secondaryStats.includes('EM') && (/mastery/i.test(substat) || wTags.has('em'))) score += 10;
+
+    // 3. Energy-Gated Scoring for High-Burst Off-Field & Support Units
+    if (isHighBurstOffField) {
+      if (mTags.has('skill_reset')) {
+        score += 24;
+        if (skillCd >= 15 && skillParticles >= 4) score += 14;
+        else if (skillCd >= 15) score += 8;
+        if (erBelowTarget) score += 10;
+      }
+      if (mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) {
+        score += 22;
+        if (erBelowTarget) score += 12;
+        if (isFavonius || mTags.has('burst_dmg')) score += 6;
+      }
+    } else if (burstCost >= 70 && (/energy\s*recharge/i.test(substat) || mTags.has('er_battery'))) {
+      score += erBelowTarget ? 20 : 14;
+    }
+
+    if (scaling.secondaryStats.includes('EM') && (/mastery/i.test(substat) || mTags.has('em_scale'))) score += 10;
 
     // Penalize pure support weapons on hypercarries
-    if (role === 'On-Field Carry' && (wTags.has('ttds') || wTags.has('favonius'))) score -= 22;
+    if (role === 'On-Field Carry' && (isTtds || isFavonius)) score -= 22;
 
-    const ownedMatch = ownedByKey.get(cand.key.toLowerCase()) || null;
+    const ownedMatch = ownedByKey.get(String(cand.key || '').toLowerCase()) || null;
     if (ownedMatch) score += 4;
+
+    // 4. Tiered Recommendation Label & Dynamic Reason
+    let tierLabel = cand.rarity === 5 ? '5â˜… Stat Match' : 'Accessible Option';
+    let reason = `${substat ? `${substatValue ? `${substatValue} ` : ''}${substat}` : `Base ATK ${cand.baseAtk || 'â€”'}`} aligned with ${scaling.primaryLabel} scaling.`;
+
+    if (mTags.has('skill_reset') && isHighBurstOffField) {
+      tierLabel = 'BiS Utility / Battery';
+      reason = skillCd >= 15
+        ? `Resets ${skillCd}s Skill CD & solves ${burstCost}-cost Burst ER.`
+        : `Resets Skill CD for double particle generation & ${burstCost}-cost Burst ER.`;
+    } else if ((mTags.has('er_battery') || /energy\s*recharge/i.test(substat)) && (isHighBurstOffField || scaling.isPureSupport)) {
+      tierLabel = mTags.has('party_buff') ? 'BiS Support / Battery' : 'BiS Utility / Battery';
+      reason = `Solves ${burstCost}-cost Burst ER${mTags.has('burst_dmg') ? ' while boosting Burst DMG' : mTags.has('party_buff') ? ' with teamwide buffs' : ' with reliable particle generation'}.`;
+    } else if (mTags.has('party_buff') && (scaling.isPureSupport || role === 'Quickswap Support')) {
+      tierLabel = 'BiS Team Buffer';
+      reason = `Teamwide utility & ${substat || 'ATK'} scaling for ${role} rotations.`;
+    } else if (/crit/i.test(substat) && !scaling.isNonCrit && !scaling.isPureSupport) {
+      tierLabel = isHighBurstOffField ? 'BiS Damage Ceiling' : 'BiS Personal DPS';
+      reason = isHighBurstOffField
+        ? `Max personal DPS (${substatValue ? `${substatValue} ` : ''}${substat}) once ER threshold is met.`
+        : `Top CRIT stat-stick (${substatValue ? `${substatValue} ` : ''}${substat}) aligned with ${scaling.primaryLabel} scaling.`;
+    }
 
     return {
       ...cand,
       substat: substat || 'ATK%',
+      tierLabel,
+      reason,
       score,
       ownedMatch
     };
   };
 
-  const curatedPool = CURATED_WEAPON_POOL.filter((w) => w.weaponType === weaponType);
-  const curatedKeys = new Set(curatedPool.map((w) => w.key.toLowerCase()));
-  const dynamicOwnedPool = [];
+  const fullPool = getWeaponsIndex().filter((w) => w.weaponType === weaponType);
+  const poolKeys = new Set(fullPool.map((w) => String(w.key || '').toLowerCase()));
+  const extraOwned = [];
   for (const [kLower, w] of ownedByKey.entries()) {
-    if (curatedKeys.has(kLower)) continue;
+    if (poolKeys.has(kLower)) continue;
     const wMeta = getWeaponMetaFn ? getWeaponMetaFn(w.key) : null;
     const liveStats = getWeaponStatsFn ? getWeaponStatsFn(w.key) : null;
     const wType = wMeta?.weaponType || liveStats?.weaponType || '';
     if (wType !== weaponType) continue;
     const substat = liveStats?.substatKey || wMeta?.substat || 'ATK%';
-    const inferredTags = [];
-    if (/crit/i.test(substat)) inferredTags.push('crit');
-    if (/mastery|em/i.test(substat)) inferredTags.push('em');
-    if (/hp/i.test(substat)) inferredTags.push('hp');
-    if (/def/i.test(substat)) inferredTags.push('def');
-    if (/energy\s*recharge/i.test(substat)) inferredTags.push('er');
-    if (/atk/i.test(substat)) inferredTags.push('atk');
-    dynamicOwnedPool.push({
+    const mechanicTags = [];
+    if (/mastery|em/i.test(substat)) mechanicTags.push('em_scale');
+    if (/hp/i.test(substat)) mechanicTags.push('hp_scale');
+    if (/def/i.test(substat)) mechanicTags.push('def_scale');
+    if (/energy\s*recharge/i.test(substat)) mechanicTags.push('er_battery');
+    extraOwned.push({
       key: w.key,
       name: wMeta?.name || w.key,
       weaponType,
       rarity: Number(wMeta?.rarity || liveStats?.rarity || 4),
       substat,
-      tags: inferredTags,
-      reason: `Owned in your Armory (${substat} substat) — compatible with ${weaponType} builds.`
+      substatValue: '',
+      mechanicTags
     });
   }
 
-  const candidates = [...curatedPool, ...dynamicOwnedPool].map(scoreCandidate);
+  const candidates = [...fullPool, ...extraOwned].map(scoreCandidate);
   candidates.sort((a, b) => b.score - a.score || b.rarity - a.rarity || a.name.localeCompare(b.name));
 
-  // Ensure up to 6 picks (including top 5★ and accessible 4★/3★ options)
+  // Ensure up to 6 picks (including top 5â˜… and accessible 4â˜…/3â˜… options)
   const top5 = candidates.filter((c) => c.rarity === 5).slice(0, 3);
   const top43 = candidates.filter((c) => c.rarity <= 4).slice(0, 4);
   const combined = [...top5, ...top43]

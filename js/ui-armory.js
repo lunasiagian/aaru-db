@@ -4,7 +4,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261115ae';
+} from './catalog.js?v=20261115ag';
 
 const STAT_LABELS = {
   atk_: 'ATK%',
@@ -18,7 +18,7 @@ const STAT_LABELS = {
 };
 
 function formatSubstat(subKey, subVal) {
-  if (!subKey) return '—';
+  if (!subKey) return 'â€”';
   const label = STAT_LABELS[subKey] || subKey;
   return subKey === 'eleMas' ? `${label} ${subVal}` : `${label} ${subVal}%`;
 }
@@ -26,17 +26,17 @@ function formatSubstat(subKey, subVal) {
 const WEAPON_TYPE_PILLS = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
 const ARMORY_FILTER_PILLS = [
   { id: 'all', label: 'All' },
-  { id: '5', label: '5★' },
-  { id: '4', label: '4★' },
-  { id: '3', label: '3★' },
+  { id: '5', label: '5â˜…' },
+  { id: '4', label: '4â˜…' },
+  { id: '3', label: '3â˜…' },
   { id: 'equipped', label: 'Equipped' },
   { id: 'unassigned', label: 'Unassigned' }
 ];
 const ARMORY_SORT_OPTIONS = [
-  { value: 'level', label: 'Level / Asc (High → Low)' },
-  { value: 'refinement', label: 'Refinement (R5 → R1)' },
-  { value: 'rarity', label: 'Rarity (5★ → 3★)' },
-  { value: 'name', label: 'Name (A → Z)' }
+  { value: 'level', label: 'Level / Asc (High â†’ Low)' },
+  { value: 'refinement', label: 'Refinement (R5 â†’ R1)' },
+  { value: 'rarity', label: 'Rarity (5â˜… â†’ 3â˜…)' },
+  { value: 'name', label: 'Name (A â†’ Z)' }
 ];
 
 function escapeHtml(str) {
@@ -131,11 +131,11 @@ export function renderArmoryTab(container, viewState, handlers) {
           </div>
           <div style="min-width:0;text-align:left;">
             <div class="item-name">${escapeHtml(w.meta.name)}</div>
-            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} Â· ${w.meta.rarity}â˜…</div>
           </div>
         </div>
         <div class="armory-row-badges mono">
-          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} Â· A${w.ascension}</span>
           <span class="pill pill-gold">R${w.refinement}</span>
           <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped: ${holderLabel}` : 'Unassigned'}</span>
         </div>
@@ -151,7 +151,7 @@ export function renderArmoryTab(container, viewState, handlers) {
           </div>
           <div style="min-width:0;text-align:left;">
             <div class="item-name">${escapeHtml(w.meta.name)}</div>
-            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} Â· ${w.meta.rarity}â˜…</div>
           </div>
         </div>
         <span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>
@@ -180,7 +180,7 @@ export function renderArmoryTab(container, viewState, handlers) {
         <h1 class="section-title">Armory</h1>
       </div>
       <div class="header-meta mono">
-        OWNED: <span class="text-mint">${allWeapons.length}</span> WEAPONS · SHOWING <span class="text-gold">${filteredWeapons.length}</span>
+        OWNED: <span class="text-mint">${allWeapons.length}</span> WEAPONS Â· SHOWING <span class="text-gold">${filteredWeapons.length}</span>
       </div>
     </div>
 
@@ -294,15 +294,15 @@ function openWeaponModal(w) {
               ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
             </div>
             <div>
-              <div class="eyebrow">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+              <div class="eyebrow">${escapeHtml(w.meta.weaponType)} Â· ${w.meta.rarity}â˜…</div>
               <h2 class="card-title" style="margin:2px 0 0;">${escapeHtml(w.meta.name)}</h2>
             </div>
           </div>
-          <button type="button" class="btn btn-ghost btn-xs" id="btn-close-weapon-modal">✕</button>
+          <button type="button" class="btn btn-ghost btn-xs" id="btn-close-weapon-modal">âœ•</button>
         </div>
 
         <div class="dossier-hero-chips mono">
-          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} Â· A${w.ascension}</span>
           <span class="pill pill-gold">Owned R${w.refinement}</span>
           <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped by ${holderLabel}` : 'Unassigned'}</span>
         </div>
@@ -315,11 +315,11 @@ function openWeaponModal(w) {
           <div class="weapon-modal-stats mono">
             <div class="armory-stat-box">
               <span class="stat-label">LV.80 BASE ATK / SUBSTAT</span>
-              <span class="stat-val">${lv80?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv80?.subKey, lv80?.subVal))}</span>
+              <span class="stat-val">${lv80?.atk || 'â€”'} ATK Â· ${escapeHtml(formatSubstat(lv80?.subKey, lv80?.subVal))}</span>
             </div>
             <div class="armory-stat-box">
               <span class="stat-label">LV.90 BASE ATK / SUBSTAT</span>
-              <span class="stat-val text-gold">${lv90?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv90?.subKey, lv90?.subVal))}</span>
+              <span class="stat-val text-gold">${lv90?.atk || 'â€”'} ATK Â· ${escapeHtml(formatSubstat(lv90?.subKey, lv90?.subVal))}</span>
             </div>
           </div>
 

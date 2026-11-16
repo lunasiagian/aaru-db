@@ -1,7 +1,7 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261115ae';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261115ag';
 
 /**
- * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
+ * Effective Hero's Wit = 4â˜… + 0.25 Ã— 3â˜… + 0.05 Ã— 2â˜…
  */
 export const SERVER_REGIONS = {
   NA: { id: 'NA', label: 'America (NA)', short: 'NA', offsetHours: -5, resetLabel: '04:00 EST / 09:00 UTC' },
@@ -889,7 +889,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
     if (r.deficit > 0) {
       const runs = Math.max(1, Math.ceil(r.equivDeficit / 2.2));
       const resin = runs * 20;
-      farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
+      farmingCost = { runs, resin, text: `~${runs} Runs Â· ${resin.toLocaleString()} Resin` };
     }
 
     results.push({
@@ -1027,7 +1027,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 2.2));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
+        farmingCost = { runs, resin, text: `~${runs} Runs Â· ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'weeklyBoss') {
       sourceLabel = 'Weekly Boss';
@@ -1037,12 +1037,12 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
         farmingCost = { weeks, text: `~${weeks} ${weeks === 1 ? 'Week' : 'Weeks'}` };
       }
     } else if (item.kind === 'worldBoss') {
-      sourceLabel = meta.bossName ? `Boss · ${meta.bossName}` : 'Overworld Boss';
+      sourceLabel = meta.bossName ? `Boss Â· ${meta.bossName}` : 'Overworld Boss';
       urgency = 4;
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 2.5));
         const resin = runs * 40;
-        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
+        farmingCost = { runs, resin, text: `~${runs} Runs Â· ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'exp') {
       name = "Hero's Wit";
@@ -1051,7 +1051,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil((deficit * 20000) / 122500));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
+        farmingCost = { runs, resin, text: `~${runs} Runs Â· ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'mora') {
       sourceLabel = 'Ley Line';
@@ -1059,7 +1059,7 @@ export function calculatePrioritySharedPool(prefarmQueue = [], inventory = {}, w
       if (deficit > 0) {
         const runs = Math.max(1, Math.ceil(deficit / 120000));
         const resin = runs * 20;
-        farmingCost = { runs, resin, text: `~${runs} Runs · ${resin.toLocaleString()} Resin` };
+        farmingCost = { runs, resin, text: `~${runs} Runs Â· ${resin.toLocaleString()} Resin` };
       }
     } else if (item.kind === 'localSpecialty') {
       sourceLabel = 'Local Specialty';
@@ -1205,32 +1205,32 @@ export function calcTargetTelemetry(target, sharedPool = [], serverId = 'NA', no
   const landingMs = nowMs + server.offsetHours * 3600_000 + resinDays * 86400_000;
   const landingDate = new Date(landingMs);
   const etaDateText = `${MONTH_SHORT[landingDate.getUTCMonth()]} ${landingDate.getUTCDate()}`;
-  const etaLabel = resinDays > 0 ? `~${resinDays}d · ${etaDateText}` : weeklyWeeks > 0 ? `~${weeklyWeeks}w · ${etaDateText}` : 'Ready';
+  const etaLabel = resinDays > 0 ? `~${resinDays}d Â· ${etaDateText}` : weeklyWeeks > 0 ? `~${weeklyWeeks}w Â· ${etaDateText}` : 'Ready';
 
   const weeklyDays = weeklyWeeks * 7;
   let gatekeeper;
   if (weeklyDays > resinDays && weeklyWeeks > 0) {
     gatekeeper = {
       type: 'weekly',
-      label: `Weekly Boss locked (~${weeklyWeeks} ${weeklyWeeks === 1 ? 'Monday' : 'Mondays'}) — save Fragile Resin`
+      label: `Weekly Boss locked (~${weeklyWeeks} ${weeklyWeeks === 1 ? 'Monday' : 'Mondays'}) â€” save Fragile Resin`
     };
   } else if (resinDomains > 0 && resinDomains >= resinBosses && resinDomains >= resinLeyLines) {
     gatekeeper = {
       type: 'domain',
-      label: `Domain schedule locked (~${resinDays}d · ${Math.round(resinDomains).toLocaleString()} Resin)`
+      label: `Domain schedule locked (~${resinDays}d Â· ${Math.round(resinDomains).toLocaleString()} Resin)`
     };
   } else if (resinBosses > 0 && resinBosses >= resinLeyLines) {
     gatekeeper = {
       type: 'boss',
-      label: `World Boss locked (~${resinDays}d · ${Math.round(resinBosses).toLocaleString()} Resin)`
+      label: `World Boss locked (~${resinDays}d Â· ${Math.round(resinBosses).toLocaleString()} Resin)`
     };
   } else if (resinDays > 0) {
     gatekeeper = {
       type: 'leyline',
-      label: `Ley Line / EXP locked (~${resinDays}d · ${Math.round(totalUnfundedResin).toLocaleString()} Resin)`
+      label: `Ley Line / EXP locked (~${resinDays}d Â· ${Math.round(totalUnfundedResin).toLocaleString()} Resin)`
     };
   } else {
-    gatekeeper = { type: 'ready', label: 'Fully funded — ready to build' };
+    gatekeeper = { type: 'ready', label: 'Fully funded â€” ready to build' };
   }
 
   return {

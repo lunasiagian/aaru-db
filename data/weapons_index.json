@@ -1,0 +1,3567 @@
+{
+    "meta":  {
+                 "source":  "gi.yatta.moe",
+                 "count":  269
+             },
+    "weapons":  [
+                    {
+                        "id":  15502,
+                        "key":  "AmosBow",
+                        "name":  "Amos\u0027 Bow",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15508,
+                        "key":  "AquaSimulacra",
+                        "name":  "Aqua Simulacra",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15514,
+                        "key":  "AstralVulturesCrimsonPlumage",
+                        "name":  "Astral Vulture\u0027s Crimson Plumage",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15503,
+                        "key":  "ElegyForTheEnd",
+                        "name":  "Elegy for the End",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "party_buff"
+                                         ]
+                    },
+                    {
+                        "id":  15516,
+                        "key":  "GoldenFrostboundOath",
+                        "name":  "Golden Frostbound Oath",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15511,
+                        "key":  "HuntersPath",
+                        "name":  "Hunter\u0027s Path",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  542,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15507,
+                        "key":  "PolarStar",
+                        "name":  "Polar Star",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15513,
+                        "key":  "SilvershowerHeartstrings",
+                        "name":  "Silvershower Heartstrings",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  542,
+                        "substat":  "HP%",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "burst_dmg",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15501,
+                        "key":  "SkywardHarp",
+                        "name":  "Skyward Harp",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  350002,
+                        "key":  "StarpiercerSublimation",
+                        "name":  "Starpiercer - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15515,
+                        "key":  "TheDaybreakChronicles",
+                        "name":  "The Daybreak Chronicles",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15512,
+                        "key":  "TheFirstGreatMagic",
+                        "name":  "The First Great Magic",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15509,
+                        "key":  "ThunderingPulse",
+                        "name":  "Thundering Pulse",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  350004,
+                        "key":  "YayuSublimation",
+                        "name":  "Yayu - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Bow",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14511,
+                        "key":  "AThousandFloatingDreams",
+                        "name":  "A Thousand Floating Dreams",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "265",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14523,
+                        "key":  "AngelosHeptades",
+                        "name":  "Angelos\u0027 Heptades",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  741,
+                        "substat":  "ATK%",
+                        "substatValue":  "16.5%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14513,
+                        "key":  "CashflowSupervision",
+                        "name":  "Cashflow Supervision",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14515,
+                        "key":  "CranesEchoingCall",
+                        "name":  "Crane\u0027s Echoing Call",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  741,
+                        "substat":  "ATK%",
+                        "substatValue":  "16.5%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "party_buff",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  340004,
+                        "key":  "DawnstarOfShaharSublimation",
+                        "name":  "Dawnstar of Shahar - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14506,
+                        "key":  "EverlastingMoonglow",
+                        "name":  "Everlasting Moonglow",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  608,
+                        "substat":  "HP%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "na_ca_dmg",
+                                             "hp_scale",
+                                             "healer_utility"
+                                         ]
+                    },
+                    {
+                        "id":  340002,
+                        "key":  "HallowedFettersSublimation",
+                        "name":  "Hallowed Fetters - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14524,
+                        "key":  "HymnOfTheMaelstrom",
+                        "name":  "Hymn of the Maelstrom",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "HP%",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "hp_scale",
+                                             "healer_utility"
+                                         ]
+                    },
+                    {
+                        "id":  14505,
+                        "key":  "JadefallsSplendor",
+                        "name":  "Jadefall\u0027s Splendor",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  608,
+                        "substat":  "HP%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14509,
+                        "key":  "KagurasVerity",
+                        "name":  "Kagura\u0027s Verity",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14502,
+                        "key":  "LostPrayerToTheSacredWinds",
+                        "name":  "Lost Prayer to the Sacred Winds",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14504,
+                        "key":  "MemoryOfDust",
+                        "name":  "Memory of Dust",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14520,
+                        "key":  "NightweaversLookingGlass",
+                        "name":  "Nightweaver\u0027s Looking Glass",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "265",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14522,
+                        "key":  "NocturnesCurtainCall",
+                        "name":  "Nocturne\u0027s Curtain Call",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14521,
+                        "key":  "ReliquaryOfTruth",
+                        "name":  "Reliquary of Truth",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14501,
+                        "key":  "SkywardAtlas",
+                        "name":  "Skyward Atlas",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  674,
+                        "substat":  "ATK%",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14517,
+                        "key":  "StarcallersWatch",
+                        "name":  "Starcaller\u0027s Watch",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "265",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14525,
+                        "key":  "StarsealedEdict",
+                        "name":  "Starsealed Edict",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14518,
+                        "key":  "SunnyMorningSleepIn",
+                        "name":  "Sunny Morning Sleep-In",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "265",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14516,
+                        "key":  "SurfsUp",
+                        "name":  "Surf\u0027s Up",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14514,
+                        "key":  "TomeOfTheEternalFlow",
+                        "name":  "Tome of the Eternal Flow",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14512,
+                        "key":  "TulaytullahsRemembrance",
+                        "name":  "Tulaytullah\u0027s Remembrance",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14519,
+                        "key":  "VividNotions",
+                        "name":  "Vivid Notions",
+                        "rarity":  5,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12516,
+                        "key":  "ATeaspoonOfTranscendence",
+                        "name":  "A Teaspoon of Transcendence",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12514,
+                        "key":  "AThousandBlazingSuns",
+                        "name":  "A Thousand Blazing Suns",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  741,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "11%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  320002,
+                        "key":  "ArdentStormSublimation",
+                        "name":  "Ardent Storm - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12511,
+                        "key":  "BeaconOfTheReedSea",
+                        "name":  "Beacon of the Reed Sea",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12513,
+                        "key":  "FangOfTheMountainKing",
+                        "name":  "Fang of the Mountain King",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  741,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "11%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12515,
+                        "key":  "GestOfTheMightyWolf",
+                        "name":  "Gest of the Mighty Wolf",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12510,
+                        "key":  "RedhornStonethresher",
+                        "name":  "Redhorn Stonethresher",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  320004,
+                        "key":  "SilverRadianceOfGradlonSublimation",
+                        "name":  "Silver Radiance of Gradlon - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12501,
+                        "key":  "SkywardPride",
+                        "name":  "Skyward Pride",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  674,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12503,
+                        "key":  "SongOfBrokenPines",
+                        "name":  "Song of Broken Pines",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  741,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "20.7%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12504,
+                        "key":  "TheUnforged",
+                        "name":  "The Unforged",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12512,
+                        "key":  "Verdict",
+                        "name":  "Verdict",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12502,
+                        "key":  "WolfsGravestone",
+                        "name":  "Wolf\u0027s Gravestone",
+                        "rarity":  5,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+                                             "party_buff"
+                                         ]
+                    },
+                    {
+                        "id":  13516,
+                        "key":  "BloodsoakedRuins",
+                        "name":  "Bloodsoaked Ruins",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13507,
+                        "key":  "CalamityQueller",
+                        "name":  "Calamity Queller",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  741,
+                        "substat":  "ATK%",
+                        "substatValue":  "16.5%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13512,
+                        "key":  "CrimsonMoonsSemblance",
+                        "name":  "Crimson Moon\u0027s Semblance",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13517,
+                        "key":  "DisasterAndRemorse",
+                        "name":  "Disaster and Remorse",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "burst_dmg",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13509,
+                        "key":  "EngulfingLightning",
+                        "name":  "Engulfing Lightning",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  13515,
+                        "key":  "FracturedHalo",
+                        "name":  "Fractured Halo",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "party_buff"
+                                         ]
+                    },
+                    {
+                        "id":  13513,
+                        "key":  "LumidouceElegy",
+                        "name":  "Lumidouce Elegy",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  13505,
+                        "key":  "PrimordialJadeWingedSpear",
+                        "name":  "Primordial Jade Winged-Spear",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  330002,
+                        "key":  "ShatteredMoonSublimation",
+                        "name":  "Shattered Moon - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13502,
+                        "key":  "SkywardSpine",
+                        "name":  "Skyward Spine",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  674,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13501,
+                        "key":  "StaffOfHoma",
+                        "name":  "Staff of Homa",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13511,
+                        "key":  "StaffOfTheScarletSands",
+                        "name":  "Staff of the Scarlet Sands",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  542,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  330004,
+                        "key":  "StarlightOfFylkirSublimation",
+                        "name":  "Starlight of Fylkir - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13514,
+                        "key":  "SymphonistOfScents",
+                        "name":  "Symphonist of Scents",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13504,
+                        "key":  "VortexVanquisher",
+                        "name":  "Vortex Vanquisher",
+                        "rarity":  5,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11515,
+                        "key":  "Absolution",
+                        "name":  "Absolution",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11501,
+                        "key":  "AquilaFavonia",
+                        "name":  "Aquila Favonia",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11518,
+                        "key":  "AthameArtis",
+                        "name":  "Athame Artis",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11517,
+                        "key":  "Azurelight",
+                        "name":  "Azurelight",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11522,
+                        "key":  "BeyondTheChrysalis",
+                        "name":  "Beyond the Chrysalis",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11521,
+                        "key":  "ExaiphanesBlade",
+                        "name":  "Exaiphanes Blade",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11503,
+                        "key":  "FreedomSworn",
+                        "name":  "Freedom-Sworn",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "198",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "na_ca_dmg",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  310004,
+                        "key":  "GoldenBoughOfNemorensisSublimation",
+                        "name":  "Golden Bough of Nemorensis - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11510,
+                        "key":  "HaranGeppakuFutsu",
+                        "name":  "Haran Geppaku Futsu",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "33.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11511,
+                        "key":  "KeyOfKhajNisut",
+                        "name":  "Key of Khaj-Nisut",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "HP%",
+                        "substatValue":  "66.2%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11512,
+                        "key":  "LightOfFoliarIncision",
+                        "name":  "Light of Foliar Incision",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "na_ca_dmg",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11519,
+                        "key":  "LightbearingMoonshard",
+                        "name":  "Lightbearing Moonshard",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11509,
+                        "key":  "MistsplitterReforged",
+                        "name":  "Mistsplitter Reforged",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11516,
+                        "key":  "PeakPatrolSong",
+                        "name":  "Peak Patrol Song",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "DEF%",
+                        "substatValue":  "82.7%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "na_ca_dmg",
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11505,
+                        "key":  "PrimordialJadeCutter",
+                        "name":  "Primordial Jade Cutter",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "44.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  310002,
+                        "key":  "SerpentDevourerSublimation",
+                        "name":  "Serpent Devourer - Sublimation",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11502,
+                        "key":  "SkywardBlade",
+                        "name":  "Skyward Blade",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11513,
+                        "key":  "SplendorOfTranquilWaters",
+                        "name":  "Splendor of Tranquil Waters",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11504,
+                        "key":  "SummitShaper",
+                        "name":  "Summit Shaper",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  608,
+                        "substat":  "ATK%",
+                        "substatValue":  "49.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11514,
+                        "key":  "UrakuMisugiri",
+                        "name":  "Uraku Misugiri",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  542,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "88.2%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "skill_dmg",
+                                             "na_ca_dmg",
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11520,
+                        "key":  "WhitelakeFrostfeather",
+                        "name":  "Whitelake Frostfeather",
+                        "rarity":  5,
+                        "weaponType":  "Sword",
+                        "baseAtk":  674,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "22.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15410,
+                        "key":  "AlleyHunter",
+                        "name":  "Alley Hunter",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15408,
+                        "key":  "BlackcliffWarbow",
+                        "name":  "Blackcliff Warbow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15437,
+                        "key":  "BreezeborneRefrain",
+                        "name":  "Breezeborne Refrain",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15431,
+                        "key":  "ChainBreaker",
+                        "name":  "Chain Breaker",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15426,
+                        "key":  "Cloudforged",
+                        "name":  "Cloudforged",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15407,
+                        "key":  "CompoundBow",
+                        "name":  "Compound Bow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  454,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "69%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15436,
+                        "key":  "CovenantOfFrostAndSnow",
+                        "name":  "Covenant of Frost and Snow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "DEF%",
+                        "substatValue":  "51.7%",
+                        "mechanicTags":  [
+                                             "def_scale",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15418,
+                        "key":  "EndOfTheLine",
+                        "name":  "End of the Line",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15411,
+                        "key":  "FadingTwilight",
+                        "name":  "Fading Twilight",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15401,
+                        "key":  "FavoniusWarbow",
+                        "name":  "Favonius Warbow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15430,
+                        "key":  "FlowerWreathedFeathers",
+                        "name":  "Flower-Wreathed Feathers",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15414,
+                        "key":  "Hamayumi",
+                        "name":  "Hamayumi",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15419,
+                        "key":  "IbisPiercer",
+                        "name":  "Ibis Piercer",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15435,
+                        "key":  "JadeVista",
+                        "name":  "Jade Vista",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15417,
+                        "key":  "KingsSquire",
+                        "name":  "King\u0027s Squire",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15412,
+                        "key":  "MitternachtsWaltz",
+                        "name":  "Mitternachts Waltz",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "51.7%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15416,
+                        "key":  "MouunsMoon",
+                        "name":  "Mouun\u0027s Moon",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15415,
+                        "key":  "Predator",
+                        "name":  "Predator",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15406,
+                        "key":  "PrototypeCrescent",
+                        "name":  "Prototype Crescent",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15434,
+                        "key":  "RainbowSerpentsRainBow",
+                        "name":  "Rainbow Serpent\u0027s Rain Bow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15427,
+                        "key":  "RangeGauge",
+                        "name":  "Range Gauge",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15404,
+                        "key":  "RoyalBow",
+                        "name":  "Royal Bow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15405,
+                        "key":  "Rust",
+                        "name":  "Rust",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15403,
+                        "key":  "SacrificialBow",
+                        "name":  "Sacrificial Bow",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "skill_reset",
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15424,
+                        "key":  "ScionOfTheBlazingSun",
+                        "name":  "Scion of the Blazing Sun",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  565,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "18.4%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15432,
+                        "key":  "SequenceOfSolitude",
+                        "name":  "Sequence of Solitude",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15433,
+                        "key":  "SnareHook",
+                        "name":  "Snare Hook",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  15425,
+                        "key":  "SongOfStillness",
+                        "name":  "Song of Stillness",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  350001,
+                        "key":  "Starpiercer",
+                        "name":  "Starpiercer",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15402,
+                        "key":  "TheStringless",
+                        "name":  "The Stringless",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "burst_dmg",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15409,
+                        "key":  "TheViridescentHunt",
+                        "name":  "The Viridescent Hunt",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  15413,
+                        "key":  "WindblumeOde",
+                        "name":  "Windblume Ode",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  350003,
+                        "key":  "Yayu",
+                        "name":  "Yayu",
+                        "rarity":  4,
+                        "weaponType":  "Bow",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14427,
+                        "key":  "AshGravenDrinkingHorn",
+                        "name":  "Ash-Graven Drinking Horn",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14426,
+                        "key":  "BalladOfTheBoundlessBlue",
+                        "name":  "Ballad of the Boundless Blue",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14408,
+                        "key":  "BlackcliffAgate",
+                        "name":  "Blackcliff Agate",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14433,
+                        "key":  "BlackmarrowLantern",
+                        "name":  "Blackmarrow Lantern",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "221",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14435,
+                        "key":  "ClashOfKings",
+                        "name":  "Clash of Kings",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14434,
+                        "key":  "DawningFrost",
+                        "name":  "Dawning Frost",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  340003,
+                        "key":  "DawnstarOfShahar",
+                        "name":  "Dawnstar of Shahar",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14413,
+                        "key":  "DodocoTales",
+                        "name":  "Dodoco Tales",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14436,
+                        "key":  "EchoesOfTheHeart",
+                        "name":  "Echoes of the Heart",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14432,
+                        "key":  "EtherlightSpindlelute",
+                        "name":  "Etherlight Spindlelute",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14409,
+                        "key":  "EyeOfPerception",
+                        "name":  "Eye of Perception",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14401,
+                        "key":  "FavoniusCodex",
+                        "name":  "Favonius Codex",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  14425,
+                        "key":  "FlowingPurity",
+                        "name":  "Flowing Purity",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14412,
+                        "key":  "Frostbearer",
+                        "name":  "Frostbearer",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14417,
+                        "key":  "FruitOfFulfillment",
+                        "name":  "Fruit of Fulfillment",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  14414,
+                        "key":  "HakushinRing",
+                        "name":  "Hakushin Ring",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  340001,
+                        "key":  "HallowedFetters",
+                        "name":  "Hallowed Fetters",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14407,
+                        "key":  "MappaMare",
+                        "name":  "Mappa Mare",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "110",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14415,
+                        "key":  "OathswornEye",
+                        "name":  "Oathsworn Eye",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  380001,
+                        "key":  "PhantasmalGiftStarOmen",
+                        "name":  "Phantasmal Gift: Star Omen",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14406,
+                        "key":  "PrototypeAmber",
+                        "name":  "Prototype Amber",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "party_buff",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14431,
+                        "key":  "RingOfYaxche",
+                        "name":  "Ring of Yaxche",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14404,
+                        "key":  "RoyalGrimoire",
+                        "name":  "Royal Grimoire",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  14403,
+                        "key":  "SacrificialFragments",
+                        "name":  "Sacrificial Fragments",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "221",
+                        "mechanicTags":  [
+                                             "skill_reset",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14424,
+                        "key":  "SacrificialJade",
+                        "name":  "Sacrificial Jade",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+                                             "skill_reset"
+                                         ]
+                    },
+                    {
+                        "id":  14405,
+                        "key":  "SolarPearl",
+                        "name":  "Solar Pearl",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "burst_dmg",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14402,
+                        "key":  "TheWidsith",
+                        "name":  "The Widsith",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14416,
+                        "key":  "WanderingEvenstar",
+                        "name":  "Wandering Evenstar",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14430,
+                        "key":  "WaveridingWhirl",
+                        "name":  "Waveriding Whirl",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14410,
+                        "key":  "WineAndSong",
+                        "name":  "Wine and Song",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  14437,
+                        "key":  "WintersHeavyHeart",
+                        "name":  "Winter\u0027s Heavy Heart",
+                        "rarity":  4,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12426,
+                        "key":  "UltimateOverlordsMegaMagicSword",
+                        "name":  "\"Ultimate Overlord\u0027s Mega Magic Sword\"",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  12416,
+                        "key":  "Akuoumaru",
+                        "name":  "Akuoumaru",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  320001,
+                        "key":  "ArdentStorm",
+                        "name":  "Ardent Storm",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12408,
+                        "key":  "BlackcliffSlasher",
+                        "name":  "Blackcliff Slasher",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12436,
+                        "key":  "BladeOfAtonement",
+                        "name":  "Blade of Atonement",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12431,
+                        "key":  "EarthShaker",
+                        "name":  "Earth Shaker",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12401,
+                        "key":  "FavoniusGreatsword",
+                        "name":  "Favonius Greatsword",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  12432,
+                        "key":  "FlameForgedInsight",
+                        "name":  "Flame-Forged Insight",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12417,
+                        "key":  "ForestRegalia",
+                        "name":  "Forest Regalia",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  12435,
+                        "key":  "ForgedByTheGoldenMelody",
+                        "name":  "Forged by the Golden Melody",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12430,
+                        "key":  "FruitfulHook",
+                        "name":  "Fruitful Hook",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12414,
+                        "key":  "KatsuragikiriNagamasa",
+                        "name":  "Katsuragikiri Nagamasa",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12410,
+                        "key":  "LithicBlade",
+                        "name":  "Lithic Blade",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12412,
+                        "key":  "LuxuriousSeaLord",
+                        "name":  "Luxurious Sea-Lord",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12418,
+                        "key":  "MailedFlower",
+                        "name":  "Mailed Flower",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "110",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12415,
+                        "key":  "MakhairaAquamarine",
+                        "name":  "Makhaira Aquamarine",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12433,
+                        "key":  "MasterKey",
+                        "name":  "Master Key",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  12427,
+                        "key":  "PortablePowerSaw",
+                        "name":  "Portable Power Saw",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  454,
+                        "substat":  "HP%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12406,
+                        "key":  "PrototypeArchaic",
+                        "name":  "Prototype Archaic",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12405,
+                        "key":  "Rainslasher",
+                        "name":  "Rainslasher",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12404,
+                        "key":  "RoyalGreatsword",
+                        "name":  "Royal Greatsword",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12403,
+                        "key":  "SacrificialGreatsword",
+                        "name":  "Sacrificial Greatsword",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "skill_reset",
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  12409,
+                        "key":  "SerpentSpine",
+                        "name":  "Serpent Spine",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  320003,
+                        "key":  "SilverRadianceOfGradlon",
+                        "name":  "Silver Radiance of Gradlon",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12411,
+                        "key":  "SnowTombedStarsilver",
+                        "name":  "Snow-Tombed Starsilver",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "34.5%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  380002,
+                        "key":  "SuperAwesomeMagicKey",
+                        "name":  "Super Awesome Magic Key",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12424,
+                        "key":  "TalkingStick",
+                        "name":  "Talking Stick",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  565,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "18.4%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12402,
+                        "key":  "TheBell",
+                        "name":  "The Bell",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12425,
+                        "key":  "TidalShadow",
+                        "name":  "Tidal Shadow",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  390001,
+                        "key":  "UnbreakableDurandarte",
+                        "name":  "Unbreakable: Durandarte",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12407,
+                        "key":  "Whiteblind",
+                        "name":  "Whiteblind",
+                        "rarity":  4,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  510,
+                        "substat":  "DEF%",
+                        "substatValue":  "51.7%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13415,
+                        "key":  "TheCatch",
+                        "name":  "\"The Catch\"",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13424,
+                        "key":  "BalladOfTheFjords",
+                        "name":  "Ballad of the Fjords",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13404,
+                        "key":  "BlackcliffPole",
+                        "name":  "Blackcliff Pole",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13403,
+                        "key":  "CrescentPike",
+                        "name":  "Crescent Pike",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "34.5%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13405,
+                        "key":  "Deathmatch",
+                        "name":  "Deathmatch",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  454,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13426,
+                        "key":  "DialoguesOfTheDesertSages",
+                        "name":  "Dialogues of the Desert Sages",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13401,
+                        "key":  "DragonsBane",
+                        "name":  "Dragon\u0027s Bane",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  454,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "221",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13409,
+                        "key":  "DragonspineSpear",
+                        "name":  "Dragonspine Spear",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  454,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "69%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13407,
+                        "key":  "FavoniusLance",
+                        "name":  "Favonius Lance",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  13431,
+                        "key":  "FootprintOfTheRainbow",
+                        "name":  "Footprint of the Rainbow",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "DEF%",
+                        "substatValue":  "51.7%",
+                        "mechanicTags":  [
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13435,
+                        "key":  "Frostbreath",
+                        "name":  "Frostbreath",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  13414,
+                        "key":  "KitainCrossSpear",
+                        "name":  "Kitain Cross Spear",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "110",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "skill_dmg",
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13406,
+                        "key":  "LithicSpear",
+                        "name":  "Lithic Spear",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13419,
+                        "key":  "MissiveWindspear",
+                        "name":  "Missive Windspear",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13417,
+                        "key":  "Moonpiercer",
+                        "name":  "Moonpiercer",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "110",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13430,
+                        "key":  "MountainBracingBolt",
+                        "name":  "Mountain-Bracing Bolt",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13427,
+                        "key":  "ProspectorsDrill",
+                        "name":  "Prospector\u0027s Drill",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13433,
+                        "key":  "ProspectorsShovel",
+                        "name":  "Prospector\u0027s Shovel",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13402,
+                        "key":  "PrototypeStarglitter",
+                        "name":  "Prototype Starglitter",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  13425,
+                        "key":  "RightfulReward",
+                        "name":  "Rightful Reward",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "HP%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13408,
+                        "key":  "RoyalSpear",
+                        "name":  "Royal Spear",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13434,
+                        "key":  "SacrificersStaff",
+                        "name":  "Sacrificer\u0027s Staff",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  620,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "9.2%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  330001,
+                        "key":  "ShatteredMoon",
+                        "name":  "Shattered Moon",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13436,
+                        "key":  "SongOfTheVigil",
+                        "name":  "Song of the Vigil",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "110",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  330003,
+                        "key":  "StarlightOfFylkir",
+                        "name":  "Starlight of Fylkir",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13432,
+                        "key":  "TamayurateiNoOhanashi",
+                        "name":  "Tamayuratei no Ohanashi",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  13416,
+                        "key":  "WavebreakersFin",
+                        "name":  "Wavebreaker\u0027s Fin",
+                        "rarity":  4,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  620,
+                        "substat":  "ATK%",
+                        "substatValue":  "13.8%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  380003,
+                        "key":  "ATouchOfFrostInScorchingSummer",
+                        "name":  "A Touch of Frost in Scorching Summer!",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11414,
+                        "key":  "AmenomaKageuchi",
+                        "name":  "Amenoma Kageuchi",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "ATK%",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11408,
+                        "key":  "BlackcliffLongsword",
+                        "name":  "Blackcliff Longsword",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "36.8%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11432,
+                        "key":  "CalamityOfEshu",
+                        "name":  "Calamity of Eshu",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11415,
+                        "key":  "CinnabarSpindle",
+                        "name":  "Cinnabar Spindle",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "DEF%",
+                        "substatValue":  "69%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11436,
+                        "key":  "Emberwell",
+                        "name":  "Emberwell",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  390002,
+                        "key":  "ExaiphanesBlade",
+                        "name":  "Exaiphanes Blade",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  390003,
+                        "key":  "ExaiphanesBlade",
+                        "name":  "Exaiphanes Blade",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11401,
+                        "key":  "FavoniusSword",
+                        "name":  "Favonius Sword",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11413,
+                        "key":  "FesteringDesire",
+                        "name":  "Festering Desire",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11425,
+                        "key":  "FinaleOfTheDeep",
+                        "name":  "Finale of the Deep",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11426,
+                        "key":  "FleuveCendreFerryman",
+                        "name":  "Fleuve Cendre Ferryman",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "45.9%",
+                        "mechanicTags":  [
+                                             "er_battery",
+                                             "skill_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11431,
+                        "key":  "FluteOfEzpitzal",
+                        "name":  "Flute of Ezpitzal",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "DEF%",
+                        "substatValue":  "69%",
+                        "mechanicTags":  [
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  310003,
+                        "key":  "GoldenBoughOfNemorensis",
+                        "name":  "Golden Bough of Nemorensis",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11435,
+                        "key":  "HereticsMoltenBlade",
+                        "name":  "Heretic\u0027s Molten Blade",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11407,
+                        "key":  "IronSting",
+                        "name":  "Iron Sting",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11416,
+                        "key":  "KagotsurubeIsshin",
+                        "name":  "Kagotsurube Isshin",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11405,
+                        "key":  "LionsRoar",
+                        "name":  "Lion\u0027s Roar",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11434,
+                        "key":  "MoonweaversDawn",
+                        "name":  "Moonweaver\u0027s Dawn",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11437,
+                        "key":  "NewBough",
+                        "name":  "New Bough",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "55.1%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11406,
+                        "key":  "PrototypeRancour",
+                        "name":  "Prototype Rancour",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "34.5%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11404,
+                        "key":  "RoyalLongsword",
+                        "name":  "Royal Longsword",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11403,
+                        "key":  "SacrificialSword",
+                        "name":  "Sacrificial Sword",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "skill_reset",
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11417,
+                        "key":  "SapwoodBlade",
+                        "name":  "Sapwood Blade",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "30.6%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11433,
+                        "key":  "SerenitysCall",
+                        "name":  "Serenity\u0027s Call",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  454,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "61.3%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  310001,
+                        "key":  "SerpentDevourer",
+                        "name":  "Serpent Devourer",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  0,
+                        "substat":  "",
+                        "substatValue":  "",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11438,
+                        "key":  "SilverLight",
+                        "name":  "Silver Light",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11430,
+                        "key":  "SturdyBone",
+                        "name":  "Sturdy Bone",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  565,
+                        "substat":  "ATK%",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11412,
+                        "key":  "SwordOfDescension",
+                        "name":  "Sword of Descension",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  440,
+                        "substat":  "ATK%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11428,
+                        "key":  "SwordOfNarzissenkreuz",
+                        "name":  "Sword of Narzissenkreuz",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11410,
+                        "key":  "TheAlleyFlash",
+                        "name":  "The Alley Flash",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  620,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "55",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11409,
+                        "key":  "TheBlackSword",
+                        "name":  "The Black Sword",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11427,
+                        "key":  "TheDockhandsAssistant",
+                        "name":  "The Dockhand\u0027s Assistant",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "HP%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11402,
+                        "key":  "TheFlute",
+                        "name":  "The Flute",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "ATK%",
+                        "substatValue":  "41.3%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11422,
+                        "key":  "ToukabouShigure",
+                        "name":  "Toukabou Shigure",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11424,
+                        "key":  "WolfFang",
+                        "name":  "Wolf-Fang",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "27.6%",
+                        "mechanicTags":  [
+                                             "skill_dmg",
+                                             "burst_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11418,
+                        "key":  "XiphosMoonlight",
+                        "name":  "Xiphos\u0027 Moonlight",
+                        "rarity":  4,
+                        "weaponType":  "Sword",
+                        "baseAtk":  510,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "165",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15305,
+                        "key":  "Messenger",
+                        "name":  "Messenger",
+                        "rarity":  3,
+                        "weaponType":  "Bow",
+                        "baseAtk":  448,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "31.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15301,
+                        "key":  "RavenBow",
+                        "name":  "Raven Bow",
+                        "rarity":  3,
+                        "weaponType":  "Bow",
+                        "baseAtk":  448,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "94",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15303,
+                        "key":  "RecurveBow",
+                        "name":  "Recurve Bow",
+                        "rarity":  3,
+                        "weaponType":  "Bow",
+                        "baseAtk":  354,
+                        "substat":  "HP%",
+                        "substatValue":  "46.9%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  15302,
+                        "key":  "SharpshootersOath",
+                        "name":  "Sharpshooter\u0027s Oath",
+                        "rarity":  3,
+                        "weaponType":  "Bow",
+                        "baseAtk":  401,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "46.9%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  15304,
+                        "key":  "Slingshot",
+                        "name":  "Slingshot",
+                        "rarity":  3,
+                        "weaponType":  "Bow",
+                        "baseAtk":  354,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "31.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  14304,
+                        "key":  "EmeraldOrb",
+                        "name":  "Emerald Orb",
+                        "rarity":  3,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  448,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "94",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14301,
+                        "key":  "MagicGuide",
+                        "name":  "Magic Guide",
+                        "rarity":  3,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  354,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "187",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14303,
+                        "key":  "OtherworldlyStory",
+                        "name":  "Otherworldly Story",
+                        "rarity":  3,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  401,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "39%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  14302,
+                        "key":  "ThrillingTalesOfDragonSlayers",
+                        "name":  "Thrilling Tales of Dragon Slayers",
+                        "rarity":  3,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  401,
+                        "substat":  "HP%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+                                             "party_buff",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  14305,
+                        "key":  "TwinNephrite",
+                        "name":  "Twin Nephrite",
+                        "rarity":  3,
+                        "weaponType":  "Catalyst",
+                        "baseAtk":  448,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "15.6%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  12302,
+                        "key":  "BloodtaintedGreatsword",
+                        "name":  "Bloodtainted Greatsword",
+                        "rarity":  3,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  354,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "187",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12305,
+                        "key":  "DebateClub",
+                        "name":  "Debate Club",
+                        "rarity":  3,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  401,
+                        "substat":  "ATK%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12301,
+                        "key":  "FerrousShadow",
+                        "name":  "Ferrous Shadow",
+                        "rarity":  3,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  401,
+                        "substat":  "HP%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg",
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  12306,
+                        "key":  "SkyriderGreatsword",
+                        "name":  "Skyrider Greatsword",
+                        "rarity":  3,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  401,
+                        "substat":  "Physical DMG",
+                        "substatValue":  "43.9%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  12303,
+                        "key":  "WhiteIronGreatsword",
+                        "name":  "White Iron Greatsword",
+                        "rarity":  3,
+                        "weaponType":  "Claymore",
+                        "baseAtk":  401,
+                        "substat":  "DEF%",
+                        "substatValue":  "43.9%",
+                        "mechanicTags":  [
+                                             "def_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13303,
+                        "key":  "BlackTassel",
+                        "name":  "Black Tassel",
+                        "rarity":  3,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  354,
+                        "substat":  "HP%",
+                        "substatValue":  "46.9%",
+                        "mechanicTags":  [
+                                             "hp_scale"
+                                         ]
+                    },
+                    {
+                        "id":  13302,
+                        "key":  "Halberd",
+                        "name":  "Halberd",
+                        "rarity":  3,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  448,
+                        "substat":  "ATK%",
+                        "substatValue":  "23.5%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  13301,
+                        "key":  "WhiteTassel",
+                        "name":  "White Tassel",
+                        "rarity":  3,
+                        "weaponType":  "Polearm",
+                        "baseAtk":  401,
+                        "substat":  "CRIT Rate",
+                        "substatValue":  "23.4%",
+                        "mechanicTags":  [
+                                             "na_ca_dmg"
+                                         ]
+                    },
+                    {
+                        "id":  11301,
+                        "key":  "CoolSteel",
+                        "name":  "Cool Steel",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  401,
+                        "substat":  "ATK%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11304,
+                        "key":  "DarkIronSword",
+                        "name":  "Dark Iron Sword",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  401,
+                        "substat":  "Elemental Mastery",
+                        "substatValue":  "141",
+                        "mechanicTags":  [
+                                             "em_scale"
+                                         ]
+                    },
+                    {
+                        "id":  11305,
+                        "key":  "FilletBlade",
+                        "name":  "Fillet Blade",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  401,
+                        "substat":  "ATK%",
+                        "substatValue":  "35.2%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11302,
+                        "key":  "HarbingerOfDawn",
+                        "name":  "Harbinger of Dawn",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  401,
+                        "substat":  "CRIT DMG",
+                        "substatValue":  "46.9%",
+                        "mechanicTags":  [
+
+                                         ]
+                    },
+                    {
+                        "id":  11306,
+                        "key":  "SkyriderSword",
+                        "name":  "Skyrider Sword",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  354,
+                        "substat":  "Energy Recharge",
+                        "substatValue":  "52.1%",
+                        "mechanicTags":  [
+                                             "er_battery"
+                                         ]
+                    },
+                    {
+                        "id":  11303,
+                        "key":  "TravelersHandySword",
+                        "name":  "Traveler\u0027s Handy Sword",
+                        "rarity":  3,
+                        "weaponType":  "Sword",
+                        "baseAtk":  448,
+                        "substat":  "DEF%",
+                        "substatValue":  "29.3%",
+                        "mechanicTags":  [
+                                             "def_scale"
+                                         ]
+                    }
+                ]
+}

@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261115ae';
+} from './catalog.js?v=20261115ag';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,
@@ -118,7 +118,7 @@ export function renderHudTab(container, state, handlers) {
         <button type="button" class="card scarcity-tile ${spares.isMoraBroke ? 'is-broke' : 'is-spare'}" data-popover-trigger="mora">
           <div class="scarcity-head">
             <span class="card-eyebrow">SPARE MORA</span>
-            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT ▾'}</span>
+            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT â–¾'}</span>
           </div>
           <div class="scarcity-hero-row">
             ${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-sm')}
@@ -126,13 +126,13 @@ export function renderHudTab(container, state, handlers) {
               ${spares.spareMora >= 0 ? `+${formatCompactSurplus(spares.spareMora)} SPARE` : `-${formatCompactSurplus(spares.spareMora)} SHORT`}
             </div>
           </div>
-          <div class="kpi-sub mono">${formatCompactNum(spares.bagMora)} in Bag · ${formatCompactNum(spares.committedMora)} Committed</div>
+          <div class="kpi-sub mono">${formatCompactNum(spares.bagMora)} in Bag Â· ${formatCompactNum(spares.committedMora)} Committed</div>
         </button>
 
         <div class="glass-popover" id="popover-mora" hidden>
           <div class="popover-head">
             <span class="card-eyebrow">UPDATE MORA BALANCE</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
+            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>âœ•</button>
           </div>
           <label class="mini-field">
             <span>MORA IN BAG</span>
@@ -146,7 +146,7 @@ export function renderHudTab(container, state, handlers) {
         <button type="button" class="card scarcity-tile ${spares.isWitsBroke ? 'is-broke' : 'is-spare'}" data-popover-trigger="wits">
           <div class="scarcity-head">
             <span class="card-eyebrow">SPARE WITS</span>
-            <span class="scarcity-edit-hint mono">BREAKDOWN ▾</span>
+            <span class="scarcity-edit-hint mono">BREAKDOWN â–¾</span>
           </div>
           <div class="scarcity-hero-row">
             ${renderAssetIcon('materials', 'HerosWit', "Hero's Wit", 'icon-sm')}
@@ -154,22 +154,22 @@ export function renderHudTab(container, state, handlers) {
               ${spares.spareWits >= 0 ? `+${Math.round(spares.spareWits).toLocaleString()} EQ. SPARE` : `${Math.round(spares.spareWits).toLocaleString()} EQ. SHORT`}
             </div>
           </div>
-          <div class="kpi-sub mono">${wits.effectiveTotal.toLocaleString()} Eq. in Bag (${wits.wits4} 4★ / ${wits.exp3} 3★ / ${wits.adv2} 2★)</div>
+          <div class="kpi-sub mono">${wits.effectiveTotal.toLocaleString()} Eq. in Bag (${wits.wits4} 4â˜… / ${wits.exp3} 3â˜… / ${wits.adv2} 2â˜…)</div>
         </button>
 
         <div class="glass-popover" id="popover-wits" hidden>
           <div class="popover-head">
             <span class="card-eyebrow">EXP BOOK EQUIVALENCY</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
+            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>âœ•</button>
           </div>
-          <div class="popover-formula mono">1 Hero's Wit = 4× Adventurer's = 20× Wanderer's</div>
+          <div class="popover-formula mono">1 Hero's Wit = 4Ã— Adventurer's = 20Ã— Wanderer's</div>
           <div class="popover-stat-grid mono">
-            <span>4★ Hero's Wit: <strong>${wits.wits4}</strong></span>
-            <span>3★ Adventurer's: <strong>${wits.exp3}</strong></span>
-            <span>2★ Wanderer's: <strong>${wits.adv2}</strong></span>
+            <span>4â˜… Hero's Wit: <strong>${wits.wits4}</strong></span>
+            <span>3â˜… Adventurer's: <strong>${wits.exp3}</strong></span>
+            <span>2â˜… Wanderer's: <strong>${wits.adv2}</strong></span>
             <span>Committed (#1/#2): <strong>${spares.committedWits}</strong></span>
           </div>
-          <button type="button" class="btn btn-outline btn-xs full-width" data-goto-vault>Open Inventory Vault →</button>
+          <button type="button" class="btn btn-outline btn-xs full-width" data-goto-vault>Open Inventory Vault â†’</button>
         </div>
       </div>
 
@@ -178,19 +178,19 @@ export function renderHudTab(container, state, handlers) {
         <button type="button" class="card scarcity-tile" data-popover-trigger="wishes">
           <div class="scarcity-head">
             <span class="card-eyebrow">WISH STASH</span>
-            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT ▾'}</span>
+            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT â–¾'}</span>
           </div>
           <div class="scarcity-hero-row">
             ${renderAssetIcon('materials', 'Primogem', 'Primogem', 'icon-sm')}
             <div class="kpi-hero mono text-amber">${purse.totalPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
           </div>
-          <div class="kpi-sub mono">${softPityRatio}× Soft Pity · ${guaranteePct}% to Guarantee (${purse.limitedPulls} Lim / ${purse.acquaintFates} Blue)</div>
+          <div class="kpi-sub mono">${softPityRatio}Ã— Soft Pity Â· ${guaranteePct}% to Guarantee (${purse.limitedPulls} Lim / ${purse.acquaintFates} Blue)</div>
         </button>
 
         <div class="glass-popover" id="popover-wishes" hidden>
           <div class="popover-head">
             <span class="card-eyebrow">EDIT WISH RESERVES</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
+            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>âœ•</button>
           </div>
           <div class="inline-edit-grid">
             <label class="mini-field">
@@ -249,7 +249,7 @@ export function renderHudTab(container, state, handlers) {
                     const ringCirc = 2 * Math.PI * ringRadius;
                     const ringOffset = ringCirc * (1 - pct / 100);
                     return `
-                    <button type="button" class="cmd-intent-pill ${rankCls}" data-focus-char="${t.characterKey}" title="Hover to spotlight · Click to filter ${cm.name}'s materials">
+                    <button type="button" class="cmd-intent-pill ${rankCls}" data-focus-char="${t.characterKey}" title="Hover to spotlight Â· Click to filter ${cm.name}'s materials">
                       <span class="cmd-rank-tag mono ${rankCls}">${t.tierLabel}</span>
                       <div class="cmd-ring-wrap">
                         <svg class="cmd-ring-svg ${rankCls}" viewBox="0 0 56 56" aria-hidden="true">
@@ -261,7 +261,7 @@ export function renderHudTab(container, state, handlers) {
                       <div class="cmd-intent-body">
                         <div class="cmd-intent-top">
                           <span class="cmd-intent-name">${cm.name}</span>
-                          <span class="cmd-intent-specs mono">Lv.${t.currentLevel}→${t.targetLevel} · ${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}</span>
+                          <span class="cmd-intent-specs mono">Lv.${t.currentLevel}â†’${t.targetLevel} Â· ${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}</span>
                         </div>
                         <div class="cmd-intent-meta mono">
                           <span class="cmd-intent-pct">${pct}% READY</span>
@@ -301,7 +301,7 @@ export function renderHudTab(container, state, handlers) {
                     <div class="alloc-seg alloc-c${Math.min(lockedTarget.slotIndex ?? 0, 3)}" style="width:${lockedTarget.pct}%"></div>
                   </div>
                   <div class="alloc-labels mono">
-                    <span class="alloc-lbl"><i class="alloc-dot c${Math.min(lockedTarget.slotIndex ?? 0, 3)}"></i>${lockedTarget.name}: <strong>${lockedTarget.pct}%</strong> · ${formatCompactNum(lockedTarget.funded)}/${formatCompactNum(lockedTarget.needed)}</span>
+                    <span class="alloc-lbl"><i class="alloc-dot c${Math.min(lockedTarget.slotIndex ?? 0, 3)}"></i>${lockedTarget.name}: <strong>${lockedTarget.pct}%</strong> Â· ${formatCompactNum(lockedTarget.funded)}/${formatCompactNum(lockedTarget.needed)}</span>
                   </div>
                 </div>`
               : allocTargets.length
@@ -325,10 +325,10 @@ export function renderHudTab(container, state, handlers) {
             let detailTooltip = `${formatCompactNum(item.owned)} / ${formatCompactNum(item.neededTotal)}`;
             let expandableDetailsHtml = '';
             if (item.tiers) {
-              detailTooltip = item.tiers.map((t) => `${getMaterialMeta(t.key).name}: ${t.owned}/${t.needed}`).join(' • ');
+              detailTooltip = item.tiers.map((t) => `${getMaterialMeta(t.key).name}: ${t.owned}/${t.needed}`).join(' â€¢ ');
               expandableDetailsHtml = `
                 <details class="cmd-card-details">
-                  <summary class="mono">Tiers (${item.tiers.map((t) => `${t.owned}/${t.needed}`).join(' · ')})</summary>
+                  <summary class="mono">Tiers (${item.tiers.map((t) => `${t.owned}/${t.needed}`).join(' Â· ')})</summary>
                   <div class="cmd-item-tiles">
                     ${item.tiers
                       .map((t) => {
@@ -343,7 +343,7 @@ export function renderHudTab(container, state, handlers) {
                   </div>
                 </details>`;
             } else if (item.expBreakdown) {
-              detailTooltip = `4★ ${item.expBreakdown.wits4} • 3★ ${item.expBreakdown.exp3} • 2★ ${item.expBreakdown.adv2}`;
+              detailTooltip = `4â˜… ${item.expBreakdown.wits4} â€¢ 3â˜… ${item.expBreakdown.exp3} â€¢ 2â˜… ${item.expBreakdown.adv2}`;
               expandableDetailsHtml = `
                 <details class="cmd-card-details">
                   <summary class="mono">${item.owned}/${item.neededTotal} Eq. (${wits.wits4}/${wits.exp3}/${wits.adv2})</summary>
@@ -423,7 +423,7 @@ export function renderHudTab(container, state, handlers) {
           const breakdownHtml = `
             <details class="telemetry-drawer">
               <summary class="telemetry-drawer-summary mono">
-                <span>📊 Farm Breakdown &amp; Gatekeepers</span>
+                <span>ðŸ“Š Farm Breakdown &amp; Gatekeepers</span>
               </summary>
               <div class="breakdown-body">
                 ${
@@ -462,7 +462,7 @@ export function renderHudTab(container, state, handlers) {
         })()}
       </article>
 
-      <!-- Zone 3: Today's Grind — Live Ops Column (4 Cols) -->
+      <!-- Zone 3: Today's Grind â€” Live Ops Column (4 Cols) -->
       <aside class="hud-ops-col">
         <!-- Live Resin Tracker Card -->
         <article class="card">

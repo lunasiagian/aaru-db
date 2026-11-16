@@ -1,5 +1,5 @@
 import { renderAssetIcon } from './assets.js';
-import { getMaterialMeta } from './catalog.js?v=20261115ae';
+import { getMaterialMeta } from './catalog.js?v=20261115ag';
 import { upsertInventoryRow } from './api.js?v=20261115y';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -119,12 +119,12 @@ export function renderVaultTab(container, state, handlers) {
                         ${renderAssetIcon('materials', row.key, row.name, 'icon-sm')}
                         <div>
                           <div class="item-name">${row.name}</div>
-                          <div class="item-meta mono">${row.key}${row.availableToday ? ' • <span class="text-mint">OPEN TODAY</span>' : ''}</div>
+                          <div class="item-meta mono">${row.key}${row.availableToday ? ' â€¢ <span class="text-mint">OPEN TODAY</span>' : ''}</div>
                         </div>
                       </div>
                     </td>
                     <td><span class="pill">${row.category}</span></td>
-                    <td class="mono muted">${row.target ? row.target.toLocaleString() : '—'}</td>
+                    <td class="mono muted">${row.target ? row.target.toLocaleString() : 'â€”'}</td>
                     <td>
                       ${
                         row.isLowStock
@@ -197,7 +197,7 @@ export function renderVaultTab(container, state, handlers) {
             handlers.onInventoryRowSaved(key, payload);
             const liveBadge = container.querySelector(`[data-saved-badge="${key}"]`);
             if (liveBadge) {
-              liveBadge.textContent = 'Saved ✓';
+              liveBadge.textContent = 'Saved âœ“';
               liveBadge.className = 'saved-badge mono is-saved';
             }
           } catch (err) {

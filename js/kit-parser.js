@@ -9,4 +9,4 @@ export {
   extractKitScaling,
   getBuildStatGuidelines,
   recommendWeaponsForCharacter
-} from './build-science.js?v=20261115af';
+} from './build-science.js?v=20261115ag';

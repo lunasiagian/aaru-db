@@ -1,5 +1,6 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
+let cachedWeaponsIndex = [];
 const CATALOG_CACHE_PREFIX = 'aaru_catalog_v';
 const CATALOG_LATEST_PTR = 'aaru_catalog_latest_patch';
 const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
@@ -473,11 +474,16 @@ export function getLiveAssetEntry(type, pascalKey) {
   return null;
 }
 
+export function getWeaponsIndex() {
+  return cachedWeaponsIndex;
+}
+
 export async function loadCatalog() {
   if (cachedCatalog) return cachedCatalog;
-  const [catRes, kqmRes] = await Promise.allSettled([
+  const [catRes, kqmRes, wepIdxRes] = await Promise.allSettled([
     fetch('./data/catalog.json', { cache: 'no-cache' }),
-    fetch('./data/kqm-tcl.json', { cache: 'no-cache' })
+    fetch('./data/kqm-tcl.json', { cache: 'no-cache' }),
+    fetch('./data/weapons_index.json', { cache: 'no-cache' })
   ]);
 
   if (kqmRes.status === 'fulfilled' && kqmRes.value?.ok) {
@@ -485,6 +491,15 @@ export async function loadCatalog() {
       cachedKqmTcl = (await kqmRes.value.json()) || {};
     } catch {
       cachedKqmTcl = {};
+    }
+  }
+
+  if (wepIdxRes.status === 'fulfilled' && wepIdxRes.value?.ok) {
+    try {
+      const wepIdxJson = await wepIdxRes.value.json();
+      cachedWeaponsIndex = Array.isArray(wepIdxJson?.weapons) ? wepIdxJson.weapons : [];
+    } catch {
+      cachedWeaponsIndex = [];
     }
   }
 

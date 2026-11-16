@@ -8,7 +8,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261115ae';
+} from './catalog.js?v=20261115ag';
 import {
   analyzeCharacterKit,
   calcTalentUpgradeDiff,
@@ -19,7 +19,7 @@ import {
   generateKitInsights,
   getBuildStatGuidelines,
   recommendWeaponsForCharacter
-} from './build-science.js?v=20261115af';
+} from './build-science.js?v=20261115ag';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -78,7 +78,7 @@ function sortCharacters(list, sortBy, tierId) {
 
 function renderCharacterCard(c, density) {
   const isUnreleased = Boolean(c.meta?.unreleased || c.meta?.lunarisId);
-  const cornerBadge = c.owned ? `Lv.${c.level} · C${c.constellation}` : isUnreleased ? 'UNRELEASED' : '';
+  const cornerBadge = c.owned ? `Lv.${c.level} Â· C${c.constellation}` : isUnreleased ? 'UNRELEASED' : '';
   const cornerBadgeHtml = cornerBadge
     ? `<span class="roster-corner-badge mono ${!c.owned && isUnreleased ? 'is-unreleased' : ''}">${cornerBadge}</span>`
     : '';
@@ -88,7 +88,7 @@ function renderCharacterCard(c, density) {
       ? `<span class="pill mono pill-gold">${c.priorityRank ? `#${c.priorityRank} ` : ''}PREFARM</span>`
       : '';
   const swapBadge = isSwapFlagged(c)
-    ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">⇄</span>'
+    ? '<span class="roster-swap-flag mono" title="Gear Swap / Borrowing Flagged">â‡„</span>'
     : '';
   const actionableHtml =
     prefarmBadge || swapBadge
@@ -227,7 +227,7 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
               ${renderAssetIcon('weapons', c.equippedWeapon.key, weaponMeta.name, 'icon-md')}
               <div class="dossier-weapon-info">
                 <div class="dossier-weapon-name">${escapeHtml(weaponMeta.name)}</div>
-                <div class="item-meta mono">Lv.${c.equippedWeapon.level} · R${c.equippedWeapon.refinement} · ${weaponMeta.rarity}★</div>
+                <div class="item-meta mono">Lv.${c.equippedWeapon.level} Â· R${c.equippedWeapon.refinement} Â· ${weaponMeta.rarity}â˜…</div>
               </div>
               ${
                 wepLvStats
@@ -269,7 +269,7 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
                         ${iconHtml}
                         <div class="artifact-row-body">
                           <div class="artifact-row-top">
-                            <span class="mono text-gold">${escapeHtml(slotName)} · +${a.level}</span>
+                            <span class="mono text-gold">${escapeHtml(slotName)} Â· +${a.level}</span>
                             <span class="mono artifact-main-stat">${escapeHtml(formatStatKey(a.mainStatKey))}</span>
                           </div>
                           <div class="artifact-set-name">${escapeHtml(splitPascalSet(a.setKey))}</div>
@@ -371,7 +371,7 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
 
             for (const [lbl, arr] of multEntries) {
               const idx = Math.min((arr?.length || 1) - 1, Math.max(0, lv - 1));
-              const val = Array.isArray(arr) ? arr[idx] ?? arr[0] ?? '—' : String(arr || '—');
+              const val = Array.isArray(arr) ? arr[idx] ?? arr[0] ?? 'â€”' : String(arr || 'â€”');
               if (TIMING_LABEL_RE.test(lbl.trim())) {
                 timingPills.push({ lbl, val });
               } else {
@@ -389,7 +389,7 @@ function renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents) {
               ? `<details class="dossier-mult-drawer">
                   <summary class="dossier-mult-summary mono">
                     <span>Scaling &amp; Multipliers (${scalingRows.length})</span>
-                    <span class="text-cyan">Lv.${lv} ▾</span>
+                    <span class="text-cyan">Lv.${lv} â–¾</span>
                   </summary>
                   <div class="dossier-mult-table mono">
                     ${scalingRows
@@ -520,17 +520,17 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
   }
 
   const costParts = [`${formatMoraCompact(totalMora)} Mora`];
-  if (totalTeachings) costParts.push(`${totalTeachings}× Teachings`);
-  if (totalGuide) costParts.push(`${totalGuide}× Guide`);
-  if (totalPhil) costParts.push(`${totalPhil}× Philosophies`);
+  if (totalTeachings) costParts.push(`${totalTeachings}Ã— Teachings`);
+  if (totalGuide) costParts.push(`${totalGuide}Ã— Guide`);
+  if (totalPhil) costParts.push(`${totalPhil}Ã— Philosophies`);
   if (bookName && (totalTeachings || totalGuide || totalPhil)) costParts[1] += ` of ${bookName}`;
-  if (totalWeekly) costParts.push(`${totalWeekly}× Weekly`);
-  if (totalCrown) costParts.push(`${totalCrown}× Crown`);
+  if (totalWeekly) costParts.push(`${totalWeekly}Ã— Weekly`);
+  if (totalCrown) costParts.push(`${totalCrown}Ã— Crown`);
 
   return `
     <div class="dossier-roi-header">
       <span class="card-eyebrow" style="margin:0;">TALENT LEVEL MULTIPLIER &amp; COST PREVIEW</span>
-      <span class="mono dossier-roi-total-cost">${escapeHtml(costParts.join(' · '))}</span>
+      <span class="mono dossier-roi-total-cost">${escapeHtml(costParts.join(' Â· '))}</span>
     </div>
     <div class="dossier-roi-list">
       ${diffs
@@ -546,7 +546,7 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
                   <span class="muted" style="font-size:12px;">${escapeHtml(d.talentName)}</span>
                 </div>
                 <div class="dossier-roi-badges">
-                  <span class="pill">Lv.${d.effCur} → Lv.${d.effTgt}${bonusNote}</span>
+                  <span class="pill">Lv.${d.effCur} â†’ Lv.${d.effTgt}${bonusNote}</span>
                   ${d.avgRelGainPct > 0 ? `<span class="pill pill-mint">+${d.avgRelGainPct}%</span>` : ''}
                   <span class="pill pill-${d.badgeTone}">${d.badge}</span>
                 </div>
@@ -559,7 +559,7 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
                           (r) => `
                         <div class="dossier-roi-row">
                           <span class="muted">${escapeHtml(r.label)}</span>
-                          <span class="mono">${escapeHtml(r.oldDisplay)} → <strong>${escapeHtml(r.newDisplay)}</strong> ${
+                          <span class="mono">${escapeHtml(r.oldDisplay)} â†’ <strong>${escapeHtml(r.newDisplay)}</strong> ${
                             r.relGainPct !== null ? `<span class="text-mint">(+${r.relGainPct}%)</span>` : ''
                           }</span>
                         </div>`
@@ -600,7 +600,8 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
     kitAnalysis,
     accountWeapons,
     getWeaponMeta,
-    getWeaponStats
+    getWeaponStats,
+    erReport
   );
 
   return `
@@ -616,17 +617,17 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
         </label>
         <label class="mini-field">
           <span>PRIORITY RANK</span>
-          <input type="number" min="1" max="99" class="input-mono" name="priorityRank" placeholder="—" value="${c.priorityRank || ''}" ${disabledAttr} />
+          <input type="number" min="1" max="99" class="input-mono" name="priorityRank" placeholder="â€”" value="${c.priorityRank || ''}" ${disabledAttr} />
         </label>
       </div>
 
       <div class="roster-drawer-grid">
         <label class="mini-field">
-          <span>CURRENT LVL (1–100)</span>
+          <span>CURRENT LVL (1â€“100)</span>
           <input type="number" min="1" max="100" class="input-mono" name="level" value="${c.level || 1}" ${disabledAttr} />
         </label>
         <label class="mini-field">
-          <span>TARGET LVL (1–100)</span>
+          <span>TARGET LVL (1â€“100)</span>
           <input type="number" min="1" max="100" class="input-mono" name="targetLevel" value="${c.targetLevel || 90}" ${disabledAttr} />
         </label>
       </div>
@@ -722,7 +723,7 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       </div>
 
       <div class="dossier-guidelines-card">
-        <div class="card-eyebrow" style="margin-bottom:8px;">SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · KIT-MATCHED)</div>
+        <div class="card-eyebrow" style="margin-bottom:8px;">SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} Â· KIT-MATCHED)</div>
         <div class="rec-weapon-grid">
           ${recWeapons
             .map(
@@ -735,9 +736,10 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
                 <div class="rec-weapon-meta">
                   <div class="rec-weapon-title">
                     <strong>${escapeHtml(w.name)}</strong>
-                    <span class="pill pill-gold mono">${w.rarity}★</span>
+                    <span class="pill pill-gold mono">${w.rarity}â˜…</span>
                   </div>
                   <div class="rec-weapon-badges mono">
+                    ${w.tierLabel ? `<span class="pill pill-violet">${escapeHtml(w.tierLabel)}</span>` : ''}
                     <span class="pill pill-sky">${escapeHtml(w.substat)}</span>
                     ${
                       w.ownedMatch
@@ -777,7 +779,7 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       <div class="roster-drawer-actions">
         ${
           isReadOnly
-            ? '<span class="muted mono" style="font-size:11px;">Partner View — Read Only</span>'
+            ? '<span class="muted mono" style="font-size:11px;">Partner View â€” Read Only</span>'
             : '<button type="submit" class="btn btn-gold">Save to Sheet</button>'
         }
       </div>
@@ -823,15 +825,15 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
     <div class="dossier-shell">
       <div class="dossier-topbar">
         <div class="dossier-topbar-left">
-          <button type="button" class="btn btn-outline btn-sm mono" data-dossier-back>← Back to Roster</button>
+          <button type="button" class="btn btn-outline btn-sm mono" data-dossier-back>â† Back to Roster</button>
           <div class="dossier-nav-btns">
-            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${prevChar ? prevChar.key : ''}" ${prevChar ? '' : 'disabled'} title="${prevChar ? escapeHtml(prevChar.meta.name) : ''}">‹</button>
-            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">›</button>
+            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${prevChar ? prevChar.key : ''}" ${prevChar ? '' : 'disabled'} title="${prevChar ? escapeHtml(prevChar.meta.name) : ''}">â€¹</button>
+            <button type="button" class="btn btn-outline btn-xs mono" data-inspect-char="${nextChar ? nextChar.key : ''}" ${nextChar ? '' : 'disabled'} title="${nextChar ? escapeHtml(nextChar.meta.name) : ''}">â€º</button>
           </div>
           <div class="dossier-title-group">
             <div class="dossier-title-row">
               <h1 class="dossier-char-name">${escapeHtml(c.meta.name)}</h1>
-              <span class="dossier-char-submeta mono">${c.meta.rarity || 5}★ · ${escapeHtml(c.meta.element)} · ${escapeHtml(c.meta.weaponType)}</span>
+              <span class="dossier-char-submeta mono">${c.meta.rarity || 5}â˜… Â· ${escapeHtml(c.meta.element)} Â· ${escapeHtml(c.meta.weaponType)}</span>
             </div>
             <div class="dossier-meta-pills mono">
               ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.fieldRole || kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
@@ -842,7 +844,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 const flexModes = kitAnalysis.roleInfo?.flexModes || [];
                 return `${shown.map((tag) => `<span class="pill pill-violet">${escapeHtml(tag)}</span>`).join('')}${
                   extra.length
-                    ? `<span class="pill pill-muted" title="${escapeHtml(extra.join(' · '))}">+${extra.length}</span>`
+                    ? `<span class="pill pill-muted" title="${escapeHtml(extra.join(' Â· '))}">+${extra.length}</span>`
                     : ''
                 }${flexModes
                   .map(
@@ -951,7 +953,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                     title="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
                     data-tooltip="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
                     aria-label="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
-                  >${erReport.dataSource === 'KQM_TCL' ? '✓' : '?'}</span>
+                  >${erReport.dataSource === 'KQM_TCL' ? 'âœ“' : '?'}</span>
                 </span>
               </div>
               ${
@@ -974,7 +976,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
               }
               ${
                 teamCaps.supportGear.length
-                  ? `<div class="dossier-cap-item"><span class="dossier-cap-label">Support Gear:</span> ${escapeHtml(teamCaps.supportGear.join(' · '))}</div>`
+                  ? `<div class="dossier-cap-item"><span class="dossier-cap-label">Support Gear:</span> ${escapeHtml(teamCaps.supportGear.join(' Â· '))}</div>`
                   : ''
               }
               <p class="dossier-er-summary ${erReport.erStatus === 'short' ? 'text-coral' : erReport.erStatus === 'warn' ? 'text-amber' : ''}"><span class="dossier-cap-label">Energy:</span> ${escapeHtml(erReport.summary)}</p>
@@ -1264,7 +1266,7 @@ export function renderRosterTab(container, state, handlers) {
         <h1 class="section-title">Roster</h1>
       </div>
       <div class="header-meta mono">
-        OWNED: <span class="text-gold">${combinedChars.filter((c) => c.owned).length}</span> CHARS · SHOWING <span class="text-mint">${filteredChars.length}</span>
+        OWNED: <span class="text-gold">${combinedChars.filter((c) => c.owned).length}</span> CHARS Â· SHOWING <span class="text-mint">${filteredChars.length}</span>
       </div>
     </div>
 
