@@ -5094,3 +5094,15 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Orthogonal Role Taxonomy: Flex Mode Outline Pills & Teams Lab Role Selector */
+.pill-flex-outline {
+  background: transparent;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  color: rgba(203, 213, 225, 0.85);
+}
+
+.slot-role-select {
+  margin-top: 4px;
+  max-width: 190px;
+}

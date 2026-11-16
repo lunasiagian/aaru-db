@@ -226,11 +226,29 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const INFUSION_OVERRIDE_RE =
     /cannot\s+be\s+overridden(?:\s+by\s+any\s+other\s+elemental\s+infusion)?/i;
 
-  const hasInfusion =
+  const rawHasInfusion =
     INFUSION_CONVERT_RE.test(ownKitText) ||
     INFUSION_ALTF_RE.test(ownKitText) ||
     INFUSION_IMBUE_RE.test(ownKitText) ||
     (INFUSION_OVERRIDE_RE.test(ownKitText) && /(?:normal|charged|plunging)\s+attacks?/i.test(ownKitText));
+
+  // Distinguish sustained infusion stances (>= 6s) from brief plunge/dash animations (<= 2s, e.g. Kazuha Midare Ranzan)
+  const isBriefPlungeOrTap =
+    /plunging\s+attack:\s*midare\s+ranzan/i.test(ownKitText) ||
+    (/(?:plunging\s+attack|dash)/i.test(ownKitText) && !/(?:normal\s+attack|stance|lasts?\s+(?:[6-9]|1\d)s)/i.test(ownKitText));
+
+  // Check if infusion/stance duration >= 6s (or explicit sustained carry kit)
+  const hasSustainedDuration = talents
+    .filter((t) => t.kind !== 'normal')
+    .some((t) =>
+      Object.entries(t.multipliers || {}).some(([lbl, arr]) => {
+        if (!/duration/i.test(lbl) || /cd|cooldown/i.test(lbl)) return false;
+        const sec = parseFirstNumber(Array.isArray(arr) ? arr[0] : arr);
+        return sec >= 6;
+      })
+    );
+
+  const hasInfusion = rawHasInfusion && !isBriefPlungeOrTap;
   const hasChargedCarryFocus =
     sentences.some(
       (s) =>
@@ -241,15 +259,19 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     );
   const usesNormalAttack = hasInfusion || hasChargedCarryFocus;
 
-  const hasPartyHeal = sentences.some(
-    (s) =>
-      /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s) &&
-      /(?:party|nearby|allies|allied|active\s+character|other\s+characters|teammates)/i.test(s)
+  const healSentences = sentences.filter((s) =>
+    /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s)
   );
-  const hasSelfSustain =
+  const hasTeamHeal = healSentences.some((s) =>
+    /(?:all\s+(?:nearby\s+)?party\s+members|allies|allied|other\s+characters|teammates|nearby\s+characters)/i.test(s)
+  );
+  const hasSingleTargetHeal =
+    !hasTeamHeal &&
+    healSentences.some((s) => /(?:the\s+active\s+character|nearby\s+active\s+characters?)/i.test(s));
+  const hasPartyHeal = hasTeamHeal || hasSingleTargetHeal;
+  const selfHeal =
     !hasPartyHeal &&
-    (sentences.some((s) => /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s)) ||
-      /bond\s+of\s+life/i.test(nonNormalText));
+    (healSentences.length > 0 || /bond\s+of\s+life/i.test(nonNormalText));
 
   const hasShield = /shield\s+dmg\s+absorption|creates?\s+a\s+shield|generates?\s+a\s+shield|forms?\s+a\s+shield/i.test(
     `${labelText}\n${nonNormalText}`
@@ -260,7 +282,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       Object.entries(t.multipliers || {}).some(([lbl, arr]) => {
         if (!/duration/i.test(lbl)) return false;
         const sec = parseFirstNumber(Array.isArray(arr) ? arr[0] : arr);
-        return sec >= 10;
+        return sec >= 8;
       })
     );
   const hasStanceExitClause =
@@ -287,8 +309,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       ) ||
       (hasLongDuration && hasPeriodicOffFieldDmg));
 
-  // Scan utility tags with strict ally-recipient scope across sentences
-  const utilityTags = [];
+  // Scan verified team-scoped functionTags with strict subject-recipient guard
+  const functionTags = [];
   const matchesAllyBuff = (s, statRe) => {
     if (/(?:her|his|their)\s+own\s+/i.test(s)) return false;
     const allyNoun =
@@ -298,12 +320,18 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       `(?:increases?|grant(?:s|ing)?|gain(?:s|ing)?)\\s+(?:the\\s+)?${statRe}[^.]{0,45}\\b(?:of|to|for)\\s+${allyNoun}`,
       'i'
     );
-    const pHaveTheir = new RegExp(
-      `${allyNoun}[^.]{0,40}?(?:have\\s+their|gain(?:s)?)[^.]{0,30}?${statRe}`,
+    const pGrantAllyStat = new RegExp(
+      `(?:grants?|gives?|provides?)\\s+${allyNoun}[^.]{0,35}?${statRe}`,
       'i'
     );
-    if (!pPossessive.test(s) && !pGrantTo.test(s) && !pHaveTheir.test(s)) return false;
-    if (new RegExp(`\\b[A-Z][a-z]+(?:'|’s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s)) {
+    const pHaveTheir = new RegExp(
+      `${allyNoun}[^.]{0,40}?(?:have\\s+their|gain(?:s)?|receive(?:s)?)[^.]{0,30}?${statRe}`,
+      'i'
+    );
+    if (!pPossessive.test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s) && !pHaveTheir.test(s)) {
+      return false;
+    }
+    if (new RegExp(`\\b[A-Z][a-z]+(?:'|’s)\\s+${statRe}`, 'i').test(s) && !pGrantTo.test(s) && !pGrantAllyStat.test(s)) {
       return false;
     }
     return true;
@@ -312,19 +340,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const emSentence = sentences.find((s) => matchesAllyBuff(s, '\\b(?:Elemental\\s+Mastery|EM)\\b'));
   if (emSentence) {
     const emM = emSentence.match(/(?:Elemental\s+Mastery|\bEM\b)[^.]{0,35}?by\s+(\d+)/i);
-    utilityTags.push(emM ? `EM Buffer (+${emM[1]})` : 'EM Buffer');
-  }
-
-  const isReactionBuffer =
-    /converted\s+into\s+(?:the\s+)?Lunar[- ]/i.test(nonNormalText) ||
-    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(
-      nonNormalText
-    ) ||
-    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG/i.test(
-      nonNormalText
-    );
-  if (isReactionBuffer) {
-    utilityTags.push('Reaction Buffer');
+    functionTags.push(emM ? `EM Buffer (+${emM[1]})` : 'EM Buffer');
   }
 
   const dmgSentence = sentences.find(
@@ -334,20 +350,27 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   );
   if (dmgSentence) {
     const dmgM = dmgSentence.match(/(?:DMG|Damage)[^.]{0,35}?by\s+([\d.]+%)/i);
-    utilityTags.push(dmgM ? `DMG Buffer (+${dmgM[1]})` : 'DMG Buffer');
+    functionTags.push(dmgM ? `DMG% Buffer (+${dmgM[1]})` : 'DMG% Buffer');
   }
 
   if (sentences.some((s) => matchesAllyBuff(s, '\\bATK\\b'))) {
-    utilityTags.push('ATK Buffer');
+    functionTags.push('ATK Buffer');
   }
   const critSentence = sentences.find((s) => matchesAllyBuff(s, '\\b(?:CRIT\\s+Rate|CRIT\\s+DMG|CRIT)\\b'));
   if (critSentence) {
     const crM = critSentence.match(/crit\s+rate[^.]{0,30}?by\s+([\d.]+%)/i);
-    utilityTags.push(crM ? `+${crM[1]} Party CRIT Rate` : 'Crit Buffer');
+    functionTags.push(crM ? `CRIT Buffer (+${crM[1]})` : 'CRIT Buffer');
   }
   if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
-    utilityTags.push('RES Shred');
+    functionTags.push('RES Shred');
   }
+  if (/def\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?def\b|ignores?\s+[\d.]+%\s+of\s+opponents'?\s+def/i.test(nonNormalText)) {
+    functionTags.push('DEF Shred');
+  }
+  if (/pulls?\s+opponents|pulling\s+opponents|vacuum|vortex|gather(?:s|ing)?\s+opponents/i.test(nonNormalText)) {
+    functionTags.push('Crowd Control');
+  }
+
   const IR_RE = /interruption\s+resistance|resistance\s+to\s+interruption/i;
   const TEAM_IR_TARGET_RE =
     /\b(?:party\s+members?|nearby\s+(?:party\s+)?characters?|active\s+character|allies|allied\s+characters?|teammates?)\b/i;
@@ -366,15 +389,33 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       selfIR = true;
     }
   }
-  if (teamIR) {
-    utilityTags.push('Poise / IR');
+  if (teamIR) functionTags.push('Team IR');
+  if (hasShield) functionTags.push('Shielder');
+  if (hasTeamHeal) functionTags.push('Team Healer');
+  else if (hasSingleTargetHeal) functionTags.push('Single-Target Healer');
+
+  const energySentences = sentences.filter((s) => /(?:restores?|regenerates?)\s+[\d.]+\s+(?:Elemental\s+)?Energy/i.test(s));
+  const hasTeamEnergy = energySentences.some((s) =>
+    /(?:all\s+(?:nearby\s+)?party\s+members|allies|allied|other\s+characters|teammates|active\s+character)/i.test(s) &&
+    !/(?:her|his|their)\s+own\b/i.test(s)
+  );
+  const selfEnergy = !hasTeamEnergy && energySentences.length > 0;
+  if (hasTeamEnergy) functionTags.push('Energy Battery');
+
+  const isReactionEnabler =
+    /converted\s+into\s+(?:the\s+)?Lunar[- ]/i.test(nonNormalText) ||
+    /Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG[^.]{0,45}increas/i.test(nonNormalText) ||
+    /increas(?:es?|ing)\s+Lunar[- ]?(?:Charged|Bloom|Crystallize|Reaction)(?:'|’s)?\s+Base\s+DMG/i.test(nonNormalText);
+  if (isReactionEnabler || (hasOffField && functionTags.length === 0)) {
+    functionTags.push('Reaction Enabler');
   }
-  if (/dmg\s+reduction|reduces?\s+dmg\s+taken|decreases?\s+dmg\s+taken/i.test(nonNormalText)) {
-    utilityTags.push('DMG Reduction');
-  }
-  if (hasShield) utilityTags.push('Shielder');
-  if (hasPartyHeal) utilityTags.push('Healer');
-  else if (hasSelfSustain) utilityTags.push('Self-Sustain');
+
+  // Self-only durability / energy traits (strictly excluded from functionTags)
+  const selfDurability = {
+    selfHeal,
+    selfEnergy,
+    selfIR
+  };
 
   // Detect conditional Burst triggers in passives & unlocked constellations
   const kitTriggers = [];
@@ -426,48 +467,114 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     }
   }
 
-  const ascKey = kitData?.ascensionStat?.key || '';
-  const hasSustainAscension = ascKey === 'hp_' || ascKey === 'def_' || ascKey === 'heal_';
-  const hasOffensiveSelfBuff = /(?:his|her|their|\w+'s)\s+(?:crit\s+rate|crit\s+dmg|elemental\s+dmg)/i.test(
-    nonNormalText
-  );
-  const hasHealingLabel = /(?:heal|regeneration|hp\s+restored)/i.test(labelText);
-  const isDedicatedHealer = hasPartyHeal && (hasHealingLabel || hasSustainAscension || !hasOffensiveSelfBuff);
+  // Axis 1: Mutually-exclusive Field-Time Archetype (fieldRole)
+  const meta = getCharacterMeta(charKey);
+  const weaponType = meta?.weaponType || '';
+  const elem = meta?.element || '';
+  const isNightsoulSamplerSupport =
+    /source\s+sample/i.test(nonNormalText) ||
+    (functionTags.includes('RES Shred') && (hasPartyHeal || functionTags.includes('Shielder')));
 
-  const hasSupportIdentity =
-    hasShield ||
-    hasOffField ||
-    utilityTags.some((t) => t === 'RES Shred' || t === 'Shielder' || t.startsWith('Off-Field'));
+  const isDriverArchetype =
+    !hasSustainedDuration &&
+    (weaponType === 'Catalyst' || elem === 'Hydro' || elem === 'Anemo') &&
+    (hasPartyHeal || functionTags.some((t) => /EM Buffer|Crowd Control|Reaction Enabler/.test(t))) &&
+    !hasChargedCarryFocus;
 
-  let primaryRole = 'Quickswap DPS';
-  if (isDedicatedHealer) {
-    primaryRole = 'Healer / Support';
-    if (hasOffField) {
-      const charElem = getCharacterMeta(charKey)?.element || '';
-      utilityTags.push(charElem ? `Off-Field ${charElem}` : 'Off-Field Sub-DPS');
-    }
-  } else if ((hasInfusion || usesNormalAttack) && !hasPartyHeal) {
-    primaryRole = 'On-Field Carry';
-  } else if (hasOffField) {
-    primaryRole = 'Off-Field Sub-DPS';
-  } else if (hasPartyHeal || hasShield || hasSupportIdentity || utilityTags.some((t) => t !== 'Self-Sustain')) {
-    primaryRole = 'Sustain / Support';
+  let fieldRole = 'Quickswap Support';
+  if (isNightsoulSamplerSupport && hasPartyHeal) {
+    // e.g. Xilonen in >=2 PHEC teams, Jean, Xianyun: quick-tap support even if NA/Plunge has elemental hits
+    fieldRole = 'Quickswap Support';
+  } else if ((hasInfusion || hasChargedCarryFocus) && !isDriverArchetype) {
+    fieldRole = 'On-Field Carry';
+  } else if (hasOffField && !usesNormalAttack) {
+    fieldRole = 'Off-Field Sub-DPS';
+  } else if (isDriverArchetype && usesNormalAttack) {
+    fieldRole = 'On-Field Driver';
+  } else if (functionTags.length > 0 || hasPartyHeal || hasShield) {
+    fieldRole = 'Quickswap Support';
+  } else if (hasInfusion || usesNormalAttack) {
+    fieldRole = 'On-Field Carry';
   }
 
-  const finalTags =
-    primaryRole === 'Healer / Support'
-      ? utilityTags.filter((t) => t !== 'Healer')
-      : utilityTags;
+  // Axis 3: Explicit flexModes for creative / constellation / conditional playstyles
+  const flexModes = [];
+  const normChar = String(charKey || '').toLowerCase();
+  if (normChar === 'kaedeharakazuha') {
+    fieldRole = 'Quickswap Support';
+    flexModes.push({
+      id: 'On-Field Carry',
+      label: ownedCon >= 6 ? 'On-Field Carry (C6)' : 'Driver / Plunge Carry',
+      unlocked: ownedCon >= 6,
+      condition: ownedCon >= 6 ? 'C6 Anemo Infusion active' : 'Unlocks full carry infusion at C6 (or Plunge Driver)'
+    });
+  } else if (normChar === 'xilonen') {
+    fieldRole = 'Quickswap Support';
+    flexModes.push({
+      id: 'On-Field Carry',
+      label: 'On-Field Carry (< 2 PHEC)',
+      unlocked: true,
+      condition: 'Auto-activates in teams with < 2 Pyro/Hydro/Electro/Cryo allies'
+    });
+  } else if (normChar === 'sangonomiyakokomi') {
+    fieldRole = hasOffField ? 'Off-Field Sub-DPS' : 'Quickswap Support';
+    flexModes.push(
+      { id: 'On-Field Driver', label: 'On-Field Driver', unlocked: true, condition: 'Burst-window Hydro NA driver' },
+      { id: 'Creative Carry (Critkomi)', label: 'Creative Carry (Critkomi)', unlocked: true, condition: 'Meme/Crit build bypassing -100% CR passive' }
+    );
+  } else if (fieldRole === 'Quickswap Support' && (weaponType === 'Catalyst' || hasPartyHeal)) {
+    flexModes.push({
+      id: 'On-Field Driver',
+      label: 'On-Field Driver',
+      unlocked: true,
+      condition: 'Elemental NA/CA enabler for off-field sub-DPS'
+    });
+    if (hasPartyHeal) {
+      flexModes.push({
+        id: 'Creative Carry',
+        label: 'Creative Carry',
+        unlocked: true,
+        condition: 'Off-meta on-field DPS / driver build'
+      });
+    }
+  } else if (fieldRole === 'On-Field Driver') {
+    flexModes.push({
+      id: 'Quickswap Support',
+      label: 'Quickswap Support',
+      unlocked: true,
+      condition: 'Skill/Burst swap utility only'
+    });
+  }
+
+  const dedupedTags = [...new Set(functionTags)];
 
   return {
     charKey,
-    primaryRole,
-    utilityTags: [...new Set(finalTags)].slice(0, 4),
+    fieldRole,
+    primaryRole: fieldRole,
+    functionTags: dedupedTags,
+    utilityTags: dedupedTags.slice(0, 4),
+    selfDurability,
+    flexModes,
     kitTriggers,
-    usesNormalAttack,
+    usesNormalAttack: fieldRole === 'On-Field Carry' || fieldRole === 'On-Field Driver',
     teamIR,
     selfIR
   };
+}
+
+/**
+ * Resolves a character's effective role inside a 4-character squad (e.g. Xilonen < 2 PHEC -> On-Field Carry).
+ */
+export function resolveMemberTeamRole(charKey, kitData, constellation = 0, teamMembers = [], explicitMode = '') {
+  const roleInfo = classifyCharacterRole(charKey, kitData, constellation);
+  if (explicitMode) return explicitMode;
+  if (String(charKey || '').toLowerCase() === 'xilonen' && Array.isArray(teamMembers) && teamMembers.length > 0) {
+    const PHEC = new Set(['Pyro', 'Hydro', 'Electro', 'Cryo']);
+    const phecCount = teamMembers.filter((m) => PHEC.has(getCharacterMeta(m.characterKey)?.element)).length;
+    if (phecCount < 2) return 'On-Field Carry';
+  }
+  return roleInfo.fieldRole;
 }
 
 /**
@@ -1000,7 +1107,7 @@ function scoreTalentScalingWeight(talent) {
 }
 
 export function getTalentPriorityInfo(kitData, kitAnalysis) {
-  const role = kitAnalysis?.roleInfo?.primaryRole || 'Quickswap DPS';
+  const role = kitAnalysis?.roleInfo?.fieldRole || kitAnalysis?.roleInfo?.primaryRole || 'Quickswap Support';
   const usesNormal = Boolean(kitAnalysis?.roleInfo?.usesNormalAttack);
   const talents = kitData?.talents || [];
   const tSkill = talents.find((t) => t.kind === 'skill');
@@ -1010,7 +1117,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
   const burstWeight = scoreTalentScalingWeight(tBurst);
   const skillFavored = skillWeight >= burstWeight;
 
-  if (role === 'On-Field Carry' || usesNormal) {
+  if (role === 'On-Field Carry' || role === 'On-Field Driver' || usesNormal) {
     return {
       tiers: { auto: 'high', skill: skillFavored ? 'high' : 'medium', burst: skillFavored ? 'medium' : 'high' },
       orderText: skillFavored
@@ -1020,7 +1127,7 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
     };
   }
 
-  if (role === 'Sustain / Support' || role === 'Healer / Support') {
+  if (role === 'Quickswap Support') {
     const skillSupport = /heal|shield|absorption|bonus/i.test((tSkill?.labels || []).join(' '));
     const burstSupport = /heal|shield|absorption|bonus/i.test((tBurst?.labels || []).join(' '));
     const eFirst = skillSupport && !burstSupport ? true : !skillSupport && burstSupport ? false : skillFavored;
@@ -1049,7 +1156,13 @@ export function getTalentPriorityInfo(kitData, kitAnalysis) {
 export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalysis = null) {
   const analysis =
     kitAnalysis || analyzeCharacterKit(char?.key, kitData, char?.talent, char?.constellation || 0);
-  const roleInfo = analysis.roleInfo || { primaryRole: 'Quickswap DPS', utilityTags: [], kitTriggers: [] };
+  const roleInfo = analysis.roleInfo || {
+    fieldRole: 'Quickswap Support',
+    primaryRole: 'Quickswap Support',
+    functionTags: [],
+    utilityTags: [],
+    kitTriggers: []
+  };
   const tags = roleInfo.utilityTags?.length ? ` · ${roleInfo.utilityTags.join(' · ')}` : '';
   const critNote = analysis.isNonCrit ? ' (Non-Crit scaling — Crit Rate/DMG bypassed)' : '';
   const weaponNote = weaponData?.name ? ` Paired with ${weaponData.name}.` : '';
@@ -1224,8 +1337,9 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
   const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
-  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
-  const tags = analysis?.roleInfo?.utilityTags || [];
+  const role = analysis?.roleInfo?.fieldRole || analysis?.roleInfo?.primaryRole || 'Quickswap Support';
+  const tags = analysis?.roleInfo?.functionTags || analysis?.roleInfo?.utilityTags || [];
+  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
   const isNonCrit = Boolean(analysis?.isNonCrit);
   const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
 
@@ -1258,7 +1372,7 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
 
   if (/based\s+on[^.]{0,45}max\s+hp|scales?\s+(?:off|with)[^.]{0,30}hp/i.test(fullText)) hpHits += 3;
   if (/based\s+on[^.]{0,45}\bdef\b|scales?\s+(?:off|with)[^.]{0,30}\bdef\b/i.test(fullText)) defHits += 3;
-  if (/based\s+on[^.]{0,45}elemental\s+mastery|scales?\s+(?:off|with)[^.]{0,30}elemental\s+mastery/i.test(fullText)) emHits += 3;
+  if (/based\s+on[^.]{0,45}elemental\s+mastery|scales?\s+(?:off|with)[^.]{0,30}elemental\s+mastery|for\s+every\s+point\s+of\s+elemental\s+mastery/i.test(fullText)) emHits += 3;
   if (/based\s+on[^.]{0,45}energy\s+recharge|for\s+every\s+[\d.]+%[^.]{0,40}energy\s+recharge/i.test(fullText)) erHits += 3;
 
   // Determine dominant stat
@@ -1283,8 +1397,8 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   }
 
   const isPureSupport =
-    role === 'Healer / Support' ||
-    (role === 'Sustain / Support' && !tags.some((t) => /Sub-DPS|Carry/i.test(t)));
+    role === 'Quickswap Support' &&
+    !tags.some((t) => /Sub-DPS|Carry|Driver/i.test(t));
 
   const damageSources = [];
   if (usesNormal) damageSources.push('Normal / Charged');
@@ -1303,7 +1417,7 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   const secondaryStats = [];
   if ((analysis?.burstCost || 60) >= 60 || role !== 'On-Field Carry') secondaryStats.push('ER%');
   if (reactionCarry && primaryStatKey !== 'eleMas') secondaryStats.push('EM');
-  if (role === 'Healer / Support' || tags.includes('Healer')) secondaryStats.push('Healing Bonus%');
+  if (tags.includes('Team Healer') || tags.includes('Single-Target Healer')) secondaryStats.push('Healing Bonus%');
   if (!isNonCrit && !isPureSupport && primaryStatKey !== 'atk_') secondaryStats.push('CRIT Rate / DMG');
 
   const primaryDisplay =
@@ -1333,8 +1447,9 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
 export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
   const analysis = kitAnalysis || analyzeCharacterKit(charKey, kitData);
   const scaling = extractKitScaling(charKey, kitData, analysis);
-  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
-  const tags = analysis?.roleInfo?.utilityTags || [];
+  const role = analysis?.roleInfo?.fieldRole || analysis?.roleInfo?.primaryRole || 'Quickswap Support';
+  const tags = analysis?.roleInfo?.functionTags || analysis?.roleInfo?.utilityTags || [];
+  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
   const meta = getCharacterMeta(charKey);
   const elem = meta?.element || 'Elemental';
   const isPhysical =
@@ -1370,7 +1485,7 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
   }
 
   let circlet = 'CRIT Rate / CRIT DMG';
-  if (role === 'Healer / Support' || tags.includes('Healer')) {
+  if (isHealer) {
     circlet = `Healing Bonus% / ${mainStatLabel}`;
   } else if (tags.includes('Shielder') && scaling.isPureSupport) {
     circlet = `${mainStatLabel} (CRIT Rate if Favonius)`;
@@ -1401,7 +1516,7 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
     if (!sTier.includes('ATK%') && !aTier.includes('ATK%')) aTier.push('ATK%');
     situational.push('Flat ATK');
   }
-  if (tags.includes('Shielder') || role === 'Healer / Support') {
+  if (tags.includes('Shielder') || isHealer) {
     if (!sTier.includes('CRIT Rate') && !aTier.includes('CRIT Rate (Favonius)')) {
       situational.push('CRIT Rate (Favonius)');
     }
@@ -1487,8 +1602,9 @@ export function recommendWeaponsForCharacter(
   const scaling = extractKitScaling(charKey, kitData, analysis);
   const meta = getCharacterMeta(charKey);
   const weaponType = meta?.weaponType || 'Sword';
-  const role = analysis?.roleInfo?.primaryRole || 'Quickswap DPS';
-  const tags = analysis?.roleInfo?.utilityTags || [];
+  const role = analysis?.roleInfo?.fieldRole || analysis?.roleInfo?.primaryRole || 'Quickswap Support';
+  const tags = analysis?.roleInfo?.functionTags || analysis?.roleInfo?.utilityTags || [];
+  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
   const usesNormal = Boolean(analysis?.roleInfo?.usesNormalAttack);
   const burstCost = analysis?.burstCost || 60;
 
@@ -1532,9 +1648,9 @@ export function recommendWeaponsForCharacter(
     // 2. Role & Passive Mechanic Match
     if (usesNormal && wTags.has('na_ca')) score += 20;
     if (role === 'Off-Field Sub-DPS' && (wTags.has('skill') || wTags.has('burst') || wTags.has('subdps'))) score += 18;
-    if (scaling.isPureSupport || role === 'Healer / Support' || role === 'Sustain / Support') {
+    if (scaling.isPureSupport || role === 'Quickswap Support') {
       if (wTags.has('support') || wTags.has('party_buff') || wTags.has('favonius') || wTags.has('ttds')) score += 26;
-      if (tags.includes('Healer') && wTags.has('heal')) score += 16;
+      if ((tags.includes('Team Healer') || tags.includes('Single-Target Healer')) && wTags.has('heal')) score += 16;
       if (tags.includes('Shielder') && wTags.has('shield')) score += 16;
     }
     if (burstCost >= 70 && (/energy\s*recharge/i.test(substat) || wTags.has('er'))) score += 14;

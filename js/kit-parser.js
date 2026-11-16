@@ -5,7 +5,8 @@
 export {
   analyzeCharacterKit,
   classifyCharacterRole,
+  resolveMemberTeamRole,
   extractKitScaling,
   getBuildStatGuidelines,
   recommendWeaponsForCharacter
-} from './build-science.js?v=20261115ad';
+} from './build-science.js?v=20261115af';

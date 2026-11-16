@@ -20,9 +20,9 @@ import {
 import { renderHudTab } from './ui-hud.js?v=20261114w';
 import { renderVaultTab } from './ui-vault.js';
 import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
-import { renderRosterTab } from './ui-roster.js?v=20261115ad';
+import { renderRosterTab } from './ui-roster.js?v=20261115af';
 import { renderArmoryTab } from './ui-armory.js?v=20261115v';
-import { renderTeamsTab } from './ui-teams.js?v=20261115a';
+import { renderTeamsTab } from './ui-teams.js?v=20261115af';
 import { CHANGELOG } from './changelog.js?v=20261115ab';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
@@ -407,6 +407,13 @@ function renderActiveTab(options = {}) {
     });
   } else if (state.activeTab === 'teams') {
     renderTeamsTab(container, viewState, {
+      onUpdateTeamRole: async (teamId, memberIdx, roleOverride) => {
+        const team = (state.ownAccount.teams || []).find((t) => t.id === teamId);
+        if (!team || !team.members[memberIdx]) return;
+        team.members[memberIdx].roleOverride = roleOverride || '';
+        await saveAccountSection(state.sessionUser, 'teams', state.ownAccount.teams);
+        renderActiveTab();
+      },
       onUpdateTeamWeapon: async (teamId, memberIdx, weaponId, weaponKey) => {
         const team = (state.ownAccount.teams || []).find((t) => t.id === teamId);
         if (!team || !team.members[memberIdx]) return;

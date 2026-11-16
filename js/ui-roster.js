@@ -19,7 +19,7 @@ import {
   generateKitInsights,
   getBuildStatGuidelines,
   recommendWeaponsForCharacter
-} from './build-science.js?v=20261115ad';
+} from './build-science.js?v=20261115af';
 
 const STATUS_PILLS = [
   { id: 'All', label: 'All' },
@@ -834,16 +834,22 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
               <span class="dossier-char-submeta mono">${c.meta.rarity || 5}★ · ${escapeHtml(c.meta.element)} · ${escapeHtml(c.meta.weaponType)}</span>
             </div>
             <div class="dossier-meta-pills mono">
-              ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
+              ${kitAnalysis.roleInfo ? `<span class="pill pill-sky">${escapeHtml(kitAnalysis.roleInfo.fieldRole || kitAnalysis.roleInfo.primaryRole)}</span>` : ''}
               ${(() => {
-                const allTags = kitAnalysis.roleInfo?.utilityTags || [];
+                const allTags = kitAnalysis.roleInfo?.functionTags || kitAnalysis.roleInfo?.utilityTags || [];
                 const shown = allTags.slice(0, 2);
                 const extra = allTags.slice(2);
+                const flexModes = kitAnalysis.roleInfo?.flexModes || [];
                 return `${shown.map((tag) => `<span class="pill pill-violet">${escapeHtml(tag)}</span>`).join('')}${
                   extra.length
                     ? `<span class="pill pill-muted" title="${escapeHtml(extra.join(' · '))}">+${extra.length}</span>`
                     : ''
-                }`;
+                }${flexModes
+                  .map(
+                    (fm) =>
+                      `<span class="pill pill-flex-outline" title="${escapeHtml(fm.condition || fm.label)}">Flex: ${escapeHtml(fm.label)}</span>`
+                  )
+                  .join('')}`;
               })()}
             </div>
           </div>

@@ -1,13 +1,16 @@
 import { renderAssetIcon } from './assets.js';
-import { getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261115ae';
+import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261115ae';
+import { classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261115af';
 import { detectTeamWeaponConflicts } from './calculations.js?v=20261114w';
 
 const ARCHETYPES = ['Hypercarry', 'Dual Carry', 'Chip Damage'];
+const CORE_FIELD_ROLES = ['On-Field Carry', 'On-Field Driver', 'Off-Field Sub-DPS', 'Quickswap Support'];
 
 export function renderTeamsTab(container, state, handlers) {
   const { account, isReadOnly } = state;
   const teams = account.teams || [];
   const weapons = account.weapons || [];
+  const charByKey = new Map((account.characters || []).map((c) => [c.key, c]));
   const conflicts = detectTeamWeaponConflicts(teams);
   const conflictSet = new Set(conflicts.map((c) => c.instanceKey));
   const disabledAttr = isReadOnly ? 'disabled' : '';
@@ -77,6 +80,21 @@ export function renderTeamsTab(container, state, handlers) {
                     .map((m, idx) => {
                       const cm = getCharacterMeta(m.characterKey);
                       const wm = getWeaponMeta(m.weaponKey);
+                      const kitData = getCharacterKit(m.characterKey);
+                      const ownedCon = Number(charByKey.get(m.characterKey)?.constellation) || 0;
+                      const roleInfo = classifyCharacterRole(m.characterKey, kitData, ownedCon);
+                      const autoRole = resolveMemberTeamRole(m.characterKey, kitData, ownedCon, team.members, '');
+                      const explicitRole = m.roleOverride || '';
+                      const flexOptions = (roleInfo.flexModes || []).map((fm) => ({
+                        value: fm.id,
+                        label: `Flex: ${fm.label}`
+                      }));
+                      const seenVals = new Set(flexOptions.map((o) => o.value));
+                      const standardOptions = CORE_FIELD_ROLES.filter((r) => !seenVals.has(r)).map((r) => ({
+                        value: r,
+                        label: r
+                      }));
+                      const roleOptions = [...flexOptions, ...standardOptions];
                       const instKey = m.weaponId || m.weaponKey;
                       const hasConflict = conflictSet.has(instKey);
                       return `
@@ -87,7 +105,16 @@ export function renderTeamsTab(container, state, handlers) {
                           </div>
                           <div>
                             <div class="item-name">${cm.name}</div>
-                            <div class="item-meta mono">${m.role || cm.element}</div>
+                            <div class="item-meta mono">${cm.element}${roleInfo.functionTags.length ? ` · ${roleInfo.functionTags.slice(0, 2).join(' · ')}` : ''}</div>
+                            <select class="select-xs mono slot-role-select" data-team-role="${team.id}" data-member-idx="${idx}" ${disabledAttr}>
+                              <option value="" ${!explicitRole ? 'selected' : ''}>Auto: ${autoRole}</option>
+                              ${roleOptions
+                                .map(
+                                  (opt) =>
+                                    `<option value="${opt.value}" ${explicitRole === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                                )
+                                .join('')}
+                            </select>
                           </div>
                         </div>
                         <div class="slot-weapon">
@@ -132,6 +159,14 @@ export function renderTeamsTab(container, state, handlers) {
   `;
 
   if (!isReadOnly) {
+    container.querySelectorAll('[data-team-role]').forEach((sel) => {
+      sel.addEventListener('change', (e) => {
+        const teamId = e.target.dataset.teamRole;
+        const memberIdx = Number(e.target.dataset.memberIdx);
+        handlers.onUpdateTeamRole?.(teamId, memberIdx, e.target.value);
+      });
+    });
+
     container.querySelectorAll('[data-team-weapon]').forEach((sel) => {
       sel.addEventListener('change', (e) => {
         const teamId = e.target.dataset.teamWeapon;
