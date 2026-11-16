@@ -18,6 +18,7 @@ import {
   evaluateTeamCapabilities,
   generateKitInsights,
   getBuildStatGuidelines,
+  getSignatureWeapon,
   recommendWeaponsForCharacter
 } from './build-science.js?v=20261115ah';
 
@@ -594,6 +595,7 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
 
   const insights = generateKitInsights(c, kitData, weaponMeta, erReport, kitAnalysis);
   const guidelines = getBuildStatGuidelines(c.key, kitData, kitAnalysis);
+  const sigWeaponName = getSignatureWeapon(c.key);
   const recWeapons = recommendWeaponsForCharacter(
     c.key,
     kitData,
@@ -723,7 +725,10 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       </div>
 
       <div class="dossier-guidelines-card">
-        <div class="card-eyebrow" style="margin-bottom:8px;">SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · KIT-MATCHED)</div>
+        <div class="card-eyebrow" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span>SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · KIT-MATCHED)</span>
+          ${sigWeaponName ? `<span class="text-gold mono" style="font-size:11px;">Signature: ${escapeHtml(sigWeaponName)}</span>` : ''}
+        </div>
         <div class="rec-weapon-grid">
           ${recWeapons
             .map(
@@ -741,6 +746,7 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
                   <div class="rec-weapon-badges mono">
                     <span class="pill ${String(w.tierLabel || '').startsWith('BiS') ? 'pill-violet' : 'pill-sky'}">${escapeHtml(w.tierLabel || 'Option')}</span>
                     <span class="rec-substat">• ${escapeHtml(w.substat)}</span>
+                    ${w.isSignature ? '<span class="pill pill-gold">SIGNATURE</span>' : ''}
                     ${
                       w.ownedMatch
                         ? `<span class="pill pill-mint">In Armory (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`

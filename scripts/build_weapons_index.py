@@ -105,6 +105,10 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("burst_dmg")
     if re.search(r"normal(?:\s+and\s+|\s*,\s*|\s+or\s+)?charged\s+attack|normal\s+attack\s+dmg|charged\s+attack\s+dmg|plunge|plunging\s+attack|dmg\s+dealt\s+by\s+normal\s+attacks?", text, re.I):
         tags.append("na_ca_dmg")
+    if re.search(r"charged\s+attack\s+dmg|normal\s+(?:and|or)\s+charged\s+attack\s+dmg", text, re.I):
+        tags.append("ca_dmg")
+    if re.search(r"increases?\s+atk\s+by|atk\s+(?:is\s+)?increased\s+by|gains?\s+[\d.]+%\s+atk", text, re.I):
+        tags.append("atk_buff")
 
     # 5. Stat scaling & healer utility
     if substat == "HP%" or re.search(r"max\s+hp\s+(?:is\s+)?increased|based\s+on[^.]{0,40}max\s+hp|of\s+max\s+hp", text, re.I):
@@ -121,6 +125,25 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("elem_dmg")
 
     return list(dict.fromkeys(tags))
+
+
+def extract_required_mechanics(passive_text: str) -> list[str]:
+    reqs: list[str] = []
+    if re.search(r"bond\s+of\s+life", passive_text, re.I):
+        reqs.append("bond_of_life")
+    if re.search(r"nightsoul", passive_text, re.I):
+        reqs.append("nightsoul")
+    if re.search(r"hp\s+(?:increases\s+or\s+decreases|decreases\s+or\s+increases|changes)", passive_text, re.I):
+        reqs.append("hp_fluctuation")
+    if re.search(r"when\s+the\s+wielder\s+performs?\s+healing|performs?\s+healing", passive_text, re.I):
+        reqs.append("healing_performed")
+    if re.search(r"\blunar(?:[- ]?(?:charged|bloom|crystallize|reaction))?\b", passive_text, re.I):
+        reqs.append("lunar")
+    if re.search(r"\bhexerei\b", passive_text, re.I):
+        reqs.append("hexerei")
+    if re.search(r"stellar\s+glimmer", passive_text, re.I):
+        reqs.append("stellar_glimmer")
+    return reqs
 
 
 def compute_lv90_stats(detail: dict, curve_data: dict) -> tuple[int, str, str]:
@@ -155,6 +178,43 @@ def compute_lv90_stats(detail: dict, curve_data: dict) -> tuple[int, str, str]:
     return base_atk, substat, substat_val
 
 
+BP_KEYS = {
+    "SerpentSpine", "Deathmatch", "TheBlackSword", "SolarPearl", "TheViridescentHunt",
+    "WolfFang", "BalladOfTheFjords", "SacrificialJade", "TalkingStick", "ScionOfTheBlazingSun",
+}
+
+EVENT_LIMITED_KEYS = {
+    "FesteringDesire", "WindblumeOde", "DodocoTales", "LuxuriousSeaLord", "CinnabarSpindle",
+    "OathswornEye", "FadingTwilight", "MissiveWindspear", "ToukabouShigure", "MailedFlower",
+    "IbisPiercer", "BalladOfTheBoundlessBlue", "UltimateOverlordsMegaMagicSword",
+    "DialoguesOfTheDesertSages", "Cloudforged", "AshGravenDrinkingHorn", "CalamityOfEshu",
+    "TamayurateiNoOhanashi", "SequenceOfSolitude",
+}
+
+F2P_CRAFT_FISH_KEYS = {
+    "TheCatch", "FleuveCendreFerryman", "EndOfTheLine", "KagotsurubeIsshin", "SwordOfNarzissenkreuz",
+    "PrototypeRancour", "IronSting", "AmenomaKageuchi", "SapwoodBlade", "FinaleOfTheDeep", "FluteOfEzpitzal",
+    "PrototypeArchaic", "Whiteblind", "SnowTombedStarsilver", "KatsuragikiriNagamasa", "ForestRegalia",
+    "TidalShadow", "EarthShaker", "CrescentPike", "PrototypeStarglitter", "DragonspineSpear",
+    "KitainCrossSpear", "Moonpiercer", "RightfulReward", "FootprintOfTheRainbow",
+    "PrototypeAmber", "MappaMare", "Frostbearer", "HakushinRing", "FruitOfFulfillment",
+    "FlowingPurity", "RingOfYaxche", "PrototypeCrescent", "CompoundBow", "Hamayumi",
+    "KingsSquire", "SongOfStillness", "ChainBreaker",
+}
+
+
+def classify_acquisition(pascal_key: str, rarity: int) -> str:
+    if pascal_key in BP_KEYS:
+        return "bp"
+    if pascal_key in EVENT_LIMITED_KEYS:
+        return "event_limited"
+    if rarity == 3 or pascal_key in F2P_CRAFT_FISH_KEYS:
+        return "f2p_craft_fish"
+    if rarity == 5:
+        return "limited_5"
+    return "gacha_4"
+
+
 def process_weapon(item: dict, curve_data: dict) -> dict | None:
     wid = item.get("id")
     rarity = int(item.get("rank") or 0)
@@ -171,21 +231,27 @@ def process_weapon(item: dict, curve_data: dict) -> dict | None:
     passive_text = ""
     if isinstance(affix_map, dict) and affix_map:
         first_affix = next(iter(affix_map.values()))
+        affix_name = strip_markup((first_affix or {}).get("name") or "")
         upg = (first_affix or {}).get("upgrade") or {}
-        passive_text = strip_markup(upg.get("0") or upg.get("4") or "")
+        passive_desc = strip_markup(upg.get("0") or upg.get("4") or "")
+        passive_text = f"{affix_name}\n{passive_desc}".strip()
 
     mechanic_tags = extract_mechanic_tags(name, substat, passive_text)
+    requires_mechanics = extract_required_mechanics(passive_text)
 
+    pascal_key = to_pascal_key(name)
     return {
         "id": wid,
-        "key": to_pascal_key(name),
+        "key": pascal_key,
         "name": name,
         "rarity": rarity,
         "weaponType": weapon_type,
         "baseAtk": base_atk,
         "substat": substat,
         "substatValue": substat_val,
+        "acquisition": classify_acquisition(pascal_key, rarity),
         "mechanicTags": mechanic_tags,
+        "requiresMechanics": requires_mechanics,
     }
 
 

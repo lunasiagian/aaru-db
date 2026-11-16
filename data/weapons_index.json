@@ -13,9 +13,14 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15508,
@@ -26,9 +31,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15514,
@@ -39,9 +48,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15503,
@@ -52,10 +65,15 @@
                         "baseAtk":  608,
                         "substat":  "Energy Recharge",
                         "substatValue":  "55.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "party_buff"
-                                         ]
+                                             "party_buff",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15516,
@@ -66,9 +84,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  15511,
@@ -79,11 +101,16 @@
                         "baseAtk":  542,
                         "substat":  "CRIT Rate",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "na_ca_dmg",
+                                             "ca_dmg",
                                              "em_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15507,
@@ -94,10 +121,15 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "skill_dmg",
-                                             "burst_dmg"
-                                         ]
+                                             "burst_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15513,
@@ -108,10 +140,14 @@
                         "baseAtk":  542,
                         "substat":  "HP%",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "burst_dmg",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "bond_of_life"
+                                              ]
                     },
                     {
                         "id":  15501,
@@ -122,9 +158,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  350002,
@@ -135,9 +175,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15515,
@@ -148,9 +192,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hexerei"
+                                              ]
                     },
                     {
                         "id":  15512,
@@ -161,9 +209,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15509,
@@ -174,9 +226,14 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  350004,
@@ -187,9 +244,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14511,
@@ -200,10 +261,14 @@
                         "baseAtk":  542,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "265",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14523,
@@ -214,9 +279,13 @@
                         "baseAtk":  741,
                         "substat":  "ATK%",
                         "substatValue":  "16.5%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-
-                                         ]
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hexerei"
+                                              ]
                     },
                     {
                         "id":  14513,
@@ -227,9 +296,15 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hp_fluctuation"
+                                              ]
                     },
                     {
                         "id":  14515,
@@ -240,11 +315,15 @@
                         "baseAtk":  741,
                         "substat":  "ATK%",
                         "substatValue":  "16.5%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
                                              "party_buff",
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  340004,
@@ -255,9 +334,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14506,
@@ -268,12 +351,16 @@
                         "baseAtk":  608,
                         "substat":  "HP%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
                                              "na_ca_dmg",
                                              "hp_scale",
                                              "healer_utility"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  340002,
@@ -284,9 +371,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14524,
@@ -297,10 +388,14 @@
                         "baseAtk":  542,
                         "substat":  "HP%",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "hp_scale",
                                              "healer_utility"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14505,
@@ -311,11 +406,15 @@
                         "baseAtk":  608,
                         "substat":  "HP%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
                                              "hp_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14509,
@@ -326,10 +425,14 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14502,
@@ -340,9 +443,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14504,
@@ -353,9 +460,13 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  14520,
@@ -366,10 +477,14 @@
                         "baseAtk":  542,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "265",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  14522,
@@ -380,9 +495,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  14521,
@@ -393,9 +512,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  14501,
@@ -406,9 +529,13 @@
                         "baseAtk":  674,
                         "substat":  "ATK%",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14517,
@@ -419,9 +546,13 @@
                         "baseAtk":  542,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "265",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14525,
@@ -432,9 +563,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14518,
@@ -445,9 +580,13 @@
                         "baseAtk":  542,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "265",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14516,
@@ -458,10 +597,14 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "na_ca_dmg",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14514,
@@ -472,9 +615,14 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hp_fluctuation"
+                                              ]
                     },
                     {
                         "id":  14512,
@@ -485,9 +633,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14519,
@@ -498,9 +650,14 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12516,
@@ -511,9 +668,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  12514,
@@ -524,9 +685,14 @@
                         "baseAtk":  741,
                         "substat":  "CRIT Rate",
                         "substatValue":  "11%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "nightsoul"
+                                              ]
                     },
                     {
                         "id":  320002,
@@ -537,9 +703,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12511,
@@ -550,9 +720,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12513,
@@ -563,9 +737,13 @@
                         "baseAtk":  741,
                         "substat":  "CRIT Rate",
                         "substatValue":  "11%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12515,
@@ -576,9 +754,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hexerei"
+                                              ]
                     },
                     {
                         "id":  12510,
@@ -589,10 +771,15 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "na_ca_dmg",
+                                             "ca_dmg",
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  320004,
@@ -603,9 +790,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12501,
@@ -616,10 +807,14 @@
                         "baseAtk":  674,
                         "substat":  "Energy Recharge",
                         "substatValue":  "36.8%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12503,
@@ -630,10 +825,15 @@
                         "baseAtk":  741,
                         "substat":  "Physical DMG",
                         "substatValue":  "20.7%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12504,
@@ -644,9 +844,13 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  12512,
@@ -657,9 +861,14 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "skill_dmg"
-                                         ]
+                                             "skill_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  12502,
@@ -670,9 +879,14 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "party_buff"
-                                         ]
+                                             "party_buff",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13516,
@@ -683,9 +897,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  13507,
@@ -696,9 +914,13 @@
                         "baseAtk":  741,
                         "substat":  "ATK%",
                         "substatValue":  "16.5%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13512,
@@ -709,9 +931,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "bond_of_life"
+                                              ]
                     },
                     {
                         "id":  13517,
@@ -722,11 +948,16 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg",
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hexerei"
+                                              ]
                     },
                     {
                         "id":  13509,
@@ -737,9 +968,14 @@
                         "baseAtk":  608,
                         "substat":  "Energy Recharge",
                         "substatValue":  "55.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13515,
@@ -750,9 +986,14 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "party_buff"
-                                         ]
+                                             "party_buff",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  13513,
@@ -763,9 +1004,14 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13505,
@@ -776,9 +1022,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  330002,
@@ -789,9 +1039,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13502,
@@ -802,10 +1056,14 @@
                         "baseAtk":  674,
                         "substat":  "Energy Recharge",
                         "substatValue":  "36.8%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery",
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13501,
@@ -816,9 +1074,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13511,
@@ -829,9 +1091,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT Rate",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  330004,
@@ -842,9 +1108,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13514,
@@ -855,9 +1125,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT DMG",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  13504,
@@ -868,9 +1142,13 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  11515,
@@ -881,9 +1159,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "bond_of_life"
+                                              ]
                     },
                     {
                         "id":  11501,
@@ -894,9 +1176,13 @@
                         "baseAtk":  674,
                         "substat":  "Physical DMG",
                         "substatValue":  "41.3%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  11518,
@@ -907,9 +1193,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
-
-                                         ]
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hexerei"
+                                              ]
                     },
                     {
                         "id":  11517,
@@ -920,9 +1210,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  11522,
@@ -933,9 +1227,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11521,
@@ -946,9 +1244,13 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11503,
@@ -959,11 +1261,16 @@
                         "baseAtk":  608,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "198",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "na_ca_dmg",
+                                             "atk_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  310004,
@@ -974,9 +1281,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11510,
@@ -987,10 +1298,14 @@
                         "baseAtk":  608,
                         "substat":  "CRIT Rate",
                         "substatValue":  "33.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "na_ca_dmg",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11511,
@@ -1001,10 +1316,14 @@
                         "baseAtk":  542,
                         "substat":  "HP%",
                         "substatValue":  "66.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11512,
@@ -1015,11 +1334,15 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "na_ca_dmg",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11519,
@@ -1030,9 +1353,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  11509,
@@ -1043,9 +1370,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT DMG",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11516,
@@ -1056,12 +1387,16 @@
                         "baseAtk":  542,
                         "substat":  "DEF%",
                         "substatValue":  "82.7%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "na_ca_dmg",
                                              "def_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11505,
@@ -1072,9 +1407,13 @@
                         "baseAtk":  542,
                         "substat":  "CRIT Rate",
                         "substatValue":  "44.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  310002,
@@ -1085,9 +1424,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11502,
@@ -1098,9 +1441,13 @@
                         "baseAtk":  608,
                         "substat":  "Energy Recharge",
                         "substatValue":  "55.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11513,
@@ -1111,10 +1458,14 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "hp_fluctuation"
+                                              ]
                     },
                     {
                         "id":  11504,
@@ -1125,9 +1476,13 @@
                         "baseAtk":  608,
                         "substat":  "ATK%",
                         "substatValue":  "49.6%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  11514,
@@ -1138,12 +1493,16 @@
                         "baseAtk":  542,
                         "substat":  "CRIT DMG",
                         "substatValue":  "88.2%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
                                              "party_buff",
                                              "skill_dmg",
                                              "na_ca_dmg",
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11520,
@@ -1154,9 +1513,13 @@
                         "baseAtk":  674,
                         "substat":  "CRIT Rate",
                         "substatValue":  "22.1%",
+                        "acquisition":  "limited_5",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  15410,
@@ -1167,9 +1530,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15408,
@@ -1180,9 +1547,13 @@
                         "baseAtk":  565,
                         "substat":  "CRIT DMG",
                         "substatValue":  "36.8%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  15437,
@@ -1193,9 +1564,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  15431,
@@ -1206,9 +1581,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15426,
@@ -1219,9 +1598,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15407,
@@ -1232,9 +1615,13 @@
                         "baseAtk":  454,
                         "substat":  "Physical DMG",
                         "substatValue":  "69%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  15436,
@@ -1245,10 +1632,14 @@
                         "baseAtk":  510,
                         "substat":  "DEF%",
                         "substatValue":  "51.7%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "def_scale",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15418,
@@ -1259,9 +1650,13 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15411,
@@ -1272,9 +1667,13 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15401,
@@ -1285,9 +1684,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15430,
@@ -1298,9 +1701,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15414,
@@ -1311,9 +1718,14 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15419,
@@ -1324,9 +1736,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15435,
@@ -1337,9 +1753,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15417,
@@ -1350,9 +1770,13 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15412,
@@ -1363,10 +1787,14 @@
                         "baseAtk":  510,
                         "substat":  "Physical DMG",
                         "substatValue":  "51.7%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15416,
@@ -1377,9 +1805,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15415,
@@ -1390,9 +1822,15 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15406,
@@ -1403,9 +1841,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15434,
@@ -1416,9 +1858,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15427,
@@ -1429,9 +1876,14 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15404,
@@ -1442,9 +1894,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15405,
@@ -1455,9 +1911,14 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15403,
@@ -1468,10 +1929,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_reset",
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15424,
@@ -1482,9 +1947,14 @@
                         "baseAtk":  565,
                         "substat":  "CRIT Rate",
                         "substatValue":  "18.4%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15432,
@@ -1495,9 +1965,13 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15433,
@@ -1508,9 +1982,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15425,
@@ -1521,9 +1999,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "healer_trigger"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  350001,
@@ -1534,9 +2016,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15402,
@@ -1547,11 +2033,15 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15409,
@@ -1562,9 +2052,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15413,
@@ -1575,9 +2069,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  350003,
@@ -1588,9 +2086,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14427,
@@ -1601,9 +2103,13 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14426,
@@ -1614,10 +2120,15 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14408,
@@ -1628,9 +2139,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  14433,
@@ -1641,9 +2156,13 @@
                         "baseAtk":  454,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "221",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  14435,
@@ -1654,9 +2173,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14434,
@@ -1667,9 +2190,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  340003,
@@ -1680,9 +2207,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14413,
@@ -1693,9 +2224,15 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14436,
@@ -1706,9 +2243,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  14432,
@@ -1719,10 +2260,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14409,
@@ -1733,9 +2278,13 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14401,
@@ -1746,9 +2295,13 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14425,
@@ -1759,10 +2312,14 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "hp_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "bond_of_life"
+                                              ]
                     },
                     {
                         "id":  14412,
@@ -1773,9 +2330,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14417,
@@ -1786,9 +2347,13 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14414,
@@ -1799,10 +2364,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  340001,
@@ -1813,9 +2382,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14407,
@@ -1826,10 +2399,14 @@
                         "baseAtk":  565,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14415,
@@ -1840,9 +2417,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  380001,
@@ -1853,9 +2434,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14406,
@@ -1866,11 +2451,15 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "party_buff",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14431,
@@ -1881,10 +2470,14 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14404,
@@ -1895,9 +2488,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14403,
@@ -1908,10 +2505,14 @@
                         "baseAtk":  454,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "221",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_reset",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14424,
@@ -1922,9 +2523,13 @@
                         "baseAtk":  454,
                         "substat":  "CRIT Rate",
                         "substatValue":  "36.8%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "skill_reset"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14405,
@@ -1935,11 +2540,15 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg",
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14402,
@@ -1950,10 +2559,15 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "em_scale",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14416,
@@ -1964,9 +2578,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14430,
@@ -1977,10 +2595,14 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14410,
@@ -1991,9 +2613,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14437,
@@ -2004,9 +2631,14 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  12426,
@@ -2017,9 +2649,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12416,
@@ -2030,9 +2667,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  320001,
@@ -2043,9 +2684,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12408,
@@ -2056,9 +2701,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  12436,
@@ -2069,9 +2718,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  12431,
@@ -2082,9 +2735,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12401,
@@ -2095,9 +2752,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12432,
@@ -2108,9 +2769,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  12417,
@@ -2121,9 +2786,13 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  12435,
@@ -2134,9 +2803,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  12430,
@@ -2147,9 +2820,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12414,
@@ -2160,10 +2837,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12410,
@@ -2174,9 +2855,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12412,
@@ -2187,9 +2872,13 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12418,
@@ -2200,9 +2889,13 @@
                         "baseAtk":  565,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12415,
@@ -2213,9 +2906,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12433,
@@ -2226,9 +2923,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12427,
@@ -2239,9 +2940,13 @@
                         "baseAtk":  454,
                         "substat":  "HP%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12406,
@@ -2252,9 +2957,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12405,
@@ -2265,9 +2974,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12404,
@@ -2278,9 +2991,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12403,
@@ -2291,10 +3008,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_reset",
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12409,
@@ -2305,9 +3026,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  320003,
@@ -2318,9 +3043,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12411,
@@ -2331,9 +3060,13 @@
                         "baseAtk":  565,
                         "substat":  "Physical DMG",
                         "substatValue":  "34.5%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  380002,
@@ -2344,9 +3077,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12424,
@@ -2357,9 +3094,13 @@
                         "baseAtk":  565,
                         "substat":  "CRIT Rate",
                         "substatValue":  "18.4%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12402,
@@ -2370,9 +3111,13 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12425,
@@ -2383,9 +3128,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "healer_trigger"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  390001,
@@ -2396,9 +3145,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12407,
@@ -2409,10 +3162,14 @@
                         "baseAtk":  510,
                         "substat":  "DEF%",
                         "substatValue":  "51.7%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg",
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13415,
@@ -2423,10 +3180,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13424,
@@ -2437,9 +3198,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13404,
@@ -2450,9 +3215,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  13403,
@@ -2463,9 +3232,13 @@
                         "baseAtk":  565,
                         "substat":  "Physical DMG",
                         "substatValue":  "34.5%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13405,
@@ -2476,9 +3249,14 @@
                         "baseAtk":  454,
                         "substat":  "CRIT Rate",
                         "substatValue":  "36.8%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13426,
@@ -2489,11 +3267,15 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "er_battery",
                                              "hp_scale",
                                              "healer_trigger"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "healing_performed"
+                                              ]
                     },
                     {
                         "id":  13401,
@@ -2504,9 +3286,13 @@
                         "baseAtk":  454,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "221",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13409,
@@ -2517,9 +3303,13 @@
                         "baseAtk":  454,
                         "substat":  "Physical DMG",
                         "substatValue":  "69%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13407,
@@ -2530,9 +3320,13 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13431,
@@ -2543,9 +3337,13 @@
                         "baseAtk":  510,
                         "substat":  "DEF%",
                         "substatValue":  "51.7%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13435,
@@ -2556,9 +3354,13 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13414,
@@ -2569,11 +3371,15 @@
                         "baseAtk":  565,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13406,
@@ -2584,9 +3390,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13419,
@@ -2597,9 +3407,14 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13417,
@@ -2610,9 +3425,13 @@
                         "baseAtk":  565,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  13430,
@@ -2623,10 +3442,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13427,
@@ -2637,9 +3460,14 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "elem_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13433,
@@ -2650,9 +3478,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  13402,
@@ -2663,10 +3495,15 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "ca_dmg"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13425,
@@ -2677,10 +3514,14 @@
                         "baseAtk":  565,
                         "substat":  "HP%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13408,
@@ -2691,9 +3532,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13434,
@@ -2704,9 +3549,14 @@
                         "baseAtk":  620,
                         "substat":  "CRIT Rate",
                         "substatValue":  "9.2%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  330001,
@@ -2717,9 +3567,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13436,
@@ -2730,9 +3584,13 @@
                         "baseAtk":  565,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "110",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  330003,
@@ -2743,9 +3601,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13432,
@@ -2756,9 +3618,14 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
-                                             "er_battery"
-                                         ]
+                                             "er_battery",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13416,
@@ -2769,9 +3636,13 @@
                         "baseAtk":  620,
                         "substat":  "ATK%",
                         "substatValue":  "13.8%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  380003,
@@ -2782,9 +3653,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11414,
@@ -2795,9 +3670,13 @@
                         "baseAtk":  454,
                         "substat":  "ATK%",
                         "substatValue":  "55.1%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11408,
@@ -2808,9 +3687,13 @@
                         "baseAtk":  565,
                         "substat":  "CRIT DMG",
                         "substatValue":  "36.8%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
 
-                                         ]
+                                              ]
                     },
                     {
                         "id":  11432,
@@ -2821,9 +3704,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11415,
@@ -2834,10 +3721,14 @@
                         "baseAtk":  454,
                         "substat":  "DEF%",
                         "substatValue":  "69%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11436,
@@ -2848,9 +3739,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  390002,
@@ -2861,9 +3756,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  390003,
@@ -2874,9 +3773,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11401,
@@ -2887,9 +3790,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11413,
@@ -2900,10 +3807,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11425,
@@ -2914,9 +3825,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "bond_of_life"
+                                              ]
                     },
                     {
                         "id":  11426,
@@ -2927,10 +3842,14 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery",
                                              "skill_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11431,
@@ -2941,9 +3860,13 @@
                         "baseAtk":  454,
                         "substat":  "DEF%",
                         "substatValue":  "69%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  310003,
@@ -2954,9 +3877,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11435,
@@ -2967,9 +3894,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11407,
@@ -2980,9 +3911,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11416,
@@ -2993,9 +3928,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11405,
@@ -3006,9 +3945,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11434,
@@ -3019,9 +3962,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11437,
@@ -3032,9 +3979,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-
-                                         ]
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+                                                  "stellar_glimmer"
+                                              ]
                     },
                     {
                         "id":  11406,
@@ -3045,9 +3996,13 @@
                         "baseAtk":  565,
                         "substat":  "Physical DMG",
                         "substatValue":  "34.5%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11404,
@@ -3058,9 +4013,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11403,
@@ -3071,10 +4030,14 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "skill_reset",
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11417,
@@ -3085,9 +4048,13 @@
                         "baseAtk":  565,
                         "substat":  "Energy Recharge",
                         "substatValue":  "30.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  11433,
@@ -3098,9 +4065,13 @@
                         "baseAtk":  454,
                         "substat":  "Energy Recharge",
                         "substatValue":  "61.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  310001,
@@ -3111,9 +4082,13 @@
                         "baseAtk":  0,
                         "substat":  "",
                         "substatValue":  "",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11438,
@@ -3124,9 +4099,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11430,
@@ -3137,9 +4116,13 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11412,
@@ -3150,9 +4133,14 @@
                         "baseAtk":  440,
                         "substat":  "ATK%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11428,
@@ -3163,9 +4151,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11410,
@@ -3176,9 +4168,13 @@
                         "baseAtk":  620,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "55",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11409,
@@ -3189,9 +4185,13 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11427,
@@ -3202,9 +4202,13 @@
                         "baseAtk":  510,
                         "substat":  "HP%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11402,
@@ -3215,9 +4219,13 @@
                         "baseAtk":  510,
                         "substat":  "ATK%",
                         "substatValue":  "41.3%",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11422,
@@ -3228,9 +4236,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "event_limited",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11424,
@@ -3241,10 +4253,14 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "skill_dmg",
                                              "burst_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11418,
@@ -3255,9 +4271,13 @@
                         "baseAtk":  510,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "165",
+                        "acquisition":  "gacha_4",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15305,
@@ -3268,9 +4288,13 @@
                         "baseAtk":  448,
                         "substat":  "CRIT DMG",
                         "substatValue":  "31.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15301,
@@ -3281,9 +4305,13 @@
                         "baseAtk":  448,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "94",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15303,
@@ -3294,9 +4322,13 @@
                         "baseAtk":  354,
                         "substat":  "HP%",
                         "substatValue":  "46.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15302,
@@ -3307,9 +4339,13 @@
                         "baseAtk":  401,
                         "substat":  "CRIT DMG",
                         "substatValue":  "46.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  15304,
@@ -3320,9 +4356,13 @@
                         "baseAtk":  354,
                         "substat":  "CRIT Rate",
                         "substatValue":  "31.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14304,
@@ -3333,9 +4373,14 @@
                         "baseAtk":  448,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "94",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  14301,
@@ -3346,9 +4391,13 @@
                         "baseAtk":  354,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "187",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14303,
@@ -3359,9 +4408,13 @@
                         "baseAtk":  401,
                         "substat":  "Energy Recharge",
                         "substatValue":  "39%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14302,
@@ -3372,10 +4425,15 @@
                         "baseAtk":  401,
                         "substat":  "HP%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "party_buff",
+                                             "atk_buff",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  14305,
@@ -3386,9 +4444,13 @@
                         "baseAtk":  448,
                         "substat":  "CRIT Rate",
                         "substatValue":  "15.6%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12302,
@@ -3399,9 +4461,13 @@
                         "baseAtk":  354,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "187",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12305,
@@ -3412,9 +4478,13 @@
                         "baseAtk":  401,
                         "substat":  "ATK%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12301,
@@ -3425,10 +4495,15 @@
                         "baseAtk":  401,
                         "substat":  "HP%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg",
+                                             "ca_dmg",
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12306,
@@ -3439,9 +4514,14 @@
                         "baseAtk":  401,
                         "substat":  "Physical DMG",
                         "substatValue":  "43.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
-                                             "na_ca_dmg"
-                                         ]
+                                             "na_ca_dmg",
+                                             "atk_buff"
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  12303,
@@ -3452,9 +4532,13 @@
                         "baseAtk":  401,
                         "substat":  "DEF%",
                         "substatValue":  "43.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13303,
@@ -3465,9 +4549,13 @@
                         "baseAtk":  354,
                         "substat":  "HP%",
                         "substatValue":  "46.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "hp_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13302,
@@ -3478,9 +4566,13 @@
                         "baseAtk":  448,
                         "substat":  "ATK%",
                         "substatValue":  "23.5%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  13301,
@@ -3491,9 +4583,13 @@
                         "baseAtk":  401,
                         "substat":  "CRIT Rate",
                         "substatValue":  "23.4%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "na_ca_dmg"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11301,
@@ -3504,9 +4600,13 @@
                         "baseAtk":  401,
                         "substat":  "ATK%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11304,
@@ -3517,9 +4617,14 @@
                         "baseAtk":  401,
                         "substat":  "Elemental Mastery",
                         "substatValue":  "141",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
+                                             "atk_buff",
                                              "em_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+                                                  "lunar"
+                                              ]
                     },
                     {
                         "id":  11305,
@@ -3530,9 +4635,13 @@
                         "baseAtk":  401,
                         "substat":  "ATK%",
                         "substatValue":  "35.2%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11302,
@@ -3543,9 +4652,13 @@
                         "baseAtk":  401,
                         "substat":  "CRIT DMG",
                         "substatValue":  "46.9%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
 
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11306,
@@ -3556,9 +4669,13 @@
                         "baseAtk":  354,
                         "substat":  "Energy Recharge",
                         "substatValue":  "52.1%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "er_battery"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     },
                     {
                         "id":  11303,
@@ -3569,9 +4686,13 @@
                         "baseAtk":  448,
                         "substat":  "DEF%",
                         "substatValue":  "29.3%",
+                        "acquisition":  "f2p_craft_fish",
                         "mechanicTags":  [
                                              "def_scale"
-                                         ]
+                                         ],
+                        "requiresMechanics":  [
+
+                                              ]
                     }
                 ]
 }

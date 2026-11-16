@@ -74,9 +74,10 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const accSup = recs.find((w) => w.tierLabel === 'Accessible Support');
     const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
     assert(bisDps?.name === 'Staff of Homa', `Expected BiS DPS Staff of Homa, got ${bisDps?.name}`);
+    assert(bisSup?.name !== 'Fractured Halo', `BiS Support should not be Lunar-locked Fractured Halo`);
     assert(
-      accSup?.name === 'Favonius Lance' || accSup?.name === 'Black Tassel',
-      `Expected Accessible Support Favonius Lance or Black Tassel, got ${accSup?.name}`
+      accSup?.name === 'Favonius Lance' || accSup?.name === 'Black Tassel' || accSup?.name === 'Rightful Reward',
+      `Expected Accessible Support Favonius Lance, Black Tassel, or Rightful Reward, got ${accSup?.name}`
     );
     assert(!/40-cost Burst ER/i.test(bisSup?.reason || ''), `Lying ER blurb on 40-cost Zhongli: ${bisSup?.reason}`);
     return verifyFourUniqueBuckets(profile, recs);
@@ -102,7 +103,16 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     assert(profile.primaryScaling === 'ATK', `Expected ATK primaryScaling, got ${profile.primaryScaling}`);
     const recs = recommendWeapons(profile, weaponsIndex, []);
     const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
+    const accDps = recs.find((w) => w.tierLabel === 'Accessible DPS');
     assert(!/HP%/i.test(bisDps?.substat || ''), `HP% bow recommended as BiS DPS for Ganyu: ${bisDps?.name}`);
+    assert(
+      bisDps?.name === "Amos' Bow" || bisDps?.name === 'Polar Star',
+      `Expected BiS DPS Amos' Bow or Polar Star for Ganyu, got ${bisDps?.name}`
+    );
+    assert(
+      accDps?.name === 'Hamayumi' || accDps?.name === 'Prototype Crescent',
+      `Expected Accessible DPS Hamayumi or Prototype Crescent for Ganyu, got ${accDps?.name}`
+    );
     assert(profile.flexModes.some((m) => m.id === 'On-Field Carry'), 'Ganyu flexModes missing On-Field Carry');
     assert(profile.flexModes.some((m) => m.id === 'Off-Field Sub-DPS'), 'Ganyu flexModes missing Off-Field Sub-DPS');
     return verifyFourUniqueBuckets(profile, recs);
