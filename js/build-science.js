@@ -1404,10 +1404,35 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
         ? primaryLabel
         : `${primaryLabel}% + CRIT`;
 
+  // Scan talents & Ascension Passives (A1, A4) for additive stat-to-DMG/Shield/Heal conversions
+  const a1a4Text = passives
+    .filter((p) => p.slot === 'A1' || p.slot === 'A4' || !p.slot)
+    .map((p) => stripMarkup(p.description || ''))
+    .join('\n');
+  const conversionSentences = `${a1a4Text}\n${talentDescText}`
+    .replace(/[^.\n]*(?:endurance|inherited\s+hp|ice\s+lotus|baron\s+bunny|bogglecat)[^.\n]*/gi, '')
+    .split(/(?<=[.!?\n])\s+|\n+/);
+  const conversionStats = [];
+  const ADDITIVE_CONV_RE =
+    /(?:dmg|damage|attack|skill|burst|heal|shield|absorption|bonus)[^.]{0,90}(?:increased\s+by|based\s+on|equal\s+to|of)\s+(?:[\d.]+%\s+of\s+)?(?:[A-Za-z'’]+\s+|her\s+|his\s+|their\s+)?(max\s*hp|\bdef\b|elemental\s+mastery)/i;
+  for (const s of conversionSentences) {
+    const m = s.match(ADDITIVE_CONV_RE);
+    if (!m) continue;
+    const rawStat = m[1].toLowerCase();
+    if (rawStat.includes('hp') && !conversionStats.includes('HP')) conversionStats.push('HP');
+    else if (rawStat.includes('def') && !conversionStats.includes('DEF')) conversionStats.push('DEF');
+    else if (rawStat.includes('mastery') && !conversionStats.includes('EM')) conversionStats.push('EM');
+  }
+  const primaryShort =
+    primaryStatKey === 'hp_' ? 'HP' : primaryStatKey === 'def_' ? 'DEF' : primaryStatKey === 'eleMas' ? 'EM' : primaryStatKey === 'enerRech_' ? 'ER' : 'ATK';
+  const scalingStats = [...new Set([primaryShort, ...conversionStats])];
+
   return {
     primaryStatKey,
     primaryLabel,
     primaryDisplay,
+    scalingStats,
+    conversionStats,
     damageSources,
     secondaryStats: [...new Set(secondaryStats)],
     isNonCrit,
@@ -1594,6 +1619,7 @@ export function buildKitProfile(charData, contextOverride = {}) {
     skillParticles,
     primaryScaling: primaryScalingMap[scaling.primaryStatKey] || 'ATK',
     primaryStatKey: scaling.primaryStatKey,
+    scalingStats: scaling.scalingStats || [primaryScalingMap[scaling.primaryStatKey] || 'ATK'],
     isNonCrit: scaling.isNonCrit,
     isPureSupport: fieldRole === 'Quickswap Support' && scaling.isPureSupport,
     infusionType,
@@ -1730,6 +1756,9 @@ export function recommendWeapons(
     });
   }
 
+  const scalingStatsSet = new Set(profile?.scalingStats || [profile?.primaryScaling || 'ATK']);
+  const erNeedGate = Math.max(0, burstCost - 40) / 40;
+
   const scored = [...indexPool, ...extraOwned].map((cand) => {
     const substat = cand.substat || 'ATK%';
     const mTags = new Set(cand.mechanicTags || []);
@@ -1748,83 +1777,138 @@ export function recommendWeapons(
 
     // --- Linear DPS Score ---
     let dpsScore = rarityBase + ownedBonus;
-    if (profile.primaryStatKey === 'hp_') dpsScore += isHpWeapon ? 30 : 0;
-    else if (isHpWeapon) dpsScore -= 35;
+    let dpsPrimaryPts = 0;
+    let dpsHybridPts = 0;
+    let dpsCritPts = 0;
+    let dpsErPts = 0;
 
-    if (profile.primaryStatKey === 'def_') dpsScore += isDefWeapon ? 30 : 0;
-    else if (isDefWeapon) dpsScore -= 35;
+    if (profile.primaryStatKey === 'hp_') dpsPrimaryPts += isHpWeapon ? 30 : 0;
+    else if (isHpWeapon && !scalingStatsSet.has('HP')) dpsScore -= 35;
 
-    if (profile.primaryStatKey === 'eleMas') dpsScore += isEmWeapon ? 28 : 0;
-    else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) dpsScore += 14;
+    if (profile.primaryStatKey === 'def_') dpsPrimaryPts += isDefWeapon ? 30 : 0;
+    else if (isDefWeapon && !scalingStatsSet.has('DEF')) dpsScore -= 35;
 
-    if (!profile.isNonCrit && isCritWeapon) dpsScore += 28;
-    if (profile.infusionType === 'na_ca' && mTags.has('na_ca_dmg')) dpsScore += 18;
-    if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsScore += 12;
-    if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsScore += 12;
-    if (profile.scaling?.secondaryStats?.includes('EM') && isEmWeapon) dpsScore += 10;
+    if (profile.primaryStatKey === 'eleMas') dpsPrimaryPts += isEmWeapon ? 28 : 0;
+    else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) dpsPrimaryPts += 14;
+
+    // Additive conversion / dual-scaling bonus (e.g. Zhongli A4 HP->DMG, Alhaitham/Nahida EM->DMG)
+    if (profile.primaryStatKey !== 'hp_' && scalingStatsSet.has('HP') && isHpWeapon) dpsHybridPts += 22;
+    if (profile.primaryStatKey !== 'def_' && scalingStatsSet.has('DEF') && isDefWeapon) dpsHybridPts += 22;
+    if (profile.primaryStatKey !== 'eleMas' && scalingStatsSet.has('EM') && isEmWeapon) dpsHybridPts += 22;
+    else if (profile.scaling?.secondaryStats?.includes('EM') && isEmWeapon) dpsHybridPts += 10;
+
+    if (!profile.isNonCrit && isCritWeapon) dpsCritPts += 28;
+    if (profile.infusionType === 'na_ca' && mTags.has('na_ca_dmg')) dpsPrimaryPts += 18;
+    if (profile.scaling?.damageSources?.includes('Elemental Skill') && mTags.has('skill_dmg')) dpsPrimaryPts += 12;
+    if (profile.scaling?.damageSources?.includes('Elemental Burst') && mTags.has('burst_dmg')) dpsPrimaryPts += 12;
+    if (isErWeapon && erNeedGate > 0) dpsErPts += Math.round(10 * erNeedGate);
     if (isTtds || (isFavonius && role === 'On-Field Carry')) dpsScore -= 25;
 
-    // --- Linear Support / Utility Score ---
-    let supportScore = rarityBase + ownedBonus;
-    if (profile.primaryStatKey !== 'hp_' && isHpWeapon && !isTtds) supportScore -= 35;
-    if (profile.primaryStatKey !== 'def_' && isDefWeapon) supportScore -= 35;
+    dpsScore += dpsPrimaryPts + dpsHybridPts + dpsCritPts + dpsErPts;
 
-    if (mTags.has('party_buff') || isTtds) supportScore += 32;
-    if (isErWeapon || isFavonius) {
-      supportScore += 26;
-      if (burstCost >= 70) supportScore += 10;
-      if (erBelowTarget) supportScore += 12;
-    }
+    const dpsFactors = [
+      { key: 'hybrid_scale', pts: dpsHybridPts },
+      { key: 'crit_stick', pts: dpsCritPts },
+      { key: 'er_threshold', pts: dpsErPts },
+      { key: 'primary_scale', pts: dpsPrimaryPts }
+    ].sort((a, b) => b.pts - a.pts);
+    const dpsWinningFactor = dpsFactors[0].pts > 0 ? dpsFactors[0].key : 'primary_scale';
+
+    // --- Linear Support Score: teamUtilityScore + defensiveScalingScore + erNeedGate ---
+    let teamUtilityScore = 0;
+    let partyBuffPts = 0;
+    let teamParticlesPts = 0;
+    let skillResetPts = 0;
+
+    if (mTags.has('party_buff') || isTtds) partyBuffPts = 34;
+    if (isFavonius) teamParticlesPts = 30;
     if (mTags.has('skill_reset')) {
-      supportScore += 28;
-      if (profile.skillCd >= 15 && profile.skillParticles >= 4) supportScore += 14;
-      else if (profile.skillCd >= 15) supportScore += 8;
+      skillResetPts = 28 + (profile.skillCd >= 15 && profile.skillParticles >= 4 ? 12 : profile.skillCd >= 15 ? 6 : 0);
     }
-    if (isHealer && mTags.has('healer_utility')) supportScore += 18;
-    if (profile.primaryStatKey === 'hp_' && isHpWeapon) supportScore += 20;
-    if (profile.primaryStatKey === 'def_' && isDefWeapon) supportScore += 20;
-    if (profile.primaryStatKey === 'eleMas' && isEmWeapon) supportScore += 20;
+    teamUtilityScore = partyBuffPts + teamParticlesPts + skillResetPts;
+
+    let defensiveScalingScore = 0;
+    if (isShielder || isHealer) {
+      if (scalingStatsSet.has('HP') && isHpWeapon) defensiveScalingScore += 30;
+      if (scalingStatsSet.has('DEF') && isDefWeapon) defensiveScalingScore += 30;
+      if (scalingStatsSet.has('EM') && isEmWeapon) defensiveScalingScore += 22;
+      if (isHealer && mTags.has('healer_utility')) defensiveScalingScore += 18;
+    }
+
+    // Penalize non-matching HP/DEF weapons on non-HP/DEF characters (except TTDS)
+    let compatPenalty = 0;
+    if (!scalingStatsSet.has('HP') && isHpWeapon && !isTtds) compatPenalty -= 35;
+    if (!scalingStatsSet.has('DEF') && isDefWeapon) compatPenalty -= 35;
+
+    const erThresholdPts = isErWeapon ? Math.round((24 + (erBelowTarget ? 8 : 0)) * erNeedGate) : 0;
+    const supportScore = rarityBase + ownedBonus + teamUtilityScore + defensiveScalingScore + erThresholdPts + compatPenalty;
+
+    const supFactors = [
+      { key: 'party_buff', pts: partyBuffPts },
+      { key: 'team_particles', pts: teamParticlesPts },
+      { key: 'skill_reset', pts: skillResetPts },
+      { key: 'defensive_scale', pts: defensiveScalingScore },
+      { key: 'er_threshold', pts: erThresholdPts }
+    ].sort((a, b) => b.pts - a.pts);
+    const supWinningFactor = supFactors[0].pts > 0 ? supFactors[0].key : 'party_buff';
 
     return {
       ...cand,
       substat,
       dpsScore,
       supportScore,
+      dpsWinningFactor,
+      supWinningFactor,
       ownedMatch
     };
   });
 
   const usedKeys = new Set();
-  const pickTop = (sortedList, tierLabel, reasonFn) => {
+  const pickTop = (sortedList, tierLabel, factorProp) => {
     const found = sortedList.find((w) => !usedKeys.has(w.key));
     if (!found) return null;
     usedKeys.add(found.key);
     return {
       ...found,
       tierLabel,
-      reason: reasonFn(found)
+      winningFactor: found[factorProp],
+      reason: buildWeaponReason(found, found[factorProp])
     };
   };
+
+  function buildWeaponReason(w, factor) {
+    const statText = `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat}`;
+    switch (factor) {
+      case 'party_buff':
+        return `Grants teamwide party buffs (${statText} utility).`;
+      case 'team_particles':
+        return `Generates white particles for the party on CRIT (${statText}).`;
+      case 'skill_reset':
+        return `Resets ${profile.skillCd ? `${profile.skillCd}s ` : ''}Skill CD for extra particles & uptime.`;
+      case 'defensive_scale': {
+        const job = isShielder && isHealer ? 'Shield & Healing' : isShielder ? 'Shield absorption' : 'Healing';
+        return `Boosts ${job} via ${statText}.`;
+      }
+      case 'hybrid_scale':
+        return `Dual-scales with ${[...scalingStatsSet].join(' + ')} (${statText}).`;
+      case 'crit_stick':
+        return `Top CRIT stat-stick (${statText}) for ${profile.primaryScaling} damage.`;
+      case 'er_threshold':
+        return `Meets ${burstCost}-cost Burst ER threshold (${statText}).`;
+      default:
+        return `${statText} aligned with ${profile.primaryScaling} kit.`;
+    }
+  }
 
   const byDps = [...scored].sort((a, b) => b.dpsScore - a.dpsScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
   const byDpsAcc = byDps.filter((w) => w.rarity <= 4);
   const bySup = [...scored].sort((a, b) => b.supportScore - a.supportScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
   const bySupAcc = bySup.filter((w) => w.rarity <= 4);
 
-  const dpsReason = (w) =>
-    `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat} aligned with ${profile.primaryScaling} scaling${profile.infusionType === 'na_ca' ? ' & on-field NA/CA damage' : ''}.`;
-  const supReason = (w) => {
-    const mTags = new Set(w.mechanicTags || []);
-    if (mTags.has('skill_reset')) return `Resets ${profile.skillCd ? `${profile.skillCd}s ` : ''}Skill CD & solves ${burstCost}-cost Burst ER.`;
-    if (mTags.has('party_buff')) return `Teamwide party buff & ${w.substat} utility.`;
-    if (mTags.has('er_battery') || /energy\s*recharge/i.test(w.substat)) return `Solves ${burstCost}-cost Burst ER with reliable particle generation.`;
-    return `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat} support utility.`;
-  };
-
-  const bisDps = pickTop(byDps, 'BiS DPS', dpsReason);
-  const accDps = pickTop(byDpsAcc, 'Accessible DPS', dpsReason);
-  const bisSup = pickTop(bySup, 'BiS Support', supReason);
-  const accSup = pickTop(bySupAcc, 'Accessible Support', supReason);
+  const bisDps = pickTop(byDps, 'BiS DPS', 'dpsWinningFactor');
+  const accDps = pickTop(byDpsAcc, 'Accessible DPS', 'dpsWinningFactor');
+  const bisSup = pickTop(bySup, 'BiS Support', 'supWinningFactor');
+  const accSup = pickTop(bySupAcc, 'Accessible Support', 'supWinningFactor');
 
   const ordered = isSupportRole ? [bisSup, accSup, bisDps, accDps] : [bisDps, accDps, bisSup, accSup];
   return ordered.filter(Boolean);
