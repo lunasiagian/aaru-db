@@ -33,7 +33,7 @@
                         "substatValue":  "88.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-
+                                             "hp_scale"
                                          ],
                         "requiresMechanics":  [
 
@@ -615,7 +615,8 @@
                         "substatValue":  "88.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "ca_dmg"
+                                             "ca_dmg",
+                                             "hp_scale"
                                          ],
                         "requiresMechanics":  [
                                                   "hp_fluctuation"
@@ -669,7 +670,7 @@
                                              "atk_buff"
                                          ],
                         "requiresMechanics":  [
-
+                                                  "charged_attack"
                                               ]
                     },
                     {
@@ -929,7 +930,8 @@
                                              "hp_scale"
                                          ],
                         "requiresMechanics":  [
-                                                  "bond_of_life"
+                                                  "bond_of_life",
+                                                  "charged_attack"
                                               ]
                     },
                     {
@@ -1398,7 +1400,7 @@
                         "substatValue":  "44.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-
+                                             "hp_scale"
                                          ],
                         "requiresMechanics":  [
 
@@ -2168,7 +2170,7 @@
 
                                          ],
                         "requiresMechanics":  [
-
+                                                  "charged_attack"
                                               ]
                     },
                     {
@@ -3089,7 +3091,7 @@
                                              "elem_dmg"
                                          ],
                         "requiresMechanics":  [
-
+                                                  "self_elemental_aura"
                                               ]
                     },
                     {

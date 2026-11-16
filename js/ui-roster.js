@@ -14,12 +14,12 @@ import {
   calcTalentUpgradeDiff,
   computeCharacterCombatStats,
   computeEffectiveTalents,
+  evaluateCharacterBuild,
   evaluateErComfort,
   evaluateTeamCapabilities,
   generateKitInsights,
   getBuildStatGuidelines,
-  getSignatureWeapon,
-  recommendWeaponsForCharacter
+  getSignatureWeapon
 } from './build-science.js?v=20261115ah';
 
 const STATUS_PILLS = [
@@ -596,15 +596,52 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
   const insights = generateKitInsights(c, kitData, weaponMeta, erReport, kitAnalysis);
   const guidelines = getBuildStatGuidelines(c.key, kitData, kitAnalysis);
   const sigWeaponName = getSignatureWeapon(c.key);
-  const recWeapons = recommendWeaponsForCharacter(
-    c.key,
-    kitData,
-    kitAnalysis,
-    accountWeapons,
-    getWeaponMeta,
-    getWeaponStats,
-    erReport
+  const evalRes = evaluateCharacterBuild(
+    { ...c, kitData },
+    {
+      armory: accountWeapons,
+      getWeaponMetaFn: getWeaponMeta,
+      getWeaponStatsFn: getWeaponStats,
+      erReport
+    }
   );
+  const recWeapons = evalRes.weapons.bestOverall;
+  const armoryWeapons = evalRes.weapons.inArmory;
+
+  const renderWeaponCardList = (list, emptyMsg) => {
+    if (!list.length) {
+      return `<div class="empty-state" style="grid-column:1/-1;">${escapeHtml(emptyMsg)}</div>`;
+    }
+    return list
+      .map(
+        (w) => `
+            <div class="rec-weapon-card">
+              <div class="rec-weapon-top">
+                <div class="rec-weapon-icon-wrap">
+                  ${renderAssetIcon('weapons', w.key, w.name, 'icon-sm')}
+                </div>
+                <div class="rec-weapon-meta">
+                  <div class="rec-weapon-title">
+                    <strong>${escapeHtml(w.name)}</strong>
+                    <span class="pill pill-gold mono">${w.rarity}★</span>
+                  </div>
+                  <div class="rec-weapon-badges mono">
+                    <span class="pill ${String(w.tierLabel || '').startsWith('BiS') || String(w.tierLabel || '').startsWith('Owned DPS #1') || String(w.tierLabel || '').startsWith('Owned Support #1') ? 'pill-violet' : 'pill-sky'}">${escapeHtml(w.tierLabel || 'Option')}</span>
+                    <span class="rec-substat">• ${escapeHtml(w.substat)}</span>
+                    ${w.isSignature ? '<span class="pill pill-gold">SIGNATURE</span>' : ''}
+                    ${
+                      w.ownedMatch
+                        ? `<span class="pill pill-mint">In Armory (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`
+                        : ''
+                    }
+                  </div>
+                </div>
+              </div>
+              <p class="rec-weapon-reason">${escapeHtml(w.reason)}</p>
+            </div>`
+      )
+      .join('');
+  };
 
   return `
     <form class="roster-drawer-form dossier-targets-form" data-inspector-form="${c.key}">
@@ -727,38 +764,19 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       <div class="dossier-guidelines-card">
         <div class="card-eyebrow" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
           <span>SUGGESTED WEAPONS (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · KIT-MATCHED)</span>
-          ${sigWeaponName ? `<span class="text-gold mono" style="font-size:11px;">Signature: ${escapeHtml(sigWeaponName)}</span>` : ''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${sigWeaponName ? `<span class="text-gold mono" style="font-size:11px;">Signature: ${escapeHtml(sigWeaponName)}</span>` : ''}
+            <div class="dossier-tabs" style="margin:0;">
+              <button type="button" class="filter-pill active" data-rec-tab="best">Best Overall</button>
+              <button type="button" class="filter-pill" data-rec-tab="armory">In Your Armory (${armoryWeapons.length})</button>
+            </div>
+          </div>
         </div>
-        <div class="rec-weapon-grid">
-          ${recWeapons
-            .map(
-              (w) => `
-            <div class="rec-weapon-card">
-              <div class="rec-weapon-top">
-                <div class="rec-weapon-icon-wrap">
-                  ${renderAssetIcon('weapons', w.key, w.name, 'icon-sm')}
-                </div>
-                <div class="rec-weapon-meta">
-                  <div class="rec-weapon-title">
-                    <strong>${escapeHtml(w.name)}</strong>
-                    <span class="pill pill-gold mono">${w.rarity}★</span>
-                  </div>
-                  <div class="rec-weapon-badges mono">
-                    <span class="pill ${String(w.tierLabel || '').startsWith('BiS') ? 'pill-violet' : 'pill-sky'}">${escapeHtml(w.tierLabel || 'Option')}</span>
-                    <span class="rec-substat">• ${escapeHtml(w.substat)}</span>
-                    ${w.isSignature ? '<span class="pill pill-gold">SIGNATURE</span>' : ''}
-                    ${
-                      w.ownedMatch
-                        ? `<span class="pill pill-mint">In Armory (Lv.${w.ownedMatch.level} R${w.ownedMatch.refinement || 1})</span>`
-                        : ''
-                    }
-                  </div>
-                </div>
-              </div>
-              <p class="rec-weapon-reason">${escapeHtml(w.reason)}</p>
-            </div>`
-            )
-            .join('')}
+        <div id="rec-weapons-best" class="rec-weapon-grid">
+          ${renderWeaponCardList(recWeapons, 'No compatible weapons found.')}
+        </div>
+        <div id="rec-weapons-armory" class="rec-weapon-grid" style="display:none;">
+          ${renderWeaponCardList(armoryWeapons, `No ${c.meta?.weaponType || 'matching'} weapons currently in your Armory.`)}
         </div>
       </div>
 
@@ -1185,6 +1203,19 @@ export function renderRosterTab(container, state, handlers) {
     container.querySelectorAll('[data-dossier-tab]').forEach((btn) => {
       btn.addEventListener('click', () => {
         handlers.onChangeRosterFilter({ dossierTab: btn.dataset.dossierTab });
+      });
+    });
+
+    container.querySelectorAll('[data-rec-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.recTab;
+        container.querySelectorAll('[data-rec-tab]').forEach((b) => {
+          b.classList.toggle('active', b.dataset.recTab === target);
+        });
+        const bestEl = container.querySelector('#rec-weapons-best');
+        const armoryEl = container.querySelector('#rec-weapons-armory');
+        if (bestEl) bestEl.style.display = target === 'best' ? '' : 'none';
+        if (armoryEl) armoryEl.style.display = target === 'armory' ? '' : 'none';
       });
     });
 

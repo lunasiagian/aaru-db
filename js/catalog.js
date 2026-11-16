@@ -1,7 +1,7 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
 let cachedWeaponsIndex = [];
-const CATALOG_VERSION = '20261116a';
+const CATALOG_VERSION = '20261116b';
 const STATIC_CATALOG_CACHE_KEY = `aaru_static_catalog_${CATALOG_VERSION}`;
 const CATALOG_CACHE_PREFIX = 'aaru_catalog_v';
 const CATALOG_LATEST_PTR = 'aaru_catalog_latest_patch';
@@ -483,22 +483,25 @@ export function getWeaponsIndex() {
 export async function loadCatalog() {
   if (cachedCatalog) return cachedCatalog;
 
-  // Fast path: hydrate parsed static JSONs from versioned localStorage cache (< 20ms)
-  try {
-    const cachedRaw = localStorage.getItem(STATIC_CATALOG_CACHE_KEY);
-    if (cachedRaw) {
-      const parsed = JSON.parse(cachedRaw);
-      if (parsed?.catalog && Array.isArray(parsed?.weaponsIndex) && parsed.weaponsIndex.length > 0) {
-        cachedCatalog = parsed.catalog;
-        cachedKqmTcl = parsed.kqmTcl || {};
-        cachedWeaponsIndex = parsed.weaponsIndex;
-        // Hydrate Yatta maps synchronously from cache or snapshot; refresh live API in background
-        fetchYattaCatalog(false).catch(() => {});
-        return cachedCatalog;
+  // Fast path: hydrate parsed static JSONs from versioned localStorage cache (< 20ms) in production
+  const isLocalDev = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  if (!isLocalDev) {
+    try {
+      const cachedRaw = localStorage.getItem(STATIC_CATALOG_CACHE_KEY);
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (parsed?.catalog && Array.isArray(parsed?.weaponsIndex) && parsed.weaponsIndex.length > 0) {
+          cachedCatalog = parsed.catalog;
+          cachedKqmTcl = parsed.kqmTcl || {};
+          cachedWeaponsIndex = parsed.weaponsIndex;
+          // Hydrate Yatta maps synchronously from cache or snapshot; refresh live API in background
+          fetchYattaCatalog(false).catch(() => {});
+          return cachedCatalog;
+        }
       }
+    } catch {
+      // Ignore cache read/parse errors and fetch fresh
     }
-  } catch {
-    // Ignore cache read/parse errors and fetch fresh
   }
 
   const [catRes, kqmRes, wepIdxRes] = await Promise.allSettled([

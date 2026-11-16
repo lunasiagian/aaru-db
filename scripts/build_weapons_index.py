@@ -113,7 +113,7 @@ def extract_mechanic_tags(name: str, substat: str, passive_text: str) -> list[st
         tags.append("atk_buff")
 
     # 5. Stat scaling & healer utility
-    if substat == "HP%" or re.search(r"max\s+hp\s+(?:is\s+)?increased|based\s+on[^.]{0,40}max\s+hp|of\s+max\s+hp", text, re.I):
+    if substat == "HP%" or re.search(r"max\s+hp\s+(?:is\s+)?increased|\bhp\s+(?:is\s+)?increased\s+by|based\s+on[^.]{0,40}max\s+hp|of\s+max\s+hp", text, re.I):
         tags.append("hp_scale")
     if substat == "DEF%" or re.search(r"\bdef\b\s+(?:is\s+)?increased|based\s+on[^.]{0,40}\bdef\b|of\s+(?:the\s+character\'s\s+)?def\b", text, re.I):
         tags.append("def_scale")
@@ -147,6 +147,10 @@ def extract_required_mechanics(passive_text: str) -> list[str]:
         reqs.append("hexerei")
     if re.search(r"stellar\s+glimmer", passive_text, re.I):
         reqs.append("stellar_glimmer")
+    if re.search(r"after\s+being\s+affected\s+by\s+(?:pyro|hydro|cryo|electro|dendro)", passive_text, re.I):
+        reqs.append("self_elemental_aura")
+    if re.search(r"hits?\s+an\s+opponent\s+with\s+(?:their\s+|a\s+|his\s+|her\s+)?charged\s+attack|when\s+(?:a\s+|the\s+wielder'?s?\s+)?charged\s+attack\s+hits", passive_text, re.I):
+        reqs.append("charged_attack")
     return reqs
 
 
