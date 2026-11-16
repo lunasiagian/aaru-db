@@ -262,7 +262,9 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   const usesNormalAttack = hasInfusion || hasChargedCarryFocus;
 
   const healSentences = sentences.filter((s) =>
-    /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b/i.test(s)
+    /(?:restores?|regenerates?|heals?)[^.]{0,80}\bHP\b|healing\s+(?:nearby\s+)?(?:active\s+)?(?:characters?|allies|party\s+members)/i.test(
+      s
+    )
   );
   const hasTeamHeal = healSentences.some((s) =>
     /(?:all\s+(?:nearby\s+)?party\s+members|allies|allied|other\s+characters|teammates|nearby\s+characters)/i.test(s)
@@ -363,7 +365,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     const crM = critSentence.match(/crit\s+rate[^.]{0,30}?by\s+([\d.]+%)/i);
     functionTags.push(crM ? `CRIT Buffer (+${crM[1]})` : 'CRIT Buffer');
   }
-  if (/res\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
+  if (/res\s+(?:is\s+decreased|will\s+decrease)|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
     functionTags.push('RES Shred');
   }
   if (/def\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?def\b|ignores?\s+[\d.]+%\s+of\s+opponents'?\s+def/i.test(nonNormalText)) {
@@ -495,7 +497,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     fieldRole = 'On-Field Driver';
   } else if (functionTags.length > 0 || hasPartyHeal || hasShield) {
     fieldRole = 'Quickswap Support';
-  } else if (hasInfusion || usesNormalAttack) {
+  } else if (hasInfusion || usesNormalAttack || (weaponType === 'Catalyst' && !hasOffField)) {
     fieldRole = 'On-Field Carry';
   }
 
@@ -730,12 +732,126 @@ export function computeEffectiveTalents(char, kitData) {
   };
 }
 
+const CRIT_SET_BONUSES = {
+  MarechausseeHunter: 36,
+  ObsidianCodex: 40,
+  BlizzardStrayer: 20
+};
+
 /**
- * Computes exact total character combat stats and artifact Roll Value (RV%).
+ * Computes deterministic substat roll weights (1.0 primary, 0.5 secondary, 0.25 flat ATK, 0.0 dead)
+ * across all 10 artifact substat keys.
+ */
+export function computeSubstatWeights(kitAnalysis, weaponKey = '', artifacts = []) {
+  const weights = {
+    hp: 0.0,
+    hp_: 0.0,
+    atk: 0.0,
+    atk_: 0.0,
+    def: 0.0,
+    def_: 0.0,
+    eleMas: 0.0,
+    enerRech_: 0.0,
+    critRate_: 0.0,
+    critDMG_: 0.0
+  };
+
+  const setCounts = {};
+  for (const a of artifacts || []) {
+    if (a?.setKey) setCounts[a.setKey] = (setCounts[a.setKey] || 0) + 1;
+  }
+  const hasEmblem4pc = (setCounts.EmblemOfSeveredFate || 0) >= 4;
+
+  const isNonCrit = Boolean(kitAnalysis?.isNonCrit);
+  const role = kitAnalysis?.roleInfo?.fieldRole || kitAnalysis?.roleInfo?.primaryRole || 'Quickswap Support';
+  const tags = kitAnalysis?.roleInfo?.functionTags || kitAnalysis?.roleInfo?.utilityTags || [];
+  const isPureSupport = role === 'Quickswap Support' && !tags.some((t) => /Sub-DPS|Carry|Driver/i.test(t));
+  const isFavonius = /favonius/i.test(String(weaponKey || ''));
+  const primary = String(kitAnalysis?.primaryScaling || 'ATK');
+  const usefulSet = new Set(kitAnalysis?.usefulSubstats || []);
+
+  if (primary.startsWith('HP')) {
+    weights.hp_ = 1.0;
+    weights.hp = 0.5;
+  } else if (primary.startsWith('DEF')) {
+    weights.def_ = 1.0;
+    weights.def = 0.5;
+  } else if (primary.startsWith('EM')) {
+    weights.eleMas = 1.0;
+  } else {
+    weights.atk_ = isPureSupport ? 0.5 : 1.0;
+    if (!isPureSupport) weights.atk = 0.25;
+  }
+
+  if (usefulSet.has('eleMas') && weights.eleMas < 1.0) weights.eleMas = 0.5;
+  if (usefulSet.has('atk_') && weights.atk_ < 1.0) weights.atk_ = 0.5;
+
+  if (!isNonCrit) {
+    if (!isPureSupport) {
+      weights.critRate_ = 1.0;
+      weights.critDMG_ = 1.0;
+    } else if (isFavonius) {
+      weights.critRate_ = 0.5;
+    }
+  }
+
+  const burstCost = Number(kitAnalysis?.burstCost) || 60;
+  if (burstCost >= 70 || role === 'Off-Field Sub-DPS' || role === 'Quickswap Support' || hasEmblem4pc) {
+    weights.enerRech_ = 1.0;
+  } else {
+    weights.enerRech_ = 0.5;
+  }
+
+  return weights;
+}
+
+/**
+ * Evaluates build diagnostics such as 4pc CRIT Rate over-cap.
+ */
+export function evaluateBuildDiagnostics(combatStats, artifacts = [], kitAnalysis = null) {
+  const diagnostics = [];
+  if (kitAnalysis?.isNonCrit) return diagnostics;
+
+  const setCounts = {};
+  for (const a of artifacts || []) {
+    if (a?.setKey) setCounts[a.setKey] = (setCounts[a.setKey] || 0) + 1;
+  }
+
+  let setCritBonus = 0;
+  let setLabel = '';
+  for (const [setKey, bonus] of Object.entries(CRIT_SET_BONUSES)) {
+    if ((setCounts[setKey] || 0) >= 4) {
+      setCritBonus += bonus;
+      setLabel = setKey.replace(/([a-z])([A-Z])/g, '$1 $2');
+    }
+  }
+
+  const sheetCr = Number(combatStats?.critRate) || 0;
+  const effectiveCr = Math.round((sheetCr + setCritBonus) * 10) / 10;
+  if (effectiveCr > 100) {
+    const overBy = Math.round((effectiveCr - 100) * 10) / 10;
+    diagnostics.push({
+      id: 'crit-overcap',
+      tone: overBy >= 8 ? 'coral' : 'amber',
+      effectiveCr,
+      setCritBonus,
+      overBy,
+      message: `CRIT Rate over-cap: ${effectiveCr.toFixed(1)}% effective (${sheetCr.toFixed(1)}% sheet${
+        setCritBonus ? ` + ${setCritBonus}% 4pc ${setLabel}` : ''
+      } — ${overBy.toFixed(1)}% wasted).`
+    });
+  }
+
+  return diagnostics;
+}
+
+/**
+ * Computes exact total character combat stats and Weighted Roll Value (wRV%).
  */
 export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null) {
   const effectiveTalents = computeEffectiveTalents(char, kitData);
   const kitAnalysis = analyzeCharacterKit(char?.key, kitData, effectiveTalents.effective, char?.constellation || 0);
+  const substatWeights = computeSubstatWeights(kitAnalysis, weapon?.key || '', artifacts);
   const charBase = pickCharBaseStats(char, kitData);
   const wepBase = pickWeaponStats(weapon, weaponStats);
 
@@ -771,8 +887,10 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
 
   let subCv = 0;
   let usefulRolls = 0;
+  let primaryRolls = 0;
+  let secondaryRolls = 0;
+  let weightedRollsSum = 0;
   let totalRolls = 0;
-  const usefulSet = new Set(kitAnalysis.usefulSubstats);
 
   for (const a of artifacts) {
     applyStat(a.mainStatKey, getArtifactMainStatValue(a.mainStatKey, a.level, a.rarity));
@@ -785,7 +903,14 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
       if (avgRoll && val > 0) {
         const rolls = val / avgRoll;
         totalRolls += rolls;
-        if (usefulSet.has(s.key)) usefulRolls += rolls;
+        const w = substatWeights[s.key] ?? 0;
+        weightedRollsSum += rolls * w;
+        if (w >= 1.0) {
+          usefulRolls += rolls;
+          primaryRolls += rolls;
+        } else if (w > 0) {
+          secondaryRolls += rolls;
+        }
       }
     }
   }
@@ -803,24 +928,54 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
     }
   }
 
-  const roundedUseful = Math.round(usefulRolls * 10) / 10;
-  const rvPct = Math.min(100, Math.round((usefulRolls / 38) * 100));
+  const wRvBenchmark = 32;
+  const weightedRolls = Math.round(weightedRollsSum * 10) / 10;
+  const wrvPct = Math.min(100, Math.round((weightedRollsSum / wRvBenchmark) * 100));
+  const wrvGrade =
+    !artifacts || artifacts.length === 0
+      ? 'UNGEAR'
+      : wrvPct >= 85
+        ? 'S+'
+        : wrvPct >= 70
+          ? 'S'
+          : wrvPct >= 55
+            ? 'A'
+            : wrvPct >= 40
+              ? 'B'
+              : 'C';
+
+  const roundedCritRate = Math.round(critRate * 10) / 10;
+  const roundedCritDmg = Math.round(critDmg * 10) / 10;
+  const roundedEr = Math.round(er * 10) / 10;
+  const diagnostics = evaluateBuildDiagnostics(
+    { critRate: roundedCritRate, critDmg: roundedCritDmg, er: roundedEr },
+    artifacts,
+    kitAnalysis
+  );
 
   return {
     maxHp,
     totalAtk,
     totalDef,
     em: Math.round(flat.eleMas),
-    critRate: Math.round(critRate * 10) / 10,
-    critDmg: Math.round(critDmg * 10) / 10,
-    er: Math.round(er * 10) / 10,
+    critRate: roundedCritRate,
+    critDmg: roundedCritDmg,
+    er: roundedEr,
     dmgBonus: Math.round(topDmgVal * 10) / 10,
     dmgBonusKey: topDmgKey,
     healingBonus: Math.round((healingBonus + (kitAnalysis.isNonCrit ? 25 : 0)) * 10) / 10,
     subCv: Math.round(subCv * 10) / 10,
-    usefulRolls: roundedUseful,
+    usefulRolls: Math.round(usefulRolls * 10) / 10,
+    primaryRolls: Math.round(primaryRolls * 10) / 10,
+    secondaryRolls: Math.round(secondaryRolls * 10) / 10,
+    weightedRolls,
+    wRvBenchmark,
+    wrvPct,
+    rvPct: wrvPct,
+    wrvGrade,
+    substatWeights,
+    diagnostics,
     totalRolls: Math.round(totalRolls * 10) / 10,
-    rvPct,
     kitAnalysis
   };
 }
@@ -908,9 +1063,14 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     if (best.hasSameElemBattery) reasons.push(`Double ${charElem}`);
     if (best.batteryWeapons > 0) reasons.push(`${best.batteryWeapons}× Energy Weapon`);
     const via = reasons.length ? ` via ${reasons.join(' + ')}` : '';
-    if (best.delta >= 0 && hasEndgameFlag && soloDelta < 0) {
-      erStatus = 'warn';
-      summary = `${currentEr}% ER — Covered in ${best.teamName}${via}, but ${soloDelta}% short for solo Stygian / Theatre.`;
+    if (best.delta >= 0 && soloDelta < 0) {
+      if (hasEndgameFlag) {
+        erStatus = 'warn';
+        summary = `${currentEr}% ER — Covered in ${best.teamName}${via}, but ${Math.abs(soloDelta)}% short for solo Stygian / Theatre (~${soloEndgameReq}%).`;
+      } else {
+        erStatus = 'ok';
+        summary = `${currentEr}% ER — Covered in ${best.teamName}${via} (Req ~${best.reqEr}%; ${Math.abs(soloDelta)}% below solo Stygian / Theatre ~${soloEndgameReq}%).`;
+      }
     } else if (best.delta >= 0) {
       erStatus = 'ok';
       summary = `${currentEr}% ER — Comfortable in ${best.teamName}${via} (Req ~${best.reqEr}%).`;
@@ -1586,8 +1746,6 @@ export function buildKitProfile(charData, contextOverride = {}) {
   let fieldRole = contextOverride.forcedRole || roleInfo.fieldRole || 'Quickswap Support';
   if (contextOverride.flexMode && /critkomi/i.test(contextOverride.flexMode)) {
     fieldRole = 'On-Field Carry';
-  } else if (!contextOverride.forcedRole && roleInfo.hasInfusion && fieldRole === 'Quickswap Support') {
-    fieldRole = 'On-Field Carry';
   }
   const nativeElement = meta?.element || 'Physical';
   const damageElement = contextOverride.effectiveElement || nativeElement;
@@ -1786,7 +1944,7 @@ export const SIGNATURE_WEAPONS = {
   Odette: 'Whitelake Frostfeather',
   Skirk: 'Azurelight',
   Vesna: 'Beyond the Chrysalis',
-  Xilonen: 'Peak Patrol Song',
+  Xilonen: { support: 'Peak Patrol Song' },
   Zibai: 'Lightbearing Moonshard',
 
   // Claymore
@@ -1875,10 +2033,10 @@ export function getSignatureWeapon(charKey, roleOrMode = '') {
   if (typeof entry === 'string') return entry;
   const r = String(roleOrMode || '').toLowerCase();
   if (r === 'dps' || r === 'on-field carry' || r === 'on-field driver') {
-    return entry.dps || entry.support || '';
+    return entry.dps || '';
   }
   if (r === 'support' || r === 'quickswap support') {
-    return entry.support || entry.dps || '';
+    return entry.support || '';
   }
   return [entry.support, entry.dps].filter(Boolean).join(' / ');
 }
@@ -2015,7 +2173,7 @@ export function recommendWeapons(
         const normCrit = /crit\s*rate/i.test(substat) ? substatMag * 2 : substatMag;
         dpsCritPts += 28 + Math.round(normCrit * 0.15);
       }
-      if (mTags.has('elem_dmg')) dpsPrimaryPts += 14;
+      if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon)) dpsPrimaryPts += 14;
       if (profile.primaryStatKey === 'atk_') {
         const baseAtkPts = Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
         dpsPrimaryPts += baseAtkPts;
@@ -2038,14 +2196,8 @@ export function recommendWeapons(
       if (mTags.has('ca_penalty') && profile.primaryAttackType === 'charged') {
         dpsScore -= 35;
       }
-      const isDpsSignature = Boolean(
-        (profile.signatureDpsWeapon && cand.name === profile.signatureDpsWeapon) ||
-          (!profile.signatureDpsWeapon && profile.signatureWeapon && cand.name === profile.signatureWeapon)
-      );
-      const isSupSignature = Boolean(
-        (profile.signatureSupportWeapon && cand.name === profile.signatureSupportWeapon) ||
-          (!profile.signatureSupportWeapon && profile.signatureWeapon && cand.name === profile.signatureWeapon)
-      );
+      const isDpsSignature = Boolean(profile.signatureDpsWeapon && cand.name === profile.signatureDpsWeapon);
+      const isSupSignature = Boolean(profile.signatureSupportWeapon && cand.name === profile.signatureSupportWeapon);
       const isSignature = isDpsSignature || isSupSignature;
       if (isDpsSignature && !missingMechanic && !isHealerLocked) {
         dpsPrimaryPts += 20;
@@ -2160,17 +2312,25 @@ export function recommendWeapons(
     }
   }
 
-  const pickFourBuckets = (scoredList, { strictAccessible = true, labels = null } = {}) => {
+  const hasTeamSupportUtility =
+    isHealer ||
+    isShielder ||
+    tags.some((t) => /Buffer|RES Shred|DEF Shred|Crowd Control|Team IR|Energy Battery/i.test(t));
+  const isPureCarry = role === 'On-Field Carry' && !hasTeamSupportUtility;
+  const isPureSupportRole = role === 'Quickswap Support' && !tags.some((t) => /Sub-DPS/i.test(t));
+
+  const pickFourBuckets = (scoredList, { strictAccessible = true, labels = null, erLabel = 'ER / Comfort' } = {}) => {
     const usedKeys = new Set();
-    const pickTop = (list, tierLabel, factorProp) => {
+    const pickTop = (list, tierLabel, factorProp, forcedFactor = null) => {
       const found = list.find((w) => !usedKeys.has(w.key));
       if (!found) return null;
       usedKeys.add(found.key);
+      const factor = forcedFactor || found[factorProp];
       return {
         ...found,
         tierLabel,
-        winningFactor: found[factorProp],
-        reason: buildWeaponReason(found, found[factorProp])
+        winningFactor: factor,
+        reason: buildWeaponReason(found, factor)
       };
     };
 
@@ -2184,14 +2344,34 @@ export function recommendWeapons(
     );
     const bySup = [...scoredList].sort((a, b) => b.supportScore - a.supportScore || b.rarity - a.rarity || a.name.localeCompare(b.name));
     const bySupAcc = strictAccessible ? bySup.filter(isAccessible) : bySup;
+    const byErComfort = [...scoredList]
+      .filter((w) => (w.mechanicTags || []).includes('er_battery') || (w.mechanicTags || []).includes('skill_reset') || /energy\s*recharge/i.test(w.substat))
+      .sort((a, b) => (b.dpsScore + b.supportScore * 0.5) - (a.dpsScore + a.supportScore * 0.5) || b.rarity - a.rarity);
 
     const l = labels || ['BiS DPS', 'Accessible DPS', 'BiS Support', 'Accessible Support'];
     const bisDps = pickTop(byDps, l[0], 'dpsWinningFactor');
     const accDps = pickTop(byDpsAcc, l[1], 'dpsWinningFactor');
-    const bisSup = pickTop(bySup, l[2], 'supWinningFactor');
-    const accSup = pickTop(bySupAcc, l[3], 'supWinningFactor');
-    const ordered = isSupportRole ? [bisSup, accSup, bisDps, accDps] : [bisDps, accDps, bisSup, accSup];
-    return ordered.filter(Boolean);
+    const bisSup = isPureCarry ? null : pickTop(bySup, l[2], 'supWinningFactor');
+    const accSup = isPureCarry ? null : pickTop(bySupAcc, l[3], 'supWinningFactor');
+    const comfortEr = isPureCarry && burstCost >= 70 ? pickTop(byErComfort, erLabel, 'dpsWinningFactor', 'er_threshold') : null;
+
+    let visibleSlots;
+    if (isPureCarry) {
+      visibleSlots = [bisDps, accDps, comfortEr].filter(Boolean);
+    } else if (isPureSupportRole) {
+      visibleSlots = [bisSup, accSup].filter(Boolean);
+    } else {
+      visibleSlots = isSupportRole ? [bisSup, accSup, bisDps, accDps].filter(Boolean) : [bisDps, accDps, bisSup, accSup].filter(Boolean);
+    }
+
+    return Object.assign([...visibleSlots], {
+      visibleSlots,
+      bisDps,
+      accessibleDps: accDps,
+      bisSupport: bisSup,
+      accessibleSupport: accSup,
+      comfortEr
+    });
   };
 
   // 1. Best Overall: Pure kit science, ZERO Armory bonus, exclude event_limited & platform_exclusive
@@ -2210,7 +2390,10 @@ export function recommendWeapons(
     scoreList(armoryPool, { includeOwnedBonus: true, useTheoreticalRef: false }),
     {
       strictAccessible: false,
-      labels: ['Owned DPS #1', 'Owned DPS #2', 'Owned Support #1', 'Owned Support #2']
+      labels: isPureCarry
+        ? ['Best Owned DPS', 'Alt Owned DPS', 'Owned Utility #1', 'Owned Utility #2']
+        : ['Best Owned DPS', 'Alt Owned DPS', 'Best Owned Support', 'Alt Owned Support'],
+      erLabel: 'Best Owned ER Comfort'
     }
   );
 

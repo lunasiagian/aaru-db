@@ -23,17 +23,22 @@
       <div class="eyebrow">AARUDB / LOCAL VERIFICATION</div>
       <h1 class="section-title" style="margin: 4px 0 0;">Build Science Stress-Test Suite</h1>
     </div>
-    <button id="rerun-btn" class="btn-primary mono">Re-run Tests</button>
+    <div style="display:flex;gap:8px;">
+      <button id="fuzz-btn" class="btn-secondary mono">Roll 5 Random</button>
+      <button id="rerun-btn" class="btn-primary mono">Re-run All</button>
+    </div>
   </div>
   <div id="test-summary" class="test-summary mono">Running tests...</div>
   <div id="test-list" class="test-list"></div>
 
   <script type="module">
-    import { runBuildScienceTests } from './tests/build-science.test.js';
+    import { runBuildScienceTests, runRandomFuzzTests } from './tests/build-science.test.js';
 
     const summaryEl = document.getElementById('test-summary');
     const listEl = document.getElementById('test-list');
     const rerunBtn = document.getElementById('rerun-btn');
+    const fuzzBtn = document.getElementById('fuzz-btn');
+    let fixedRowsCache = [];
 
     function render(rows) {
       const passed = rows.filter((r) => r.ok).length;
@@ -55,13 +60,26 @@
 
     async function run() {
       rerunBtn.disabled = true;
+      fuzzBtn.disabled = true;
       summaryEl.textContent = 'Hydrating character kits & running assertions...';
       const finalRows = await runBuildScienceTests(render);
+      fixedRowsCache = finalRows.filter((r) => !r.name.startsWith('[Fuzz]'));
       render(finalRows);
       rerunBtn.disabled = false;
+      fuzzBtn.disabled = false;
+    }
+
+    async function rollFuzz() {
+      rerunBtn.disabled = true;
+      fuzzBtn.disabled = true;
+      const fuzzRows = await runRandomFuzzTests(5, (partial) => render([...fixedRowsCache, ...partial]));
+      render([...fixedRowsCache, ...fuzzRows]);
+      rerunBtn.disabled = false;
+      fuzzBtn.disabled = false;
     }
 
     rerunBtn.addEventListener('click', run);
+    fuzzBtn.addEventListener('click', rollFuzz);
     run();
   </script>
 </body>

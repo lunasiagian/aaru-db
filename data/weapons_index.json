@@ -1745,7 +1745,7 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -1850,7 +1850,7 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "atk_buff"
@@ -2165,7 +2165,7 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
 
                                          ],
@@ -2182,7 +2182,7 @@
                         "baseAtk":  510,
                         "substat":  "CRIT DMG",
                         "substatValue":  "55.1%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "em_scale"
                                          ],
@@ -2795,7 +2795,7 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
 
                                          ],
@@ -3346,7 +3346,7 @@
                         "baseAtk":  510,
                         "substat":  "Energy Recharge",
                         "substatValue":  "45.9%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
                                              "er_battery"
                                          ],
@@ -3541,7 +3541,7 @@
                         "baseAtk":  620,
                         "substat":  "CRIT Rate",
                         "substatValue":  "9.2%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "er_battery",
                                              "atk_buff"
@@ -3887,7 +3887,7 @@
                         "baseAtk":  510,
                         "substat":  "CRIT Rate",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "bp",
                         "mechanicTags":  [
 
                                          ],
@@ -3955,7 +3955,7 @@
                         "baseAtk":  565,
                         "substat":  "ATK%",
                         "substatValue":  "27.6%",
-                        "acquisition":  "gacha_4",
+                        "acquisition":  "limited_4",
                         "mechanicTags":  [
                                              "burst_dmg"
                                          ],

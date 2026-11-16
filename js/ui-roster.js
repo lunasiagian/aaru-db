@@ -14,6 +14,7 @@ import {
   calcTalentUpgradeDiff,
   computeCharacterCombatStats,
   computeEffectiveTalents,
+  computeSubstatWeights,
   evaluateCharacterBuild,
   evaluateErComfort,
   evaluateTeamCapabilities,
@@ -210,6 +211,7 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
   const sortedArtifacts = [...(c.equippedArtifacts || [])].sort(
     (a, b) => (SLOT_ORDER[a.slotKey] ?? 9) - (SLOT_ORDER[b.slotKey] ?? 9)
   );
+  const substatWeights = computeSubstatWeights(kitAnalysis, c.equippedWeapon?.key || '', sortedArtifacts);
   const setCounts = new Map();
   for (const a of sortedArtifacts) {
     if (a.setKey) setCounts.set(a.setKey, (setCounts.get(a.setKey) || 0) + 1);
@@ -279,8 +281,9 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
                       <div class="dossier-substats-list mono">
                         ${(a.substats || [])
                           .map((sub) => {
-                            const isUseful = usefulSet.has(sub.key);
-                            return `<span class="substat-chip ${isUseful ? 'is-useful' : 'is-dead'}">${escapeHtml(formatSubstatValue(sub))}</span>`;
+                            const w = substatWeights[sub.key] ?? (usefulSet.has(sub.key) ? 1.0 : 0.0);
+                            const tierCls = w >= 1.0 ? 'is-useful' : w > 0 ? 'is-secondary' : 'is-dead';
+                            return `<span class="substat-chip ${tierCls}">${escapeHtml(formatSubstatValue(sub))}</span>`;
                           })
                           .join('')}
                       </div>
@@ -605,8 +608,8 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       erReport
     }
   );
-  const recWeapons = evalRes.weapons.bestOverall;
-  const armoryWeapons = evalRes.weapons.inArmory;
+  const recWeapons = evalRes.weapons.bestOverall.visibleSlots || evalRes.weapons.bestOverall;
+  const armoryWeapons = evalRes.weapons.inArmory.visibleSlots || evalRes.weapons.inArmory;
 
   const renderWeaponCardList = (list, emptyMsg) => {
     if (!list.length) {
@@ -942,15 +945,27 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
 
             <div class="dossier-grade-block">
               <div class="dossier-grade-head mono">
-                <span>BUILD EFFICIENCY (RV%)</span>
-                <span class="text-mint">${combat.rvPct}% (${combat.usefulRolls} / 38 useful rolls)</span>
+                <span>BUILD EFFICIENCY (wRV%)</span>
+                <span class="${combat.wrvPct >= 70 ? 'text-mint' : combat.wrvPct >= 45 ? 'text-gold' : 'text-coral'}">${escapeHtml(combat.wrvGrade)} · ${combat.wrvPct}% (${combat.weightedRolls} / ${combat.wRvBenchmark})</span>
               </div>
-              <div class="progress-track"><div class="progress-fill mint" style="width:${Math.min(100, Math.max(0, Number(combat.rvPct) || 0))}%"></div></div>
+              <div class="battery-track">
+                <div class="battery-fill ${combat.wrvPct >= 70 ? 'mint' : combat.wrvPct >= 45 ? 'gold' : 'coral'}" style="width:${Math.min(100, Math.max(0, Number(combat.wrvPct) || 0))}%"></div>
+              </div>
+              <div class="dossier-cv-row mono">
+                <span>Primary vs. Utility Rolls</span>
+                <span class="muted">${combat.primaryRolls} primary · ${combat.secondaryRolls} utility</span>
+              </div>
               ${
                 !kitAnalysis.isNonCrit
                   ? `<div class="dossier-cv-row mono"><span>Substat Crit Value</span><span class="text-sky">${combat.subCv.toFixed(1)} CV</span></div>`
                   : ''
               }
+              ${(combat.diagnostics || [])
+                .map(
+                  (d) =>
+                    `<div class="dossier-diag-alert is-${d.tone} mono">${escapeHtml(d.message)}</div>`
+                )
+                .join('')}
               ${kitAnalysis.statCaps
                 .map((cap) => {
                   const cur = Number(combat[cap.statKey]) || 0;
@@ -1022,9 +1037,9 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   : ''
               }
               ${
-                erReport.hasEndgameFlag
+                erReport.hasEndgameFlag || erReport.soloDelta < 0
                   ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
-                      <span>Solo Stygian / Theatre (~${erReport.soloEndgameReq}%)</span>
+                      <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
                       <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
                     </div>`
                   : ''

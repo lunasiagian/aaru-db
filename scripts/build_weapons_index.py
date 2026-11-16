@@ -187,8 +187,12 @@ def compute_lv90_stats(detail: dict, curve_data: dict) -> tuple[int, str, str]:
 
 
 BP_KEYS = {
+    # Series 1
     "SerpentSpine", "Deathmatch", "TheBlackSword", "SolarPearl", "TheViridescentHunt",
+    # Series 2
     "WolfFang", "BalladOfTheFjords", "SacrificialJade", "TalkingStick", "ScionOfTheBlazingSun",
+    # Series 3
+    "HereticsMoltenBlade", "ForgedByTheGoldenMelody", "Frostbreath", "ClashOfKings", "JadeVista",
 }
 
 EVENT_LIMITED_KEYS = {
@@ -222,6 +226,7 @@ LIMITED_4_KEYS = {
     "MouunsMoon", "Akuoumaru", "LithicBlade", "LithicSpear", "FlowerWreathedFeathers",
     "WaveridingWhirl", "FruitfulHook", "MountainBracingBolt", "SturdyBone",
     "MitternachtsWaltz", "AlleyHunter", "TheAlleyFlash", "WineAndSong",
+    "MoonweaversDawn", "SacrificersStaff", "DawningFrost", "RainbowSerpentsRainBow",
 }
 
 

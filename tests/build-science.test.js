@@ -1,13 +1,18 @@
 import {
   ensureCharacterKitAndStats,
+  getAllCharacterKeys,
   getCharacterKit,
   getWeaponsIndex,
   loadCatalog
 } from '../js/catalog.js?v=20261115ag';
 import {
+  analyzeCharacterKit,
   buildKitProfile,
+  computeSubstatWeights,
   deriveTalentPriority,
   evaluateBuild,
+  evaluateBuildDiagnostics,
+  evaluateErComfort,
   recommendWeapons,
   resolveMemberTeamRole
 } from '../js/build-science.js?v=20261115ah';
@@ -59,13 +64,14 @@ export async function runBuildScienceTests(onProgress = () => {}) {
   await Promise.all(TEST_KEYS.map((k) => ensureCharacterKitAndStats(k).catch(() => null)));
 
   const verifyFourUniqueBuckets = (profile, recs) => {
-    assert(recs.length === 4, `Expected 4 weapon buckets, got ${recs.length}`);
-    assert(!recs.some((w) => w.acquisition === 'event_limited'), `event_limited weapon leaked into bestOverall: ${recs.map((w) => w.name).join(', ')}`);
-    const keys = new Set(recs.map((w) => w.key));
-    assert(keys.size === 4, `Duplicate weapon keys in recommendations: ${recs.map((w) => w.key).join(', ')}`);
-    const tiers = new Set(recs.map((w) => w.tierLabel));
-    assert(tiers.size === 4, `Duplicate tier labels: ${recs.map((w) => w.tierLabel).join(', ')}`);
-    return `${profile.fieldRole} · [${profile.scalingStats.join(', ')}] · ${recs.map((w) => `${w.tierLabel}: ${w.name}`).join(' | ')}`;
+    const slots = recs.visibleSlots || recs;
+    assert(slots.length >= 2 && slots.length <= 4, `Expected 2-4 weapon slots, got ${slots.length}`);
+    assert(!slots.some((w) => w.acquisition === 'event_limited'), `event_limited weapon leaked into bestOverall: ${slots.map((w) => w.name).join(', ')}`);
+    const keys = new Set(slots.map((w) => w.key));
+    assert(keys.size === slots.length, `Duplicate weapon keys in recommendations: ${slots.map((w) => w.key).join(', ')}`);
+    const tiers = new Set(slots.map((w) => w.tierLabel));
+    assert(tiers.size === slots.length, `Duplicate tier labels: ${slots.map((w) => w.tierLabel).join(', ')}`);
+    return `${profile.fieldRole} · [${profile.scalingStats.join(', ')}] · ${slots.map((w) => `${w.tierLabel}: ${w.name}`).join(' | ')}`;
   };
 
   await runCase('Zhongli: Shielder + HP A4 conversion + 40-cost ER gate', async () => {
@@ -77,9 +83,9 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     assert(profile.scalingStats.includes('HP'), `Expected HP in scalingStats, got ${profile.scalingStats.join(', ')}`);
     assert(profile.burstCost === 40, `Expected 40-cost burst, got ${profile.burstCost}`);
     const { bestOverall: recs } = recommendWeapons(profile, weaponsIndex, []);
-    const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
-    const accSup = recs.find((w) => w.tierLabel === 'Accessible Support');
-    const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
+    const bisDps = recs.bisDps || recs.find((w) => w.tierLabel === 'BiS DPS');
+    const accSup = recs.accessibleSupport || recs.find((w) => w.tierLabel === 'Accessible Support');
+    const bisSup = recs.bisSupport || recs.find((w) => w.tierLabel === 'BiS Support');
     assert(bisDps?.name === 'Staff of Homa', `Expected BiS DPS Staff of Homa, got ${bisDps?.name}`);
     assert(bisSup?.name !== 'Fractured Halo', `BiS Support should not be Lunar-locked Fractured Halo`);
     assert(
@@ -133,8 +139,15 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     assert(profile.scalingStats.includes('EM'), `Expected EM in scalingStats, got ${profile.scalingStats.join(', ')}`);
     const armory = [{ key: 'LightOfFoliarIncision', level: 90, refinement: 1, location: 'Clorinde' }];
     const { bestOverall: recs, inArmory } = recommendWeapons(profile, weaponsIndex, armory);
-    const lofi = recs.find((w) => w.key === 'LightOfFoliarIncision');
-    assert(lofi && lofi.ownedMatch, 'Light of Foliar Incision missing or not marked owned in bestOverall');
+    const visible = recs.visibleSlots || recs;
+    assert(
+      !visible.some((w) => /Support/i.test(w.tierLabel)),
+      `Pure On-Field Carry Alhaitham should not show Support tags: ${visible.map((w) => w.tierLabel).join(', ')}`
+    );
+    const lofi = visible.find((w) => w.key === 'LightOfFoliarIncision');
+    assert(lofi && lofi.tierLabel === 'BiS DPS' && lofi.isSignature && lofi.ownedMatch, 'Light of Foliar Incision missing as BiS DPS Signature');
+    assert(visible.some((w) => w.tierLabel === 'Accessible DPS'), 'Missing Accessible DPS in Alhaitham visibleSlots');
+    assert(visible.some((w) => w.tierLabel === 'ER / Comfort'), 'Missing ER / Comfort in 70-cost Alhaitham visibleSlots');
     assert(inArmory.some((w) => w.key === 'LightOfFoliarIncision'), 'Light of Foliar Incision missing from inArmory');
     return verifyFourUniqueBuckets(profile, recs);
   });
@@ -145,8 +158,8 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const profile = buildKitProfile({ key: 'Xingqiu', kitData: kit });
     assert(profile.fieldRole === 'Off-Field Sub-DPS', `Expected Off-Field Sub-DPS, got ${profile.fieldRole}`);
     const { bestOverall: recs } = recommendWeapons(profile, weaponsIndex, []);
-    const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
-    const bisDps = recs.find((w) => w.tierLabel === 'BiS DPS');
+    const bisSup = recs.bisSupport || recs.find((w) => w.tierLabel === 'BiS Support');
+    const bisDps = recs.bisDps || recs.find((w) => w.tierLabel === 'BiS DPS');
     assert(bisSup?.name === 'Sacrificial Sword', `Expected BiS Support Sacrificial Sword, got ${bisSup?.name}`);
     assert(
       bisDps?.name === 'Mistsplitter Reforged' || bisDps?.name === 'Primordial Jade Cutter',
@@ -166,7 +179,10 @@ export async function runBuildScienceTests(onProgress = () => {}) {
       { forcedRole: 'On-Field Carry' }
     );
     assert(forcedEval.profile.fieldRole === 'On-Field Carry', 'forcedRole override failed');
-    assert(Array.isArray(forcedEval.weapons?.bestOverall) && forcedEval.weapons.bestOverall.length === 4, 'evaluateBuild forcedRole missing weapons.bestOverall');
+    assert(
+      Array.isArray(forcedEval.weapons?.bestOverall) && forcedEval.weapons.bestOverall.length >= 2,
+      'evaluateBuild forcedRole missing weapons.bestOverall'
+    );
     const { bestOverall: recs } = recommendWeapons(defProfile, weaponsIndex, []);
     return verifyFourUniqueBuckets(defProfile, recs);
   });
@@ -177,11 +193,15 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const phecTeam = [{ characterKey: 'Neuvillette' }, { characterKey: 'Furina' }, { characterKey: 'Xilonen' }];
     const geoTeam = [{ characterKey: 'Navia' }, { characterKey: 'Zhongli' }, { characterKey: 'Xilonen' }];
     assert(resolveMemberTeamRole('Xilonen', kit, 0, phecTeam) === 'Quickswap Support', 'Expected Quickswap Support in >= 2 PHEC');
-    assert(resolveMemberTeamRole('Xilonen', kit, 0, geoTeam) === 'On-Field Carry', 'Expected On-Field Carry in < 2 PHEC');
+    const geoRole = resolveMemberTeamRole('Xilonen', kit, 0, geoTeam);
+    assert(geoRole === 'On-Field Carry', 'Expected On-Field Carry in < 2 PHEC');
+    const geoEval = evaluateBuild({ key: 'Xilonen', kitData: kit }, { forcedRole: geoRole });
+    assert(geoEval.profile.fieldRole === 'On-Field Carry', 'Expected Xilonen geoEval fieldRole On-Field Carry');
+    assert(geoEval.weapons.bestOverall.bisDps, 'Expected bisDps for Xilonen < 2 PHEC On-Field Carry');
     const profile = buildKitProfile({ key: 'Xilonen', kitData: kit });
     const { bestOverall: recs } = recommendWeapons(profile, weaponsIndex, []);
-    const bisSup = recs.find((w) => w.tierLabel === 'BiS Support');
-    const accSup = recs.find((w) => w.tierLabel === 'Accessible Support');
+    const bisSup = recs.bisSupport || recs.find((w) => w.tierLabel === 'BiS Support');
+    const accSup = recs.accessibleSupport || recs.find((w) => w.tierLabel === 'Accessible Support');
     assert(bisSup?.name === 'Peak Patrol Song', `Expected BiS Support Peak Patrol Song for Xilonen, got ${bisSup?.name}`);
     assert(
       accSup?.name === 'Favonius Sword' || accSup?.name === 'Flute of Ezpitzal',
@@ -230,8 +250,8 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const dehya = buildKitProfile({ key: 'Dehya', kitData: dehyaKit });
     const { bestOverall: beidouRecs } = recommendWeapons(beidou, weaponsIndex, []);
     const { bestOverall: dehyaRecs } = recommendWeapons(dehya, weaponsIndex, []);
-    const beidouBis = beidouRecs.find((w) => w.tierLabel === 'BiS DPS');
-    const dehyaBis = dehyaRecs.find((w) => w.tierLabel === 'BiS DPS');
+    const beidouBis = beidouRecs.bisDps || beidouRecs.find((w) => w.tierLabel === 'BiS DPS');
+    const dehyaBis = dehyaRecs.bisDps || dehyaRecs.find((w) => w.tierLabel === 'BiS DPS');
     assert(beidouBis?.name !== 'A Teaspoon of Transcendence', `CA-locked Teaspoon leaked onto Beidou BiS DPS`);
     assert(dehyaBis?.name === 'Beacon of the Reed Sea', `Expected Beacon of the Reed Sea for Dehya BiS DPS, got ${dehyaBis?.name}`);
     return `Beidou BiS: ${beidouBis?.name} | Dehya BiS: ${dehyaBis?.name}`;
@@ -245,12 +265,17 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     if (durinKit) {
       const dp = buildKitProfile({ key: 'Durin', kitData: durinKit });
       const { bestOverall: dRecs } = recommendWeapons(dp, weaponsIndex, []);
+      const dAccDps = dRecs.accessibleDps || dRecs.find((w) => w.tierLabel === 'Accessible DPS');
+      assert(
+        dAccDps?.name !== "Heretic's Molten Blade",
+        `Paywalled BP sword Heretic's Molten Blade leaked into Durin Accessible DPS`
+      );
       out.push(`Durin: ${verifyFourUniqueBuckets(dp, dRecs)}`);
     }
     if (vodKit) {
       const vp = buildKitProfile({ key: 'Vodyanitsa', kitData: vodKit });
       const { bestOverall: vRecs } = recommendWeapons(vp, weaponsIndex, []);
-      const vBisDps = vRecs.find((w) => w.tierLabel === 'BiS DPS');
+      const vBisDps = vRecs.bisDps || vRecs.find((w) => w.tierLabel === 'BiS DPS');
       assert(
         vBisDps?.rarity === 5 && vBisDps?.name !== 'Solar Pearl',
         `Expected 5★ BiS DPS over Solar Pearl for Vodyanitsa, got ${vBisDps?.name}`
@@ -260,5 +285,105 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     return out.join(' || ');
   });
 
-  return results;
+  await runCase('wRV%: Non-Crit Kokomi assigns 0.0 to CRIT and 1.0 to HP%/ER%', async () => {
+    const kit = getCharacterKit('SangonomiyaKokomi');
+    assert(kit, 'Kokomi kit failed to load');
+    const analysis = analyzeCharacterKit('SangonomiyaKokomi', kit);
+    const weights = computeSubstatWeights(analysis, 'PrototypeAmber', []);
+    assert(weights.critRate_ === 0 && weights.critDMG_ === 0, `Expected 0.0 CRIT weights, got CR=${weights.critRate_}, CD=${weights.critDMG_}`);
+    assert(weights.hp_ === 1.0 && weights.enerRech_ === 1.0, `Expected 1.0 HP%/ER% weights, got HP%=${weights.hp_}, ER%=${weights.enerRech_}`);
+    return `CR=${weights.critRate_}, CD=${weights.critDMG_}, HP%=${weights.hp_}, ER%=${weights.enerRech_}`;
+  });
+
+  await runCase('Diagnostics: 4pc Marechaussee Hunter 72% sheet CR triggers crit-overcap (108%)', async () => {
+    const artifacts = [
+      { setKey: 'MarechausseeHunter' },
+      { setKey: 'MarechausseeHunter' },
+      { setKey: 'MarechausseeHunter' },
+      { setKey: 'MarechausseeHunter' }
+    ];
+    const diags = evaluateBuildDiagnostics({ critRate: 72 }, artifacts, { isNonCrit: false });
+    const over = diags.find((d) => d.id === 'crit-overcap');
+    assert(over && over.effectiveCr === 108 && over.tone === 'coral', `Expected crit-overcap at 108% (coral), got ${JSON.stringify(diags)}`);
+    return over.message;
+  });
+
+  await runCase('ER Diagnostics: Team battery covers Abyss while flagging solo Stygian/Theatre shortfall', async () => {
+    const kit = getCharacterKit('Xingqiu');
+    const profile = buildKitProfile({ key: 'Xingqiu', kitData: kit });
+    const teams = [
+      {
+        id: 't1',
+        name: 'Double Hydro',
+        members: [{ characterKey: 'Xingqiu' }, { characterKey: 'Yelan', weaponKey: 'FavoniusWarbow' }]
+      }
+    ];
+    const erReport = evaluateErComfort(
+      { key: 'Xingqiu', meta: { element: 'Hydro' }, notes: 'Stygian Onslaught' },
+      { er: 175 },
+      teams,
+      [],
+      kit,
+      profile.analysis
+    );
+    assert(erReport.erStatus === 'warn' && erReport.soloDelta < 0, `Expected warn & negative soloDelta, got ${JSON.stringify(erReport)}`);
+    assert(/Stygian\s*\/\s*Theatre/i.test(erReport.summary), `Expected Stygian/Theatre shortfall in summary: ${erReport.summary}`);
+    return erReport.summary;
+  });
+
+  const fuzzRows = await runRandomFuzzTests(5, (partialFuzz) => onProgress([...results, ...partialFuzz]));
+  return [...results, ...fuzzRows];
+}
+
+export async function runRandomFuzzTests(count = 5, onProgress = () => {}) {
+  await loadCatalog();
+  const weaponsIndex = getWeaponsIndex();
+  const fixedSet = new Set(TEST_KEYS.map((k) => k.toLowerCase()));
+  const pool = getAllCharacterKeys().filter(
+    (k) => !fixedSet.has(k.toLowerCase()) && !/^(traveler|manekin|aloy)/i.test(k)
+  );
+  const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+  await Promise.all(picked.map((k) => ensureCharacterKitAndStats(k).catch(() => null)));
+
+  const fuzzResults = [];
+  for (const k of picked) {
+    const t0 = performance.now();
+    try {
+      const kitData = getCharacterKit(k);
+      assert(kitData, `Kit failed to load for ${k}`);
+      const res = evaluateBuild({ key: k, kitData });
+      const { profile, talentPriority, weapons } = res;
+      const recs = weapons?.bestOverall?.visibleSlots || weapons?.bestOverall || [];
+      assert(recs.length >= 2 && recs.length <= 4, `Expected 2-4 weapon slots, got ${recs.length}`);
+      assert(new Set(recs.map((w) => w.key)).size === recs.length, `Duplicate weapon keys: ${recs.map((w) => w.name).join(', ')}`);
+      assert(
+        !recs.some((w) => w.acquisition === 'event_limited' || w.acquisition === 'platform_exclusive'),
+        `Unobtainable weapon in bestOverall: ${recs.map((w) => w.name).join(', ')}`
+      );
+      for (const acc of recs.filter((w) => w.tierLabel.startsWith('Accessible'))) {
+        assert(
+          acc.acquisition === 'f2p_craft_fish' || acc.acquisition === 'gacha_4',
+          `Non-accessible weapon ${acc.name} (${acc.acquisition}) in ${acc.tierLabel}`
+        );
+      }
+      if (profile.burstCost <= 40) {
+        assert(!recs.some((w) => /40-cost Burst ER/i.test(w.reason || '')), 'Lying 40-cost ER blurb');
+      }
+      fuzzResults.push({
+        name: `[Fuzz] ${profile.name}`,
+        ok: true,
+        ms: Math.round(performance.now() - t0),
+        detail: `${profile.fieldRole} · [${profile.scalingStats.join(', ')}] · ${talentPriority.orderText} · ${recs.map((w) => `${w.tierLabel}: ${w.name}`).join(' | ')}`
+      });
+    } catch (err) {
+      fuzzResults.push({
+        name: `[Fuzz] ${k}`,
+        ok: false,
+        ms: Math.round(performance.now() - t0),
+        detail: err.message
+      });
+    }
+    onProgress([...fuzzResults]);
+  }
+  return fuzzResults;
 }
