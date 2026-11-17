@@ -422,7 +422,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     (hasPartyHeal || functionTags.some((t) => /EM Buffer|Crowd Control|Reaction Enabler/.test(t))) &&
     !hasChargedCarryFocus;
 
-  let fieldRole = 'Quickswap Support';
+  const hasCritAscension = /crit/i.test(meta?.ascensionStat || kitData?.ascensionStat || '');
+  let fieldRole = 'On-Field Carry';
   if (isNightsoulSamplerSupport && hasPartyHeal) {
     // e.g. Xilonen in >=2 PHEC teams, Jean, Xianyun: quick-tap support even if NA/Plunge has elemental hits
     fieldRole = 'Quickswap Support';
@@ -432,9 +433,12 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     fieldRole = 'Off-Field Sub-DPS';
   } else if (isDriverArchetype && usesNormalAttack) {
     fieldRole = 'On-Field Driver';
-  } else if (functionTags.length > 0 || hasPartyHeal || hasShield) {
+  } else if (
+    (functionTags.length > 0 || hasPartyHeal || hasShield) &&
+    !(hasCritAscension && !hasPartyHeal && !hasShield && !functionTags.some((t) => /Buffer|RES Shred/i.test(t)))
+  ) {
     fieldRole = 'Quickswap Support';
-  } else if (hasInfusion || usesNormalAttack || (weaponType === 'Catalyst' && !hasOffField)) {
+  } else {
     fieldRole = 'On-Field Carry';
   }
 
@@ -478,6 +482,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
         condition: 'Off-meta on-field DPS / driver build'
       });
     }
+  } else if (normChar === 'sandrone') {
+    fieldRole = 'On-Field Carry';
   } else if (normChar === 'ganyu') {
     fieldRole = 'On-Field Carry';
     flexModes.push(
@@ -551,8 +557,17 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     /(?:dmg|damage|shield|heal|healing|bonus)[^.]{0,45}(?:of|based\s+on)\s+(?:her|his|their|\w+'s)?\s*max\s*hp/i.test(
       fullText
     );
-  const defHits = (fullText.match(/\bdef\b/gi) || []).length;
-  const emHits = (fullText.match(/\belemental\s+mastery\b/gi) || []).length;
+  const cleanFullText = stripMarkup(fullText);
+  const defHits = (cleanFullText.match(/\bdef\b/gi) || []).length;
+  const emHits = (cleanFullText.match(/\belemental\s+mastery\b/gi) || []).length;
+  const hasDefToAtkConv =
+    /atk\s+bonus[^.]{0,60}\bdef\b|converts?[^.]{0,60}\bdef\b[^.]{0,60}\batk\b|increases?[^.]{0,40}\batk\b[^.]{0,60}based\s+on[^.]{0,30}\bdef\b/i.test(
+      cleanFullText
+    );
+  const hasHpToAtkConv =
+    /atk\s+bonus[^.]{0,60}max\s*hp|converts?[^.]{0,60}hp[^.]{0,60}\batk\b|increases?[^.]{0,40}\batk\b[^.]{0,60}based\s+on[^.]{0,30}max\s*hp/i.test(
+      cleanFullText
+    );
 
   let primaryScaling = 'ATK';
   let usefulSubstats = ['atk_', 'critRate_', 'critDMG_', 'enerRech_'];
@@ -560,10 +575,10 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
   if (isNonCrit) {
     primaryScaling = hpHits >= 2 && hasHpScaling ? 'HP (Non-Crit)' : 'ATK (Non-Crit)';
     usefulSubstats = hpHits >= 2 && hasHpScaling ? ['hp_', 'enerRech_', 'hp', 'eleMas'] : ['atk_', 'enerRech_', 'atk', 'eleMas'];
-  } else if (defHits >= 3 && defHits >= hpHits) {
+  } else if (hasDefToAtkConv || (defHits >= 3 && defHits >= hpHits)) {
     primaryScaling = 'DEF';
     usefulSubstats = ['def_', 'critRate_', 'critDMG_', 'enerRech_'];
-  } else if (hpHits >= 3 && hasHpScaling) {
+  } else if (hasHpToAtkConv || (hpHits >= 3 && hasHpScaling)) {
     primaryScaling = 'HP';
     usefulSubstats = ['hp_', 'critRate_', 'critDMG_', 'enerRech_'];
   } else if (emHits >= 3 && !/normal attack dmg/i.test(labelText)) {
@@ -811,15 +826,24 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   let defHits = 0;
   let emHits = 0;
   let atkHits = 0;
+  let skillBurstAtkHits = 0;
+  let hpCoreMultHits = 0;
   let erHits = 0;
 
   for (const m of multEntries) {
     const combined = `${m.label} ${m.sample}`;
     if (/\binherited\s+hp\b|\bendurance\b/i.test(m.label)) continue;
-    if (/\b(?:max\s*)?hp\b/i.test(combined)) hpHits += m.kind === 'normal' ? 1 : 2;
-    else if (/\bdef\b/i.test(combined)) defHits += m.kind === 'normal' ? 1 : 2;
-    else if (/\belemental\s+mastery\b|\bem\b/i.test(combined)) emHits += 2;
-    else if (/%/.test(m.sample) && !/duration|cd|cooldown|cost|stamina/i.test(m.label)) atkHits += 1;
+    if (/\b(?:max\s*)?hp\b/i.test(combined)) {
+      hpHits += m.kind === 'normal' ? 1 : 2;
+      if (m.kind !== 'normal' || /equitable\s+judgment/i.test(m.label)) hpCoreMultHits += 1;
+    } else if (/\bdef\b/i.test(combined)) {
+      defHits += m.kind === 'normal' ? 1 : 2;
+    } else if (/\belemental\s+mastery\b|\bem\b/i.test(combined)) {
+      emHits += 2;
+    } else if (/%/.test(m.sample) && !/duration|cd|cooldown|cost|stamina/i.test(m.label)) {
+      atkHits += 1;
+      if (m.kind !== 'normal') skillBurstAtkHits += 1;
+    }
   }
 
   const hpScaleText = `${passiveText}\n${talentDescText}`.replace(
@@ -895,7 +919,7 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
     .split(/(?<=[.!?\n])\s+|\n+/);
   const conversionStats = [];
   const ADDITIVE_CONV_RE =
-    /(?:dmg|damage|attack|skill|burst|heal|shield|absorption|bonus)[^.]{0,90}(?:increased\s+by|based\s+on|equal\s+to|of)\s+(?:[\d.]+%\s+of\s+)?(?:[A-Za-z'’]+\s+|her\s+|his\s+|their\s+)?(max\s*hp|\bdef\b|elemental\s+mastery)/i;
+    /(?:dmg|damage|attack|atk|skill|burst|heal|shield|absorption|bonus)[^.]{0,90}(?:increased\s+by|based\s+on|equal\s+to|of)\s+(?:[\d.]+%\s+of\s+)?(?:[A-Za-z'’]+\s+|her\s+|his\s+|their\s+)?(max\s*hp|\bdef\b|elemental\s+mastery)/i;
   for (const s of conversionSentences) {
     const m = s.match(ADDITIVE_CONV_RE);
     if (!m) continue;
@@ -907,13 +931,31 @@ export function extractKitScaling(charKey, kitData, kitAnalysis = null) {
   const primaryShort =
     primaryStatKey === 'hp_' ? 'HP' : primaryStatKey === 'def_' ? 'DEF' : primaryStatKey === 'eleMas' ? 'EM' : primaryStatKey === 'enerRech_' ? 'ER' : 'ATK';
   const scalingStats = [...new Set([primaryShort, ...conversionStats])];
+  const hasStatToAtkConversion =
+    /atk\s+bonus[^.]{0,60}(?:max\s*hp|\bdef\b)|converts?[^.]{0,60}(?:hp|\bdef\b)[^.]{0,60}\batk\b|increases?[^.]{0,40}\batk\b[^.]{0,60}based\s+on[^.]{0,30}(?:max\s*hp|\bdef\b)/i.test(
+      fullText
+    );
+  const isPureHpCore = primaryShort === 'HP' && !hasStatToAtkConversion && hpCoreMultHits >= 2;
+  const isSplitAtkScaler =
+    !isPureHpCore &&
+    (((primaryShort === 'HP' || primaryShort === 'DEF') && (hasStatToAtkConversion || skillBurstAtkHits >= 3)) ||
+      (primaryShort === 'ATK' && (conversionStats.includes('HP') || conversionStats.includes('DEF'))));
+
+  const ascMeta = getCharacterMeta(charKey);
+  const hasCritAscension = /crit/i.test(kitData?.ascensionStat || ascMeta?.ascensionStat || '');
+  const finalScalingStats = [...scalingStats];
+  if (!finalScalingStats.length) finalScalingStats.push('ATK');
+  if (hasCritAscension && !finalScalingStats.includes('CRIT')) {
+    finalScalingStats.push('CRIT');
+  }
 
   return {
     primaryStatKey,
     primaryLabel,
     primaryDisplay,
-    scalingStats,
+    scalingStats: finalScalingStats,
     conversionStats,
+    isSplitAtkScaler,
     damageSources,
     secondaryStats: [...new Set(secondaryStats)],
     isNonCrit,
@@ -1076,6 +1118,7 @@ export function buildKitProfile(charData, contextOverride = {}) {
 
   const analysis = analyzeCharacterKit(charKey, kitData, talentLevels, constellation);
   const scaling = extractKitScaling(charKey, kitData, analysis);
+  analysis.isSplitAtkScaler = Boolean(scaling.isSplitAtkScaler);
   const roleInfo = analysis.roleInfo || {};
 
   const talents = kitData?.talents || [];
@@ -1455,7 +1498,7 @@ export function deriveCharacterArchetypes(char, kitProfile = null) {
     } else if (isShielder) {
       push('Sustain · Shielder');
     } else {
-      push('Buffer / Enabler');
+      push('On-Field Carry');
     }
   }
 
@@ -1469,5 +1512,32 @@ export function deriveCharacterArchetypes(char, kitProfile = null) {
     else if (id === 'Quickswap Support') push('Buffer / Enabler');
   }
 
-  return out.length ? out : ['Buffer / Enabler'];
+  return out.length ? out : ['On-Field Carry'];
+}
+
+/**
+ * Determines whether Elemental Mastery is a useful secondary utility stat (0.4 wRV / +14 weapon pts)
+ * for kits that do not already scale primarily with EM.
+ */
+export function isUsefulSecondaryEm(profileOrAnalysis) {
+  if (!profileOrAnalysis) return false;
+  const charKey = profileOrAnalysis.charKey || '';
+  const normKey = String(charKey).replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const elem =
+    profileOrAnalysis.nativeElement ||
+    profileOrAnalysis.damageElement ||
+    getCharacterMeta(charKey)?.element ||
+    '';
+
+  if (elem === 'Geo' || elem === 'Physical' || !elem) return false;
+  if (elem === 'Electro' || elem === 'Dendro') return true;
+  if (elem === 'Hydro' || elem === 'Pyro' || elem === 'Cryo') {
+    return profileOrAnalysis.archetypeLock !== 'Freeze-Core';
+  }
+  if (elem === 'Anemo') {
+    // Pure raw-Anemo hypercarries (e.g. Xiao) do not value EM; Swirl/hybrid Anemo units do
+    if (normKey === 'xiao') return false;
+    return true;
+  }
+  return false;
 }

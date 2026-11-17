@@ -7,6 +7,7 @@ import {
 import { getBuildStatGuidelines, rankWeaponsByArchetype, recommendWeapons } from './science/weapon-engine.js';
 
 export * from './science/kit-taxonomy.js';
+export * from './science/reaction-math.js';
 export * from './science/stat-math.js';
 export * from './science/weapon-engine.js';
 

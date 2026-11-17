@@ -604,18 +604,21 @@ export function getCharacterMeta(key) {
   const base = catalog?.characters?.[key];
   const live = getLiveAssetEntry('characters', key);
   if (base) {
-    return live
-      ? {
-          ...live,
-          ...base,
-          domainMatKey: base.domainMatKey || live.domainMatKey,
-          talentBook: base.talentBook || live.talentBook,
-          bossMat: base.bossMat || live.bossMat,
-          weeklyMat: base.weeklyMat || live.weeklyMat,
-          commonMatTiers: base.commonMatTiers || live.commonMatTiers,
-          gemTiers: base.gemTiers || live.gemTiers
-        }
-      : base;
+    if (!live) return base;
+    const cleanLive = {};
+    for (const [k, v] of Object.entries(live)) {
+      if (v !== undefined && v !== null && v !== '') cleanLive[k] = v;
+    }
+    return {
+      ...base,
+      ...cleanLive,
+      domainMatKey: cleanLive.domainMatKey || base.domainMatKey,
+      talentBook: cleanLive.talentBook || base.talentBook,
+      bossMat: cleanLive.bossMat || base.bossMat,
+      weeklyMat: cleanLive.weeklyMat || base.weeklyMat,
+      commonMatTiers: cleanLive.commonMatTiers || base.commonMatTiers,
+      gemTiers: cleanLive.gemTiers || base.gemTiers
+    };
   }
   return (
     (live ? { key, ...live } : null) || {

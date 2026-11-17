@@ -50,7 +50,8 @@
                         "substatValue":  "66.2%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-                                             "burst_dmg"
+                                             "burst_dmg",
+                                             "ca_dmg"
                                          ],
                         "requiresMechanics":  [
 

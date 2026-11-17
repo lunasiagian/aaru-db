@@ -4,6 +4,7 @@ import {
   buildKitProfile,
   deriveCharacterArchetypes,
   extractKitScaling,
+  isUsefulSecondaryEm,
   parsePrimaryMultiplierNumber
 } from './kit-taxonomy.js';
 
@@ -208,6 +209,7 @@ export function recommendWeapons(
       const isTtds = lowerName.includes('thrilling tales');
       const isHpSubstat = /hp/i.test(substat);
       const isDefSubstat = /def/i.test(substat);
+      const isAtkSubstat = /atk/i.test(substat);
       const isHpWeapon = mTags.has('hp_scale') || isHpSubstat;
       const isDefWeapon = mTags.has('def_scale') || isDefSubstat;
       const isEmWeapon = mTags.has('em_scale') || /mastery|em/i.test(substat);
@@ -217,6 +219,8 @@ export function recommendWeapons(
       const isPlatformExclusive = cand.acquisition === 'platform_exclusive';
       const hasSkillDmg = mTags.has('skill_dmg') || /elemental skill[^.]{0,30}dmg/i.test(cand.passive || '');
       const hasBurstDmg = mTags.has('burst_dmg') || /elemental burst[^.]{0,30}dmg/i.test(cand.passive || '');
+      const hasCaDmg = mTags.has('ca_dmg') || /charged\s+attack[^.]{0,35}dmg/i.test(cand.passive || '');
+      const swirlLockedAtkBuff = /swirl/i.test(cand.passive || '') && profile.nativeElement !== 'Anemo';
       const hasEmSubstat = mTags.has('em_scale') || /elemental mastery/i.test(cand.substat || '');
       const isElectroDendroSkillEm =
         role === 'Off-Field Sub-DPS' &&
@@ -224,7 +228,8 @@ export function recommendWeapons(
         profile.scaling?.damageSources?.includes('Elemental Skill') &&
         hasSkillDmg &&
         hasEmSubstat;
-      const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM') && !isElectroDendroSkillEm;
+      const secondaryEmUseful = isUsefulSecondaryEm(profile);
+      const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM') && !isElectroDendroSkillEm && !secondaryEmUseful;
 
       const rarityBase = cand.rarity === 5 ? 16 : cand.rarity === 4 ? 12 : 6;
       const ownedMatch = ownedByKey.get(String(cand.key || '').toLowerCase()) || null;
@@ -254,8 +259,11 @@ export function recommendWeapons(
       if (profile.primaryStatKey === 'def_') dpsPrimaryPts += isDefWeapon ? 30 : 0;
       else if (isDefSubstat && !scalingStatsSet.has('DEF')) dpsScore -= 35;
 
+      const isSplitAtk = Boolean(profile.scaling?.isSplitAtkScaler || profile.analysis?.isSplitAtkScaler);
       if (profile.primaryStatKey === 'eleMas') dpsPrimaryPts += isEmWeapon ? 28 : 0;
-      else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) dpsPrimaryPts += 14;
+      else if (profile.primaryStatKey === 'atk_' && isAtkSubstat) dpsPrimaryPts += 14;
+      else if (isAtkSubstat && (scalingStatsSet.has('ATK') || isSplitAtk)) dpsPrimaryPts += 8;
+      else if (isAtkSubstat) dpsScore -= 25;
 
       const isDualHpScaler = profile.primaryStatKey !== 'hp_' && scalingStatsSet.has('HP') && isHpWeapon;
       const isDualDefScaler = profile.primaryStatKey !== 'def_' && scalingStatsSet.has('DEF') && isDefWeapon;
@@ -270,6 +278,8 @@ export function recommendWeapons(
       }
       if (isDualEmScaler) {
         dpsHybridPts += /mastery|em/i.test(substat) ? 22 : Math.round(22 * passiveUptimeFactor);
+      } else if (!scalingStatsSet.has('EM') && secondaryEmUseful && isEmWeapon) {
+        dpsPrimaryPts += 5;
       }
 
       if (!profile.isNonCrit && isCritWeapon) {
@@ -280,17 +290,21 @@ export function recommendWeapons(
       if (profile.primaryStatKey === 'atk_') {
         const baseAtkPts = Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
         dpsPrimaryPts += baseAtkPts;
+      } else if (isSplitAtk) {
+        const splitBaseAtkPts = Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14 * 0.45);
+        dpsPrimaryPts += splitBaseAtkPts;
       }
       if (!emPassiveMismatch && !isPlatformExclusive) {
         let condPassivePts = 0;
         if (role !== 'Off-Field Sub-DPS' && (profile.primaryAttackType === 'normal' || profile.primaryAttackType === 'mixed') && mTags.has('na_dmg')) {
           condPassivePts += 18;
         }
-        if (role !== 'Off-Field Sub-DPS' && (profile.primaryAttackType === 'charged' || profile.primaryAttackType === 'mixed') && mTags.has('ca_dmg')) {
+        if (role !== 'Off-Field Sub-DPS' && (profile.primaryAttackType === 'charged' || profile.primaryAttackType === 'mixed') && hasCaDmg) {
           condPassivePts += profile.primaryAttackType === 'charged' ? 24 : 18;
         }
-        if (mTags.has('atk_buff') && scalingStatsSet.has('ATK')) {
-          condPassivePts += 10;
+        if (mTags.has('atk_buff') && !swirlLockedAtkBuff) {
+          if (scalingStatsSet.has('ATK')) condPassivePts += 10;
+          else if (isSplitAtk) condPassivePts += 5;
         }
         if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg) condPassivePts += 12;
         if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg) condPassivePts += 12;
@@ -787,6 +801,7 @@ export function rankWeaponsByArchetype(
     const isBlackTassel = lowerName.includes('black tassel');
     const isHpSubstat = /hp/i.test(substat);
     const isDefSubstat = /def/i.test(substat);
+    const isAtkSubstat = /atk/i.test(substat);
     const isHpWeapon = mTags.has('hp_scale') || isHpSubstat;
     const isDefWeapon = mTags.has('def_scale') || isDefSubstat;
     const isEmWeapon = mTags.has('em_scale') || /mastery|em/i.test(substat);
@@ -805,6 +820,8 @@ export function rankWeaponsByArchetype(
     const isHealerLocked = (mTags.has('healer_trigger') || reqMechs.includes('healing_performed')) && !hasHealerTag;
     const hasSkillDmg = mTags.has('skill_dmg') || /elemental skill[^.]{0,30}dmg/i.test(cand.passive || '');
     const hasBurstDmg = mTags.has('burst_dmg') || /elemental burst[^.]{0,30}dmg/i.test(cand.passive || '');
+    const hasCaDmg = mTags.has('ca_dmg') || /charged\s+attack[^.]{0,35}dmg/i.test(cand.passive || '');
+    const swirlLockedAtkBuff = /swirl/i.test(cand.passive || '') && profile.nativeElement !== 'Anemo';
     const hasEmSubstat = mTags.has('em_scale') || /elemental mastery/i.test(cand.substat || '');
     const isElectroDendroSkillEm =
       isSubDpsArch &&
@@ -812,7 +829,8 @@ export function rankWeaponsByArchetype(
       profile.scaling?.damageSources?.includes('Elemental Skill') &&
       hasSkillDmg &&
       hasEmSubstat;
-    const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM') && !isElectroDendroSkillEm;
+    const secondaryEmUseful = isUsefulSecondaryEm(profile);
+    const emPassiveMismatch = mTags.has('em_scale') && !scalingStatsSet.has('EM') && !isElectroDendroSkillEm && !secondaryEmUseful;
 
     const rarity = Number(cand.rarity) || 4;
     const effectiveRef = useActualOwned
@@ -869,8 +887,11 @@ export function rankWeaponsByArchetype(
       if (profile.primaryStatKey === 'def_') primaryPts += isDefWeapon ? 30 : 0;
       else if (isDefSubstat && !scalingStatsSet.has('DEF')) base -= 35;
 
+      const isSplitAtk = Boolean(profile.scaling?.isSplitAtkScaler || profile.analysis?.isSplitAtkScaler);
       if (profile.primaryStatKey === 'eleMas') primaryPts += isEmWeapon ? 28 : 0;
-      else if (profile.primaryStatKey === 'atk_' && /atk/i.test(substat)) primaryPts += 14;
+      else if (profile.primaryStatKey === 'atk_' && isAtkSubstat) primaryPts += 14;
+      else if (isAtkSubstat && (scalingStatsSet.has('ATK') || isSplitAtk)) primaryPts += 8;
+      else if (isAtkSubstat) base -= 25;
 
       if (profile.primaryStatKey !== 'hp_' && scalingStatsSet.has('HP') && isHpWeapon) {
         const pts = isCritWeapon ? 28 : 22;
@@ -882,6 +903,8 @@ export function rankWeaponsByArchetype(
       }
       if (profile.primaryStatKey !== 'eleMas' && scalingStatsSet.has('EM') && isEmWeapon) {
         hybridPts += /mastery|em/i.test(substat) ? 22 : Math.round(22 * passiveUptimeFactor);
+      } else if (!scalingStatsSet.has('EM') && secondaryEmUseful && isEmWeapon) {
+        primaryPts += 5;
       }
 
       if (!profile.isNonCrit && isCritWeapon) {
@@ -891,16 +914,21 @@ export function rankWeaponsByArchetype(
       if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon)) primaryPts += 14;
       if (profile.primaryStatKey === 'atk_') {
         primaryPts += Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
+      } else if (isSplitAtk) {
+        primaryPts += Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14 * 0.45);
       }
       if (!emPassiveMismatch) {
         let condPassivePts = 0;
         if (isCarryArch && (profile.primaryAttackType === 'normal' || profile.primaryAttackType === 'mixed') && mTags.has('na_dmg')) {
           condPassivePts += 18;
         }
-        if (isCarryArch && (profile.primaryAttackType === 'charged' || profile.primaryAttackType === 'mixed') && mTags.has('ca_dmg')) {
+        if (isCarryArch && (profile.primaryAttackType === 'charged' || profile.primaryAttackType === 'mixed') && hasCaDmg) {
           condPassivePts += profile.primaryAttackType === 'charged' ? 24 : 18;
         }
-        if (mTags.has('atk_buff') && scalingStatsSet.has('ATK')) condPassivePts += 10;
+        if (mTags.has('atk_buff') && !swirlLockedAtkBuff) {
+          if (scalingStatsSet.has('ATK')) condPassivePts += 10;
+          else if (isSplitAtk) condPassivePts += 5;
+        }
         if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg) condPassivePts += 12;
         if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg) condPassivePts += 12;
         if (isElectroDendroSkillEm) {

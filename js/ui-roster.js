@@ -1271,12 +1271,18 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                       <span>Stygian / Theatre</span>
                       <span class="pill pill-mint">0-ENERGY IMMUNE</span>
                     </div>`
-                  : erReport.hasEndgameFlag || erReport.soloDelta < 0
-                    ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
-                        <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
-                        <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
-                      </div>`
-                    : ''
+                  : `<div class="dossier-er-team-row mono" style="margin-top:6px;">
+                      <span>Double ${escapeHtml(erReport.charElem || 'Element')} / Battery (~${erReport.resonanceReq}%)</span>
+                      <span class="pill ${erReport.resonanceDelta >= 0 ? 'pill-mint' : erReport.resonanceDelta >= -12 ? 'pill-gold' : 'pill-coral'}">${erReport.resonanceDelta >= 0 ? 'SAFE' : `${erReport.resonanceDelta}% ER`}</span>
+                    </div>
+                    ${
+                      erReport.hasEndgameFlag || erReport.soloDelta < 0
+                        ? `<div class="dossier-er-team-row mono" style="margin-top:4px;">
+                            <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
+                            <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                          </div>`
+                        : ''
+                    }`
               }
             </div>
           </article>

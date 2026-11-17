@@ -5490,3 +5490,76 @@ textarea:focus {
   background: rgba(56, 189, 248, 0.28);
   transition: width 0.25s ease;
 }
+
+/* Credits & KQM Formula Reference Page */
+.credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.credit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credit-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.credit-role {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(203, 213, 225, 0.85);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.credit-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.formula-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.formula-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formula-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+}
+
+.formula-eq {
+  font-size: 12px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.formula-note {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(203, 213, 225, 0.8);
+  line-height: 1.45;
+}

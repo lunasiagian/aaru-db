@@ -4,6 +4,7 @@ import {
   classifyBurstCadence,
   computeEffectiveTalents,
   getTalentPriorityInfo,
+  isUsefulSecondaryEm,
   parseFirstNumber,
   stripMarkup
 } from './kit-taxonomy.js';
@@ -150,9 +151,17 @@ export function computeSubstatWeights(kitAnalysis, weaponKey = '', artifacts = [
   if (primary.startsWith('HP')) {
     weights.hp_ = 1.0;
     weights.hp = 0.5;
+    if (kitAnalysis?.isSplitAtkScaler) {
+      weights.atk_ = 0.45;
+      weights.atk = 0.15;
+    }
   } else if (primary.startsWith('DEF')) {
     weights.def_ = 1.0;
     weights.def = 0.5;
+    if (kitAnalysis?.isSplitAtkScaler) {
+      weights.atk_ = 0.45;
+      weights.atk = 0.15;
+    }
   } else if (primary.startsWith('EM')) {
     weights.eleMas = 1.0;
   } else {
@@ -161,10 +170,13 @@ export function computeSubstatWeights(kitAnalysis, weaponKey = '', artifacts = [
   }
 
   if (usefulSet.has('eleMas') && weights.eleMas < 1.0) weights.eleMas = 0.5;
+  else if (weights.eleMas === 0 && isUsefulSecondaryEm(kitAnalysis)) weights.eleMas = 0.4;
   if (usefulSet.has('atk_') && weights.atk_ < 1.0) weights.atk_ = 0.5;
 
+  const meta = getCharacterMeta(kitAnalysis?.charKey);
+  const hasCritAscension = /crit/i.test(kitAnalysis?.ascensionStat || meta?.ascensionStat || '');
   if (!isNonCrit) {
-    if (!isPureSupport) {
+    if (!isPureSupport || hasCritAscension || role === 'On-Field Carry' || role === 'Off-Field Sub-DPS') {
       weights.critRate_ = 1.0;
       weights.critDMG_ = 1.0;
     } else if (isFavonius) {
@@ -436,6 +448,10 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
   const hasEndgameFlag = /\b(stygian|onslaught|theatre|theater)\b/i.test(noteText);
   const soloEndgameReq = baseReq + 20;
   const soloDelta = currentEr - soloEndgameReq;
+  const resonanceReq = kqm?.erBaselines?.doubleSameElement
+    ? Math.max(100, kqm.erBaselines.doubleSameElement)
+    : Math.max(100, baseReq - 20);
+  const resonanceDelta = currentEr - resonanceReq;
 
   let summary = '';
   let erStatus = 'ok';
@@ -488,6 +504,9 @@ export function evaluateErComfort(char, combatStats, teams = [], weapons = [], k
     burstCost,
     currentEr,
     baseReq,
+    resonanceReq,
+    resonanceDelta,
+    charElem,
     soloEndgameReq,
     soloDelta,
     hasEndgameFlag,

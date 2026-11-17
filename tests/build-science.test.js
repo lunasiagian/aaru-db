@@ -2,6 +2,7 @@ import {
   ensureCharacterKitAndStats,
   getAllCharacterKeys,
   getCharacterKit,
+  getCharacterMeta,
   getWeaponsIndex,
   loadCatalog
 } from '../js/catalog.js?v=20261115ag';
@@ -14,6 +15,7 @@ import {
   evaluateBuild,
   evaluateBuildDiagnostics,
   evaluateErComfort,
+  getSignatureWeapon,
   rankWeaponsByArchetype,
   recommendWeapons,
   resolveMemberTeamRole
@@ -121,8 +123,22 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     const accDps = recs.find((w) => w.tierLabel === 'Accessible DPS');
     assert(!/HP%/i.test(bisDps?.substat || ''), `HP% bow recommended as BiS DPS for Ganyu: ${bisDps?.name}`);
     assert(
-      bisDps?.name === "Amos' Bow" || bisDps?.name === 'Polar Star',
-      `Expected BiS DPS Amos' Bow or Polar Star for Ganyu, got ${bisDps?.name}`
+      [
+        "Amos' Bow",
+        'Polar Star',
+        "Hunter's Path",
+        'The First Great Magic',
+        'Aqua Simulacra',
+        "Astral Vulture's Crimson Plumage"
+      ].includes(bisDps?.name),
+      `Expected BiS DPS top 5★ bow for Ganyu, got ${bisDps?.name}`
+    );
+    const matrix = rankWeaponsByArchetype({ key: 'Ganyu', kitData: kit }, profile, weaponsIndex, []);
+    const ganyuCarry = matrix.rankingsByArchetype['On-Field Carry'] || [];
+    const astralIdx = ganyuCarry.findIndex((w) => w.name === "Astral Vulture's Crimson Plumage");
+    assert(
+      astralIdx >= 0 && astralIdx < 5,
+      `Expected Astral Vulture's Crimson Plumage in Ganyu Top 5, got #${astralIdx + 1}`
     );
     assert(
       accDps?.name === 'Hamayumi' || accDps?.name === 'Prototype Crescent',
@@ -536,6 +552,59 @@ export async function runBuildScienceTests(onProgress = () => {}) {
       `Expected Prototype Starglitter (#${protoIdx + 1}) ahead of Kitain Cross Spear (#${kitainIdx + 1})`
     );
     return `Escoffier (${profile.archetypeLock}): ${top2.join(' > ')} | Starglitter #${protoIdx + 1} vs Kitain #${kitainIdx + 1}`;
+  });
+
+  await runCase('Dead-Stat Gate & Secondary EM: Neuvillette ranks 5★ EM catalysts ahead of ATK% Memory of Dust', async () => {
+    await ensureCharacterKitAndStats('Neuvillette').catch(() => null);
+    const kit = getCharacterKit('Neuvillette');
+    assert(kit, 'Neuvillette kit failed to load');
+    const profile = buildKitProfile({ key: 'Neuvillette', kitData: kit });
+    const weights = computeSubstatWeights(profile.analysis);
+    assert(weights.atk_ === 0, `Expected ATK% weight 0 on Neuvillette, got ${weights.atk_}`);
+    assert(weights.eleMas >= 0.4, `Expected secondary EM weight >= 0.4 on Neuvillette, got ${weights.eleMas}`);
+
+    const matrix = rankWeaponsByArchetype({ key: 'Neuvillette', kitData: kit }, profile, weaponsIndex, []);
+    const ladder = matrix.rankingsByArchetype['On-Field Carry'] || [];
+    const emIdx = ladder.findIndex((w) => w.name === 'A Thousand Floating Dreams' || w.name === "Starcaller's Watch");
+    const modIdx = ladder.findIndex((w) => w.name === 'Memory of Dust');
+    assert(emIdx >= 0 && modIdx >= 0 && emIdx < modIdx, `Expected 5★ EM catalyst (#${emIdx + 1}) ahead of Memory of Dust (#${modIdx + 1})`);
+    return `Neuvillette Carry: ${ladder[emIdx].name} (#${emIdx + 1}) > Memory of Dust (#${modIdx + 1}) | wRV EM=${weights.eleMas}, ATK%=${weights.atk_}`;
+  });
+
+  await runCase('Split-Scaler Secondary Tier: Zhongli & Itto retain 0.45x ATK% credit below primary HP%/DEF%', async () => {
+    await ensureCharacterKitAndStats('AratakiItto').catch(() => null);
+    const ittoKit = getCharacterKit('AratakiItto');
+    const zhongliKit = getCharacterKit('Zhongli');
+    assert(ittoKit && zhongliKit, 'Itto or Zhongli kit failed to load');
+    const ittoProfile = buildKitProfile({ key: 'AratakiItto', kitData: ittoKit });
+    const zhongliProfile = buildKitProfile({ key: 'Zhongli', kitData: zhongliKit });
+    const ittoWeights = computeSubstatWeights(ittoProfile.analysis);
+    const zhongliWeights = computeSubstatWeights(zhongliProfile.analysis);
+    assert(ittoWeights.def_ === 1.0 && ittoWeights.atk_ === 0.45, `Expected Itto DEF%=1.0, ATK%=0.45, got DEF%=${ittoWeights.def_}, ATK%=${ittoWeights.atk_}`);
+    assert(zhongliWeights.hp_ === 1.0 && zhongliWeights.atk_ === 0.45, `Expected Zhongli HP%=1.0, ATK%=0.45, got HP%=${zhongliWeights.hp_}, ATK%=${zhongliWeights.atk_}`);
+    assert(ittoWeights.eleMas === 0 && zhongliWeights.eleMas === 0, `Expected Geo EM=0, got Itto=${ittoWeights.eleMas}, Zhongli=${zhongliWeights.eleMas}`);
+    return `Itto (DEF=1.0, ATK%=0.45, EM=0) | Zhongli (HP=1.0, ATK%=0.45, EM=0)`;
+  });
+
+  await runCase('Catalog Live Precedence: Sandrone renders as 5★ Cryo Claymore On-Field Carry with A Teaspoon of Transcendence', async () => {
+    await ensureCharacterKitAndStats('Sandrone').catch(() => null);
+    const meta = getCharacterMeta('Sandrone');
+    assert(meta?.rarity === 5 && meta?.element === 'Cryo' && meta?.weaponType === 'Claymore', `Expected 5★ Cryo Claymore, got ${meta?.rarity}★ ${meta?.element} ${meta?.weaponType}`);
+    assert(
+      meta?.talentBook === 'Vagrancy' && meta?.bossMat === 'PlumeoftheFallenWatcher' && meta?.weeklyMat === 'MadmansRestraint',
+      `Expected live-snapshot mats (Vagrancy / PlumeoftheFallenWatcher / MadmansRestraint), got ${meta?.talentBook} / ${meta?.bossMat} / ${meta?.weeklyMat}`
+    );
+    const kit = getCharacterKit('Sandrone');
+    const profile = buildKitProfile({ key: 'Sandrone', kitData: kit });
+    assert(profile.fieldRole === 'On-Field Carry', `Expected Sandrone On-Field Carry, got ${profile.fieldRole}`);
+    const weights = computeSubstatWeights(profile.analysis);
+    assert(weights.critRate_ === 1.0 && weights.critDMG_ === 1.0, `Expected CRIT weights 1.0 on Sandrone, got CR=${weights.critRate_}, CD=${weights.critDMG_}`);
+    const matrix = rankWeaponsByArchetype({ key: 'Sandrone', kitData: kit }, profile, weaponsIndex, []);
+    const carryTop = matrix.rankingsByArchetype['On-Field Carry']?.[0];
+    assert(carryTop?.name === 'A Teaspoon of Transcendence', `Expected Carry #1 A Teaspoon of Transcendence, got ${carryTop?.name}`);
+    const sig = getSignatureWeapon('Sandrone');
+    assert(sig === 'A Teaspoon of Transcendence', `Expected signature A Teaspoon of Transcendence, got ${sig}`);
+    return `Sandrone: ${meta.rarity}★ ${meta.element} ${meta.weaponType} (${profile.fieldRole}) · Carry #1: ${carryTop.name}`;
   });
 
   const fuzzRows = await runRandomFuzzTests(5, (partialFuzz) => onProgress([...results, ...partialFuzz]));

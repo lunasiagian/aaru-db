@@ -27,7 +27,7 @@ import { renderTeamsTab } from './ui-teams.js?v=20261115ah';
 import { CHANGELOG } from './changelog.js?v=20261115ab';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
-const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'armory', 'teams', 'changelog']);
+const VALID_TABS = new Set(['hud', 'vault', 'prefarm', 'roster', 'armory', 'teams', 'changelog', 'credits']);
 
 function getTabFromHash() {
   const raw = window.location.hash.replace(/^#/, '').trim().toLowerCase();
@@ -169,7 +169,8 @@ function updateTopBar() {
     roster: 'AARUDB / ROSTER',
     armory: 'AARUDB / ARMORY',
     teams: 'AARUDB / TEAM COMPS',
-    changelog: 'AARUDB / FIXES & FEATS'
+    changelog: 'AARUDB / FIXES & FEATS',
+    credits: 'AARUDB / CREDITS & FORMULAS'
   };
   const crumbEl = document.getElementById('topbar-breadcrumb');
   if (crumbEl) crumbEl.textContent = crumbMap[state.activeTab] || 'AARUDB';
@@ -438,6 +439,8 @@ function renderActiveTab(options = {}) {
     });
   } else if (state.activeTab === 'changelog') {
     renderFixesAndFeatsPage(container);
+  } else if (state.activeTab === 'credits') {
+    renderCreditsTab(container);
   }
 
   if (options?.preserveFocusSelector) {
@@ -894,6 +897,110 @@ function renderFixesAndFeatsPage(container) {
   `;
 }
 
+function renderCreditsTab(container) {
+  const sources = [
+    {
+      name: 'KeqingMains Theorycrafting Library (KQM TCL)',
+      role: 'Damage Formulas, Reaction Math, ER Baselines & Particle Generation',
+      url: 'https://github.com/KQM-git/TCL',
+      secondaryUrl: 'https://library.keqingmains.com/',
+      secondaryLabel: 'library.keqingmains.com'
+    },
+    {
+      name: 'Project Amber (gi.yatta.moe)',
+      role: 'Character, Weapon, Artifact & Material Catalog / Stat Curves',
+      url: 'https://gi.yatta.moe/'
+    },
+    {
+      name: 'Lunaris',
+      role: 'Live Patch & Unreleased Character / Weapon / Material Sync',
+      url: 'https://lunaris.moe/'
+    },
+    {
+      name: 'Enka.Network',
+      role: 'Character & Equipment Icon Assets',
+      url: 'https://enka.network/'
+    },
+    {
+      name: 'Genshin Optimizer (GOOD Format)',
+      role: 'GOOD v3 Account, Weapon & Artifact Import Schema',
+      url: 'https://frzyc.github.io/genshin-optimizer/#/doc'
+    }
+  ];
+
+  const formulas = [
+    {
+      title: 'Core Outgoing Damage',
+      eq: 'Final DMG = Base DMG × DMG% × CRIT × Reaction × DEF × RES',
+      note: 'Base DMG = Talent% × Scaling Stat (+ Additive Flat Bonus). DEF = (Lv_c + 100) / ((Lv_c + 100) + (Lv_e + 100) × (1 - Shred) × (1 - Ignore)).'
+    },
+    {
+      title: 'Amplifying Reactions (Vaporize & Melt)',
+      eq: 'Amp Mult = BaseMult × (1 + (2.78 × EM) / (1400 + EM) + Bonus)',
+      note: '2.0× for Hydro Vaporize & Pyro Melt; 1.5× for Pyro Reverse Vaporize & Cryo Reverse Melt. Scales with ATK, DMG%, and CRIT.'
+    },
+    {
+      title: 'Additive Reactions (Aggravate & Spread)',
+      eq: 'Flat Bonus = Coeff × LvMult × (1 + (5 × EM) / (1200 + EM) + Bonus)',
+      note: 'Coeff = 1.15 (Aggravate) or 1.25 (Spread); Lv.90 LvMult = 1446.85. Added to Base DMG before DMG%, CRIT, DEF, and RES.'
+    },
+    {
+      title: 'Transformative Reactions (Bloom, Hyperbloom, Swirl, Overload)',
+      eq: 'Transform DMG = Coeff × LvMult × (1 + (16 × EM) / (2000 + EM) + Bonus) × RES',
+      note: 'Ignores enemy DEF and ATK/CRIT (unless kit-enabled). Coeff: Hyperbloom/Burgeon 3.0, Overloaded/Bloom 2.0, Shatter 1.5, Electro-Charged 1.2, Swirl 0.6, Superconduct 0.5.'
+    }
+  ];
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">AARUDB / CREDITS &amp; FORMULAS</div>
+        <h1 class="section-title">Community Sources &amp; KQM Math</h1>
+      </div>
+      <div class="header-meta mono">
+        <a href="https://github.com/KQM-git/TCL" target="_blank" rel="noopener noreferrer" class="pill pill-gold">KQM-git/TCL ↗</a>
+      </div>
+    </div>
+
+    <div class="credits-grid">
+      ${sources
+        .map(
+          (s) => `
+        <article class="card credit-card">
+          <div class="card-eyebrow">DATA &amp; THEORYCRAFT SOURCE</div>
+          <h2 class="credit-title">${s.name}</h2>
+          <p class="credit-role">${s.role}</p>
+          <div class="credit-links mono">
+            <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs">${s.url.replace(/^https?:\/\//, '')} ↗</a>
+            ${
+              s.secondaryUrl
+                ? `<a href="${s.secondaryUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs">${s.secondaryLabel} ↗</a>`
+                : ''
+            }
+          </div>
+        </article>`
+        )
+        .join('')}
+    </div>
+
+    <article class="card" style="margin-top:16px;">
+      <div class="card-eyebrow">KQM TCL REACTION &amp; DAMAGE FORMULAS (IMPLEMENTED IN JS/SCIENCE/REACTION-MATH.JS)</div>
+      <div class="formula-grid">
+        ${formulas
+          .map(
+            (f) => `
+          <div class="formula-card">
+            <div class="formula-title">${f.title}</div>
+            <div class="formula-eq mono">${f.eq}</div>
+            <p class="formula-note">${f.note}</p>
+          </div>`
+          )
+          .join('')}
+      </div>
+    </article>
+  `;
+}
+
 function initChangelogModal() {
   const btn = document.getElementById('btn-changelog');
   const dot = document.getElementById('changelog-dot');
@@ -911,6 +1018,31 @@ function initChangelogModal() {
 }
 
 async function bootstrap() {
+  const loginScreen = document.getElementById('login-screen');
+  const loginForm = document.getElementById('login-form');
+  const submitBtn = document.getElementById('login-submit-btn');
+
+  // Bind login form & Enter keybinding immediately before async catalog load
+  loginForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const user = document.getElementById('login-username').value;
+    const pass = document.getElementById('login-passphrase').value;
+    handleLogin(user, pass);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    if (!loginScreen || loginScreen.hidden || !loginForm) return;
+    if (submitBtn?.disabled) return;
+    if (e.target?.tagName === 'BUTTON') return;
+    e.preventDefault();
+    if (typeof loginForm.requestSubmit === 'function') {
+      loginForm.requestSubmit();
+    } else {
+      loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+  });
+
   let savedUser = null;
   try {
     const saved = sessionStorage.getItem(SESSION_KEY);
@@ -925,13 +1057,7 @@ async function bootstrap() {
   await loadCatalog();
   initChangelogModal();
 
-  // Bind login form & quick-login buttons
-  document.getElementById('login-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const user = document.getElementById('login-username').value;
-    const pass = document.getElementById('login-passphrase').value;
-    handleLogin(user, pass);
-  });
+  // Bind quick-login buttons
 
   document.querySelectorAll('[data-quick-user]').forEach((btn) => {
     btn.addEventListener('click', () => handleLogin(btn.dataset.quickUser));

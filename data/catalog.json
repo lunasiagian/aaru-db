@@ -439,21 +439,6 @@
       "localSpecialty": "LakelightLily",
       "commonMat": "ClockworkGear",
       "gem": "ShivadaJade"
-    },
-    "Sandrone": {
-      "key": "Sandrone",
-      "name": "Sandrone",
-      "rarity": 5,
-      "element": "Geo",
-      "weaponType": "Catalyst",
-      "region": "Snezhnaya",
-      "icon": "https://enka.network/ui/UI_AvatarIcon_Sandrone.png",
-      "talentBook": "Fortitude",
-      "bossMat": "BasaltPillar",
-      "weeklyMat": "FadingCandle",
-      "localSpecialty": "CorLapis",
-      "commonMat": "ClockworkGear",
-      "gem": "PrithivaTopaz"
     }
   },
   "weapons": {
