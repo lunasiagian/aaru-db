@@ -607,6 +607,18 @@ export async function runBuildScienceTests(onProgress = () => {}) {
     return `Sandrone: ${meta.rarity}★ ${meta.element} ${meta.weaponType} (${profile.fieldRole}) · Carry #1: ${carryTop.name}`;
   });
 
+  await runCase('Reaction-Locked Stack Gate: Beidou ranks Beacon of the Reed Sea ahead of Fang of the Mountain King', async () => {
+    const kit = getCharacterKit('Beidou');
+    assert(kit, 'Beidou kit failed to load');
+    const profile = buildKitProfile({ key: 'Beidou', kitData: kit });
+    const matrix = rankWeaponsByArchetype({ key: 'Beidou', kitData: kit }, profile, weaponsIndex, []);
+    const ladder = matrix.rankingsByArchetype['Off-Field Sub-DPS'] || [];
+    const beaconIdx = ladder.findIndex((w) => w.name === 'Beacon of the Reed Sea');
+    const fangIdx = ladder.findIndex((w) => w.name === 'Fang of the Mountain King');
+    assert(beaconIdx >= 0 && fangIdx >= 0 && beaconIdx < fangIdx, `Expected Beacon (#${beaconIdx + 1}) ahead of Fang (#${fangIdx + 1})`);
+    return `Beidou Off-Field Sub-DPS: Beacon (#${beaconIdx + 1}) > Fang (#${fangIdx + 1})`;
+  });
+
   const fuzzRows = await runRandomFuzzTests(5, (partialFuzz) => onProgress([...results, ...partialFuzz]));
   return [...results, ...fuzzRows];
 }

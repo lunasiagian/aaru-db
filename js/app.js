@@ -907,6 +907,16 @@ function renderCreditsTab(container) {
       secondaryLabel: 'library.keqingmains.com'
     },
     {
+      name: 'KQM Stellar Glimmer Reaction Guide (v7.0)',
+      role: 'Stellar-Conduct (SSC) & Stellar Swirl (SSW) Formulas, Polestar Field & Level Multipliers (by ren718.exe; contributors: acerbus114, idkanonymized)',
+      url: 'https://keqingmains.com/misc/stellar/'
+    },
+    {
+      name: 'KQM Lunar Reaction Guide (Luna VI)',
+      role: 'Lunar-Charged (LC), Lunar-Bloom (LB), Lunar-Crystallize (LCrys) & Moonsign Team Bonus (by ren718.exe; contributors: acerbus114, lesterberne, antiguaa, pulsar79., maelstromica)',
+      url: 'https://keqingmains.com/misc/lunar/'
+    },
+    {
       name: 'Project Amber (gi.yatta.moe)',
       role: 'Character, Weapon, Artifact & Material Catalog / Stat Curves',
       url: 'https://gi.yatta.moe/'
@@ -928,34 +938,11 @@ function renderCreditsTab(container) {
     }
   ];
 
-  const formulas = [
-    {
-      title: 'Core Outgoing Damage',
-      eq: 'Final DMG = Base DMG × DMG% × CRIT × Reaction × DEF × RES',
-      note: 'Base DMG = Talent% × Scaling Stat (+ Additive Flat Bonus). DEF = (Lv_c + 100) / ((Lv_c + 100) + (Lv_e + 100) × (1 - Shred) × (1 - Ignore)).'
-    },
-    {
-      title: 'Amplifying Reactions (Vaporize & Melt)',
-      eq: 'Amp Mult = BaseMult × (1 + (2.78 × EM) / (1400 + EM) + Bonus)',
-      note: '2.0× for Hydro Vaporize & Pyro Melt; 1.5× for Pyro Reverse Vaporize & Cryo Reverse Melt. Scales with ATK, DMG%, and CRIT.'
-    },
-    {
-      title: 'Additive Reactions (Aggravate & Spread)',
-      eq: 'Flat Bonus = Coeff × LvMult × (1 + (5 × EM) / (1200 + EM) + Bonus)',
-      note: 'Coeff = 1.15 (Aggravate) or 1.25 (Spread); Lv.90 LvMult = 1446.85. Added to Base DMG before DMG%, CRIT, DEF, and RES.'
-    },
-    {
-      title: 'Transformative Reactions (Bloom, Hyperbloom, Swirl, Overload)',
-      eq: 'Transform DMG = Coeff × LvMult × (1 + (16 × EM) / (2000 + EM) + Bonus) × RES',
-      note: 'Ignores enemy DEF and ATK/CRIT (unless kit-enabled). Coeff: Hyperbloom/Burgeon 3.0, Overloaded/Bloom 2.0, Shatter 1.5, Electro-Charged 1.2, Swirl 0.6, Superconduct 0.5.'
-    }
-  ];
-
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="eyebrow">AARUDB / CREDITS &amp; FORMULAS</div>
-        <h1 class="section-title">Community Sources &amp; KQM Math</h1>
+        <div class="eyebrow">AARUDB / CREDITS</div>
+        <h1 class="section-title">Community Sources &amp; Credits</h1>
       </div>
       <div class="header-meta mono">
         <a href="https://github.com/KQM-git/TCL" target="_blank" rel="noopener noreferrer" class="pill pill-gold">KQM-git/TCL ↗</a>
@@ -982,22 +969,6 @@ function renderCreditsTab(container) {
         )
         .join('')}
     </div>
-
-    <article class="card" style="margin-top:16px;">
-      <div class="card-eyebrow">KQM TCL REACTION &amp; DAMAGE FORMULAS (IMPLEMENTED IN JS/SCIENCE/REACTION-MATH.JS)</div>
-      <div class="formula-grid">
-        ${formulas
-          .map(
-            (f) => `
-          <div class="formula-card">
-            <div class="formula-title">${f.title}</div>
-            <div class="formula-eq mono">${f.eq}</div>
-            <p class="formula-note">${f.note}</p>
-          </div>`
-          )
-          .join('')}
-      </div>
-    </article>
   `;
 }
 

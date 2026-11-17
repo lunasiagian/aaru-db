@@ -622,6 +622,9 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     archetypeLock = 'Bloom-Core';
   }
 
+  const hasStellarGlimmer =
+    /stellar[\s-]*(?:glimmer|conduct|swirl|vortex|linchpin)|polestar\s+field/i.test(cleanFullText);
+
   return {
     charKey,
     isNonCrit,
@@ -630,6 +633,7 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     statCaps,
     roleInfo,
     archetypeLock,
+    hasStellarGlimmer,
     burstCost: Number(kitData?.burstCost) || 60
   };
 }
@@ -1171,7 +1175,12 @@ export function buildKitProfile(charData, contextOverride = {}) {
   }
   if (/\blunar(?:[- ]?(?:charged|bloom|crystallize|reaction))?\b/i.test(kitTextForMechs)) kitMechanics.push('lunar');
   if (/\bhexerei\b/i.test(kitTextForMechs)) kitMechanics.push('hexerei');
-  if (/stellar\s+glimmer/i.test(kitTextForMechs)) kitMechanics.push('stellar_glimmer');
+  if (/stellar[\s-]*(?:glimmer|conduct|swirl|vortex|linchpin)|polestar\s+field/i.test(kitTextForMechs)) {
+    kitMechanics.push('stellar_glimmer');
+  }
+  if (nativeElement === 'Pyro' || nativeElement === 'Dendro') {
+    kitMechanics.push('burning_burgeon');
+  }
   const fTags = roleInfo.functionTags || [];
   if (fTags.includes('Team Healer') || fTags.includes('Single-Target Healer')) {
     kitMechanics.push('healing_performed');

@@ -746,7 +746,7 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
     ? `${erDiag.summary}${particleStr}${erDiag.burstTriggerNote ? ` ${erDiag.burstTriggerNote}` : ''}`
     : `${analysis.burstCost || 60}-cost Burst; sync artifacts to compute ER comfort.`;
 
-  return [
+  const baseInsights = [
     {
       label: 'CORE IDENTITY & UTILITY',
       tone: 'cyan',
@@ -768,4 +768,14 @@ export function generateKitInsights(char, kitData, weaponData, erDiag, kitAnalys
       text: stripMarkup(erText)
     }
   ];
+
+  if (analysis.hasStellarGlimmer) {
+    baseInsights.push({
+      label: 'STELLAR GLIMMER STRATEGY',
+      tone: 'gold',
+      text: 'Enables Polestar Field / Stellar-Conduct (Cryo+Electro) & Stellar Swirl (Cryo+Anemo). Direct Stellar DMG ignores DEF and regular DMG% (Elem Goblets, Furina, Skill/Burst DMG%) — prioritize CRIT + ATK% (or scaling stat) with EM as usable secondary rolls.'
+    });
+  }
+
+  return baseInsights;
 }

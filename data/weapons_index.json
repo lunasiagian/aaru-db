@@ -719,7 +719,7 @@
                         "substatValue":  "33.1%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-
+                                             "atk_buff"
                                          ],
                         "requiresMechanics":  [
 
@@ -736,10 +736,11 @@
                         "substatValue":  "11%",
                         "acquisition":  "limited_5",
                         "mechanicTags":  [
-
+                                             "skill_dmg",
+                                             "burst_dmg"
                                          ],
                         "requiresMechanics":  [
-
+                                                  "burning_burgeon"
                                               ]
                     },
                     {

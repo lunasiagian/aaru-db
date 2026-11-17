@@ -5563,3 +5563,20 @@ textarea:focus {
   color: rgba(203, 213, 225, 0.8);
   line-height: 1.45;
 }
+
+.armory-weapon-card.is-unowned,
+.armory-weapon-row.is-unowned {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.armory-weapon-card.is-unowned:hover,
+.armory-weapon-row.is-unowned:hover {
+  opacity: 1;
+}
+
+.armory-weapon-unowned-note {
+  font-size: 11px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.16);
+}

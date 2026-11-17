@@ -1213,6 +1213,7 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                 <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT CAPABILITIES</div>
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                   ${teamCaps.archetypeLock ? `<span class="pill pill-sky mono">${escapeHtml(teamCaps.archetypeLock)}</span>` : ''}
+                  ${kitAnalysis?.hasStellarGlimmer ? '<span class="pill pill-gold mono">STELLAR GLIMMER</span>' : ''}
                   <span class="pill ${erPillClass} mono er-status-pill">
                     ${erPillLabel}
                     <span

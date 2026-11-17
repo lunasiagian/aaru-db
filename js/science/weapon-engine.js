@@ -44,6 +44,8 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
     goblet = scaling.primaryStatKey === 'eleMas' ? 'EM' : `${mainStatLabel}${role === 'Off-Field Sub-DPS' ? ` / ${elem} DMG%` : ''}`;
   } else if (scaling.primaryStatKey === 'eleMas' && scaling.isNonCrit) {
     goblet = 'EM';
+  } else if (analysis?.hasStellarGlimmer && scaling.primaryStatKey !== 'eleMas') {
+    goblet = `${mainStatLabel} / ${elem} DMG%`;
   } else if (scaling.primaryStatKey === 'hp_' && role !== 'On-Field Carry') {
     goblet = `${elem} DMG% / HP%`;
   }
@@ -71,7 +73,7 @@ export function getBuildStatGuidelines(charKey, kitData, kitAnalysis = null) {
     aTier.push('ER%');
   }
 
-  if (scaling.secondaryStats.includes('EM') && !sTier.includes('EM')) {
+  if ((scaling.secondaryStats.includes('EM') || analysis?.hasStellarGlimmer) && !sTier.includes('EM')) {
     aTier.push('Elemental Mastery');
   }
   if (scaling.primaryStatKey === 'hp_' || scaling.primaryStatKey === 'def_') {
@@ -102,6 +104,21 @@ export { SIGNATURE_WEAPONS, getSignatureWeapon } from './kit-taxonomy.js';
 function getEffectiveRefinement(cand, ownedMatch = null) {
   if (ownedMatch?.refinement) return Math.min(5, Math.max(1, Number(ownedMatch.refinement) || 1));
   return Number(cand?.rarity) === 3 ? 5 : 1;
+}
+
+function getReactionPassiveUptimeFactor(cand, profile, missingMechanic, reqMechs = []) {
+  const elem = profile?.nativeElement || '';
+  const passive = String(cand?.passive || '');
+  if (reqMechs.includes('burning_burgeon') || /burning|burgeon/i.test(passive)) {
+    if (elem !== 'Pyro' && elem !== 'Dendro') return 0.17;
+  }
+  if (/electro-charged|lunar-charged/i.test(passive)) {
+    if (elem !== 'Hydro' && elem !== 'Electro') return 0.35;
+  }
+  if (/frozen|superconduct/i.test(passive)) {
+    if (!['Cryo', 'Hydro', 'Electro'].includes(elem)) return 0.35;
+  }
+  return missingMechanic ? 0.35 : 1.0;
 }
 
 /**
@@ -238,7 +255,7 @@ export function recommendWeapons(
       const substatMag = parsePrimaryMultiplierNumber(cand.substatValue) || 0;
 
       // --- Linear DPS Score ---
-      const passiveUptimeFactor = missingMechanic ? 0.35 : 1.0;
+      const passiveUptimeFactor = getReactionPassiveUptimeFactor(cand, profile, missingMechanic, reqMechs);
       const starglitterPenalty = !includeOwnedBonus && cand.acquisition === 'starglitter' ? -12 : 0;
       const onKillPenalty = mTags.has('on_kill') ? -10 : 0;
       let dpsScore =
@@ -284,9 +301,16 @@ export function recommendWeapons(
 
       if (!profile.isNonCrit && isCritWeapon) {
         const normCrit = /crit\s*rate/i.test(substat) ? substatMag * 2 : substatMag;
-        dpsCritPts += 28 + Math.round(normCrit * 0.15);
+        dpsCritPts += 28 + Math.round(normCrit * 0.35);
       }
-      if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon)) dpsPrimaryPts += 14;
+      const isStellarKit = kitMechsSet.has('stellar_glimmer');
+      const isStellarWep = reqMechs.includes('stellar_glimmer');
+      const isLunarKit = kitMechsSet.has('lunar');
+      const isLunarWep = reqMechs.includes('lunar');
+      const allowGenericDmgPassive = (!isStellarKit || isStellarWep) && (!isLunarKit || isLunarWep);
+      if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon) && allowGenericDmgPassive) {
+        dpsPrimaryPts += 14;
+      }
       if (profile.primaryStatKey === 'atk_') {
         const baseAtkPts = Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
         dpsPrimaryPts += baseAtkPts;
@@ -306,8 +330,8 @@ export function recommendWeapons(
           if (scalingStatsSet.has('ATK')) condPassivePts += 10;
           else if (isSplitAtk) condPassivePts += 5;
         }
-        if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg) condPassivePts += 12;
-        if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg) condPassivePts += 12;
+        if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg && allowGenericDmgPassive) condPassivePts += 12;
+        if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg && allowGenericDmgPassive) condPassivePts += 12;
         if (isElectroDendroSkillEm) {
           condPassivePts += 20;
         }
@@ -862,7 +886,7 @@ export function rankWeaponsByArchetype(
 
     let rawScore = 0;
     let winningFactor = 'primary_scale';
-    const passiveUptimeFactor = missingMechanic ? 0.35 : 1.0;
+    const passiveUptimeFactor = getReactionPassiveUptimeFactor(cand, profile, missingMechanic, reqMechs);
 
     if (isCarryArch || isSubDpsArch) {
       const rarityBase = rarity === 5 ? 16 : rarity === 4 ? 12 : 6;
@@ -909,9 +933,16 @@ export function rankWeaponsByArchetype(
 
       if (!profile.isNonCrit && isCritWeapon) {
         const normCrit = /crit\s*rate/i.test(substat) ? substatMag * 2 : substatMag;
-        critPts += 28 + Math.round(normCrit * 0.15);
+        critPts += 28 + Math.round(normCrit * 0.35);
       }
-      if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon)) primaryPts += 14;
+      const isStellarKit = kitMechsSet.has('stellar_glimmer');
+      const isStellarWep = reqMechs.includes('stellar_glimmer');
+      const isLunarKit = kitMechsSet.has('lunar');
+      const isLunarWep = reqMechs.includes('lunar');
+      const allowGenericDmgPassive = (!isStellarKit || isStellarWep) && (!isLunarKit || isLunarWep);
+      if (mTags.has('elem_dmg') && (!mTags.has('party_buff') || isCritWeapon) && allowGenericDmgPassive) {
+        primaryPts += 14;
+      }
       if (profile.primaryStatKey === 'atk_') {
         primaryPts += Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.14);
       } else if (isSplitAtk) {
@@ -929,8 +960,8 @@ export function rankWeaponsByArchetype(
           if (scalingStatsSet.has('ATK')) condPassivePts += 10;
           else if (isSplitAtk) condPassivePts += 5;
         }
-        if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg) condPassivePts += 12;
-        if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg) condPassivePts += 12;
+        if (profile.scaling?.damageSources?.includes('Elemental Skill') && hasSkillDmg && allowGenericDmgPassive) condPassivePts += 12;
+        if (profile.scaling?.damageSources?.includes('Elemental Burst') && hasBurstDmg && allowGenericDmgPassive) condPassivePts += 12;
         if (isElectroDendroSkillEm) {
           condPassivePts += 20;
         }

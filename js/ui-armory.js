@@ -1,6 +1,7 @@
 import { renderAssetIcon } from './assets.js';
 import {
   ensureWeaponStats,
+  getAllWeaponKeys,
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
@@ -26,6 +27,8 @@ function formatSubstat(subKey, subVal) {
 const WEAPON_TYPE_PILLS = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
 const ARMORY_FILTER_PILLS = [
   { id: 'all', label: 'All' },
+  { id: 'owned', label: 'Owned' },
+  { id: 'unowned', label: 'Unowned' },
   { id: '5', label: '5★' },
   { id: '4', label: '4★' },
   { id: '3', label: '3★' },
@@ -65,8 +68,25 @@ export function renderArmoryTab(container, viewState, handlers) {
   const density = armoryFilter.density || 'grid';
   const q = (armoryFilter.search || '').trim().toLowerCase();
 
-  const allWeapons = account.weapons || [];
-  const filteredWeapons = allWeapons
+  const ownedWeapons = account.weapons || [];
+  const ownedKeySet = new Set(ownedWeapons.map((w) => String(w.key || '').toLowerCase()));
+  const unownedWeapons = getAllWeaponKeys()
+    .filter((k) => !ownedKeySet.has(String(k || '').toLowerCase()))
+    .map((key) => ({
+      key,
+      level: 0,
+      ascension: 0,
+      refinement: 1,
+      location: '',
+      isOwned: false
+    }));
+
+  const combinedWeapons = [
+    ...ownedWeapons.map((w) => ({ ...w, isOwned: true })),
+    ...unownedWeapons
+  ];
+
+  const filteredWeapons = combinedWeapons
     .map((w) => {
       const meta = getWeaponMeta(w.key);
       const holderMeta = w.location ? getCharacterMeta(w.location) : null;
@@ -80,11 +100,13 @@ export function renderArmoryTab(container, viewState, handlers) {
       if (typeFilter !== 'All' && String(w.meta.weaponType || '').toLowerCase() !== typeFilter.toLowerCase()) {
         return false;
       }
+      if (badgeFilter === 'owned' && !w.isOwned) return false;
+      if (badgeFilter === 'unowned' && w.isOwned) return false;
       if (badgeFilter === '5' || badgeFilter === '4' || badgeFilter === '3') {
         if (Number(w.meta.rarity) !== Number(badgeFilter)) return false;
-      } else if (badgeFilter === 'equipped' && !w.location) {
+      } else if (badgeFilter === 'equipped' && (!w.isOwned || !w.location)) {
         return false;
-      } else if (badgeFilter === 'unassigned' && w.location) {
+      } else if (badgeFilter === 'unassigned' && (!w.isOwned || w.location)) {
         return false;
       }
       if (!q) return true;
@@ -95,6 +117,10 @@ export function renderArmoryTab(container, viewState, handlers) {
       );
     })
     .sort((a, b) => {
+      if (a.isOwned !== b.isOwned) return a.isOwned ? -1 : 1;
+      if (!a.isOwned && !b.isOwned) {
+        return (b.meta.rarity || 0) - (a.meta.rarity || 0) || a.meta.name.localeCompare(b.meta.name);
+      }
       if (sortBy === 'refinement') {
         return (
           (b.refinement || 1) - (a.refinement || 1) ||
@@ -124,7 +150,7 @@ export function renderArmoryTab(container, viewState, handlers) {
     const holderLabel = w.holderName ? escapeHtml(w.holderName) : 'Unassigned';
     if (density === 'list') {
       return `
-      <button type="button" class="armory-weapon-row" data-armory-inspect="${idx}">
+      <button type="button" class="armory-weapon-row ${w.isOwned ? '' : 'is-unowned'}" data-armory-inspect="${idx}">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
             ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-sm')}
@@ -135,15 +161,19 @@ export function renderArmoryTab(container, viewState, handlers) {
           </div>
         </div>
         <div class="armory-row-badges mono">
-          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
-          <span class="pill pill-gold">R${w.refinement}</span>
-          <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped: ${holderLabel}` : 'Unassigned'}</span>
+          ${
+            w.isOwned
+              ? `<span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+                 <span class="pill pill-gold">R${w.refinement}</span>
+                 <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped: ${holderLabel}` : 'Unassigned'}</span>`
+              : '<span class="pill pill-muted">UNOWNED · INSPECT</span>'
+          }
         </div>
       </button>`;
     }
 
     return `
-    <button type="button" class="armory-weapon-card" data-armory-inspect="${idx}">
+    <button type="button" class="armory-weapon-card ${w.isOwned ? '' : 'is-unowned'}" data-armory-inspect="${idx}">
       <div class="armory-weapon-top">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
@@ -154,22 +184,30 @@ export function renderArmoryTab(container, viewState, handlers) {
             <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
           </div>
         </div>
-        <span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>
+        ${
+          w.isOwned
+            ? `<span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>`
+            : '<span class="pill pill-muted mono">UNOWNED</span>'
+        }
       </div>
-      <div class="armory-weapon-stats mono">
-        <div class="armory-stat-box">
-          <span class="stat-label">REFINE</span>
-          <span class="stat-val text-gold">R${w.refinement}</span>
-        </div>
-        <div class="armory-stat-box">
-          <span class="stat-label">ASC</span>
-          <span class="stat-val">A${w.ascension}</span>
-        </div>
-        <div class="armory-stat-box">
-          <span class="stat-label">EQUIPPED</span>
-          <span class="stat-val ${w.holderName ? 'text-cyan' : 'muted'}">${holderLabel}</span>
-        </div>
-      </div>
+      ${
+        w.isOwned
+          ? `<div class="armory-weapon-stats mono">
+              <div class="armory-stat-box">
+                <span class="stat-label">REFINE</span>
+                <span class="stat-val text-gold">R${w.refinement}</span>
+              </div>
+              <div class="armory-stat-box">
+                <span class="stat-label">ASC</span>
+                <span class="stat-val">A${w.ascension}</span>
+              </div>
+              <div class="armory-stat-box">
+                <span class="stat-label">EQUIPPED</span>
+                <span class="stat-val ${w.holderName ? 'text-cyan' : 'muted'}">${holderLabel}</span>
+              </div>
+            </div>`
+          : '<div class="armory-weapon-unowned-note mono muted">Click to inspect stats &amp; R1–R5 passive</div>'
+      }
     </button>`;
   };
 
@@ -180,7 +218,7 @@ export function renderArmoryTab(container, viewState, handlers) {
         <h1 class="section-title">Armory</h1>
       </div>
       <div class="header-meta mono">
-        OWNED: <span class="text-mint">${allWeapons.length}</span> WEAPONS · SHOWING <span class="text-gold">${filteredWeapons.length}</span>
+        OWNED: <span class="text-mint">${ownedWeapons.length}</span> · CATALOG: <span class="text-cyan">${combinedWeapons.length}</span> · SHOWING <span class="text-gold">${filteredWeapons.length}</span>
       </div>
     </div>
 
@@ -302,9 +340,13 @@ function openWeaponModal(w) {
         </div>
 
         <div class="dossier-hero-chips mono">
-          <span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
-          <span class="pill pill-gold">Owned R${w.refinement}</span>
-          <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped by ${holderLabel}` : 'Unassigned'}</span>
+          ${
+            w.isOwned
+              ? `<span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+                 <span class="pill pill-gold">Owned R${w.refinement}</span>
+                 <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped by ${holderLabel}` : 'Unassigned'}</span>`
+              : '<span class="pill pill-muted">UNOWNED · CATALOG PREVIEW</span>'
+          }
         </div>
 
         ${
