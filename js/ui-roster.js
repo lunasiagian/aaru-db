@@ -11,6 +11,7 @@ import {
 } from './catalog.js?v=20261115ag';
 import {
   analyzeCharacterKit,
+  buildKitProfile,
   calcTalentUpgradeDiff,
   computeCharacterCombatStats,
   computeEffectiveTalents,
@@ -20,7 +21,8 @@ import {
   evaluateTeamCapabilities,
   generateKitInsights,
   getBuildStatGuidelines,
-  getSignatureWeapon
+  getSignatureWeapon,
+  rankWeaponsByArchetype
 } from './build-science.js?v=20261115ah';
 
 const STATUS_PILLS = [
@@ -202,7 +204,161 @@ function calcArtifactSubCv(equipped = []) {
   return subCv;
 }
 
-function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
+let weaponMatrixState = {
+  charKey: '',
+  archetype: null,
+  scope: 'holistic',
+  filter: 'all',
+  fullView: false
+};
+
+function getMatrixAcquisitionClass(label) {
+  switch (label) {
+    case 'SIGNATURE':
+      return 'pill-gold';
+    case '5★ LIMITED':
+    case '5★ STANDARD':
+      return 'pill-plum';
+    case '4★ GACHA':
+      return 'pill-sky';
+    case 'CRAFTABLE':
+    case 'FISHING':
+    case '3★ F2P':
+      return 'pill-mint';
+    default:
+      return 'pill-muted';
+  }
+}
+
+function renderWeaponMatrixTableHtml(rows, isFullView = false) {
+  const limit = isFullView ? rows.length : 12;
+  const visible = rows.slice(0, limit);
+  if (!visible.length) {
+    return '<div class="muted mono" style="font-size:12px;padding:12px 0;">No weapons match the current filter.</div>';
+  }
+  return `
+    <div class="weapon-matrix-table-wrap">
+      <table class="weapon-matrix-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Weapon &amp; Substat</th>
+            <th>Acquisition</th>
+            <th>Match Score</th>
+            <th>Synergy &amp; Cap Rationale</th>
+            <th>Account Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${visible
+            .map((w, idx) => {
+              const rankNum = idx + 1;
+              const isBis = rankNum === 1;
+              const refTag = `R${w.effectiveRefinement || 1}`;
+              const subText = `${w.substatValue ? `${w.substatValue} ` : ''}${w.substat || 'ATK%'}`;
+              const acqClass = getMatrixAcquisitionClass(w.acquisitionLabel);
+              const statusHtml = w.isOwned
+                ? `<span class="pill pill-mint mono">OWNED R${w.ownedRefinement || 1} · ${escapeHtml(w.equippedBy || 'Unassigned')}</span>`
+                : '<span class="pill pill-muted mono">NOT OWNED</span>';
+              return `
+                <tr class="${isBis ? 'is-bis-row' : ''}">
+                  <td class="mono">
+                    <span class="pill ${isBis ? 'pill-gold' : 'pill-muted'}">#${rankNum}${isBis ? ' BiS' : ''}</span>
+                  </td>
+                  <td>
+                    <div class="matrix-weapon-cell">
+                      ${renderAssetIcon('weapons', w.key, w.name, 'icon-sm')}
+                      <div>
+                        <div class="matrix-weapon-name">${escapeHtml(w.name)} <span class="pill mono">${refTag}</span></div>
+                        <div class="matrix-weapon-sub mono muted">${escapeHtml(subText)} · ${w.rarity || 4}★</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="pill ${acqClass} mono">${escapeHtml(w.acquisitionLabel || '4★ GACHA')}</span></td>
+                  <td>
+                    <div class="matrix-score-cell mono">
+                      <span class="matrix-score-num">${w.score}</span>
+                      <div class="matrix-score-bar"><span style="width:${w.score}%"></span></div>
+                    </div>
+                  </td>
+                  <td class="matrix-synergy-cell">${escapeHtml(w.synergyNote || '')}</td>
+                  <td>${statusHtml}</td>
+                </tr>`;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderDossierWeaponMatrixTab(c, matrixResult, isFullView = false) {
+  const archetypes = matrixResult.archetypes || ['Buffer / Enabler'];
+  const activeArch =
+    weaponMatrixState.archetype && archetypes.includes(weaponMatrixState.archetype)
+      ? weaponMatrixState.archetype
+      : matrixResult.primaryArchetype || archetypes[0];
+  const scope = weaponMatrixState.scope === 'armory' ? 'armory' : 'holistic';
+  const filter = weaponMatrixState.filter || 'all';
+
+  const holisticList = matrixResult.rankingsByArchetype?.[activeArch] || [];
+  const armoryList = matrixResult.armoryByArchetype?.[activeArch] || [];
+
+  let activeRows = scope === 'armory' ? armoryList : holisticList;
+  if (scope === 'holistic') {
+    if (filter === 'f2p') {
+      activeRows = activeRows.filter((w) => w.acquisition === 'f2p_craft_fish');
+    } else if (filter === 'four_below') {
+      activeRows = activeRows.filter((w) => Number(w.rarity) <= 4);
+    }
+  }
+
+  return `
+    <div class="weapon-matrix-panel ${isFullView ? 'is-full-view' : ''}">
+      <div class="weapon-matrix-head">
+        <div>
+          <div class="card-eyebrow">WEAPON MATRIX (${escapeHtml((c.meta?.weaponType || 'Sword').toUpperCase())} · HOLISTIC ARCHETYPE RANKING)</div>
+          <div class="muted mono" style="font-size:11px;margin-top:2px;">
+            ${scope === 'holistic' ? 'KQM Theorycraft Baseline (5★ R1 · 4★/3★ R5)' : 'Actual Owned Refinements &amp; Levels in Your Armory'}
+          </div>
+        </div>
+        <div class="weapon-matrix-head-actions">
+          ${
+            isFullView
+              ? '<button type="button" class="btn btn-ghost mono" data-matrix-fullview="close">× Close</button>'
+              : '<button type="button" class="btn btn-ghost mono" data-matrix-fullview="open">⤢ Full View</button>'
+          }
+        </div>
+      </div>
+
+      <div class="weapon-matrix-controls">
+        <div class="weapon-matrix-control-group">
+          ${archetypes
+            .map(
+              (arch, idx) =>
+                `<button type="button" class="filter-pill ${arch === activeArch ? 'active' : ''}" data-matrix-arch="${escapeHtml(arch)}">${escapeHtml(arch)}${idx === 0 && matrixResult.archetypeLock ? ` · ${escapeHtml(matrixResult.archetypeLock)}` : ''}${idx === 0 ? ' (Primary)' : ''}</button>`
+            )
+            .join('')}
+        </div>
+        <div class="weapon-matrix-control-group">
+          <button type="button" class="filter-pill ${scope === 'holistic' ? 'active' : ''}" data-matrix-scope="holistic">Holistic Ranking (All Weapons)</button>
+          <button type="button" class="filter-pill ${scope === 'armory' ? 'active' : ''}" data-matrix-scope="armory">In Your Armory (${armoryList.length})</button>
+        </div>
+        ${
+          scope === 'holistic'
+            ? `<div class="weapon-matrix-control-group">
+                 <button type="button" class="filter-pill ${filter === 'all' ? 'active' : ''}" data-matrix-filter="all">All</button>
+                 <button type="button" class="filter-pill ${filter === 'f2p' ? 'active' : ''}" data-matrix-filter="f2p">F2P Craft / Fish</button>
+                 <button type="button" class="filter-pill ${filter === 'four_below' ? 'active' : ''}" data-matrix-filter="four_below">4★ &amp; Below</button>
+               </div>`
+            : ''
+        }
+      </div>
+
+      ${renderWeaponMatrixTableHtml(activeRows, isFullView)}
+    </div>`;
+}
+
+function renderDossierLoadoutTab(c, weaponStats, kitAnalysis, topWeaponSummary = null) {
   const weaponMeta = c.equippedWeapon ? getWeaponMeta(c.equippedWeapon.key) : null;
   const wepLvStats = weaponStats
     ? (c.equippedWeapon?.level <= 80 ? weaponStats.lv80 : weaponStats.lv90)
@@ -223,7 +379,16 @@ function renderDossierLoadoutTab(c, weaponStats, kitAnalysis) {
 
   return `
     <div class="dossier-section">
-      <div class="card-eyebrow">EQUIPPED WEAPON</div>
+      <div class="dossier-section-head">
+        <span class="card-eyebrow">EQUIPPED WEAPON</span>
+        ${
+          topWeaponSummary
+            ? `<button type="button" class="pill pill-gold mono dossier-top-wep-pill" data-dossier-tab="weapons" title="Open Weapon Matrix">
+                 #1 ${escapeHtml(topWeaponSummary.archetype)}: ${escapeHtml(topWeaponSummary.name)} (${topWeaponSummary.score}) →
+               </button>`
+            : ''
+        }
+      </div>
       ${
         c.equippedWeapon
           ? `<div class="dossier-weapon-card">
@@ -579,7 +744,17 @@ function renderTalentRoiPreviewHtml(c, kitData, kitAnalysis, curTalents, tgtTale
     </div>`;
 }
 
-function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, accountWeapons = []) {
+function renderDossierTargetsTab(
+  c,
+  isReadOnly,
+  kitData,
+  kitAnalysis,
+  erReport,
+  weaponMeta,
+  accountWeapons = [],
+  combatStats = null,
+  teamCaps = null
+) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
   const curTalents = {
     auto: Math.min(10, Math.max(1, Number(c.talent?.auto) || 1)),
@@ -605,10 +780,14 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
       armory: accountWeapons,
       getWeaponMetaFn: getWeaponMeta,
       getWeaponStatsFn: getWeaponStats,
-      erReport
+      erReport,
+      combatStats,
+      teamCaps,
+      hasEquippedArtifacts: Array.isArray(c.equippedArtifacts) && c.equippedArtifacts.length > 0
     }
   );
   const recWeapons = evalRes.weapons.bestOverall.visibleSlots || evalRes.weapons.bestOverall;
+  const notableGacha4 = evalRes.weapons.bestOverall.notableGacha4 || [];
   const armoryWeapons = evalRes.weapons.inArmory.visibleSlots || evalRes.weapons.inArmory;
 
   const renderWeaponCardList = (list, emptyMsg) => {
@@ -778,6 +957,19 @@ function renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, 
         <div id="rec-weapons-best" class="rec-weapon-grid">
           ${renderWeaponCardList(recWeapons, 'No compatible weapons found.')}
         </div>
+        ${
+          notableGacha4.length
+            ? `<div id="rec-weapons-notable-gacha" class="notable-gacha-strip">
+                 <span class="notable-gacha-label mono">NOTABLE 4★ GACHA STANDOUTS:</span>
+                 ${notableGacha4
+                   .map(
+                     (w) =>
+                       `<span class="pill pill-sky notable-gacha-pill mono" title="${escapeHtml(w.reason || '')}">${escapeHtml(w.name)} (${escapeHtml(w.substat)})</span>`
+                   )
+                   .join('')}
+               </div>`
+            : ''
+        }
         <div id="rec-weapons-armory" class="rec-weapon-grid" style="display:none;">
           ${renderWeaponCardList(armoryWeapons, `No ${c.meta?.weaponType || 'matching'} weapons currently in your Armory.`)}
         </div>
@@ -828,6 +1020,36 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const effTalents = computeEffectiveTalents(c, kitData);
   const erReport = evaluateErComfort(c, combat, account.teams || [], account.weapons || [], kitData, kitAnalysis);
   const teamCaps = evaluateTeamCapabilities(c, kitData, combat, weaponMeta, c.equippedArtifacts, erReport);
+  if (weaponMatrixState.charKey !== c.key) {
+    weaponMatrixState = {
+      charKey: c.key,
+      archetype: null,
+      scope: 'holistic',
+      filter: 'all',
+      fullView: false
+    };
+  }
+  const matrixProfile = buildKitProfile(
+    { ...c, kitData },
+    {
+      erReport,
+      combatStats: combat,
+      teamCaps,
+      hasEquippedArtifacts: Array.isArray(c.equippedArtifacts) && c.equippedArtifacts.length > 0
+    }
+  );
+  const matrixResult = rankWeaponsByArchetype(c, matrixProfile, null, account.weapons || [], {
+    erReport,
+    combatStats: combat,
+    teamCaps,
+    hasEquippedArtifacts: Array.isArray(c.equippedArtifacts) && c.equippedArtifacts.length > 0,
+    getWeaponMetaFn: getWeaponMeta,
+    getWeaponStatsFn: getWeaponStats
+  });
+  const topMatrixWep = matrixResult.rankingsByArchetype?.[matrixResult.primaryArchetype]?.[0] || null;
+  const topWeaponSummary = topMatrixWep
+    ? { archetype: matrixResult.primaryArchetype, name: topMatrixWep.name, score: topMatrixWep.score }
+    : null;
 
   const idx = navList.findIndex((item) => item.key === c.key);
   const prevChar = idx > 0 ? navList[idx - 1] : null;
@@ -840,11 +1062,15 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
   const erPillClass =
     erReport.erStatus === 'short' ? 'pill-coral' : erReport.erStatus === 'warn' ? 'pill-gold' : 'pill-mint';
   const erPillLabel =
-    erReport.erStatus === 'short'
-      ? `LOW ER (${erReport.erDelta}%)`
-      : erReport.erStatus === 'warn'
-        ? 'BORDERLINE'
-        : 'ON TARGET';
+    erReport.cadence?.mode === 'shimenawa-cycle'
+      ? 'SHIMENAWA · OK'
+      : erReport.cadence?.burstDependency === 'optional'
+        ? 'SKILL-CORE · OK'
+        : erReport.erStatus === 'short'
+          ? `LOW ER (${erReport.erDelta}%)`
+          : erReport.erStatus === 'warn'
+            ? 'BORDERLINE'
+            : 'ON TARGET';
   const erCardStateClass =
     erReport.erStatus === 'short' ? 'is-er-short' : erReport.erStatus === 'warn' ? 'is-er-warn' : 'is-er-ok';
 
@@ -985,15 +1211,18 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
             <div class="dossier-er-card ${erCardStateClass}">
               <div class="dossier-er-head">
                 <div class="card-eyebrow" style="margin:0;">TEAM-CONTEXT CAPABILITIES</div>
-                <span class="pill ${erPillClass} mono er-status-pill">
-                  ${erPillLabel}
-                  <span
-                    class="er-source-badge ${erReport.dataSource === 'KQM_TCL' ? 'is-kqm' : 'is-parser'}"
-                    title="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
-                    data-tooltip="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
-                    aria-label="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
-                  >${erReport.dataSource === 'KQM_TCL' ? '✓' : '?'}</span>
-                </span>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  ${teamCaps.archetypeLock ? `<span class="pill pill-sky mono">${escapeHtml(teamCaps.archetypeLock)}</span>` : ''}
+                  <span class="pill ${erPillClass} mono er-status-pill">
+                    ${erPillLabel}
+                    <span
+                      class="er-source-badge ${erReport.dataSource === 'KQM_TCL' ? 'is-kqm' : 'is-parser'}"
+                      title="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                      data-tooltip="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                      aria-label="${erReport.dataSource === 'KQM_TCL' ? 'KQM verified' : 'Kit parser estimate'}"
+                    >${erReport.dataSource === 'KQM_TCL' ? '✓' : '?'}</span>
+                  </span>
+                </div>
               </div>
               ${
                 teamCaps.buffCap
@@ -1037,12 +1266,17 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
                   : ''
               }
               ${
-                erReport.hasEndgameFlag || erReport.soloDelta < 0
+                erReport.zeroEnergyImmune
                   ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
-                      <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
-                      <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                      <span>Stygian / Theatre</span>
+                      <span class="pill pill-mint">0-ENERGY IMMUNE</span>
                     </div>`
-                  : ''
+                  : erReport.hasEndgameFlag || erReport.soloDelta < 0
+                    ? `<div class="dossier-er-team-row mono" style="margin-top:6px;">
+                        <span>Stygian / Theatre Solo (~${erReport.soloEndgameReq}%)</span>
+                        <span class="pill ${erReport.soloDelta >= 0 ? 'pill-mint' : 'pill-coral'}">${erReport.soloDelta >= 0 ? 'SAFE' : `${erReport.soloDelta}% ER`}</span>
+                      </div>`
+                    : ''
               }
             </div>
           </article>
@@ -1051,22 +1285,34 @@ function renderCharacterDossier(c, navList, account, isReadOnly, dossierTab) {
         <section class="dossier-right-col">
           <article class="card dossier-workspace-card">
             <div class="dossier-tabs">
-              <button type="button" class="filter-pill ${activeTab === 'loadout' ? 'active' : ''}" data-dossier-tab="loadout">Loadout &amp; Artifacts</button>
-              <button type="button" class="filter-pill ${activeTab === 'talents' ? 'active' : ''}" data-dossier-tab="talents">Talents &amp; Passives</button>
+              <button type="button" class="filter-pill ${activeTab === 'loadout' ? 'active' : ''}" data-dossier-tab="loadout">Dossier &amp; Build</button>
+              <button type="button" class="filter-pill ${activeTab === 'weapons' ? 'active' : ''}" data-dossier-tab="weapons">Weapon Matrix</button>
+              <button type="button" class="filter-pill ${activeTab === 'talents' ? 'active' : ''}" data-dossier-tab="talents">Talents &amp; Constellations</button>
               <button type="button" class="filter-pill ${activeTab === 'targets' ? 'active' : ''}" data-dossier-tab="targets">Build Targets &amp; Kit Notes</button>
             </div>
             <div class="dossier-tab-body">
               ${
-                activeTab === 'talents'
-                  ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
-                  : activeTab === 'targets'
-                    ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, account.weapons || [])
-                    : renderDossierLoadoutTab(c, weaponStats, kitAnalysis)
+                activeTab === 'weapons'
+                  ? renderDossierWeaponMatrixTab(c, matrixResult, false)
+                  : activeTab === 'talents'
+                    ? renderDossierTalentsTab(c, kitData, kitAnalysis, effTalents)
+                    : activeTab === 'targets'
+                      ? renderDossierTargetsTab(c, isReadOnly, kitData, kitAnalysis, erReport, weaponMeta, account.weapons || [], combat, teamCaps)
+                      : renderDossierLoadoutTab(c, weaponStats, kitAnalysis, topWeaponSummary)
               }
             </div>
           </article>
         </section>
       </div>
+      ${
+        weaponMatrixState.fullView
+          ? `<div class="weapon-matrix-modal-backdrop" data-matrix-modal-backdrop="1">
+               <div class="weapon-matrix-modal card" role="dialog" aria-modal="true" aria-label="Weapon Matrix Full View">
+                 ${renderDossierWeaponMatrixTab(c, matrixResult, true)}
+               </div>
+             </div>`
+          : ''
+      }
     </div>`;
 }
 
@@ -1221,6 +1467,49 @@ export function renderRosterTab(container, state, handlers) {
       });
     });
 
+    const rerenderMatrix = () => renderRosterTab(container, state, handlers);
+    container.querySelectorAll('[data-matrix-arch]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        weaponMatrixState.archetype = btn.dataset.matrixArch;
+        rerenderMatrix();
+      });
+    });
+    container.querySelectorAll('[data-matrix-scope]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        weaponMatrixState.scope = btn.dataset.matrixScope;
+        rerenderMatrix();
+      });
+    });
+    container.querySelectorAll('[data-matrix-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        weaponMatrixState.filter = btn.dataset.matrixFilter;
+        rerenderMatrix();
+      });
+    });
+    container.querySelectorAll('[data-matrix-fullview]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        weaponMatrixState.fullView = btn.dataset.matrixFullview === 'open';
+        rerenderMatrix();
+      });
+    });
+    const modalBackdrop = container.querySelector('[data-matrix-modal-backdrop]');
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) {
+          weaponMatrixState.fullView = false;
+          rerenderMatrix();
+        }
+      });
+      const onEsc = (e) => {
+        if (e.key === 'Escape' && weaponMatrixState.fullView) {
+          document.removeEventListener('keydown', onEsc);
+          weaponMatrixState.fullView = false;
+          rerenderMatrix();
+        }
+      };
+      document.addEventListener('keydown', onEsc);
+    }
+
     container.querySelectorAll('[data-rec-tab]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const target = btn.dataset.recTab;
@@ -1228,8 +1517,10 @@ export function renderRosterTab(container, state, handlers) {
           b.classList.toggle('active', b.dataset.recTab === target);
         });
         const bestEl = container.querySelector('#rec-weapons-best');
+        const notableEl = container.querySelector('#rec-weapons-notable-gacha');
         const armoryEl = container.querySelector('#rec-weapons-armory');
         if (bestEl) bestEl.style.display = target === 'best' ? '' : 'none';
+        if (notableEl) notableEl.style.display = target === 'best' ? '' : 'none';
         if (armoryEl) armoryEl.style.display = target === 'armory' ? '' : 'none';
       });
     });

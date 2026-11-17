@@ -32,8 +32,6 @@
   <div id="test-list" class="test-list"></div>
 
   <script type="module">
-    import { runBuildScienceTests, runRandomFuzzTests } from './tests/build-science.test.js';
-
     const summaryEl = document.getElementById('test-summary');
     const listEl = document.getElementById('test-list');
     const rerunBtn = document.getElementById('rerun-btn');
@@ -58,29 +56,45 @@
         .join('');
     }
 
-    async function run() {
-      rerunBtn.disabled = true;
-      fuzzBtn.disabled = true;
-      summaryEl.textContent = 'Hydrating character kits & running assertions...';
-      const finalRows = await runBuildScienceTests(render);
-      fixedRowsCache = finalRows.filter((r) => !r.name.startsWith('[Fuzz]'));
-      render(finalRows);
-      rerunBtn.disabled = false;
-      fuzzBtn.disabled = false;
-    }
+    try {
+      const { runBuildScienceTests, runRandomFuzzTests } = await import('./tests/build-science.test.js?v=' + Date.now());
 
-    async function rollFuzz() {
-      rerunBtn.disabled = true;
-      fuzzBtn.disabled = true;
-      const fuzzRows = await runRandomFuzzTests(5, (partial) => render([...fixedRowsCache, ...partial]));
-      render([...fixedRowsCache, ...fuzzRows]);
-      rerunBtn.disabled = false;
-      fuzzBtn.disabled = false;
-    }
+      async function run() {
+        rerunBtn.disabled = true;
+        fuzzBtn.disabled = true;
+        summaryEl.textContent = 'Hydrating character kits & running assertions...';
+        try {
+          const finalRows = await runBuildScienceTests(render);
+          fixedRowsCache = finalRows.filter((r) => !r.name.startsWith('[Fuzz]'));
+          render(finalRows);
+        } catch (err) {
+          summaryEl.innerHTML = `<span class="text-coral">ERROR: ${err?.message || err}</span>`;
+        } finally {
+          rerunBtn.disabled = false;
+          fuzzBtn.disabled = false;
+        }
+      }
 
-    rerunBtn.addEventListener('click', run);
-    fuzzBtn.addEventListener('click', rollFuzz);
-    run();
+      async function rollFuzz() {
+        rerunBtn.disabled = true;
+        fuzzBtn.disabled = true;
+        try {
+          const fuzzRows = await runRandomFuzzTests(5, (partial) => render([...fixedRowsCache, ...partial]));
+          render([...fixedRowsCache, ...fuzzRows]);
+        } catch (err) {
+          summaryEl.innerHTML = `<span class="text-coral">FUZZ ERROR: ${err?.message || err}</span>`;
+        } finally {
+          rerunBtn.disabled = false;
+          fuzzBtn.disabled = false;
+        }
+      }
+
+      rerunBtn.addEventListener('click', run);
+      fuzzBtn.addEventListener('click', rollFuzz);
+      run();
+    } catch (err) {
+      summaryEl.innerHTML = `<span class="text-coral">MODULE LOAD ERROR: ${err?.stack || err?.message || err}</span>`;
+    }
   </script>
 </body>
 </html>
