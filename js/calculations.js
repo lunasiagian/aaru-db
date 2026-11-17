@@ -90,6 +90,85 @@ export function calcCoinPurse(wallet = {}) {
   };
 }
 
+export const DEFAULT_WISH_GOAL = {
+  label: 'Dec 16 Banner Target',
+  targetDate: '2026-12-16',
+  targetPulls: 180,
+  charPity: 0,
+  charGuaranteed: false,
+  weaponPity: 0,
+  includeWeapPity: false,
+  hasWelkin: true,
+  hasBattlePass: true,
+  bpLevel: 30
+};
+
+/**
+ * Target Banner Countdown & Pull Projection (with Character/Weapon Pity + Exact BP Milestone Rewards)
+ */
+export function calcWishGoalProjection(wallet = {}, wishGoalOverride = null) {
+  const goal = {
+    ...DEFAULT_WISH_GOAL,
+    ...(wallet?.wishGoal || {}),
+    ...(wishGoalOverride || {})
+  };
+  const targetDate = String(goal.targetDate || DEFAULT_WISH_GOAL.targetDate);
+  const targetPulls = Math.max(1, Number(goal.targetPulls) || DEFAULT_WISH_GOAL.targetPulls);
+  const charPity = Math.min(89, Math.max(0, Math.floor(Number(goal.charPity) || 0)));
+  const charGuaranteed = Boolean(goal.charGuaranteed);
+  const weaponPity = Math.min(79, Math.max(0, Math.floor(Number(goal.weaponPity) || 0)));
+  const includeWeapPity = Boolean(goal.includeWeapPity);
+  const hasWelkin = goal.hasWelkin !== false;
+  const hasBattlePass = goal.hasBattlePass !== false;
+  const bpLevel = Math.min(50, Math.max(1, Math.floor(Number(goal.bpLevel) || 1)));
+  const label = String(goal.label || DEFAULT_WISH_GOAL.label);
+
+  const targetMs = new Date(`${targetDate}T00:00:00`).getTime();
+  const daysRemaining = Number.isFinite(targetMs)
+    ? Math.max(0, Math.ceil((targetMs - Date.now()) / 86400000))
+    : 0;
+  const currentPulls = calcCoinPurse(wallet).limitedPulls;
+  const effectivePityPulls = charPity + (includeWeapPity ? weaponPity : 0);
+  const effectiveCurrentPulls = currentPulls + effectivePityPulls;
+
+  const dailyPrimos = hasWelkin ? 150 : 60;
+  const dailyBonusPulls = Math.floor((daysRemaining * dailyPrimos) / 160);
+
+  // Exact remaining Gnostic Hymn rewards (Lv. 10/20/30/40 = 1 Fate each, Lv. 50 = 680 Primos)
+  const remainingBpFates = hasBattlePass ? [10, 20, 30, 40].filter((lvl) => lvl > bpLevel).length : 0;
+  const remainingBpPrimos = hasBattlePass && bpLevel < 50 ? 680 : 0;
+  const bpMilestonePulls = remainingBpFates + Math.floor(remainingBpPrimos / 160);
+
+  const projectedBonusPulls = dailyBonusPulls + bpMilestonePulls;
+  const projectedTotalPulls = effectiveCurrentPulls + projectedBonusPulls;
+  const deficitPulls = Math.max(0, targetPulls - projectedTotalPulls);
+
+  return {
+    label,
+    targetDate,
+    targetPulls,
+    charPity,
+    charGuaranteed,
+    weaponPity,
+    includeWeapPity,
+    hasWelkin,
+    hasBattlePass,
+    bpLevel,
+    daysRemaining,
+    currentPulls,
+    effectivePityPulls,
+    effectiveCurrentPulls,
+    dailyPrimos,
+    dailyBonusPulls,
+    remainingBpFates,
+    remainingBpPrimos,
+    bpMilestonePulls,
+    projectedBonusPulls,
+    projectedTotalPulls,
+    deficitPulls
+  };
+}
+
 export function calcCompletionGauges(account) {
   const chars = account?.characters || [];
   const weapons = account?.weapons || [];

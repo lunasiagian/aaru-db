@@ -5375,3 +5375,118 @@ textarea:focus {
   background: rgba(168, 85, 247, 0.16);
   border: 1px solid rgba(168, 85, 247, 0.35);
 }
+
+/* Wish Stash Banner Countdown & Pull Projection */
+.wish-goal-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.wish-goal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wish-goal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.wish-goal-countdown {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.wish-goal-label-input {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--text-primary, #f8fafc);
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 180px;
+  flex: 1;
+  max-width: 300px;
+}
+
+.wish-goal-label-input:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.wish-goal-controls,
+.wish-goal-pity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wish-goal-inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.wish-goal-inline-field input[type="date"] {
+  min-width: 128px;
+}
+
+.wish-goal-inline-field input[type="number"] {
+  max-width: 78px;
+}
+
+.wish-goal-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.wish-goal-progress {
+  position: relative;
+  display: flex;
+  height: 8px;
+  width: 100%;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.wish-goal-midpoint {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+
+.wish-goal-fill-cur {
+  height: 100%;
+  background: #38bdf8;
+  transition: width 0.25s ease;
+}
+
+.wish-goal-fill-proj {
+  height: 100%;
+  background: rgba(56, 189, 248, 0.28);
+  transition: width 0.25s ease;
+}

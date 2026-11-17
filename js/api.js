@@ -99,7 +99,7 @@ function requireSessionToken() {
   return token;
 }
 
-async function getAppsScript(params, errorLabel) {
+async function getAppsScript(params, errorLabel, timeoutMs = 15000) {
   const cfg = getConfig();
   const url = new URL(cfg.APPS_SCRIPT_URL);
   for (const [k, v] of Object.entries(params)) {
@@ -107,28 +107,51 @@ async function getAppsScript(params, errorLabel) {
       url.searchParams.set(k, String(v));
     }
   }
-  const res = await fetch(url.toString(), { method: 'GET' });
-  if (!res.ok) {
-    throw new Error(`${errorLabel} (${res.status})`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url.toString(), { method: 'GET', signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`${errorLabel} (${res.status})`);
+    }
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    return json;
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw new Error(`${errorLabel}: Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  const json = await res.json();
-  if (json.error) throw new Error(json.error);
-  return json;
 }
 
-async function postAppsScript(payload, errorLabel) {
+async function postAppsScript(payload, errorLabel, timeoutMs = 15000) {
   const cfg = getConfig();
-  const res = await fetch(cfg.APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) {
-    throw new Error(`${errorLabel} (${res.status})`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(cfg.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      throw new Error(`${errorLabel} (${res.status})`);
+    }
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    return json;
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw new Error(`${errorLabel}: Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  const json = await res.json();
-  if (json.error) throw new Error(json.error);
-  return json;
 }
 
 export function isOfflineMode() {

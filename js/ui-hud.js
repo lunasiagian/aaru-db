@@ -15,8 +15,10 @@ import {
   calcSpareReserves,
   calcTargetReadinessPct,
   calcTargetTelemetry,
+  calcWishGoalProjection,
   calculatePrioritySharedPool,
   calculateWaterfallPrefarm,
+  DEFAULT_WISH_GOAL,
   getServerResetInfo,
   sortAndLabelPrefarmQueue
 } from './calculations.js?v=20261114w';
@@ -63,10 +65,48 @@ function getSourceBadgeHtml(item, todayName) {
   return `<span class="pill mono">${item.sourceLabel}</span>`;
 }
 
+const WISH_GOAL_STORAGE_KEY = 'aaru_wish_goal_v1';
+
+function loadStoredWishGoal() {
+  try {
+    const raw = localStorage.getItem(WISH_GOAL_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredWishGoal(goal) {
+  try {
+    localStorage.setItem(WISH_GOAL_STORAGE_KEY, JSON.stringify(goal));
+  } catch {
+    /* ignore storage quota errors */
+  }
+}
+
+function escapeAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export function renderHudTab(container, state, handlers) {
   const { account, isReadOnly } = state;
   const wallet = account.wallet || {};
   const purse = calcCoinPurse(wallet);
+  const storedGoal = loadStoredWishGoal();
+  const activeWishGoal = {
+    ...DEFAULT_WISH_GOAL,
+    ...(storedGoal || {}),
+    ...(wallet.wishGoal || {})
+  };
+  const wishProj = calcWishGoalProjection(wallet, activeWishGoal);
+  const curBarPct = Math.min(100, Math.round((wishProj.effectiveCurrentPulls / wishProj.targetPulls) * 100));
+  const projBarPct = Math.min(100 - curBarPct, Math.round((wishProj.projectedBonusPulls / wishProj.targetPulls) * 100));
   const wits = calcEffectiveHerosWit(account.inventory);
   const resetInfo = getServerResetInfo(state.serverId || 'NA');
   const todayName = state.hudDayOverride || resetInfo.inGameDay;
@@ -182,9 +222,9 @@ export function renderHudTab(container, state, handlers) {
           </div>
           <div class="scarcity-hero-row">
             ${renderAssetIcon('materials', 'Primogem', 'Primogem', 'icon-sm')}
-            <div class="kpi-hero mono text-amber">${purse.totalPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
+            <div class="kpi-hero mono text-amber">${purse.limitedPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
           </div>
-          <div class="kpi-sub mono">${softPityRatio}× Soft Pity · ${guaranteePct}% to Guarantee (${purse.limitedPulls} Lim / ${purse.acquaintFates} Blue)</div>
+          <div class="kpi-sub mono">${softPityRatio}× Soft Pity · ${guaranteePct}% to Guarantee</div>
         </button>
 
         <div class="glass-popover" id="popover-wishes" hidden>
@@ -207,6 +247,104 @@ export function renderHudTab(container, state, handlers) {
             </label>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Wish Stash Banner Countdown & Pull Projection -->
+    <section class="card wish-goal-strip" aria-label="Target Banner Countdown & Pull Projection">
+      <div class="wish-goal-top">
+        <div class="wish-goal-title-row">
+          <span class="pill ${wishProj.daysRemaining === 0 ? 'pill-mint' : 'pill-gold'} mono wish-goal-countdown">
+            ${wishProj.daysRemaining === 0 ? 'BANNER LIVE' : `T-${wishProj.daysRemaining}D`}
+          </span>
+          <input
+            type="text"
+            class="wish-goal-input wish-goal-label-input"
+            data-wish-goal-field="label"
+            value="${escapeAttr(wishProj.label)}"
+            aria-label="Target Banner Label"
+            ${disabledAttr}
+          />
+        </div>
+        <div class="wish-goal-controls mono">
+          <label class="wish-goal-inline-field">
+            <span>DATE</span>
+            <input type="date" class="input-mono sm" data-wish-goal-field="targetDate" value="${escapeAttr(wishProj.targetDate)}" ${disabledAttr} />
+          </label>
+          <label class="wish-goal-inline-field">
+            <span>TARGET</span>
+            <input type="number" min="1" max="2000" class="input-mono sm" data-wish-goal-field="targetPulls" value="${wishProj.targetPulls}" ${disabledAttr} />
+          </label>
+          <button
+            type="button"
+            class="filter-pill ${wishProj.hasWelkin ? 'active' : ''}"
+            data-wish-welkin-toggle
+            title="${wishProj.hasWelkin ? '150 Primos/day (Welkin + Dailies)' : '60 Primos/day (F2P Dailies)'}"
+            ${disabledAttr}
+          >
+            Welkin: ${wishProj.hasWelkin ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            class="filter-pill ${wishProj.hasBattlePass ? 'active' : ''}"
+            data-wish-bp-toggle
+            title="${wishProj.hasBattlePass ? 'Gnostic Hymn ON (Lv.10/20/30/40 Fates + Lv.50 680 Primos)' : 'Gnostic Hymn OFF'}"
+            ${disabledAttr}
+          >
+            BP: ${wishProj.hasBattlePass ? 'ON' : 'OFF'}
+          </button>
+          ${
+            wishProj.hasBattlePass
+              ? `<label class="wish-goal-inline-field" title="Current Gnostic Hymn Level (1–50)">
+                   <span>BP LV</span>
+                   <input type="number" min="1" max="50" class="input-mono sm" data-wish-goal-field="bpLevel" value="${wishProj.bpLevel}" ${disabledAttr} />
+                 </label>`
+              : ''
+          }
+        </div>
+      </div>
+
+      <div class="wish-goal-pity-row mono">
+        <label class="wish-goal-inline-field">
+          <span>CHAR PITY</span>
+          <input type="number" min="0" max="89" class="input-mono sm" data-wish-goal-field="charPity" value="${wishProj.charPity}" ${disabledAttr} />
+        </label>
+        <button
+          type="button"
+          class="filter-pill ${wishProj.charGuaranteed ? 'active' : ''}"
+          data-wish-char-guaranteed-toggle
+          title="Toggle 50/50 vs Guaranteed next 5★ Character"
+          ${disabledAttr}
+        >
+          ${wishProj.charGuaranteed ? 'GUARANTEED' : '50/50'}
+        </button>
+        <label class="wish-goal-inline-field">
+          <span>WEAP PITY</span>
+          <input type="number" min="0" max="79" class="input-mono sm" data-wish-goal-field="weaponPity" value="${wishProj.weaponPity}" ${disabledAttr} />
+        </label>
+        <button
+          type="button"
+          class="filter-pill ${wishProj.includeWeapPity ? 'active' : ''}"
+          data-wish-weap-pity-toggle
+          title="Count existing Weapon Banner pity toward current target"
+          ${disabledAttr}
+        >
+          +Weap Pity: ${wishProj.includeWeapPity ? 'ON' : 'OFF'}
+        </button>
+      </div>
+
+      <div class="wish-goal-telemetry mono">
+        <span>Stash: <strong>${wishProj.currentPulls}</strong>${wishProj.effectivePityPulls > 0 ? ` + <strong>${wishProj.effectivePityPulls}</strong> pity = <strong>${wishProj.effectiveCurrentPulls}</strong>` : ' pulls'}</span>
+        <span>·</span>
+        <span>Projected on Date: <strong class="text-cyan">${wishProj.projectedTotalPulls} / ${wishProj.targetPulls}</strong> pulls <span class="muted">(+${wishProj.dailyBonusPulls} daily${wishProj.bpMilestonePulls > 0 ? ` +${wishProj.bpMilestonePulls} BP` : ''})</span></span>
+        <span>·</span>
+        ${wishProj.deficitPulls === 0 ? '<span class="text-mint">Goal covered</span>' : `<span class="muted">${wishProj.deficitPulls} pulls to goal</span>`}
+      </div>
+
+      <div class="wish-goal-progress" title="Effective Current: ${wishProj.effectiveCurrentPulls} pulls | Projected Bonus: +${wishProj.projectedBonusPulls} pulls | Target: ${wishProj.targetPulls} pulls">
+        <div class="wish-goal-fill-cur" style="width:${curBarPct}%"></div>
+        <div class="wish-goal-fill-proj" style="width:${projBarPct}%"></div>
+        <span class="wish-goal-midpoint" aria-hidden="true"></span>
       </div>
     </section>
 
@@ -826,6 +964,41 @@ export function renderHudTab(container, state, handlers) {
       input.addEventListener('change', (e) => {
         handlers.onUpdateWallet(e.target.dataset.walletField, Number(e.target.value) || 0);
       });
+    });
+
+    const commitWishGoal = (patch) => {
+      const nextGoal = { ...activeWishGoal, ...patch };
+      saveStoredWishGoal(nextGoal);
+      handlers.onUpdateWallet('wishGoal', nextGoal);
+    };
+
+    container.querySelectorAll('[data-wish-goal-field]').forEach((input) => {
+      input.addEventListener('change', (e) => {
+        const key = e.target.dataset.wishGoalField;
+        let val;
+        if (key === 'targetPulls') val = Math.max(1, Number(e.target.value) || 1);
+        else if (key === 'charPity') val = Math.min(89, Math.max(0, Math.floor(Number(e.target.value) || 0)));
+        else if (key === 'weaponPity') val = Math.min(79, Math.max(0, Math.floor(Number(e.target.value) || 0)));
+        else if (key === 'bpLevel') val = Math.min(50, Math.max(1, Math.floor(Number(e.target.value) || 1)));
+        else val = String(e.target.value || '');
+        commitWishGoal({ [key]: val });
+      });
+    });
+
+    container.querySelector('[data-wish-welkin-toggle]')?.addEventListener('click', () => {
+      commitWishGoal({ hasWelkin: !activeWishGoal.hasWelkin });
+    });
+
+    container.querySelector('[data-wish-bp-toggle]')?.addEventListener('click', () => {
+      commitWishGoal({ hasBattlePass: !activeWishGoal.hasBattlePass });
+    });
+
+    container.querySelector('[data-wish-char-guaranteed-toggle]')?.addEventListener('click', () => {
+      commitWishGoal({ charGuaranteed: !activeWishGoal.charGuaranteed });
+    });
+
+    container.querySelector('[data-wish-weap-pity-toggle]')?.addEventListener('click', () => {
+      commitWishGoal({ includeWeapPity: !activeWishGoal.includeWeapPity });
     });
 
     container.querySelectorAll('[data-check-group]').forEach((cb) => {
