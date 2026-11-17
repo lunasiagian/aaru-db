@@ -645,6 +645,7 @@ export function evaluateTeamCapabilities(
     buffCap,
     utilitySummary,
     supportGear,
+    archetypeLock: combatStats?.kitAnalysis?.archetypeLock || null,
     erSummary: erDiag?.summary || ''
   };
 }

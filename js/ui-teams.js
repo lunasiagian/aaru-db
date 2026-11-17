@@ -1,10 +1,40 @@
 import { renderAssetIcon } from './assets.js';
 import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261115ag';
-import { classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261115ah';
+import { analyzeCharacterKit, classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261115ah';
 import { detectTeamWeaponConflicts } from './calculations.js?v=20261114w';
 
 const ARCHETYPES = ['Hypercarry', 'Dual Carry', 'Chip Damage'];
 const CORE_FIELD_ROLES = ['On-Field Carry', 'On-Field Driver', 'Off-Field Sub-DPS', 'Quickswap Support'];
+
+const LOCK_ELEMENTS = {
+  'Freeze-Core': ['Hydro', 'Cryo'],
+  'Overload-Core': ['Pyro', 'Electro'],
+  'Bloom-Core': ['Dendro', 'Hydro']
+};
+
+function evaluateSquadArchetypeLocks(members, charByKey) {
+  const elems = (members || []).map((m) => getCharacterMeta(m.characterKey)?.element || '').filter(Boolean);
+  const badges = [];
+  const seen = new Set();
+  for (const m of members || []) {
+    const kitData = getCharacterKit(m.characterKey);
+    const ownedCon = Number(charByKey.get(m.characterKey)?.constellation) || 0;
+    const analysis = analyzeCharacterKit(m.characterKey, kitData, null, ownedCon);
+    const lock = analysis?.archetypeLock;
+    if (!lock || seen.has(lock) || !LOCK_ELEMENTS[lock]) continue;
+    seen.add(lock);
+    const allowed = new Set(LOCK_ELEMENTS[lock]);
+    const allAllowed = elems.length > 0 && elems.every((e) => allowed.has(e));
+    const hasBoth = LOCK_ELEMENTS[lock].every((req) => elems.includes(req));
+    const active = allAllowed && hasBoth;
+    badges.push({
+      lock,
+      active,
+      label: active ? `✓ ${lock} Active` : `⚠ ${lock} Broken (${LOCK_ELEMENTS[lock].join('/')} only)`
+    });
+  }
+  return badges;
+}
 
 export function renderTeamsTab(container, state, handlers) {
   const { account, isReadOnly } = state;
@@ -60,13 +90,21 @@ export function renderTeamsTab(container, state, handlers) {
         <div class="teams-grid">
           ${group.length
             ? group
-                .map(
-                  (team) => `
+                .map((team) => {
+                  const lockBadges = evaluateSquadArchetypeLocks(team.members || [], charByKey);
+                  return `
               <article class="card team-card">
                 <div class="team-card-head">
                   <div>
                     <div class="card-eyebrow">${team.archetype.toUpperCase()}</div>
                     <h2 class="card-title">${team.name}</h2>
+                    ${
+                      lockBadges.length
+                        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">${lockBadges
+                            .map((b) => `<span class="pill ${b.active ? 'pill-mint' : 'pill-coral'} mono">${b.label}</span>`)
+                            .join('')}</div>`
+                        : ''
+                    }
                   </div>
                   ${
                     !isReadOnly
@@ -149,8 +187,8 @@ export function renderTeamsTab(container, state, handlers) {
                     <textarea rows="2" class="textarea-lab" data-lab-team="${team.id}" data-lab-field="poiseNotes" ${disabledAttr}>${team.testLab?.poiseNotes || ''}</textarea>
                   </label>
                 </div>
-              </article>`
-                )
+              </article>`;
+                })
                 .join('')
             : `<article class="card"><div class="empty-state">No ${arch} squads configured yet.</div></article>`}
         </div>

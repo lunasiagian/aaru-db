@@ -14,6 +14,7 @@ import {
   evaluateBuild,
   evaluateBuildDiagnostics,
   evaluateErComfort,
+  rankWeaponsByArchetype,
   recommendWeapons,
   resolveMemberTeamRole
 } from '../js/build-science.js?v=20261115ah';
@@ -422,6 +423,119 @@ export async function runBuildScienceTests(onProgress = () => {}) {
       `Expected EM weapon to outrank ER weapons for ${targetKey} when ER is covered (+20%) & EM gap is +180, got ${topWep.name} (${topWep.substat})`
     );
     return `${targetKey} Top Rec: ${topWep.name} (${topWep.substat}) — ${topWep.reason}`;
+  });
+
+  await runCase('Weapon Matrix: Xilonen decomposes into Buffer / Enabler & On-Field Carry', async () => {
+    const kit = getCharacterKit('Xilonen');
+    assert(kit, 'Xilonen kit failed to load');
+    const profile = buildKitProfile({ key: 'Xilonen', kitData: kit });
+    const matrix = rankWeaponsByArchetype({ key: 'Xilonen', kitData: kit }, profile, weaponsIndex, []);
+    assert(
+      matrix.archetypes[0] === 'Buffer / Enabler' && matrix.archetypes.includes('On-Field Carry'),
+      `Unexpected Xilonen archetypes: ${matrix.archetypes.join(', ')}`
+    );
+    const supTop = matrix.rankingsByArchetype['Buffer / Enabler']?.[0];
+    const dpsTop = matrix.rankingsByArchetype['On-Field Carry']?.[0];
+    assert(supTop?.name === 'Peak Patrol Song', `Expected Buffer #1 Peak Patrol Song, got ${supTop?.name}`);
+    assert(dpsTop?.name === 'Uraku Misugiri', `Expected Carry #1 Uraku Misugiri, got ${dpsTop?.name}`);
+    return `Buffer #1: ${supTop.name} (${supTop.score}) | Carry #1: ${dpsTop.name} (${dpsTop.score})`;
+  });
+
+  await runCase('Weapon Matrix: Gorou Buffer / Enabler ranks Favonius Warbow ahead of Elegy', async () => {
+    await ensureCharacterKitAndStats('Gorou').catch(() => null);
+    const kit = getCharacterKit('Gorou');
+    assert(kit, 'Gorou kit failed to load');
+    const profile = buildKitProfile({ key: 'Gorou', kitData: kit });
+    const matrix = rankWeaponsByArchetype({ key: 'Gorou', kitData: kit }, profile, weaponsIndex, []);
+    const ladder = matrix.rankingsByArchetype['Buffer / Enabler'] || [];
+    const favIdx = ladder.findIndex((w) => w.name === 'Favonius Warbow');
+    const elegyIdx = ladder.findIndex((w) => w.name === 'Elegy for the End');
+    assert(favIdx >= 0 && (elegyIdx < 0 || favIdx < elegyIdx), `Expected Favonius Warbow (#${favIdx + 1}) ahead of Elegy (#${elegyIdx + 1})`);
+    return `Gorou Buffer #1: ${ladder[0]?.name} (Favonius #${favIdx + 1}, Elegy #${elegyIdx + 1})`;
+  });
+
+  await runCase('Weapon Matrix: Fischl Off-Field Sub-DPS ranks Stringless R5 near top & surfaces F2P bows', async () => {
+    await ensureCharacterKitAndStats('Fischl').catch(() => null);
+    const kit = getCharacterKit('Fischl');
+    assert(kit, 'Fischl kit failed to load');
+    const profile = buildKitProfile({ key: 'Fischl', kitData: kit });
+    const matrix = rankWeaponsByArchetype({ key: 'Fischl', kitData: kit }, profile, weaponsIndex, []);
+    const ladder = matrix.rankingsByArchetype['Off-Field Sub-DPS'] || [];
+    const strIdx = ladder.findIndex((w) => w.name === 'The Stringless');
+    assert(strIdx >= 0 && strIdx < 10, `Expected The Stringless in top 10, got #${strIdx + 1}`);
+    assert(ladder[strIdx].acquisitionLabel === '4★ GACHA', `Expected 4★ GACHA badge on Stringless, got ${ladder[strIdx].acquisitionLabel}`);
+    const f2pTop = ladder.filter((w) => w.acquisition === 'f2p_craft_fish')[0];
+    assert(
+      f2pTop && ['Chain Breaker', 'Song of Stillness', 'Prototype Crescent', 'Hamayumi'].includes(f2pTop.name),
+      `Expected F2P craftable bow at top of F2P filter, got ${f2pTop?.name}`
+    );
+    return `Stringless #${strIdx + 1} (${ladder[strIdx].score}) | F2P #1: ${f2pTop.name}`;
+  });
+
+  await runCase('Weapon Matrix: Zhongli Sustain · Shielder ranks Black Tassel / Favonius / Rightful Reward at top', async () => {
+    const kit = getCharacterKit('Zhongli');
+    assert(kit, 'Zhongli kit failed to load');
+    const profile = buildKitProfile({ key: 'Zhongli', kitData: kit });
+    const matrix = rankWeaponsByArchetype({ key: 'Zhongli', kitData: kit }, profile, weaponsIndex, []);
+    assert(matrix.primaryArchetype === 'Sustain · Shielder', `Expected Sustain · Shielder, got ${matrix.primaryArchetype}`);
+    const ladder = matrix.rankingsByArchetype['Sustain · Shielder'] || [];
+    const top3Names = ladder.slice(0, 3).map((w) => w.name);
+    assert(
+      top3Names.some((n) => n === 'Black Tassel' || n === 'Favonius Lance' || n === 'Rightful Reward'),
+      `Expected Black Tassel / Favonius Lance / Rightful Reward in top 3, got ${top3Names.join(', ')}`
+    );
+    const atk3Star = ladder.find((w) => w.rarity === 3 && !/Black Tassel/i.test(w.name));
+    assert(!atk3Star || atk3Star.rank > 10, `3★ ATK filler ${atk3Star?.name} ranked too high (#${atk3Star?.rank})`);
+    return `Zhongli Shielder Top 3: ${top3Names.join(' > ')}`;
+  });
+
+  await runCase('Weapon Matrix: Build-Aware Cap Compensation (Lauma / EM scaler)', async () => {
+    await Promise.all([
+      ensureCharacterKitAndStats('Lauma').catch(() => null),
+      ensureCharacterKitAndStats('Nahida').catch(() => null)
+    ]);
+    const targetKey = getCharacterKit('Lauma') ? 'Lauma' : 'Nahida';
+    const kit = getCharacterKit(targetKey);
+    assert(kit, `Failed to load kit for ${targetKey}`);
+    const ctx = {
+      hasEquippedArtifacts: true,
+      erReport: { currentEr: 195, erDelta: 20, soloDelta: 5, hasEndgameFlag: false },
+      combatStats: { em: 620, er: 195 },
+      teamCaps: { buffCap: { statKey: 'em', statLabel: 'EM', gap: 180 } }
+    };
+    const profile = buildKitProfile({ key: targetKey, kitData: kit }, ctx);
+    const matrix = rankWeaponsByArchetype({ key: targetKey, kitData: kit }, profile, weaponsIndex, [], ctx);
+    const ladder = matrix.rankingsByArchetype[matrix.primaryArchetype] || [];
+    const top = ladder[0];
+    const isEmTop = /mastery|em/i.test(top?.substat || '') || (top?.mechanicTags || []).includes('em_scale');
+    assert(isEmTop, `Expected EM weapon #1 when ER is saturated (+20%) & EM cap gap is +180, got ${top?.name} (${top?.substat})`);
+    return `${targetKey} ${matrix.primaryArchetype} #1: ${top.name} — ${top.synergyNote}`;
+  });
+
+  await runCase('Archetype Lock: Escoffier Freeze-Core -> Buffer / Enabler + Off-Field Sub-DPS', async () => {
+    await ensureCharacterKitAndStats('Escoffier').catch(() => null);
+    const kit = getCharacterKit('Escoffier');
+    assert(kit, 'Escoffier kit failed to load');
+    const profile = buildKitProfile({ key: 'Escoffier', kitData: kit });
+    assert(profile.archetypeLock === 'Freeze-Core', `Expected Freeze-Core lock, got ${profile.archetypeLock}`);
+    const matrix = rankWeaponsByArchetype({ key: 'Escoffier', kitData: kit }, profile, weaponsIndex, []);
+    assert(
+      matrix.archetypes[0] === 'Buffer / Enabler' && matrix.archetypes.includes('Off-Field Sub-DPS'),
+      `Expected Buffer / Enabler + Off-Field Sub-DPS, got ${matrix.archetypes.join(', ')}`
+    );
+    const ladder = matrix.rankingsByArchetype['Buffer / Enabler'] || [];
+    const top2 = ladder.slice(0, 2).map((w) => w.name);
+    assert(
+      top2.some((n) => n === 'Symphonist of Scents' || n === 'Favonius Lance'),
+      `Expected Symphonist of Scents / Favonius Lance leading support ladder, got ${top2.join(', ')}`
+    );
+    const protoIdx = ladder.findIndex((w) => w.name === 'Prototype Starglitter');
+    const kitainIdx = ladder.findIndex((w) => w.name === 'Kitain Cross Spear');
+    assert(
+      protoIdx >= 0 && (kitainIdx < 0 || protoIdx < kitainIdx),
+      `Expected Prototype Starglitter (#${protoIdx + 1}) ahead of Kitain Cross Spear (#${kitainIdx + 1})`
+    );
+    return `Escoffier (${profile.archetypeLock}): ${top2.join(' > ')} | Starglitter #${protoIdx + 1} vs Kitain #${kitainIdx + 1}`;
   });
 
   const fuzzRows = await runRandomFuzzTests(5, (partialFuzz) => onProgress([...results, ...partialFuzz]));

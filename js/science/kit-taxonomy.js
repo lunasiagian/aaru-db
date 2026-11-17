@@ -576,6 +576,37 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
   const statCaps = extractStatCaps(kitData, talentLevels);
   const roleInfo = classifyCharacterRole(charKey, kitData, constellation);
 
+  const cleanPassiveText = stripMarkup(
+    [...passives, ...(Array.isArray(kitData?.passiveTalents) ? kitData.passiveTalents : [])]
+      .map((p) => `${p?.name || ''} ${p?.description || ''}`)
+      .join('\n')
+  );
+  let archetypeLock = null;
+  if (
+    /(?:when\s+the\s+party|all\s+party\s+members|only\s+hydro\s+(?:and|or)\s+cryo|hydro\s+and\s+cryo\s+characters?|1\/2\/3\/4\s+hydro\s+or\s+cryo)[^.]{0,180}(?:res|shred|decreas|heal|dmg|freeze|cold)/i.test(
+      cleanPassiveText
+    ) ||
+    /(?:hydro|cryo)[^.]{0,60}(?:and|or)[^.]{0,60}(?:cryo|hydro)[^.]{0,140}(?:res\s*(?:is\s*)?decreas|res\s*shred|resistance)/i.test(
+      cleanPassiveText
+    )
+  ) {
+    archetypeLock = 'Freeze-Core';
+  } else if (
+    /(?:pyro\s+(?:and|or)\s+electro|electro\s+(?:and|or)\s+pyro)[^.]{0,160}(?:party\s+members|overload|res|decreas|only)/i.test(
+      cleanPassiveText
+    ) ||
+    /all\s+party\s+members[^.]{0,80}(?:pyro|electro)[^.]{0,80}(?:electro|pyro)/i.test(cleanPassiveText)
+  ) {
+    archetypeLock = 'Overload-Core';
+  } else if (
+    /bountiful\s+core/i.test(cleanPassiveText) ||
+    /(?:dendro\s+(?:and|or)\s+hydro|hydro\s+(?:and|or)\s+dendro)[^.]{0,160}(?:party\s+members|bloom|golden\s+chalice|only)/i.test(
+      cleanPassiveText
+    )
+  ) {
+    archetypeLock = 'Bloom-Core';
+  }
+
   return {
     charKey,
     isNonCrit,
@@ -583,6 +614,7 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     usefulSubstats,
     statCaps,
     roleInfo,
+    archetypeLock,
     burstCost: Number(kitData?.burstCost) || 60
   };
 }
@@ -1156,6 +1188,7 @@ export function buildKitProfile(charData, contextOverride = {}) {
     flexMode: contextOverride.flexMode || null,
     infusionType,
     fieldRole,
+    archetypeLock: analysis.archetypeLock || null,
     functionTags: roleInfo.functionTags || [],
     utilityTags: roleInfo.utilityTags || [],
     flexModes: roleInfo.flexModes || [],
@@ -1339,4 +1372,102 @@ export function classifyBurstCadence(char, kitData, kitAnalysis = null, artifact
     zeroEnergyImmune: false,
     note: 'Burst-Core kit: rotation relies on Elemental Burst uptime.'
   };
+}
+
+export const CANONICAL_ARCHETYPES = [
+  'On-Field Carry',
+  'Off-Field Sub-DPS',
+  'Buffer / Enabler',
+  'Sustain · Healer',
+  'Sustain · Shielder'
+];
+
+/**
+ * Decomposes a character's canonical kit into an ordered array of archetypes
+ * (primary first, plus optional secondary if the kit genuinely supports dual playstyles).
+ * Experimental/meme builds (e.g. Critkomi, Creative Carry) are excluded and remain scoped to Teams Lab.
+ */
+export function deriveCharacterArchetypes(char, kitProfile = null) {
+  const charData = typeof char === 'string' ? { key: char } : char || {};
+  const profile = kitProfile || buildKitProfile(charData);
+  const normKey = String(profile.charKey || charData.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const fieldRole = profile.fieldRole || 'Quickswap Support';
+  const tags = profile.functionTags || [];
+  const flexModes = profile.flexModes || [];
+
+  const isHealer = tags.includes('Team Healer') || tags.includes('Single-Target Healer');
+  const isShielder = tags.includes('Shielder');
+  const hasMajorOffensiveBuff = tags.some((t) =>
+    /ATK Buffer|EM Buffer|DMG Buffer|DEF Buffer|Crit Buffer|Normal\/Charged Buffer|Plunge Buffer|Nightsoul Buffer/i.test(t)
+  );
+  const isBuffer = tags.some((t) =>
+    /Buffer|RES Shred|DEF Shred|Crowd Control|Reaction Enabler|Energy Battery|Team IR/i.test(t)
+  );
+  const hasSubDps = tags.some((t) => /Sub-DPS/i.test(t));
+
+  const out = [];
+  const push = (arch) => {
+    if (arch && CANONICAL_ARCHETYPES.includes(arch) && !out.includes(arch)) {
+      out.push(arch);
+    }
+  };
+
+  if (normKey === 'sangonomiyakokomi') {
+    push('Sustain · Healer');
+    push('Off-Field Sub-DPS');
+    return out;
+  }
+
+  if (profile.archetypeLock) {
+    push('Buffer / Enabler');
+    if (fieldRole === 'Off-Field Sub-DPS' || hasSubDps) push('Off-Field Sub-DPS');
+    if (isHealer) push('Sustain · Healer');
+    if (isShielder) push('Sustain · Shielder');
+    return out;
+  }
+
+  if (fieldRole === 'On-Field Carry' || fieldRole === 'On-Field Driver') {
+    push('On-Field Carry');
+    if (hasSubDps) push('Off-Field Sub-DPS');
+    else if (isBuffer) push('Buffer / Enabler');
+    else if (isShielder) push('Sustain · Shielder');
+    else if (isHealer) push('Sustain · Healer');
+  } else if (fieldRole === 'Off-Field Sub-DPS') {
+    push('Off-Field Sub-DPS');
+    if (hasMajorOffensiveBuff || isBuffer) push('Buffer / Enabler');
+    else if (isHealer) push('Sustain · Healer');
+    else if (isShielder) push('Sustain · Shielder');
+  } else {
+    // Quickswap Support
+    if (isShielder && !hasMajorOffensiveBuff) {
+      push('Sustain · Shielder');
+      if (isBuffer) push('Buffer / Enabler');
+      else if (isHealer) push('Sustain · Healer');
+    } else if (isHealer && !hasMajorOffensiveBuff && !tags.includes('RES Shred')) {
+      push('Sustain · Healer');
+      if (hasSubDps) push('Off-Field Sub-DPS');
+    } else if (isBuffer) {
+      push('Buffer / Enabler');
+      if (isHealer && !hasSubDps) push('Sustain · Healer');
+      else if (isShielder) push('Sustain · Shielder');
+    } else if (isHealer) {
+      push('Sustain · Healer');
+    } else if (isShielder) {
+      push('Sustain · Shielder');
+    } else {
+      push('Buffer / Enabler');
+    }
+  }
+
+  // Include genuine unlocked dual-playstyle flexModes (excluding Creative Carry / Critkomi / Driver)
+  for (const fm of flexModes) {
+    if (!fm?.unlocked) continue;
+    const id = String(fm.id || '');
+    if (/creative|critkomi|driver/i.test(id)) continue;
+    if (id === 'On-Field Carry') push('On-Field Carry');
+    else if (id === 'Off-Field Sub-DPS') push('Off-Field Sub-DPS');
+    else if (id === 'Quickswap Support') push('Buffer / Enabler');
+  }
+
+  return out.length ? out : ['Buffer / Enabler'];
 }
