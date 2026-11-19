@@ -6,6 +6,19 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 
 const debounceTimers = new Map();
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
+
 export function renderVaultTab(container, state, handlers) {
   const { account, isReadOnly, vaultFilter } = state;
   const inventory = account.inventory || {};
@@ -52,60 +65,68 @@ export function renderVaultTab(container, state, handlers) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / VAULT</div>
-        <h1 class="section-title">Inventory Vault</h1>
+        <h1 class="ed-page-title">Inventory Vault</h1>
+        <p class="section-subtitle muted">Live material ledger · Low-stock items surface first for quick count updates.</p>
       </div>
-      <div class="header-meta mono">
-        ACCOUNT: <span class="text-gold">${account.user}</span>
+      <div class="ed-hud-meta">
+        <span>Account</span>
+        <strong class="text-gold">${escapeHtml(account.user)}</strong>
+      </div>
+    </header>
+
+    <div class="ed-vault-kpi-strip" role="region" aria-label="Vault Summary">
+      <div class="ed-vault-kpi">
+        <span class="ed-vault-kpi-label">Tracked Materials</span>
+        <strong class="ed-vault-kpi-val mono">${allEntries.length}</strong>
+      </div>
+      <div class="ed-vault-kpi">
+        <span class="ed-vault-kpi-label">Low Stock</span>
+        <strong class="ed-vault-kpi-val mono text-coral">${lowStockCount}</strong>
+      </div>
+      <div class="ed-vault-kpi">
+        <span class="ed-vault-kpi-label">Open Today (${escapeHtml(todayName)})</span>
+        <strong class="ed-vault-kpi-val mono text-mint">${availableTodayCount}</strong>
       </div>
     </div>
 
-    <div class="vault-kpi-grid">
-      <article class="card">
-        <div class="card-eyebrow">TRACKED</div>
-        <div class="kpi-hero mono">${allEntries.length}</div>
-      </article>
-      <article class="card">
-        <div class="card-eyebrow">LOW STOCK</div>
-        <div class="kpi-hero mono text-coral">${lowStockCount}</div>
-      </article>
-      <article class="card">
-        <div class="card-eyebrow">TODAY (${todayName.toUpperCase()})</div>
-        <div class="kpi-hero mono text-mint">${availableTodayCount}</div>
-      </article>
-    </div>
-
-    <article class="card">
-      <div class="vault-toolbar">
-        <div class="filter-pills">
+    <section class="ed-vault-section">
+      <div class="ed-vault-toolbar">
+        <div class="ed-filter-pills" role="group" aria-label="Material Categories">
           ${categories
             .map(
               (cat) =>
-                `<button type="button" class="filter-pill ${vaultFilter.category === cat ? 'active' : ''}" data-vault-cat="${cat}">${cat}</button>`
+                `<button type="button" class="filter-pill ${vaultFilter.category === cat ? 'active' : ''}" data-vault-cat="${escapeAttr(cat)}">${escapeHtml(cat)}</button>`
             )
             .join('')}
         </div>
-        <div class="toolbar-right">
-          <label class="toggle-chip">
+        <div class="ed-vault-controls">
+          <label class="ed-toggle-chip">
             <input type="checkbox" data-vault-lowstock ${vaultFilter.lowStockOnly ? 'checked' : ''} />
             <span>Low Stock Only</span>
           </label>
-          <input type="search" class="input-search" placeholder="Search material or PascalKey..." value="${vaultFilter.search || ''}" data-vault-search />
+          <input
+            type="search"
+            class="input-search"
+            aria-label="Search materials by name or key"
+            placeholder="Search material or PascalKey…"
+            value="${escapeAttr(vaultFilter.search || '')}"
+            data-vault-search
+          />
         </div>
       </div>
 
-      <div class="vault-table-wrap">
-        <table class="data-table">
+      <div class="ed-vault-table-wrap">
+        <table class="ed-data-table">
           <thead>
             <tr>
-              <th>MATERIAL</th>
-              <th>CATEGORY</th>
-              <th>TARGET</th>
-              <th>STATUS</th>
-              <th class="num-col">RAW COUNT</th>
-              <th class="sync-col">SYNC</th>
+              <th scope="col">Material</th>
+              <th scope="col">Category</th>
+              <th scope="col">Target</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="num-col">Raw Count</th>
+              <th scope="col" class="sync-col">Sync</th>
             </tr>
           </thead>
           <tbody>
@@ -113,48 +134,49 @@ export function renderVaultTab(container, state, handlers) {
               ? filtered
                   .map(
                     (row) => `
-                  <tr data-vault-row="${row.key}">
+                  <tr data-vault-row="${escapeAttr(row.key)}">
                     <td>
-                      <div class="mat-cell">
+                      <div class="ed-mat-cell">
                         ${renderAssetIcon('materials', row.key, row.name, 'icon-sm')}
                         <div>
-                          <div class="item-name">${row.name}</div>
-                          <div class="item-meta mono">${row.key}${row.availableToday ? ' • <span class="text-mint">OPEN TODAY</span>' : ''}</div>
+                          <div class="ed-item-name">${escapeHtml(row.name)}</div>
+                          <div class="ed-item-meta">${escapeHtml(row.key)}${row.availableToday ? ' · <span class="text-mint">Open Today</span>' : ''}</div>
                         </div>
                       </div>
                     </td>
-                    <td><span class="pill">${row.category}</span></td>
+                    <td><span class="pill">${escapeHtml(row.category)}</span></td>
                     <td class="mono muted">${row.target ? row.target.toLocaleString() : '—'}</td>
                     <td>
                       ${
                         row.isLowStock
-                          ? `<span class="pill pill-coral mono">LOW (-${(row.target - row.count).toLocaleString()})</span>`
+                          ? `<span class="pill pill-coral">Low <span class="mono">(-${(row.target - row.count).toLocaleString()})</span></span>`
                           : row.target > 0
-                            ? '<span class="pill pill-mint mono">SURPLUS</span>'
-                            : '<span class="pill mono">TRACKED</span>'
+                            ? '<span class="pill pill-mint">Surplus</span>'
+                            : '<span class="pill">Tracked</span>'
                       }
                     </td>
                     <td class="num-col">
                       <input
                         type="number"
                         min="0"
-                        class="input-mono vault-raw-input"
-                        data-vault-input="${row.key}"
+                        class="input-mono ed-vault-raw-input"
+                        aria-label="${escapeAttr(row.name)} count"
+                        data-vault-input="${escapeAttr(row.key)}"
                         value="${row.count}"
                         ${disabledAttr}
                       />
                     </td>
                     <td class="sync-col">
-                      <span class="saved-badge mono" data-saved-badge="${row.key}"></span>
+                      <span class="ed-saved-badge" aria-live="polite" data-saved-badge="${escapeAttr(row.key)}"></span>
                     </td>
                   </tr>`
                   )
                   .join('')
-              : '<tr><td colspan="6" class="empty-state">No materials match the current filter.</td></tr>'}
+              : '<tr><td colspan="6" class="ed-empty-state">No materials match the current filter.</td></tr>'}
           </tbody>
         </table>
       </div>
-    </article>
+    </section>
   `;
 
   container.querySelectorAll('[data-vault-cat]').forEach((btn) => {
@@ -173,44 +195,45 @@ export function renderVaultTab(container, state, handlers) {
   }
 
   if (!isReadOnly) {
-    container.querySelectorAll('[data-vault-input]').forEach((input) => {
-      input.addEventListener('input', (e) => {
-        const key = e.target.dataset.vaultInput;
-        const newVal = Math.max(0, Number(e.target.value) || 0);
-        const badge = container.querySelector(`[data-saved-badge="${key}"]`);
-        if (badge) {
-          badge.textContent = 'Saving...';
-          badge.className = 'saved-badge mono is-saving';
-        }
+    const tbody = container.querySelector('.ed-data-table tbody');
+    tbody?.addEventListener('input', (e) => {
+      const input = e.target.closest('[data-vault-input]');
+      if (!input) return;
+      const key = input.dataset.vaultInput;
+      const newVal = Math.max(0, Number(input.value) || 0);
+      const badge = container.querySelector(`[data-saved-badge="${CSS.escape(key)}"]`);
+      if (badge) {
+        badge.textContent = 'Saving…';
+        badge.className = 'ed-saved-badge is-saving';
+      }
 
-        if (debounceTimers.has(key)) clearTimeout(debounceTimers.get(key));
-        const timer = setTimeout(async () => {
-          try {
-            const existing = account.inventory[key] || {};
-            const meta = getMaterialMeta(key);
-            const payload = {
-              count: newVal,
-              target: existing.target ?? 0,
-              category: existing.category || meta.category || 'Material'
-            };
-            await upsertInventoryRow(account.user, key, payload);
-            handlers.onInventoryRowSaved(key, payload);
-            const liveBadge = container.querySelector(`[data-saved-badge="${key}"]`);
-            if (liveBadge) {
-              liveBadge.textContent = 'Saved ✓';
-              liveBadge.className = 'saved-badge mono is-saved';
-            }
-          } catch (err) {
-            const liveBadge = container.querySelector(`[data-saved-badge="${key}"]`);
-            if (liveBadge) {
-              liveBadge.textContent = 'Error';
-              liveBadge.className = 'saved-badge mono is-error';
-            }
-            console.error(err);
+      if (debounceTimers.has(key)) clearTimeout(debounceTimers.get(key));
+      const timer = setTimeout(async () => {
+        try {
+          const existing = account.inventory[key] || {};
+          const meta = getMaterialMeta(key);
+          const payload = {
+            count: newVal,
+            target: existing.target ?? 0,
+            category: existing.category || meta.category || 'Material'
+          };
+          await upsertInventoryRow(account.user, key, payload);
+          handlers.onInventoryRowSaved(key, payload);
+          const liveBadge = container.querySelector(`[data-saved-badge="${CSS.escape(key)}"]`);
+          if (liveBadge) {
+            liveBadge.textContent = 'Saved ✓';
+            liveBadge.className = 'ed-saved-badge is-saved';
           }
-        }, 600);
-        debounceTimers.set(key, timer);
-      });
+        } catch (err) {
+          const liveBadge = container.querySelector(`[data-saved-badge="${CSS.escape(key)}"]`);
+          if (liveBadge) {
+            liveBadge.textContent = 'Error';
+            liveBadge.className = 'ed-saved-badge is-error';
+          }
+          console.error(err);
+        }
+      }, 600);
+      debounceTimers.set(key, timer);
     });
   }
 }

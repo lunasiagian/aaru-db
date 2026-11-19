@@ -76,6 +76,9 @@ export async function initInviteRegistration({ onAuthenticated, showToast }) {
     stripInviteQueryParam();
   };
   closeBtn?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeModal();
+  });
 
   userInput?.addEventListener('input', () => {
     const val = userInput.value.trim().toLowerCase();

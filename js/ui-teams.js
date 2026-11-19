@@ -12,6 +12,19 @@ const LOCK_ELEMENTS = {
   'Bloom-Core': ['Dendro', 'Hydro']
 };
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
+
 function evaluateSquadArchetypeLocks(members, charByKey) {
   const elems = (members || []).map((m) => getCharacterMeta(m.characterKey)?.element || '').filter(Boolean);
   const badges = [];
@@ -46,22 +59,22 @@ export function renderTeamsTab(container, state, handlers) {
   const disabledAttr = isReadOnly ? 'disabled' : '';
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / TEAMS</div>
-        <h1 class="section-title">Team Comps</h1>
+        <h1 class="ed-page-title">Team Comps</h1>
+        <p class="section-subtitle muted">Squad archetypes, weapon conflict detection, and rotation test notes.</p>
       </div>
-      <div class="header-meta mono">
-        SQUADS: <span class="text-gold">${teams.length}</span> •
-        CONFLICTS: <span class="${conflicts.length ? 'text-coral' : 'text-mint'}">${conflicts.length}</span>
+      <div class="ed-hud-meta">
+        <span>Squads</span> <strong class="mono text-gold">${teams.length}</strong>
+        <span class="muted">· Conflicts</span> <strong class="mono ${conflicts.length ? 'text-coral' : 'text-mint'}">${conflicts.length}</strong>
       </div>
-    </div>
+    </header>
 
     ${
       conflicts.length
         ? `
-      <article class="card conflict-banner">
-        <div class="card-eyebrow text-coral">⚠ WEAPON CONFLICT DETECTOR</div>
+      <section class="ed-conflict-banner" role="alert">
+        <div class="ed-conflict-title">Weapon Conflict Detector</div>
         <div class="conflict-list">
           ${conflicts
             .map((c) => {
@@ -69,12 +82,12 @@ export function renderTeamsTab(container, state, handlers) {
               const details = c.usages.map((u) => `${u.teamName} (${getCharacterMeta(u.characterKey).name})`).join(' vs ');
               return `<div class="conflict-item">
                 ${renderAssetIcon('weapons', c.weaponKey, wm.name, 'icon-sm')}
-                <span><strong>${wm.name}</strong> <span class="mono muted">[${c.instanceKey}]</span> shared across: ${details}</span>
+                <span><strong>${escapeHtml(wm.name)}</strong> <span class="mono muted">[${escapeHtml(c.instanceKey)}]</span> shared across: ${escapeHtml(details)}</span>
               </div>`;
             })
             .join('')}
         </div>
-      </article>`
+      </section>`
         : ''
     }
 
@@ -83,8 +96,8 @@ export function renderTeamsTab(container, state, handlers) {
       return `
       <section class="archetype-group">
         <div class="archetype-header">
-          <span class="eyebrow">${arch.toUpperCase()} ARCHETYPE</span>
-          <span class="pill mono">${group.length} SQUADS</span>
+          <h2 class="archetype-title">${arch} Archetype</h2>
+          <span class="pill"><span class="mono">${group.length}</span> Squads</span>
         </div>
 
         <div class="teams-grid">
@@ -92,23 +105,27 @@ export function renderTeamsTab(container, state, handlers) {
             ? group
                 .map((team) => {
                   const lockBadges = evaluateSquadArchetypeLocks(team.members || [], charByKey);
+                  const teamElems = (team.members || []).map((m) => String(getCharacterMeta(m.characterKey)?.element || 'geo').toLowerCase());
                   return `
-              <article class="card team-card">
+              <article class="team-card">
                 <div class="team-card-head">
                   <div>
-                    <div class="card-eyebrow">${team.archetype.toUpperCase()}</div>
-                    <h2 class="card-title">${team.name}</h2>
+                    <div class="ed-team-elem-strip" aria-hidden="true">
+                      ${teamElems.map((el) => `<span class="ed-team-elem-pip" data-element="${escapeAttr(el)}" title="${escapeAttr(el)}"></span>`).join('')}
+                    </div>
+                    <div class="team-card-kicker">${escapeHtml(team.archetype)}</div>
+                    <h3 class="team-card-title">${escapeHtml(team.name)}</h3>
                     ${
                       lockBadges.length
-                        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">${lockBadges
-                            .map((b) => `<span class="pill ${b.active ? 'pill-mint' : 'pill-coral'} mono">${b.label}</span>`)
+                        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${lockBadges
+                            .map((b) => `<span class="pill ${b.active ? 'pill-mint' : 'pill-coral'}">${escapeHtml(b.label)}</span>`)
                             .join('')}</div>`
                         : ''
                     }
                   </div>
                   ${
                     !isReadOnly
-                      ? `<button type="button" class="btn btn-danger btn-xs" data-team-remove="${team.id}">Delete</button>`
+                      ? `<button type="button" class="btn btn-danger btn-xs" data-team-remove="${escapeAttr(team.id)}">Delete</button>`
                       : ''
                   }
                 </div>
@@ -136,20 +153,20 @@ export function renderTeamsTab(container, state, handlers) {
                       const instKey = m.weaponId || m.weaponKey;
                       const hasConflict = conflictSet.has(instKey);
                       return `
-                      <div class="squad-slot ${hasConflict ? 'slot-conflict' : ''}">
+                      <div class="squad-slot ${hasConflict ? 'slot-conflict' : ''}" data-element="${escapeAttr(String(cm.element || 'geo').toLowerCase())}">
                         <div class="slot-char">
-                          <div class="element-frame" data-element="${String(cm.element || '').toLowerCase()}" title="${cm.name} (${cm.element})">
+                          <div class="element-frame" data-element="${escapeAttr(String(cm.element || '').toLowerCase())}" title="${escapeAttr(`${cm.name} (${cm.element})`)}">
                             ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
                           </div>
-                          <div>
-                            <div class="item-name">${cm.name}</div>
-                            <div class="item-meta mono">${cm.element}${roleInfo.functionTags.length ? ` · ${roleInfo.functionTags.slice(0, 2).join(' · ')}` : ''}</div>
-                            <select class="select-xs mono slot-role-select" data-team-role="${team.id}" data-member-idx="${idx}" ${disabledAttr}>
-                              <option value="" ${!explicitRole ? 'selected' : ''}>Auto: ${autoRole}</option>
+                          <div style="min-width:0;flex:1;">
+                            <div class="ed-item-name">${escapeHtml(cm.name)}</div>
+                            <div class="ed-item-meta">${escapeHtml(cm.element)}${roleInfo.functionTags.length ? ` · ${escapeHtml(roleInfo.functionTags.slice(0, 2).join(' · '))}` : ''}</div>
+                            <select class="select-xs slot-role-select" aria-label="${escapeAttr(cm.name)} role" data-team-role="${escapeAttr(team.id)}" data-member-idx="${idx}" ${disabledAttr}>
+                              <option value="" ${!explicitRole ? 'selected' : ''}>Auto: ${escapeHtml(autoRole)}</option>
                               ${roleOptions
                                 .map(
                                   (opt) =>
-                                    `<option value="${opt.value}" ${explicitRole === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                                    `<option value="${escapeAttr(opt.value)}" ${explicitRole === opt.value ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`
                                 )
                                 .join('')}
                             </select>
@@ -157,15 +174,15 @@ export function renderTeamsTab(container, state, handlers) {
                         </div>
                         <div class="slot-weapon">
                           ${renderAssetIcon('weapons', m.weaponKey, wm.name, 'icon-sm')}
-                          <select class="select-xs mono" data-team-weapon="${team.id}" data-member-idx="${idx}" ${disabledAttr}>
+                          <select class="select-xs" aria-label="${escapeAttr(cm.name)} weapon" data-team-weapon="${escapeAttr(team.id)}" data-member-idx="${idx}" ${disabledAttr}>
                             ${weapons
                               .map(
                                 (w) =>
-                                  `<option value="${w.id}" data-wkey="${w.key}" ${(m.weaponId ? m.weaponId === w.id : m.weaponKey === w.key) ? 'selected' : ''}>${getWeaponMeta(w.key).name} (R${w.refinement})</option>`
+                                  `<option value="${escapeAttr(w.id)}" data-wkey="${escapeAttr(w.key)}" ${(m.weaponId ? m.weaponId === w.id : m.weaponKey === w.key) ? 'selected' : ''}>${escapeHtml(getWeaponMeta(w.key).name)} (R${w.refinement})</option>`
                               )
                               .join('')}
                           </select>
-                          ${hasConflict ? '<span class="pill pill-coral mono">CONFLICT</span>' : ''}
+                          ${hasConflict ? '<span class="pill pill-coral">Conflict</span>' : ''}
                         </div>
                       </div>`;
                     })
@@ -173,24 +190,24 @@ export function renderTeamsTab(container, state, handlers) {
                 </div>
 
                 <div class="test-lab-box">
-                  <div class="card-eyebrow">MILIASTRA TEST LAB NOTES</div>
+                  <div class="test-lab-title">Miliastra Test Lab Notes</div>
                   <label class="lab-field">
-                    <span class="mono">ROTATION FEEL</span>
-                    <textarea rows="2" class="textarea-lab" data-lab-team="${team.id}" data-lab-field="rotationFeel" ${disabledAttr}>${team.testLab?.rotationFeel || ''}</textarea>
+                    <span>Rotation Feel</span>
+                    <textarea rows="2" class="textarea-lab" data-lab-team="${escapeAttr(team.id)}" data-lab-field="rotationFeel" ${disabledAttr}>${escapeHtml(team.testLab?.rotationFeel || '')}</textarea>
                   </label>
                   <label class="lab-field">
-                    <span class="mono">ENERGY RELIABILITY</span>
-                    <textarea rows="2" class="textarea-lab" data-lab-team="${team.id}" data-lab-field="energyReliability" ${disabledAttr}>${team.testLab?.energyReliability || ''}</textarea>
+                    <span>Energy Reliability</span>
+                    <textarea rows="2" class="textarea-lab" data-lab-team="${escapeAttr(team.id)}" data-lab-field="energyReliability" ${disabledAttr}>${escapeHtml(team.testLab?.energyReliability || '')}</textarea>
                   </label>
                   <label class="lab-field">
-                    <span class="mono">POISE &amp; STAGGER</span>
-                    <textarea rows="2" class="textarea-lab" data-lab-team="${team.id}" data-lab-field="poiseNotes" ${disabledAttr}>${team.testLab?.poiseNotes || ''}</textarea>
+                    <span>Poise &amp; Stagger</span>
+                    <textarea rows="2" class="textarea-lab" data-lab-team="${escapeAttr(team.id)}" data-lab-field="poiseNotes" ${disabledAttr}>${escapeHtml(team.testLab?.poiseNotes || '')}</textarea>
                   </label>
                 </div>
               </article>`;
                 })
                 .join('')
-            : `<article class="card"><div class="empty-state">No ${arch} squads configured yet.</div></article>`}
+            : `<div class="ed-empty-state">No ${arch} squads configured yet.</div>`}
         </div>
       </section>`;
     }).join('')}

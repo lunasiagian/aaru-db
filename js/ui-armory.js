@@ -148,117 +148,143 @@ export function renderArmoryTab(container, viewState, handlers) {
 
   const renderWeaponCard = (w, idx) => {
     const holderLabel = w.holderName ? escapeHtml(w.holderName) : 'Unassigned';
+    const rarity = Math.max(1, Math.min(5, Number(w.meta.rarity) || 3));
     if (density === 'list') {
       return `
-      <button type="button" class="armory-weapon-row ${w.isOwned ? '' : 'is-unowned'}" data-armory-inspect="${idx}">
+      <button type="button" class="armory-weapon-row ${w.isOwned ? '' : 'is-unowned'}" data-rarity="${rarity}" data-armory-inspect="${idx}">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
             ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-sm')}
           </div>
           <div style="min-width:0;text-align:left;">
-            <div class="item-name">${escapeHtml(w.meta.name)}</div>
-            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+            <div class="ed-item-name">${escapeHtml(w.meta.name)}</div>
+            <div class="ed-item-meta">${escapeHtml(w.meta.weaponType)} · <span class="mono">${w.meta.rarity}★</span></div>
           </div>
         </div>
-        <div class="armory-row-badges mono">
+        <div class="armory-row-badges">
           ${
             w.isOwned
-              ? `<span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
-                 <span class="pill pill-gold">R${w.refinement}</span>
+              ? `<span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+                 <span class="pill pill-gold mono">R${w.refinement}</span>
                  <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped: ${holderLabel}` : 'Unassigned'}</span>`
-              : '<span class="pill pill-muted">UNOWNED · INSPECT</span>'
+              : '<span class="pill pill-muted">Unowned · Inspect</span>'
           }
         </div>
       </button>`;
     }
 
     return `
-    <button type="button" class="armory-weapon-card ${w.isOwned ? '' : 'is-unowned'}" data-armory-inspect="${idx}">
+    <button type="button" class="armory-weapon-card ${w.isOwned ? '' : 'is-unowned'}" data-rarity="${rarity}" data-armory-inspect="${idx}">
       <div class="armory-weapon-top">
         <div class="armory-weapon-id">
           <div class="armory-weapon-icon">
             ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
           </div>
           <div style="min-width:0;text-align:left;">
-            <div class="item-name">${escapeHtml(w.meta.name)}</div>
-            <div class="item-meta mono">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
+            <div class="ed-item-name">${escapeHtml(w.meta.name)}</div>
+            <div class="ed-item-meta">${escapeHtml(w.meta.weaponType)} · <span class="mono">${w.meta.rarity}★</span></div>
           </div>
         </div>
         ${
           w.isOwned
             ? `<span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level}</span>`
-            : '<span class="pill pill-muted mono">UNOWNED</span>'
+            : '<span class="pill pill-muted">Unowned</span>'
         }
       </div>
       ${
         w.isOwned
-          ? `<div class="armory-weapon-stats mono">
+          ? `<div class="armory-weapon-stats">
               <div class="armory-stat-box">
-                <span class="stat-label">REFINE</span>
-                <span class="stat-val text-gold">R${w.refinement}</span>
+                <span class="stat-label">Refine</span>
+                <span class="stat-val mono text-gold">R${w.refinement}</span>
               </div>
               <div class="armory-stat-box">
-                <span class="stat-label">ASC</span>
-                <span class="stat-val">A${w.ascension}</span>
+                <span class="stat-label">Ascension</span>
+                <span class="stat-val mono">A${w.ascension}</span>
               </div>
               <div class="armory-stat-box">
-                <span class="stat-label">EQUIPPED</span>
-                <span class="stat-val ${w.holderName ? 'text-cyan' : 'muted'}">${holderLabel}</span>
+                <span class="stat-label">Equipped</span>
+                <span class="stat-val ${w.holderName ? 'text-cyan ed-armory-holder' : 'muted'}">
+                  ${w.location && w.holderName ? renderAssetIcon('characters', w.location, w.holderName, 'icon-xs') : ''}
+                  <span>${holderLabel}</span>
+                </span>
               </div>
             </div>`
-          : '<div class="armory-weapon-unowned-note mono muted">Click to inspect stats &amp; R1–R5 passive</div>'
+          : '<div class="armory-weapon-unowned-note muted">Click to inspect stats &amp; R1–R5 passive</div>'
       }
     </button>`;
   };
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / ARMORY</div>
-        <h1 class="section-title">Armory</h1>
+        <h1 class="ed-page-title">Armory</h1>
+        <p class="section-subtitle muted">Weapon catalog &amp; refinements · Click any weapon to inspect Lv.80/90 stats and passive scaling.</p>
       </div>
-      <div class="header-meta mono">
-        OWNED: <span class="text-mint">${ownedWeapons.length}</span> · CATALOG: <span class="text-cyan">${combinedWeapons.length}</span> · SHOWING <span class="text-gold">${filteredWeapons.length}</span>
+      <div class="ed-hud-meta">
+        <span>Owned</span> <strong class="mono text-mint">${ownedWeapons.length}</strong>
+        <span class="muted">· Catalog</span> <strong class="mono text-cyan">${combinedWeapons.length}</strong>
+        <span class="muted">· Showing</span> <strong class="mono text-gold">${filteredWeapons.length}</strong>
       </div>
-    </div>
+    </header>
 
-    <article class="card">
-      <div class="roster-toolbar roster-toolbar-single">
-        <div class="roster-toolbar-left">
-          <div class="filter-pills">
+    <section class="ed-armory-panel">
+      <div class="ed-armory-toolbar">
+        <div class="ed-armory-filters">
+          <div class="ed-filter-pills" role="group" aria-label="Weapon Type">
             ${WEAPON_TYPE_PILLS.map(
               (wt) => `<button type="button" class="filter-pill ${typeFilter === wt ? 'active' : ''}" data-armory-type="${wt}">${wt}</button>`
             ).join('')}
           </div>
-          <div class="filter-pills">
+          <div class="ed-filter-pills" role="group" aria-label="Ownership &amp; Rarity Filter">
             ${ARMORY_FILTER_PILLS.map(
               (f) => `<button type="button" class="filter-pill ${badgeFilter === f.id ? 'active' : ''}" data-armory-filter="${f.id}">${f.label}</button>`
             ).join('')}
           </div>
         </div>
 
-        <div class="roster-toolbar-right">
-          <select class="select-sm mono roster-sort-select" data-armory-sort aria-label="Sort weapons">
+        <div class="ed-armory-controls">
+          <select class="select-sm roster-sort-select" data-armory-sort aria-label="Sort weapons">
             ${ARMORY_SORT_OPTIONS.map(
               (opt) => `<option value="${opt.value}" ${sortBy === opt.value ? 'selected' : ''}>${opt.label}</option>`
             ).join('')}
           </select>
-          <input type="search" class="input-search input-search-sm" placeholder="Search weapon or holder..." value="${escapeHtml(armoryFilter.search || '')}" data-armory-search />
-          <div class="subtab-switch">
+          <input type="search" class="input-search input-search-sm" aria-label="Search weapon or holder" placeholder="Search weapon or holder…" value="${escapeHtml(armoryFilter.search || '')}" data-armory-search />
+          <div class="subtab-switch" role="group" aria-label="View Density">
             <button type="button" class="filter-pill ${density === 'grid' ? 'active' : ''}" data-armory-density="grid">Grid</button>
             <button type="button" class="filter-pill ${density === 'list' ? 'active' : ''}" data-armory-density="list">List</button>
           </div>
         </div>
       </div>
 
+      ${(() => {
+        const total = Math.max(1, filteredWeapons.length);
+        const c5 = filteredWeapons.filter((w) => Number(w.meta.rarity) === 5).length;
+        const c4 = filteredWeapons.filter((w) => Number(w.meta.rarity) === 4).length;
+        const c3 = Math.max(0, filteredWeapons.length - c5 - c4);
+        return filteredWeapons.length
+          ? `<div class="ed-armory-viz-wrap">
+               <div class="ed-armory-viz-bar" aria-label="Weapon rarity breakdown">
+                 ${c5 ? `<span class="ed-viz-5" style="width:${(c5 / total) * 100}%"></span>` : ''}
+                 ${c4 ? `<span class="ed-viz-4" style="width:${(c4 / total) * 100}%"></span>` : ''}
+                 ${c3 ? `<span class="ed-viz-3" style="width:${(c3 / total) * 100}%"></span>` : ''}
+               </div>
+               <div class="ed-armory-viz-legend mono">
+                 <span class="text-gold">5★ ${c5}</span>
+                 <span style="color:var(--telemetry-violet);">4★ ${c4}</span>
+                 <span class="text-cyan">3★ ${c3}</span>
+               </div>
+             </div>`
+          : '';
+      })()}
       ${
         filteredWeapons.length
           ? `<div class="${density === 'list' ? 'armory-weapon-list' : 'armory-weapon-grid'}">
               ${filteredWeapons.map((w, idx) => renderWeaponCard(w, idx)).join('')}
             </div>`
-          : '<div class="empty-state">No weapons match the current filters.</div>'
+          : '<div class="ed-empty-state">No weapons match the current filters.</div>'
       }
-    </article>
+    </section>
   `;
 
   container.querySelectorAll('[data-armory-type]').forEach((btn) => {
@@ -298,17 +324,35 @@ export function renderArmoryTab(container, viewState, handlers) {
 function openWeaponModal(w) {
   document.getElementById('armory-weapon-modal')?.remove();
 
+  const prevFocus = document.activeElement;
   const backdrop = document.createElement('div');
   backdrop.id = 'armory-weapon-modal';
-  backdrop.className = 'modal-backdrop';
+  backdrop.className = 'mat-inspector-backdrop';
   document.body.appendChild(backdrop);
 
   const close = () => {
     backdrop.remove();
     document.removeEventListener('keydown', onKey);
+    if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
   };
   const onKey = (e) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') {
+      close();
+      return;
+    }
+    if (e.key === 'Tab') {
+      const focusables = backdrop.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   };
   document.addEventListener('keydown', onKey);
   backdrop.addEventListener('click', (e) => {
@@ -316,6 +360,7 @@ function openWeaponModal(w) {
   });
 
   let activeRef = Math.max(1, Math.min(5, Number(w.refinement) || 1));
+  let focusMoved = false;
 
   const renderModal = (stats, loading = false) => {
     const lv80 = stats?.lv80;
@@ -324,44 +369,43 @@ function openWeaponModal(w) {
     const passiveText = upgrades[activeRef - 1] || stats?.passiveDesc || '';
     const holderLabel = w.holderName ? escapeHtml(w.holderName) : 'Unassigned';
 
+    const modalRarity = Math.max(1, Math.min(5, Number(w.meta.rarity) || 3));
     backdrop.innerHTML = `
-      <div class="modal-card card weapon-inspector-modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(w.meta.name)}">
-        <div class="modal-head">
-          <div class="armory-weapon-id">
-            <div class="armory-weapon-icon">
-              ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
-            </div>
-            <div>
-              <div class="eyebrow">${escapeHtml(w.meta.weaponType)} · ${w.meta.rarity}★</div>
-              <h2 class="card-title" style="margin:2px 0 0;">${escapeHtml(w.meta.name)}</h2>
-            </div>
+      <div class="mat-inspector-modal weapon-inspector-modal" data-rarity="${modalRarity}" role="dialog" aria-modal="true" aria-label="${escapeHtml(w.meta.name)}" aria-live="polite">
+        <button type="button" class="mat-inspector-close" id="btn-close-weapon-modal" aria-label="Close">×</button>
+        <div class="mat-inspector-head">
+          <div class="armory-weapon-icon">
+            ${renderAssetIcon('weapons', w.key, w.meta.name, 'icon-md')}
           </div>
-          <button type="button" class="btn btn-ghost btn-xs" id="btn-close-weapon-modal">✕</button>
+          <div>
+            <div class="ed-item-meta">${escapeHtml(w.meta.weaponType)} · <span class="mono">${w.meta.rarity}★</span></div>
+            <h2 class="mat-inspector-title">${escapeHtml(w.meta.name)}</h2>
+          </div>
         </div>
 
-        <div class="dossier-hero-chips mono">
+        <div class="dossier-hero-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
           ${
             w.isOwned
-              ? `<span class="pill ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
-                 <span class="pill pill-gold">Owned R${w.refinement}</span>
+              ? `<span class="pill mono ${w.level >= 90 ? 'pill-mint' : ''}">Lv.${w.level} · A${w.ascension}</span>
+                 <span class="pill pill-gold mono">Owned R${w.refinement}</span>
                  <span class="pill ${w.holderName ? 'pill-sky' : ''}">${w.holderName ? `Equipped by ${holderLabel}` : 'Unassigned'}</span>`
-              : '<span class="pill pill-muted">UNOWNED · CATALOG PREVIEW</span>'
+              : '<span class="pill pill-muted">Unowned · Catalog Preview</span>'
           }
         </div>
 
         ${
           loading
-            ? '<div class="empty-state mono"><span class="btn-spinner"></span> Fetching weapon stats &amp; passive from Project Amber...</div>'
+            ? '<div class="ed-empty-state"><span class="btn-spinner"></span> Fetching weapon stats &amp; passive from Project Amber…</div>'
             : stats
               ? `
-          <div class="weapon-modal-stats mono">
+          <div class="weapon-modal-stats">
             <div class="armory-stat-box">
-              <span class="stat-label">LV.80 BASE ATK / SUBSTAT</span>
-              <span class="stat-val">${lv80?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv80?.subKey, lv80?.subVal))}</span>
+              <span class="stat-label">Lv.80 Base ATK / Substat</span>
+              <span class="stat-val mono">${lv80?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv80?.subKey, lv80?.subVal))}</span>
             </div>
             <div class="armory-stat-box">
-              <span class="stat-label">LV.90 BASE ATK / SUBSTAT</span>
-              <span class="stat-val text-gold">${lv90?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv90?.subKey, lv90?.subVal))}</span>
+              <span class="stat-label">Lv.90 Base ATK / Substat</span>
+              <span class="stat-val mono text-gold">${lv90?.atk || '—'} ATK · ${escapeHtml(formatSubstat(lv90?.subKey, lv90?.subVal))}</span>
             </div>
           </div>
 
@@ -372,11 +416,11 @@ function openWeaponModal(w) {
                     <strong class="text-gold">${escapeHtml(stats.passiveName || 'Weapon Passive')}</strong>
                     ${
                       upgrades.length > 1
-                        ? `<div class="filter-pills">
+                        ? `<div class="ed-filter-pills" role="group" aria-label="Refinement Rank">
                             ${upgrades
                               .map(
                                 (_, idx) =>
-                                  `<button type="button" class="filter-pill ${activeRef === idx + 1 ? 'active' : ''}" data-wep-ref="${idx + 1}">R${idx + 1}</button>`
+                                  `<button type="button" class="filter-pill mono ${activeRef === idx + 1 ? 'active' : ''}" data-wep-ref="${idx + 1}">R${idx + 1}</button>`
                               )
                               .join('')}
                           </div>`
@@ -394,12 +438,17 @@ function openWeaponModal(w) {
               : ''
           }
           `
-              : '<div class="empty-state mono">Weapon stats unavailable offline.</div>'
+              : '<div class="ed-empty-state">Weapon stats unavailable offline.</div>'
         }
       </div>
     `;
 
-    backdrop.querySelector('#btn-close-weapon-modal')?.addEventListener('click', close);
+    const closeBtn = backdrop.querySelector('#btn-close-weapon-modal');
+    closeBtn?.addEventListener('click', close);
+    if (!focusMoved) {
+      closeBtn?.focus();
+      focusMoved = true;
+    }
     backdrop.querySelectorAll('[data-wep-ref]').forEach((btn) => {
       btn.addEventListener('click', () => {
         activeRef = Number(btn.dataset.wepRef) || 1;

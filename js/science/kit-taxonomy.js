@@ -484,6 +484,14 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     }
   } else if (normChar === 'sandrone') {
     fieldRole = 'On-Field Carry';
+  } else if (normChar === 'bennett') {
+    fieldRole = 'Quickswap Support';
+  } else if (normChar === 'beidou') {
+    fieldRole = 'Off-Field Sub-DPS';
+    if (!functionTags.includes('Parry')) functionTags.unshift('Parry');
+    const shieldIdx = functionTags.indexOf('Shielder');
+    if (shieldIdx >= 0) functionTags[shieldIdx] = 'C1 Shield';
+    else functionTags.push('C1 Shield');
   } else if (normChar === 'ganyu') {
     fieldRole = 'On-Field Carry';
     flexModes.push(

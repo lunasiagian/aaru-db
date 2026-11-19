@@ -24,69 +24,9 @@ import {
 } from './calculations.js?v=20261114w';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const PIP_DAYS = [
-  { day: 'Monday', letter: 'M' },
-  { day: 'Tuesday', letter: 'T' },
-  { day: 'Wednesday', letter: 'W' },
-  { day: 'Thursday', letter: 'T' },
-  { day: 'Friday', letter: 'F' },
-  { day: 'Saturday', letter: 'S' },
-  { day: 'Sunday', letter: 'S' }
-];
+let focusedTargetId = null;
 
-function formatCompactSurplus(n) {
-  const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
-  if (abs >= 10_000) return `${(abs / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
-  return Math.round(abs).toLocaleString();
-}
-
-function formatCompactNum(n) {
-  const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
-  if (abs >= 100_000) return `${(abs / 1_000).toFixed(0)}K`;
-  return Math.round(n).toLocaleString();
-}
-
-function getSourceBadgeHtml(item, todayName) {
-  if (item.bossUnreleased) {
-    return '<span class="pill pill-coral mono">Unreleased 7.2</span>';
-  }
-  if (item.scheduleDays?.length) {
-    const farmSet = new Set(item.scheduleDays.map((d) => String(d).slice(0, 3).toLowerCase()));
-    return `<div class="cmd-day-pips" title="Domain days: ${item.scheduleDays.join(', ')}">
-      ${PIP_DAYS.map(({ day, letter }) => {
-        const isFarmable = farmSet.has(day.slice(0, 3).toLowerCase());
-        const isToday = day === todayName;
-        return `<span class="cmd-day-pip mono ${isFarmable ? 'is-farmable' : ''} ${isToday ? 'is-today' : ''}">${letter}</span>`;
-      }).join('')}
-    </div>`;
-  }
-  return `<span class="pill mono">${item.sourceLabel}</span>`;
-}
-
-const WISH_GOAL_STORAGE_KEY = 'aaru_wish_goal_v1';
-
-function loadStoredWishGoal() {
-  try {
-    const raw = localStorage.getItem(WISH_GOAL_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveStoredWishGoal(goal) {
-  try {
-    localStorage.setItem(WISH_GOAL_STORAGE_KEY, JSON.stringify(goal));
-  } catch {
-    /* ignore storage quota errors */
-  }
-}
-
-function escapeAttr(str) {
+function escapeHtml(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -94,857 +34,428 @@ function escapeAttr(str) {
     .replace(/"/g, '&quot;');
 }
 
+function formatCompact(n) {
+  const abs = Math.abs(Number(n) || 0);
+  if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  if (abs >= 10_000) return `${(abs / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return Math.round(abs).toLocaleString();
+}
+
 export function renderHudTab(container, state, handlers) {
   const { account, isReadOnly } = state;
   const wallet = account.wallet || {};
-  const purse = calcCoinPurse(wallet);
-  const storedGoal = loadStoredWishGoal();
-  const activeWishGoal = {
-    ...DEFAULT_WISH_GOAL,
-    ...(storedGoal || {}),
-    ...(wallet.wishGoal || {})
-  };
-  const wishProj = calcWishGoalProjection(wallet, activeWishGoal);
-  const curBarPct = Math.min(100, Math.round((wishProj.effectiveCurrentPulls / wishProj.targetPulls) * 100));
-  const projBarPct = Math.min(100 - curBarPct, Math.round((wishProj.projectedBonusPulls / wishProj.targetPulls) * 100));
-  const wits = calcEffectiveHerosWit(account.inventory);
-  const resetInfo = getServerResetInfo(state.serverId || 'NA');
-  const todayName = state.hudDayOverride || resetInfo.inGameDay;
+  const disabledAttr = isReadOnly ? 'disabled' : '';
+  const serverInfo = getServerResetInfo(state.serverId || 'NA');
+  const todayName = state.hudDayOverride || serverInfo.inGameDay || WEEKDAYS[new Date().getDay()];
   const domainsToday = getDomainScheduleForDay(todayName);
-  const sharedPool = calculatePrioritySharedPool(account.prefarmQueue || [], account.inventory || {}, account.wallet, todayName);
-  const waterfallMap = calculateWaterfallPrefarm(account.prefarmQueue || [], account.inventory || {}, account.wallet);
-  const spares = calcSpareReserves(account, sharedPool);
-  const resinSummary = calcResinAllocationSummary(sharedPool);
 
-  const queueForHydration = account.prefarmQueue || [];
-  const missingChars = queueForHydration.filter((t) => {
-    const cm = getCharacterMeta(t.characterKey);
-    return !cm._hydrated && (!cm.talentBook || !cm.bossMat);
-  });
-  const missingWeps = queueForHydration.filter((t) => {
-    if (!t.weaponKey) return false;
-    const wm = getWeaponMeta(t.weaponKey);
-    return !wm._hydrated && !wm.domainMatKey;
-  });
-  if (missingChars.length || missingWeps.length) {
-    Promise.all([
-      ...missingChars.map((t) => ensureCharacterMaterials(t.characterKey)),
-      ...missingWeps.map((t) => ensureWeaponMaterials(t.weaponKey))
-    ]).then((results) => {
-      if (results.some(Boolean)) renderHudTab(container, state, handlers);
+  const labeledQueue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
+  const needMatKeys = [];
+  for (const t of labeledQueue) {
+    if (t.characterKey) needMatKeys.push(ensureCharacterMaterials(t.characterKey));
+    if (t.weaponKey) needMatKeys.push(ensureWeaponMaterials(t.weaponKey));
+  }
+  if (needMatKeys.length) {
+    Promise.all(needMatKeys).then((res) => {
+      if (res.some(Boolean)) handlers.onRefreshView?.();
     });
   }
 
-  const labeledQueue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
-  const activeTiers = [...new Set(labeledQueue.map((t) => t.tier))].slice(0, 2);
-  const topTwo = labeledQueue.filter((t) => activeTiers.includes(t.tier));
-  const topBookBases = new Set(topTwo.map((t) => getCharacterMeta(t.characterKey).talentBook).filter(Boolean));
-  const disabledAttr = isReadOnly ? 'disabled' : '';
+  const waterfall = calculateWaterfallPrefarm(labeledQueue, account.inventory || {}, wallet);
+  const sharedPool = calculatePrioritySharedPool(labeledQueue, account.inventory || {}, wallet, todayName);
+  const spares = calcSpareReserves(account, sharedPool);
+  const wits = calcEffectiveHerosWit(account.inventory || {});
+  const purse = calcCoinPurse(wallet);
+  const wishGoal = { ...DEFAULT_WISH_GOAL, ...(wallet.wishGoal || {}) };
+  const wishProj = calcWishGoalProjection(wallet, wishGoal);
+  const resinSummary = calcResinAllocationSummary(sharedPool);
 
-  const softPityRatio = (purse.limitedPulls / 90).toFixed(1);
-  const guaranteePct = Math.min(100, Math.round((purse.limitedPulls / 180) * 100));
-
-  const targetTelemetries = topTwo.map((t) => ({
-    target: t,
-    charMeta: getCharacterMeta(t.characterKey),
+  const targetsWithTel = labeledQueue.map((t, idx) => ({
+    ...t,
+    colorClass: `c${idx % 4}`,
+    readiness: calcTargetReadinessPct(waterfall.get(t.id) || []),
     telemetry: calcTargetTelemetry(t, sharedPool, state.serverId || 'NA')
   }));
 
-  container.innerHTML = `
-    <!-- Zone 1: Scarcity Strip -->
-    <section class="scarcity-strip" aria-label="Spare Resources & Wish Stash">
-      <!-- Tile 1: Spare Mora -->
-      <div class="scarcity-tile-wrap">
-        <button type="button" class="card scarcity-tile ${spares.isMoraBroke ? 'is-broke' : 'is-spare'}" data-popover-trigger="mora">
-          <div class="scarcity-head">
-            <span class="card-eyebrow">SPARE MORA</span>
-            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT ▾'}</span>
-          </div>
-          <div class="scarcity-hero-row">
-            ${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-sm')}
-            <div class="kpi-hero mono ${spares.isMoraBroke ? 'text-coral' : 'text-mint'}">
-              ${spares.spareMora >= 0 ? `+${formatCompactSurplus(spares.spareMora)} SPARE` : `-${formatCompactSurplus(spares.spareMora)} SHORT`}
-            </div>
-          </div>
-          <div class="kpi-sub mono">${formatCompactNum(spares.bagMora)} in Bag · ${formatCompactNum(spares.committedMora)} Committed</div>
-        </button>
+  if (focusedTargetId && !targetsWithTel.some((t) => t.id === focusedTargetId)) {
+    focusedTargetId = null;
+  }
 
-        <div class="glass-popover" id="popover-mora" hidden>
-          <div class="popover-head">
-            <span class="card-eyebrow">UPDATE MORA BALANCE</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
-          </div>
-          <label class="mini-field">
-            <span>MORA IN BAG</span>
-            <input type="number" min="0" step="1000" class="input-mono" data-wallet-field="mora" value="${Number(wallet.mora ?? 0)}" ${disabledAttr} />
-          </label>
-        </div>
-      </div>
+  // Resin dial math
+  const curResin = Math.max(0, Math.min(200, Number(wallet.resin ?? 160)));
+  const curCondensed = Math.max(0, Math.min(5, Number(wallet.condensedResin ?? 0)));
+  const resinPct = Math.round((curResin / 200) * 100);
+  const dialR = 26;
+  const dialCirc = 2 * Math.PI * dialR;
+  const dialOffset = dialCirc * (1 - curResin / 200);
+  const missingResin = Math.max(0, 200 - curResin);
+  const minsToFull = missingResin * 8;
+  const fullH = Math.floor(minsToFull / 60);
+  const fullM = minsToFull % 60;
+  const regenText = missingResin === 0 ? 'Capped' : `Full in ${fullH}h ${String(fullM).padStart(2, '0')}m`;
 
-      <!-- Tile 2: Spare Wits -->
-      <div class="scarcity-tile-wrap">
-        <button type="button" class="card scarcity-tile ${spares.isWitsBroke ? 'is-broke' : 'is-spare'}" data-popover-trigger="wits">
-          <div class="scarcity-head">
-            <span class="card-eyebrow">SPARE WITS</span>
-            <span class="scarcity-edit-hint mono">BREAKDOWN ▾</span>
-          </div>
-          <div class="scarcity-hero-row">
-            ${renderAssetIcon('materials', 'HerosWit', "Hero's Wit", 'icon-sm')}
-            <div class="kpi-hero mono ${spares.isWitsBroke ? 'text-coral' : 'text-mint'}">
-              ${spares.spareWits >= 0 ? `+${Math.round(spares.spareWits).toLocaleString()} EQ. SPARE` : `${Math.round(spares.spareWits).toLocaleString()} EQ. SHORT`}
-            </div>
-          </div>
-          <div class="kpi-sub mono">${wits.effectiveTotal.toLocaleString()} Eq. in Bag (${wits.wits4} 4★ / ${wits.exp3} 3★ / ${wits.adv2} 2★)</div>
-        </button>
+  // Bottleneck items (exclude universal currencies Mora & Hero's Wit already shown in top ledger)
+  const allPoolItems = Array.isArray(sharedPool) ? sharedPool : [];
+  const visibleItems = allPoolItems.filter((item) => {
+    if (item.kind === 'mora' || item.kind === 'exp') return false;
+    if (focusedTargetId) {
+      return (item.alloc?.targets || []).some((con) => con.characterKey === focusedTargetId || con.targetId === focusedTargetId);
+    }
+    return item.deficit > 0;
+  });
+  const topActionItems = visibleItems.slice(0, 5);
+  const hiddenActionItems = visibleItems.slice(5);
 
-        <div class="glass-popover" id="popover-wits" hidden>
-          <div class="popover-head">
-            <span class="card-eyebrow">EXP BOOK EQUIVALENCY</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
-          </div>
-          <div class="popover-formula mono">1 Hero's Wit = 4× Adventurer's = 20× Wanderer's</div>
-          <div class="popover-stat-grid mono">
-            <span>4★ Hero's Wit: <strong>${wits.wits4}</strong></span>
-            <span>3★ Adventurer's: <strong>${wits.exp3}</strong></span>
-            <span>2★ Wanderer's: <strong>${wits.adv2}</strong></span>
-            <span>Committed (#1/#2): <strong>${spares.committedWits}</strong></span>
-          </div>
-          <button type="button" class="btn btn-outline btn-xs full-width" data-goto-vault>Open Inventory Vault →</button>
-        </div>
-      </div>
+  // World bosses for active targets
+  const bossRows = [];
+  const seenBosses = new Set();
+  for (const t of labeledQueue) {
+    const cm = getCharacterMeta(t.characterKey);
+    const bm = cm?.bossMat ? getMaterialMeta(cm.bossMat) : null;
+    if (bm?.bossName && !seenBosses.has(bm.bossName)) {
+      seenBosses.add(bm.bossName);
+      bossRows.push({ t, cm, bm });
+    }
+  }
 
-      <!-- Tile 3: Wish Stash -->
-      <div class="scarcity-tile-wrap">
-        <button type="button" class="card scarcity-tile" data-popover-trigger="wishes">
-          <div class="scarcity-head">
-            <span class="card-eyebrow">WISH STASH</span>
-            <span class="scarcity-edit-hint mono">${isReadOnly ? 'VIEW' : 'EDIT ▾'}</span>
-          </div>
-          <div class="scarcity-hero-row">
-            ${renderAssetIcon('materials', 'Primogem', 'Primogem', 'icon-sm')}
-            <div class="kpi-hero mono text-amber">${purse.limitedPulls.toLocaleString()} <span class="kpi-unit">PULLS</span></div>
-          </div>
-          <div class="kpi-sub mono">${softPityRatio}× Soft Pity · ${guaranteePct}% to Guarantee</div>
-        </button>
-
-        <div class="glass-popover" id="popover-wishes" hidden>
-          <div class="popover-head">
-            <span class="card-eyebrow">EDIT WISH RESERVES</span>
-            <button type="button" class="btn btn-ghost btn-xs" data-popover-close>✕</button>
-          </div>
-          <div class="inline-edit-grid">
-            <label class="mini-field">
-              <span>PRIMOS</span>
-              <input type="number" min="0" class="input-mono" data-wallet-field="primogems" value="${purse.primogems}" ${disabledAttr} />
-            </label>
-            <label class="mini-field">
-              <span>PINK</span>
-              <input type="number" min="0" class="input-mono" data-wallet-field="intertwinedFates" value="${purse.intertwinedFates}" ${disabledAttr} />
-            </label>
-            <label class="mini-field">
-              <span>BLUE</span>
-              <input type="number" min="0" class="input-mono" data-wallet-field="acquaintFates" value="${purse.acquaintFates}" ${disabledAttr} />
-            </label>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Wish Stash Banner Countdown & Pull Projection -->
-    <section class="card wish-goal-strip" aria-label="Target Banner Countdown & Pull Projection">
-      <div class="wish-goal-top">
-        <div class="wish-goal-title-row">
-          <span class="pill ${wishProj.daysRemaining === 0 ? 'pill-mint' : 'pill-gold'} mono wish-goal-countdown">
-            ${wishProj.daysRemaining === 0 ? 'BANNER LIVE' : `T-${wishProj.daysRemaining}D`}
-          </span>
-          <input
-            type="text"
-            class="wish-goal-input wish-goal-label-input"
-            data-wish-goal-field="label"
-            value="${escapeAttr(wishProj.label)}"
-            aria-label="Target Banner Label"
-            ${disabledAttr}
-          />
-        </div>
-        <div class="wish-goal-controls mono">
-          <label class="wish-goal-inline-field">
-            <span>DATE</span>
-            <input type="date" class="input-mono sm" data-wish-goal-field="targetDate" value="${escapeAttr(wishProj.targetDate)}" ${disabledAttr} />
-          </label>
-          <label class="wish-goal-inline-field">
-            <span>TARGET</span>
-            <input type="number" min="1" max="2000" class="input-mono sm" data-wish-goal-field="targetPulls" value="${wishProj.targetPulls}" ${disabledAttr} />
-          </label>
-          <button
-            type="button"
-            class="filter-pill ${wishProj.hasWelkin ? 'active' : ''}"
-            data-wish-welkin-toggle
-            title="${wishProj.hasWelkin ? '150 Primos/day (Welkin + Dailies)' : '60 Primos/day (F2P Dailies)'}"
-            ${disabledAttr}
-          >
-            Welkin: ${wishProj.hasWelkin ? 'ON' : 'OFF'}
-          </button>
-          <button
-            type="button"
-            class="filter-pill ${wishProj.hasBattlePass ? 'active' : ''}"
-            data-wish-bp-toggle
-            title="${wishProj.hasBattlePass ? 'Gnostic Hymn ON (Lv.10/20/30/40 Fates + Lv.50 680 Primos)' : 'Gnostic Hymn OFF'}"
-            ${disabledAttr}
-          >
-            BP: ${wishProj.hasBattlePass ? 'ON' : 'OFF'}
-          </button>
-          ${
-            wishProj.hasBattlePass
-              ? `<label class="wish-goal-inline-field" title="Current Gnostic Hymn Level (1–50)">
-                   <span>BP LV</span>
-                   <input type="number" min="1" max="50" class="input-mono sm" data-wish-goal-field="bpLevel" value="${wishProj.bpLevel}" ${disabledAttr} />
-                 </label>`
-              : ''
+  // Enrich today's domains
+  const enrichedDomains = domainsToday
+    .map((dom) => {
+      const rewardNorms = new Set((dom.rewards || []).map((r) => normalizeAssetKey(r.key)));
+      const rewardNames = new Set((dom.rewards || []).map((r) => r.name));
+      const matches = [];
+      if (dom.domainType === 'Talent') {
+        for (const t of labeledQueue) {
+          const meta = getCharacterMeta(t.characterKey);
+          if (rewardNorms.has(meta.domainMatKey) || rewardNames.has(meta.talentBook)) {
+            matches.push({ kind: 'characters', key: t.characterKey, name: meta.name, badge: t.tierLabel });
           }
-        </div>
-      </div>
-
-      <div class="wish-goal-pity-row mono">
-        <label class="wish-goal-inline-field">
-          <span>CHAR PITY</span>
-          <input type="number" min="0" max="89" class="input-mono sm" data-wish-goal-field="charPity" value="${wishProj.charPity}" ${disabledAttr} />
-        </label>
-        <button
-          type="button"
-          class="filter-pill ${wishProj.charGuaranteed ? 'active' : ''}"
-          data-wish-char-guaranteed-toggle
-          title="Toggle 50/50 vs Guaranteed next 5★ Character"
-          ${disabledAttr}
-        >
-          ${wishProj.charGuaranteed ? 'GUARANTEED' : '50/50'}
-        </button>
-        <label class="wish-goal-inline-field">
-          <span>WEAP PITY</span>
-          <input type="number" min="0" max="79" class="input-mono sm" data-wish-goal-field="weaponPity" value="${wishProj.weaponPity}" ${disabledAttr} />
-        </label>
-        <button
-          type="button"
-          class="filter-pill ${wishProj.includeWeapPity ? 'active' : ''}"
-          data-wish-weap-pity-toggle
-          title="Count existing Weapon Banner pity toward current target"
-          ${disabledAttr}
-        >
-          +Weap Pity: ${wishProj.includeWeapPity ? 'ON' : 'OFF'}
-        </button>
-      </div>
-
-      <div class="wish-goal-telemetry mono">
-        <span>Stash: <strong>${wishProj.currentPulls}</strong>${wishProj.effectivePityPulls > 0 ? ` + <strong>${wishProj.effectivePityPulls}</strong> pity = <strong>${wishProj.effectiveCurrentPulls}</strong>` : ' pulls'}</span>
-        <span>·</span>
-        <span>Projected on Date: <strong class="text-cyan">${wishProj.projectedTotalPulls} / ${wishProj.targetPulls}</strong> pulls <span class="muted">(+${wishProj.dailyBonusPulls} daily${wishProj.bpMilestonePulls > 0 ? ` +${wishProj.bpMilestonePulls} BP` : ''})</span></span>
-        <span>·</span>
-        ${wishProj.deficitPulls === 0 ? '<span class="text-mint">Goal covered</span>' : `<span class="muted">${wishProj.deficitPulls} pulls to goal</span>`}
-      </div>
-
-      <div class="wish-goal-progress" title="Effective Current: ${wishProj.effectiveCurrentPulls} pulls | Projected Bonus: +${wishProj.projectedBonusPulls} pulls | Target: ${wishProj.targetPulls} pulls">
-        <div class="wish-goal-fill-cur" style="width:${curBarPct}%"></div>
-        <div class="wish-goal-fill-proj" style="width:${projBarPct}%"></div>
-        <span class="wish-goal-midpoint" aria-hidden="true"></span>
-      </div>
-    </section>
-
-    <!-- Main Cockpit: 8-Col Farm Deck + 4-Col Live Ops -->
-    <div class="hud-cockpit-grid">
-      <!-- Zone 2: Priority Farm Deck (8 Cols) -->
-      <article class="card cmd-deck-card">
-        <div class="cmd-deck-header">
-          <div>
-            <div class="card-eyebrow">PRIORITY FARM DECK / #1 &amp; #2 QUEUE</div>
-            <h2 class="card-title">Shared Bottleneck Matrix</h2>
-          </div>
-          <div class="cmd-reset-bar mono">
-            <span class="cmd-reset-stat">DAY: <strong class="text-cyan">${todayName.toUpperCase()}</strong></span>
-            <span class="cmd-reset-stat">RESETS: <strong id="hud-reset-countdown" class="text-mint">${resetInfo.countdownText}</strong></span>
-            ${(() => {
-              const farmTodayItems = sharedPool.filter((i) => i.deficit > 0 && i.isToday);
-              if (!farmTodayItems.length) return '';
-              return `<span class="cmd-today-icons" title="Bottlenecks farmable today">
-                ${farmTodayItems
-                  .map(
-                    (i) => `<span class="cmd-today-tile rarity-frame-${i.rarity || 3}" data-char-keys="${(i.alloc?.targets || []).map((t) => t.characterKey).join(',')}" title="${i.name} (-${i.deficit.toLocaleString()} NET)">
-                      ${renderAssetIcon('materials', i.key, i.name, 'icon-xs')}
-                    </span>`
-                  )
-                  .join('')}
-              </span>`;
-            })()}
-          </div>
-        </div>
-
-        ${
-          targetTelemetries.length
-            ? `<div class="cmd-intent-row">
-                ${targetTelemetries
-                  .map(({ target: t, charMeta: cm, telemetry: tel }, idx) => {
-                    const pct = calcTargetReadinessPct(waterfallMap.get(t.id) || []);
-                    const rankCls = `c${Math.min(idx, 3)}`;
-                    const ringRadius = 24;
-                    const ringCirc = 2 * Math.PI * ringRadius;
-                    const ringOffset = ringCirc * (1 - pct / 100);
-                    return `
-                    <button type="button" class="cmd-intent-pill ${rankCls}" data-focus-char="${t.characterKey}" title="Hover to spotlight · Click to filter ${cm.name}'s materials">
-                      <span class="cmd-rank-tag mono ${rankCls}">${t.tierLabel}</span>
-                      <div class="cmd-ring-wrap">
-                        <svg class="cmd-ring-svg ${rankCls}" viewBox="0 0 56 56" aria-hidden="true">
-                          <circle class="cmd-ring-bg" cx="28" cy="28" r="${ringRadius}" />
-                          <circle class="cmd-ring-fg" cx="28" cy="28" r="${ringRadius}" stroke-dasharray="${ringCirc.toFixed(2)}" stroke-dashoffset="${ringOffset.toFixed(2)}" />
-                        </svg>
-                        ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-ring-img')}
-                      </div>
-                      <div class="cmd-intent-body">
-                        <div class="cmd-intent-top">
-                          <span class="cmd-intent-name">${cm.name}</span>
-                          <span class="cmd-intent-specs mono">Lv.${t.currentLevel}→${t.targetLevel} · ${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}</span>
-                        </div>
-                        <div class="cmd-intent-meta mono">
-                          <span class="cmd-intent-pct">${pct}% READY</span>
-                          <span class="cmd-intent-days ${tel.resinDays === 0 && tel.weeklyWeeks === 0 ? 'is-done' : ''}">${tel.etaLabel}</span>
-                        </div>
-                      </div>
-                    </button>`;
-                  })
-                  .join('')}
-              </div>`
-            : ''
         }
-
-        ${(() => {
-          if (!sharedPool.length) {
-            return '<div class="empty-state">Add targets in Prefarm to populate the Farm Deck.</div>';
+      } else if (dom.domainType === 'Weapon') {
+        for (const t of labeledQueue.filter((x) => x.weaponKey)) {
+          const wm = getWeaponMeta(t.weaponKey);
+          if (rewardNorms.has(wm.domainMatKey)) {
+            matches.push({ kind: 'weapons', key: t.weaponKey, name: wm.name, badge: t.tierLabel });
           }
-          const pinnedKey = state.hudPinnedChar || null;
-          const allActionItems = sharedPool.filter((i) => i.deficit > 0);
-          const actionItems = pinnedKey
-            ? allActionItems.filter((i) => (i.alloc?.targets || []).some((t) => t.characterKey === pinnedKey))
-            : allActionItems;
-          const hiddenActionItems = pinnedKey
-            ? allActionItems.filter((i) => !(i.alloc?.targets || []).some((t) => t.characterKey === pinnedKey))
-            : [];
-          const surplusItems = sharedPool.filter((i) => i.deficit <= 0);
+        }
+      }
+      return { ...dom, matches };
+    })
+    .filter((d) => state.hudShowAllDomains || d.matches.length > 0);
 
-          const renderDeckCard = (item) => {
-            const rarity = item.rarity || 3;
-            const allocTargets = item.alloc?.targets || [];
-            const lockedTarget = pinnedKey ? allocTargets.find((t) => t.characterKey === pinnedKey) : null;
-
-            const pct = item.neededTotal > 0 ? Math.min(100, Math.round((item.owned / item.neededTotal) * 100)) : 100;
-            const allocHtml = lockedTarget
-              ? `<div class="cmd-alloc">
-                  <div class="alloc-track tick-bar">
-                    <div class="alloc-seg alloc-c${Math.min(lockedTarget.slotIndex ?? 0, 3)}" style="width:${lockedTarget.pct}%"></div>
-                  </div>
-                  <div class="alloc-labels mono">
-                    <span class="alloc-lbl"><i class="alloc-dot c${Math.min(lockedTarget.slotIndex ?? 0, 3)}"></i>${lockedTarget.name}: <strong>${lockedTarget.pct}%</strong> · ${formatCompactNum(lockedTarget.funded)}/${formatCompactNum(lockedTarget.needed)}</span>
-                  </div>
-                </div>`
-              : allocTargets.length
-                ? `<div class="cmd-alloc">
-                    <div class="alloc-track tick-bar">
-                      ${allocTargets
-                        .map((at) => `<div class="alloc-seg alloc-c${Math.min(at.slotIndex ?? 0, 3)}" style="width:${at.widthPct}%"></div>`)
-                        .join('')}
-                    </div>
-                    <div class="alloc-labels mono">
-                      ${allocTargets
-                        .map(
-                          (at) =>
-                            `<span class="alloc-lbl"><i class="alloc-dot c${Math.min(at.slotIndex ?? 0, 3)}"></i>${at.labelPrefix || ''}${at.name} <strong>${at.pct}%</strong></span>`
-                        )
-                        .join('')}
-                    </div>
-                  </div>`
-                : `<div class="cmd-single-track tick-bar"><div class="cmd-single-fill" style="width:${pct}%"></div></div>`;
-
-            let detailTooltip = `${formatCompactNum(item.owned)} / ${formatCompactNum(item.neededTotal)}`;
-            let expandableDetailsHtml = '';
-            if (item.tiers) {
-              detailTooltip = item.tiers.map((t) => `${getMaterialMeta(t.key).name}: ${t.owned}/${t.needed}`).join(' • ');
-              expandableDetailsHtml = `
-                <details class="cmd-card-details">
-                  <summary class="mono">Tiers (${item.tiers.map((t) => `${t.owned}/${t.needed}`).join(' · ')})</summary>
-                  <div class="cmd-item-tiles">
-                    ${item.tiers
-                      .map((t) => {
-                        const rNum = t.label === 'T1' ? 1 : t.label === 'T2' ? 2 : t.label === 'T3' ? 3 : t.label === 'T4' ? 4 : 5;
-                        const matName = getMaterialMeta(t.key).name;
-                        return `<div class="cmd-item-tile rarity-bg-${rNum} ${t.netDeficit === 0 ? 'is-complete' : ''}" title="${matName}: ${t.owned}/${t.needed}${t.craftedIn ? ` (+${t.craftedIn} crafted 3:1)` : ''}">
-                          ${renderAssetIcon('materials', t.key, matName, 'icon-tile-img')}
-                          <span class="cmd-tile-overlay mono">${t.owned}/${t.needed}</span>
-                        </div>`;
-                      })
-                      .join('')}
-                  </div>
-                </details>`;
-            } else if (item.expBreakdown) {
-              detailTooltip = `4★ ${item.expBreakdown.wits4} • 3★ ${item.expBreakdown.exp3} • 2★ ${item.expBreakdown.adv2}`;
-              expandableDetailsHtml = `
-                <details class="cmd-card-details">
-                  <summary class="mono">${item.owned}/${item.neededTotal} Eq. (${wits.wits4}/${wits.exp3}/${wits.adv2})</summary>
-                  <div class="cmd-item-tiles">
-                    <div class="cmd-item-tile rarity-bg-2" title="Wanderer's Advice">${renderAssetIcon('materials', 'WanderersAdvice', "Wanderer's Advice", 'icon-tile-img')}<span class="cmd-tile-overlay mono">${item.expBreakdown.adv2}</span></div>
-                    <div class="cmd-item-tile rarity-bg-3" title="Adventurer's Experience">${renderAssetIcon('materials', 'AdventurersExperience', "Adventurer's Experience", 'icon-tile-img')}<span class="cmd-tile-overlay mono">${item.expBreakdown.exp3}</span></div>
-                    <div class="cmd-item-tile rarity-bg-4" title="Hero's Wit">${renderAssetIcon('materials', 'HerosWit', "Hero's Wit", 'icon-tile-img')}<span class="cmd-tile-overlay mono">${item.expBreakdown.wits4}</span></div>
-                  </div>
-                </details>`;
-            }
-
-            const charKeysAttr = allocTargets.map((t) => t.characterKey).join(',');
-            return `
-            <div class="cmd-card" data-char-keys="${charKeysAttr}" title="${detailTooltip.replace(/"/g, '&quot;')}">
-              <div class="cmd-card-head">
-                <div class="cmd-icon-frame rarity-frame-${rarity}">
-                  ${renderAssetIcon('materials', item.key, item.name, 'icon-48')}
-                </div>
-                <div class="cmd-card-title-wrap">
-                  <div class="cmd-card-name">${item.name}</div>
-                  <div class="cmd-card-badges">
-                    ${getSourceBadgeHtml(item, todayName)}
-                    ${item.kind === 'weeklyBoss' && item.dreamSolventCount ? `<span class="badge-solvent mono">Solvent ${item.dreamSolventCount}</span>` : ''}
-                  </div>
-                </div>
+  container.innerHTML = `
+    <div class="hud-plate">
+      <!-- Top 3-Column Scarcity & Coin Purse Ledger -->
+      <section class="hud-ledger-strip" aria-label="Spare Resources & Coin Purse">
+        <div class="hud-ledger-col">
+          <span class="hsr-strip-label">Spare Mora</span>
+          <div class="hud-ledger-main">
+            ${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-sm')}
+            <div style="flex:1;min-width:0;">
+              <div class="hud-kpi-hero ${spares.isMoraBroke ? 'text-coral' : 'text-mint'}">
+                ${spares.spareMora >= 0 ? `+${formatCompact(spares.spareMora)} Spare` : `-${formatCompact(spares.spareMora)} Short`}
               </div>
-
-              ${allocHtml}
-              ${expandableDetailsHtml}
-
-              <div class="cmd-card-foot mono">
-                <span class="cmd-net-deficit">-${item.deficit.toLocaleString()} NET</span>
-                <span class="cmd-resin-est">${item.farmingCost?.text || `${formatCompactNum(item.owned)}/${formatCompactNum(item.neededTotal)}`}</span>
-              </div>
-            </div>`;
-          };
-
-          const gridHtml = actionItems.length
-            ? `<div class="cmd-deck-grid">${actionItems.map(renderDeckCard).join('')}</div>`
-            : '<div class="empty-state">All #1 &amp; #2 materials are fully funded!</div>';
-
-          const collapsedOthersHtml = hiddenActionItems.length
-            ? `<div class="cmd-collapsed-row">
-                <span class="cmd-collapsed-lbl mono">OTHER BOTTLENECKS (${hiddenActionItems.length})</span>
-                <div class="cmd-collapsed-icons">
-                  ${hiddenActionItems
-                    .map(
-                      (i) => `<span class="cmd-collapsed-chip" title="${i.name}: -${i.deficit.toLocaleString()} NET">
-                        ${renderAssetIcon('materials', i.key, i.name, 'icon-xs')}
-                      </span>`
-                    )
-                    .join('')}
-                </div>
-                <button type="button" class="btn btn-ghost btn-xs mono" data-clear-char-focus>Show All</button>
-              </div>`
-            : '';
-
-          const surplusHtml = surplusItems.length
-            ? `<details class="telemetry-drawer">
-                <summary class="telemetry-drawer-summary mono">
-                  <span>Bagged &amp; Ready (${surplusItems.length})</span>
-                </summary>
-                <div class="cmd-surplus-badges">
-                  ${surplusItems
-                    .map(
-                      (item) => `
-                    <div class="cmd-surplus-badge" data-char-keys="${(item.alloc?.targets || []).map((t) => t.characterKey).join(',')}" title="${item.name}: ${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()} (+${item.surplus.toLocaleString()})">
-                      ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
-                      <span class="mono">+${formatCompactSurplus(item.surplus)}</span>
-                    </div>`
-                    )
-                    .join('')}
-                </div>
-              </details>`
-            : '';
-
-          const breakdownHtml = `
-            <details class="telemetry-drawer">
-              <summary class="telemetry-drawer-summary mono">
-                <span>📊 Farm Breakdown &amp; Gatekeepers</span>
-              </summary>
-              <div class="breakdown-body">
-                ${
-                  resinSummary.totalResin > 0
-                    ? `<div class="breakdown-resin-wrap">
-                        <div class="breakdown-bar">
-                          ${resinSummary.buckets
-                            .map(
-                              (b) => `<div class="breakdown-seg" style="width:${b.pct}%;background:${b.colorVar}" title="${b.label}: ${b.resin.toLocaleString()} Resin (${b.pct}%)"></div>`
-                            )
-                            .join('')}
-                        </div>
-                        <div class="breakdown-legend mono">
-                          ${resinSummary.buckets
-                            .map((b) => `<span><i class="alloc-dot" style="background:${b.colorVar}"></i>${b.label} <strong>${b.pct}%</strong></span>`)
-                            .join('')}
-                        </div>
-                      </div>`
-                    : ''
-                }
-                <div class="gatekeeper-list">
-                  ${targetTelemetries
-                    .map(
-                      ({ target: t, charMeta: cm, telemetry: tel }) => `
-                    <div class="gatekeeper-row">
-                      <span class="mono text-gold">${t.tierLabel} ${cm.name}:</span>
-                      <span>${tel.gatekeeper.label}</span>
-                    </div>`
-                    )
-                    .join('')}
-                </div>
-              </div>
-            </details>`;
-
-          return gridHtml + collapsedOthersHtml + surplusHtml + breakdownHtml;
-        })()}
-      </article>
-
-      <!-- Zone 3: Today's Grind — Live Ops Column (4 Cols) -->
-      <aside class="hud-ops-col">
-        <!-- Live Resin Tracker Card -->
-        <article class="card">
-          <div class="card-header-row" style="margin-bottom: 10px;">
-            <div>
-              <div class="card-eyebrow">LIVE RESIN TRACKER</div>
-              <h2 class="card-title">Resin &amp; Condensed</h2>
+              <div class="muted mono ui-micro">${formatCompact(spares.bagMora)} in Bag · ${formatCompact(spares.committedMora)} Committed</div>
             </div>
           </div>
+          ${!isReadOnly
+      ? `<details class="hud-edit-details">
+                   <summary class="mono">Edit Mora Balance ▾</summary>
+                   <label class="hud-inline-input">
+                     <span class="muted mono">Bag Mora</span>
+                     <input type="number" min="0" step="1000" class="input-mono" data-wallet-field="mora" value="${Number(wallet.mora ?? 0)}" />
+                   </label>
+                 </details>`
+      : ''
+    }
+        </div>
 
-          ${(() => {
-            const curResin = Math.max(0, Math.min(200, Number(wallet.resin ?? 160)));
-            const curCondensed = Math.max(0, Math.min(5, Number(wallet.condensedResin ?? 0)));
-            const resinPct = Math.round((curResin / 200) * 100);
-            const dialR = 26;
-            const dialCirc = 2 * Math.PI * dialR;
-            const dialOffset = dialCirc * (1 - curResin / 200);
-            const missingResin = Math.max(0, 200 - curResin);
-            const minsToFull = missingResin * 8;
-            const fullH = Math.floor(minsToFull / 60);
-            const fullM = minsToFull % 60;
-            const regenText = missingResin === 0 ? 'CAPPED' : `Full in ${fullH}h ${String(fullM).padStart(2, '0')}m`;
+        <div class="hud-ledger-col">
+          <div class="hsr-strip-label-row">
+            <span class="hsr-strip-label">Spare Hero's Wit</span>
+            <button type="button" class="hsr-link-btn" data-goto-vault>Open Vault →</button>
+          </div>
+          <div class="hud-ledger-main">
+            ${renderAssetIcon('materials', 'HerosWit', "Hero's Wit", 'icon-sm')}
+            <div>
+              <div class="hud-kpi-hero ${spares.isWitsBroke ? 'text-coral' : 'text-mint'}">
+                ${spares.spareWits >= 0 ? `+${Math.round(spares.spareWits).toLocaleString()} Eq.` : `${Math.round(spares.spareWits).toLocaleString()} Eq.`}
+              </div>
+              <div class="muted mono ui-micro">${wits.effectiveTotal.toLocaleString()} Eq. (${wits.wits4} 4★ / ${wits.exp3} 3★ / ${wits.adv2} 2★)</div>
+            </div>
+          </div>
+        </div>
 
-            return `
-            <div class="resin-gizmo" style="margin-bottom:0;">
+        <div class="hud-ledger-col">
+          <span class="hsr-strip-label">Coin Purse &amp; Wish Stash</span>
+          <div class="hud-ledger-main">
+            ${renderAssetIcon('materials', 'Primogem', 'Primogem', 'icon-sm')}
+            <div>
+              <div class="hud-kpi-hero text-gold">${purse.limitedPulls.toLocaleString()} Pulls</div>
+              <div class="muted mono ui-micro">${wishProj.projectedTotalPulls} projected by ${escapeHtml(wishGoal.label || 'Target')} (${wishProj.daysRemaining}d)</div>
+            </div>
+          </div>
+          ${!isReadOnly
+      ? `<details class="hud-edit-details">
+                   <summary class="mono">Edit Wish Reserves ▾</summary>
+                   <div class="hud-purse-grid mono" style="margin-top:8px;">
+                     <label class="mini-field"><span>Primos</span><input type="number" min="0" class="input-mono" data-wallet-field="primogems" value="${purse.primogems}" /></label>
+                     <label class="mini-field"><span>Limited</span><input type="number" min="0" class="input-mono" data-wallet-field="intertwinedFates" value="${purse.intertwinedFates}" /></label>
+                     <label class="mini-field"><span>Acquaint</span><input type="number" min="0" class="input-mono" data-wallet-field="acquaintFates" value="${purse.acquaintFates}" /></label>
+                     <label class="mini-field"><span>Pity</span><input type="number" min="0" max="89" class="input-mono" data-wallet-field="charPity" value="${Number(wallet.charPity ?? 0)}" /></label>
+                   </div>
+                 </details>`
+      : ''
+    }
+        </div>
+      </section>
+
+      <!-- 2-Column Editorial Command Body -->
+      <div class="hud-editorial-grid">
+        <!-- Left 1fr: Shared Bottleneck Matrix + Checklist -->
+        <div class="hud-main-col">
+          <section class="hud-section">
+            <div class="hud-section-head">
+              <div>
+                <span class="hsr-strip-label">01 · Shared Bottleneck Matrix</span>
+                <div class="muted mono ui-micro" style="margin-top:2px;">
+                  Day: <strong class="text-cyan">${escapeHtml(todayName)}</strong> · Resets in ${escapeHtml(serverInfo.countdownText || '--h --m')}
+                </div>
+              </div>
+              ${focusedTargetId ? '<button type="button" class="btn btn-ghost btn-xs mono" data-clear-focus>Show All Targets</button>' : ''}
+            </div>
+
+            ${targetsWithTel.length
+      ? `<div class="cmd-intent-row" style="margin:12px 0;">
+                    ${targetsWithTel
+        .map((t) => {
+          const meta = getCharacterMeta(t.characterKey);
+          const isFocused = focusedTargetId === t.id;
+          const r = 20;
+          const circ = 2 * Math.PI * r;
+          const off = circ * (1 - (t.readiness || 0) / 100);
+          const elemAttr = escapeHtml(String(meta.element || 'geo').toLowerCase());
+          return `
+                          <button type="button" class="cmd-intent-pill ${t.colorClass} ${isFocused ? 'is-focused' : ''}" data-element="${elemAttr}" data-focus-target="${escapeHtml(t.characterKey)}">
+                            <div class="cmd-ring-wrap">
+                              <svg class="cmd-ring-svg ${t.colorClass}" viewBox="0 0 48 48" aria-hidden="true">
+                                <circle class="cmd-ring-bg" cx="24" cy="24" r="${r}" />
+                                <circle class="cmd-ring-fg" cx="24" cy="24" r="${r}" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" />
+                              </svg>
+                              ${renderAssetIcon('characters', t.characterKey, meta.name, 'icon-xs')}
+                            </div>
+                            <div style="min-width:0;flex:1;">
+                              <div style="display:flex;justify-content:space-between;gap:6px;align-items:center;">
+                                <strong>${escapeHtml(meta.name)}</strong>
+                                <span class="mono ui-micro" style="color:var(--accent-gold);">${escapeHtml(t.tierLabel)}</span>
+                              </div>
+                              <div class="muted mono ui-micro">${t.readiness}% Ready · ${escapeHtml(t.telemetry.etaLabel)}</div>
+                            </div>
+                          </button>`;
+        })
+        .join('')}
+                  </div>`
+      : `<div class="muted mono" style="padding:14px;border:1px solid var(--border-subtle);background:var(--bg-surface);margin:12px 0;">No active build targets in Prefarm Queue.</div>`
+    }
+
+            <div class="hud-bottleneck-list">
+              ${topActionItems.length
+      ? topActionItems
+        .map((item) => {
+          const pct = item.neededTotal > 0 ? Math.min(100, Math.round((item.owned / item.neededTotal) * 100)) : 100;
+          return `
+                          <div class="hud-bottleneck-row">
+                            <div class="hud-bn-left">
+                              ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
+                              <div>
+                                <div style="font-size:13px;font-weight:600;">${escapeHtml(item.name)}</div>
+                                <div class="muted mono ui-micro">${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()} · ${(item.alloc?.targets || item.consumers || []).map((c) => c.characterName || getCharacterMeta(c.characterKey).name).join(', ')}</div>
+                              </div>
+                            </div>
+                            <div class="hud-bn-right mono">
+                              <div class="hud-bn-bar"><span style="width:${pct}%;"></span></div>
+                              <span class="${item.deficit > 0 ? 'text-coral' : 'text-mint'} ui-micro">${item.deficit > 0 ? `-${item.deficit.toLocaleString()}` : 'Ready'}</span>
+                            </div>
+                          </div>`;
+        })
+        .join('')
+      : '<div class="muted mono" style="font-size:12px;padding:10px 0;">All tracked target materials are satisfied.</div>'
+    }
+            </div>
+
+            ${hiddenActionItems.length
+      ? `<details style="margin-top:8px;">
+                     <summary class="muted mono ui-micro" style="cursor:pointer;">Other Bottlenecks (${hiddenActionItems.length}) ▾</summary>
+                     <div class="hud-bottleneck-list" style="margin-top:8px;">
+                       ${hiddenActionItems
+        .map(
+          (item) => `
+                         <div class="hud-bottleneck-row">
+                           <div class="hud-bn-left">${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}<span>${escapeHtml(item.name)}</span></div>
+                           <span class="mono text-coral ui-micro">${item.owned.toLocaleString()} / ${item.neededTotal.toLocaleString()}</span>
+                         </div>`
+        )
+        .join('')}
+                     </div>
+                   </details>`
+      : ''
+    }
+
+            ${resinSummary.totalResin > 0
+      ? `<div style="margin-top:14px;">
+                     <div class="muted mono ui-micro" style="margin-bottom:6px;">Resin Allocation (${resinSummary.totalResin.toLocaleString()} total)</div>
+                     <div class="hud-alloc-bar">
+                       ${resinSummary.buckets.map((b) => `<div style="width:${b.pct}%;background:${b.colorVar};" title="${escapeHtml(b.label)}: ${b.resin.toLocaleString()} Resin (${b.pct}%)"></div>`).join('')}
+                     </div>
+                     <div class="hud-alloc-legend">
+                       ${resinSummary.buckets
+                         .filter((b) => b.resin > 0)
+                         .map(
+                           (b) =>
+                             `<span class="hud-alloc-item"><span class="hud-alloc-swatch" style="background:${b.colorVar};"></span><span>${escapeHtml(b.label)}</span> <strong class="mono">${b.pct}%</strong></span>`
+                         )
+                         .join('')}
+                     </div>
+                   </div>`
+      : ''
+    }
+          </section>
+
+          <section class="hud-section">
+            <div class="hsr-strip-label-row" style="margin-bottom:10px;">
+              <span class="hsr-strip-label">02 · Daily &amp; Weekly Operations</span>
+            </div>
+            <div class="hud-checklist-grid">
+              <div>
+                <div class="muted mono ui-micro" style="margin-bottom:6px;">Daily Routine</div>
+                <div class="hud-check-list">
+                  ${(account.checklist?.daily || [])
+      .map(
+        (item) => `<label class="hud-check-item ${item.done ? 'is-done' : ''}"><input type="checkbox" data-check-group="daily" data-check-id="${escapeHtml(item.id)}" ${item.done ? 'checked' : ''} ${disabledAttr} /><span>${escapeHtml(item.label)}</span></label>`
+      )
+      .join('')}
+                </div>
+              </div>
+              <div>
+                <div class="muted mono ui-micro" style="margin-bottom:6px;">Weekly &amp; Endgame</div>
+                <div class="hud-check-list">
+                  ${(account.checklist?.weekly || [])
+      .map(
+        (item) => `<label class="hud-check-item ${item.done ? 'is-done' : ''}"><input type="checkbox" data-check-group="weekly" data-check-id="${escapeHtml(item.id)}" ${item.done ? 'checked' : ''} ${disabledAttr} /><span>${escapeHtml(item.label)}</span></label>`
+      )
+      .join('')}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right 400px: Resin & Open Today Domains -->
+        <aside class="hud-side-col">
+          <section class="hud-section">
+            <div class="hsr-strip-label-row" style="margin-bottom:10px;">
+              <span class="hsr-strip-label">Resin &amp; Condensed</span>
+              <span class="resin-regen-pill mono ${missingResin === 0 ? 'is-capped' : ''}">${regenText}</span>
+            </div>
+            <div class="resin-gizmo">
               <div class="resin-dial-wrap">
                 <svg class="resin-dial-svg" viewBox="0 0 64 64" aria-hidden="true">
                   <circle class="resin-dial-bg" cx="32" cy="32" r="${dialR}" />
                   <circle class="resin-dial-fg ${resinPct >= 90 ? 'is-high' : ''}" cx="32" cy="32" r="${dialR}" stroke-dasharray="${dialCirc.toFixed(2)}" stroke-dashoffset="${dialOffset.toFixed(2)}" />
                 </svg>
-                <div class="resin-dial-val mono">${curResin}</div>
+                <div class="mono" style="font-size:15px;font-weight:700;">${curResin}</div>
               </div>
-
-              <div class="resin-gizmo-info">
+              <div style="flex:1;min-width:190px;display:flex;flex-direction:column;gap:8px;">
                 <div class="resin-gizmo-inputs">
-                  <div class="resin-stat">
-                    <span class="mono label">RESIN</span>
-                    <input type="number" min="0" max="200" class="input-mono sm" data-wallet-field="resin" value="${curResin}" ${disabledAttr} />
-                    <span class="mono muted">/ 200</span>
-                  </div>
-                  <div class="resin-stat">
-                    <span class="mono label">COND</span>
-                    <input type="number" min="0" max="5" class="input-mono sm" data-wallet-field="condensedResin" value="${curCondensed}" ${disabledAttr} />
-                    <span class="mono muted">/ 5</span>
-                  </div>
+                  <label class="mini-field"><span>Resin</span><input type="number" min="0" max="200" style="width:72px;" class="input-mono" data-wallet-field="resin" value="${curResin}" ${disabledAttr} /></label>
+                  <label class="mini-field"><span>Condensed</span><input type="number" min="0" max="5" style="width:72px;" class="input-mono" data-wallet-field="condensedResin" value="${curCondensed}" ${disabledAttr} /></label>
                 </div>
-                <div class="resin-gizmo-actions">
-                  <span class="resin-regen-pill mono ${missingResin === 0 ? 'is-capped' : ''}">${regenText}</span>
-                  ${
-                    !isReadOnly
-                      ? `<button type="button" class="btn btn-ghost btn-xs mono" data-resin-spend="20" ${curResin < 20 ? 'disabled' : ''}>-20</button>
+                ${!isReadOnly
+      ? `<div class="resin-gizmo-actions">
+                         <button type="button" class="btn btn-ghost btn-xs mono" data-resin-spend="20" ${curResin < 20 ? 'disabled' : ''}>-20</button>
                          <button type="button" class="btn btn-ghost btn-xs mono" data-resin-spend="40" ${curResin < 40 ? 'disabled' : ''}>-40</button>
-                         <button type="button" class="btn btn-outline btn-xs mono" data-resin-condense ${curResin < 40 || curCondensed >= 5 ? 'disabled' : ''}>Condense</button>`
-                      : ''
-                  }
-                </div>
+                         <button type="button" class="btn btn-outline btn-xs mono" data-resin-condense ${curResin < 40 || curCondensed >= 5 ? 'disabled' : ''}>Condense</button>
+                       </div>`
+      : ''
+    }
               </div>
-            </div>`;
-          })()}
-        </article>
-
-        <!-- Open Today Window Card -->
-        <article class="card">
-          <div class="card-header-row">
-            <div>
-              <div class="card-eyebrow">OPEN TODAY WINDOW</div>
-              <h2 class="card-title">${todayName} Domains</h2>
             </div>
-            <div class="toolbar-right" style="gap: 6px;">
-              <button type="button" class="filter-pill ${state.hudShowAllDomains ? 'active' : ''}" data-hud-all-domains>
-                ${state.hudShowAllDomains ? 'Relevant' : `All (${domainsToday.length})`}
-              </button>
-              <select class="select-sm mono" data-hud-day>
-                ${WEEKDAYS.map((d) => `<option value="${d}" ${d === todayName ? 'selected' : ''}>${d.slice(0, 3)}</option>`).join('')}
-              </select>
+          </section>
+
+          <section class="hud-section">
+            <div class="hud-section-head" style="margin-bottom:10px;">
+              <span class="hsr-strip-label">${escapeHtml(todayName)} Domains</span>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="filter-pill ${state.hudShowAllDomains ? 'active' : ''}" data-hud-all-domains>${state.hudShowAllDomains ? 'Relevant' : `All (${domainsToday.length})`}</button>
+                <select class="select-sm mono" data-hud-day aria-label="Domain Weekday">
+                  ${WEEKDAYS.map((d) => `<option value="${d}" ${d === todayName ? 'selected' : ''}>${d.slice(0, 3)}</option>`).join('')}
+                </select>
+              </div>
             </div>
-          </div>
-
-          ${(() => {
-            const prefarmQueue = labeledQueue;
-            const hasPrefarm = prefarmQueue.length > 0;
-            const enrichDomain = (dom) => {
-              const rewardNorms = new Set((dom.rewards || []).map((r) => normalizeAssetKey(r.key)));
-              const rewardNames = new Set((dom.rewards || []).map((r) => r.name));
-              const matches = [];
-              if (dom.domainType === 'Talent' && hasPrefarm) {
-                for (const t of prefarmQueue) {
-                  const meta = getCharacterMeta(t.characterKey);
-                  if (rewardNorms.has(meta.domainMatKey) || rewardNames.has(meta.talentBook)) {
-                    matches.push({ kind: 'characters', key: t.characterKey, name: meta.name, badge: t.tierLabel, title: `${t.tierLabel} ${meta.name}` });
-                  }
-                }
-              } else if (dom.domainType === 'Weapon') {
-                for (const t of prefarmQueue.filter((x) => x.weaponKey)) {
-                  const wm = getWeaponMeta(t.weaponKey);
-                  if (rewardNorms.has(wm.domainMatKey)) {
-                    matches.push({ kind: 'weapons', key: t.weaponKey, name: wm.name, badge: t.tierLabel, title: `${t.tierLabel} ${wm.name}` });
-                  }
-                }
-              }
-              return { ...dom, matches };
-            };
-
-            const enriched = domainsToday.map(enrichDomain);
-            const showAll = Boolean(state.hudShowAllDomains);
-            const filtered = enriched.filter((d) => showAll || d.matches.length > 0);
-
-            const domHtml = filtered.length
-              ? filtered
-                  .map((dom) => {
-                    const matchesPriority = dom.matches.length > 0 || (dom.rewards || []).some((r) => topBookBases.has(r.name));
-                    return `
-                    <div class="domain-card ${matchesPriority ? 'domain-highlight' : ''}">
-                      <div class="domain-top">
-                        <span class="domain-name">${dom.name}</span>
-                        <span class="pill ${matchesPriority ? 'pill-gold' : ''}">${dom.domainType}</span>
-                      </div>
-                      <div class="domain-rewards-row">
-                        <div class="domain-rewards">
-                          ${(dom.rewards || []).map((r) => `<span class="reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')} ${r.name}</span>`).join('')}
+            <div class="hud-domain-list">
+              ${enrichedDomains.length
+      ? enrichedDomains
+        .map(
+          (dom) => `
+                      <div class="hud-domain-row ${dom.matches.length ? 'is-priority' : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                          <strong style="font-size:13px;">${escapeHtml(dom.name)}</strong>
+                          <span class="pill ${dom.matches.length ? 'pill-gold' : 'pill-muted'} mono">${escapeHtml(dom.domainType)}</span>
                         </div>
+                        <div class="muted mono ui-micro" style="margin-top:4px;">${(dom.rewards || []).map((r) => escapeHtml(r.name)).join(' · ')}</div>
                         ${
                           dom.matches.length
-                            ? `<div class="domain-needed-by">
-                                ${dom.matches
-                                  .slice(0, 3)
-                                  .map(
-                                    (m) => `<span class="domain-target-chip" title="${m.title}">${renderAssetIcon(m.kind, m.key, m.name, 'icon-xs')}<span class="mono">${m.badge}</span></span>`
-                                  )
-                                  .join('')}
-                              </div>`
+                            ? `<div class="hud-dom-matches">${dom.matches.map((m) => `<span class="hud-dom-match-chip"><span class="mono text-gold">${escapeHtml(m.badge)}</span> ${escapeHtml(m.name)}</span>`).join('')}</div>`
                             : ''
                         }
-                      </div>
-                    </div>`;
-                  })
-                  .join('')
-              : '<div class="empty-state">No matching domains open today.</div>';
-
-            const bossRows = [];
-            for (const t of prefarmQueue) {
-              const cm = getCharacterMeta(t.characterKey);
-              if (!cm.bossMat) continue;
-              const bm = getMaterialMeta(cm.bossMat);
-              if (bm?.bossName) bossRows.push({ t, cm, bm });
-            }
-
-            const bossHtml = bossRows.length
-              ? `<div class="domain-group" style="margin-top:10px;">
-                  <div class="card-eyebrow">WORLD BOSSES (${bossRows.length})</div>
-                  <div class="domain-list">
-                    ${bossRows
-                      .map(
-                        ({ t, cm, bm }) => `
-                        <div class="domain-card ${bm.bossUnreleased ? '' : 'domain-highlight'}">
-                          <div class="domain-top">
-                            <span class="domain-name">${bm.bossName}</span>
-                            ${bm.bossUnreleased ? '<span class="pill pill-coral mono">7.2</span>' : `<span class="pill mono">${t.tierLabel} ${cm.name}</span>`}
-                          </div>
-                        </div>`
-                      )
-                      .join('')}
-                  </div>
-                </div>`
-              : '';
-
-            return `<div class="domain-list">${domHtml}</div>${bossHtml}`;
-          })()}
-        </article>
-
-        <!-- Dailies & Snezhnaya Ops Card -->
-        <article class="card">
-          <div class="card-header-row" style="margin-bottom: 10px;">
-            <div>
-              <div class="card-eyebrow">DAILIES &amp; SNEZHNAYA OPS</div>
-              <h2 class="card-title">Checklist</h2>
+                      </div>`
+        )
+        .join('')
+      : '<div class="muted mono" style="font-size:12px;">No priority domains open for current queue today.</div>'
+    }
             </div>
-          </div>
-          <div class="ops-checklist-stack">
-            <div>
-              <h3 class="subhead mono">DAILY ROUTINE</h3>
-              <div class="check-list">
-                ${(account.checklist?.daily || [])
-                  .map(
-                    (item) => `
-                    <label class="check-item ${item.done ? 'is-done' : ''}">
-                      <input type="checkbox" data-check-group="daily" data-check-id="${item.id}" ${item.done ? 'checked' : ''} ${disabledAttr} />
-                      <span>${item.label}</span>
-                    </label>`
-                  )
-                  .join('')}
-              </div>
-            </div>
-            <div>
-              <h3 class="subhead mono">WEEKLY &amp; SNEZHNAYA</h3>
-              <div class="check-list">
-                ${(account.checklist?.weekly || [])
-                  .map(
-                    (item) => `
-                    <label class="check-item ${item.done ? 'is-done' : ''}">
-                      <input type="checkbox" data-check-group="weekly" data-check-id="${item.id}" ${item.done ? 'checked' : ''} ${disabledAttr} />
-                      <span>${item.label}</span>
-                      ${item.tag ? `<span class="pill pill-gold mono">${item.tag}</span>` : ''}
-                    </label>`
-                  )
-                  .join('')}
-              </div>
-            </div>
-          </div>
-        </article>
-      </aside>
-    </div>
-  `;
 
-  // Scarcity Tile Popovers (click-to-edit, click-outside & Escape dismiss)
-  const closeAllPopovers = () => {
-    container.querySelectorAll('.glass-popover').forEach((p) => {
-      p.hidden = true;
-    });
-  };
+            ${bossRows.length
+      ? `<div style="margin-top:16px;">
+                     <div class="muted mono ui-micro" style="margin-bottom:6px;">World Bosses (${bossRows.length})</div>
+                     <div class="hud-domain-list">
+                       ${bossRows
+        .map(
+          ({ t, cm, bm }) => `
+                         <div class="hud-domain-row" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                           <span style="font-size:12.5px;font-weight:600;">${escapeHtml(bm.bossName)}</span>
+                           <span class="pill mono">${escapeHtml(t.tierLabel)} ${escapeHtml(cm.name)}</span>
+                         </div>`
+        )
+        .join('')}
+                     </div>
+                   </div>`
+      : ''
+    }
+          </section>
+        </aside>
+      </div>
+    </div>`;
 
-  container.querySelectorAll('[data-popover-trigger]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const targetId = `popover-${btn.dataset.popoverTrigger}`;
-      const pop = container.querySelector(`#${targetId}`);
-      const wasHidden = pop?.hidden;
-      closeAllPopovers();
-      if (pop && wasHidden) pop.hidden = false;
-    });
-  });
-
-  container.querySelectorAll('[data-popover-close]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeAllPopovers();
-    });
-  });
-
-  container.querySelectorAll('.glass-popover').forEach((pop) => {
-    pop.addEventListener('click', (e) => e.stopPropagation());
-  });
-
-  if (container._hudOutsideClick) {
-    document.removeEventListener('click', container._hudOutsideClick);
-  }
-  if (container._hudEscapeKey) {
-    document.removeEventListener('keydown', container._hudEscapeKey);
-  }
-  container._hudOutsideClick = () => closeAllPopovers();
-  container._hudEscapeKey = (e) => {
-    if (e.key === 'Escape') closeAllPopovers();
-  };
-  document.addEventListener('click', container._hudOutsideClick);
-  document.addEventListener('keydown', container._hudEscapeKey);
-
-  container.querySelector('[data-goto-vault]')?.addEventListener('click', () => {
-    closeAllPopovers();
-    handlers.onNavigateTab?.('vault');
-  });
-
-  // Live server reset countdown updater
-  const countdownEl = container.querySelector('#hud-reset-countdown');
-  if (countdownEl) {
-    const timer = setInterval(() => {
-      if (!countdownEl.isConnected) {
-        clearInterval(timer);
-        return;
-      }
-      countdownEl.textContent = getServerResetInfo(state.serverId || 'NA').countdownText;
-    }, 30_000);
-  }
-
-  // Character focus highlight (hover + click pin)
-  let pinnedCharKey = state.hudPinnedChar || null;
-  const applyCharFocus = (activeKey) => {
-    container.querySelectorAll('[data-focus-char]').forEach((btn) => {
-      const key = btn.dataset.focusChar;
-      btn.classList.toggle('is-focused', Boolean(activeKey) && key === activeKey);
-      btn.classList.toggle('is-dimmed', Boolean(activeKey) && key !== activeKey);
-      btn.setAttribute('aria-pressed', pinnedCharKey === key ? 'true' : 'false');
-    });
-    container.querySelectorAll('.cmd-card[data-char-keys], .cmd-today-tile[data-char-keys], .cmd-surplus-badge[data-char-keys]').forEach((el) => {
-      if (!activeKey) {
-        el.classList.remove('is-focused', 'is-dimmed');
-        return;
-      }
-      const keys = (el.dataset.charKeys || '').split(',').filter(Boolean);
-      const match = keys.includes(activeKey);
-      el.classList.toggle('is-focused', match);
-      el.classList.toggle('is-dimmed', !match);
-    });
-  };
-
-  if (pinnedCharKey) applyCharFocus(pinnedCharKey);
-
-  container.querySelectorAll('[data-focus-char]').forEach((btn) => {
-    const charKey = btn.dataset.focusChar;
-    btn.addEventListener('mouseenter', () => {
-      if (!pinnedCharKey) applyCharFocus(charKey);
-    });
-    btn.addEventListener('mouseleave', () => {
-      if (!pinnedCharKey) applyCharFocus(null);
-    });
+  // Event Wiring
+  container.querySelector('[data-goto-vault]')?.addEventListener('click', () => handlers.onNavigateTab('vault'));
+  container.querySelector('[data-hud-day]')?.addEventListener('change', (e) => handlers.onChangeHudDay(e.target.value));
+  container.querySelector('[data-hud-all-domains]')?.addEventListener('click', () => handlers.onToggleAllDomains());
+  container.querySelector('[data-clear-focus]')?.addEventListener('click', () => { focusedTargetId = null; renderHudTab(container, state, handlers); });
+  container.querySelectorAll('[data-focus-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      pinnedCharKey = pinnedCharKey === charKey ? null : charKey;
-      state.hudPinnedChar = pinnedCharKey;
+      focusedTargetId = focusedTargetId === btn.dataset.focusTarget ? null : btn.dataset.focusTarget;
       renderHudTab(container, state, handlers);
     });
   });
 
-  container.querySelector('[data-clear-char-focus]')?.addEventListener('click', () => {
-    state.hudPinnedChar = null;
-    renderHudTab(container, state, handlers);
-  });
-
-  // 3D Tilt + Cursor Spotlight on Deck Cards
-  container.querySelectorAll('.cmd-card').forEach((card) => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const rx = (((y / rect.height) - 0.5) * -4).toFixed(2);
-      const ry = (((x / rect.width) - 0.5) * 4).toFixed(2);
-      card.style.setProperty('--mx', `${x.toFixed(1)}px`);
-      card.style.setProperty('--my', `${y.toFixed(1)}px`);
-      card.style.setProperty('--rx', `${rx}deg`);
-      card.style.setProperty('--ry', `${ry}deg`);
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.setProperty('--rx', '0deg');
-      card.style.setProperty('--ry', '0deg');
-    });
-  });
-
-  container.querySelector('[data-hud-day]')?.addEventListener('change', (e) => {
-    handlers.onChangeHudDay(e.target.value);
-  });
-
-  container.querySelector('[data-hud-all-domains]')?.addEventListener('click', () => {
-    handlers.onToggleAllDomains?.();
-  });
-
   if (!isReadOnly) {
+    container.querySelectorAll('[data-wallet-field]').forEach((inp) => {
+      inp.addEventListener('change', () => {
+        const val = Math.max(0, Number(inp.value) || 0);
+        handlers.onUpdateWallet(inp.dataset.walletField, val);
+      });
+    });
     container.querySelectorAll('[data-resin-spend]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const cost = Number(btn.dataset.resinSpend) || 20;
@@ -952,59 +463,14 @@ export function renderHudTab(container, state, handlers) {
         handlers.onUpdateWallet('resin', Math.max(0, cur - cost));
       });
     });
-
     container.querySelector('[data-resin-condense]')?.addEventListener('click', () => {
       const curR = Math.max(0, Number(wallet.resin ?? 160));
       const curC = Math.max(0, Number(wallet.condensedResin ?? 0));
       if (curR < 40 || curC >= 5) return;
       handlers.onUpdateWalletPatch?.({ resin: curR - 40, condensedResin: curC + 1 }, 'Condensed 1 Resin (+1)');
     });
-
-    container.querySelectorAll('[data-wallet-field]').forEach((input) => {
-      input.addEventListener('change', (e) => {
-        handlers.onUpdateWallet(e.target.dataset.walletField, Number(e.target.value) || 0);
-      });
-    });
-
-    const commitWishGoal = (patch) => {
-      const nextGoal = { ...activeWishGoal, ...patch };
-      saveStoredWishGoal(nextGoal);
-      handlers.onUpdateWallet('wishGoal', nextGoal);
-    };
-
-    container.querySelectorAll('[data-wish-goal-field]').forEach((input) => {
-      input.addEventListener('change', (e) => {
-        const key = e.target.dataset.wishGoalField;
-        let val;
-        if (key === 'targetPulls') val = Math.max(1, Number(e.target.value) || 1);
-        else if (key === 'charPity') val = Math.min(89, Math.max(0, Math.floor(Number(e.target.value) || 0)));
-        else if (key === 'weaponPity') val = Math.min(79, Math.max(0, Math.floor(Number(e.target.value) || 0)));
-        else if (key === 'bpLevel') val = Math.min(50, Math.max(1, Math.floor(Number(e.target.value) || 1)));
-        else val = String(e.target.value || '');
-        commitWishGoal({ [key]: val });
-      });
-    });
-
-    container.querySelector('[data-wish-welkin-toggle]')?.addEventListener('click', () => {
-      commitWishGoal({ hasWelkin: !activeWishGoal.hasWelkin });
-    });
-
-    container.querySelector('[data-wish-bp-toggle]')?.addEventListener('click', () => {
-      commitWishGoal({ hasBattlePass: !activeWishGoal.hasBattlePass });
-    });
-
-    container.querySelector('[data-wish-char-guaranteed-toggle]')?.addEventListener('click', () => {
-      commitWishGoal({ charGuaranteed: !activeWishGoal.charGuaranteed });
-    });
-
-    container.querySelector('[data-wish-weap-pity-toggle]')?.addEventListener('click', () => {
-      commitWishGoal({ includeWeapPity: !activeWishGoal.includeWeapPity });
-    });
-
     container.querySelectorAll('[data-check-group]').forEach((cb) => {
-      cb.addEventListener('change', (e) => {
-        handlers.onToggleChecklist(e.target.dataset.checkGroup, e.target.dataset.checkId, e.target.checked);
-      });
+      cb.addEventListener('change', () => handlers.onToggleChecklist(cb.dataset.checkGroup, cb.dataset.checkId, cb.checked));
     });
   }
 }

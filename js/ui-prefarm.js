@@ -53,10 +53,10 @@ function renderReqChipHtml(r, targetStateKey = '') {
   }
 
   const isZero = r.owned === 0 && r.needed > 0;
+  const rarity = Math.max(1, Math.min(5, Number(getMaterialMeta(r.key)?.rarity) || 3));
   return `
-    <div class="req-chip prefarm-tile ${isDef ? 'row-deficit' : 'row-surplus'}"
-      role="button"
-      tabindex="0"
+    <button type="button" class="req-chip prefarm-tile ${isDef ? 'row-deficit' : 'row-surplus'}"
+      data-rarity="${rarity}"
       data-pf-inspect="${escapeAttr(r.key)}"
       data-pf-target="${escapeAttr(targetStateKey)}"
       title="${escapeAttr(`${r.name}: ${fullRatio} — Click for description & drop locations`)}">
@@ -67,10 +67,10 @@ function renderReqChipHtml(r, targetStateKey = '') {
           <span class="prefarm-count" title="${escapeAttr(fullRatio)}">${formatCompactNumber(r.owned)}<span class="prefarm-count-denom">/${formatCompactNumber(r.needed)}</span></span>
           <span class="req-delta-badge prefarm-deficit-pill ${isDef ? 'is-def' : 'is-surplus'}">${compactDelta}</span>
         </div>
-        ${hints.length ? `<div class="prefarm-tile-sub mono">${hints.join('')}</div>` : ''}
+        ${hints.length ? `<div class="prefarm-tile-sub">${hints.join('')}</div>` : ''}
       </div>
       <div class="req-progress ${barTone} ${isZero ? 'is-zero' : ''}"><span style="width:${pct}%"></span></div>
-    </div>`;
+    </button>`;
 }
 
 function groupRequirementsIntoFamilies(reqRows, charMeta, weaponMeta) {
@@ -247,37 +247,38 @@ export function renderPrefarmTab(container, state, handlers) {
   }
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / PREFARM</div>
-        <h1 class="section-title">Prefarm Queue</h1>
+        <h1 class="ed-page-title">Prefarm Queue</h1>
         <p class="section-subtitle muted">Shared bag cascades sequentially by priority (#1 → #2) · Lower tiers shown side-by-side for 3:1 crafting.</p>
       </div>
-      <div class="header-meta mono">
-        TARGETS: <span class="text-gold">${queue.length}</span> • #1 &amp; #2 FEED HUD
+      <div class="ed-hud-meta">
+        <span>Queue Targets</span>
+        <strong class="mono text-gold">${queue.length}</strong>
+        <span class="muted">· #1 &amp; #2 feed HUD</span>
       </div>
-    </div>
+    </header>
 
     ${
       !isReadOnly
         ? `
-      <article class="card prefarm-add-card">
-        <div class="card-eyebrow">ADD PREFARM TARGET</div>
+      <section class="ed-pf-add-panel">
+        <div class="ed-pf-panel-title">Add Prefarm Target</div>
         <form class="prefarm-add-form" id="prefarm-add-form">
           <label class="mini-field">
-            <span>CHARACTER</span>
+            <span>Character</span>
             <select name="characterKey" class="select-sm">
               ${allCharKeys
                 .map((k) => {
                   const m = getCharacterMeta(k);
                   const label = m.name.includes(`(${m.element})`) ? m.name : `${m.name} (${m.element})`;
-                  return `<option value="${k}">${label}</option>`;
+                  return `<option value="${escapeAttr(k)}">${escapeAttr(label)}</option>`;
                 })
                 .join('')}
             </select>
           </label>
           <label class="mini-field">
-            <span>TARGET LVL</span>
+            <span>Target Level</span>
             <select name="targetLevel" class="select-sm mono">
               <option value="80">80</option>
               <option value="90" selected>90</option>
@@ -285,32 +286,32 @@ export function renderPrefarmTab(container, state, handlers) {
             </select>
           </label>
           <label class="mini-field">
-            <span>TARGET A</span>
+            <span>Target A</span>
             <input type="number" name="tAuto" min="1" max="10" value="6" class="input-mono sm" />
           </label>
           <label class="mini-field">
-            <span>TARGET E</span>
+            <span>Target E</span>
             <input type="number" name="tSkill" min="1" max="10" value="9" class="input-mono sm" />
           </label>
           <label class="mini-field">
-            <span>TARGET Q</span>
+            <span>Target Q</span>
             <input type="number" name="tBurst" min="1" max="10" value="9" class="input-mono sm" />
           </label>
           <label class="mini-field">
-            <span>WEAPON (OPTIONAL)</span>
+            <span>Weapon (Optional)</span>
             <select name="weaponKey" class="select-sm">
               <option value="">— None —</option>
               ${(() => {
                 const firstType = allCharKeys.length ? getCharacterMeta(allCharKeys[0]).weaponType : '';
                 return allWeaponKeys
                   .filter((wk) => !firstType || getWeaponMeta(wk).weaponType === firstType)
-                  .map((wk) => `<option value="${wk}">${getWeaponMeta(wk).name}</option>`)
+                  .map((wk) => `<option value="${escapeAttr(wk)}">${escapeAttr(getWeaponMeta(wk).name)}</option>`)
                   .join('');
               })()}
             </select>
           </label>
           <label class="mini-field">
-            <span>TIER</span>
+            <span>Tier</span>
             <select name="tier" class="select-sm mono">
               <option value="1" selected>#1</option>
               <option value="2">#2</option>
@@ -321,7 +322,7 @@ export function renderPrefarmTab(container, state, handlers) {
           </label>
           <button type="submit" class="btn btn-gold">+ Add Target</button>
         </form>
-      </article>`
+      </section>`
         : ''
     }
 
@@ -340,27 +341,42 @@ export function renderPrefarmTab(container, state, handlers) {
               const targetsOpen = uiState.openTargets.has(targetStateKey);
               const surplusOpen = uiState.expandedSurplus.has(targetStateKey);
 
+              const totalReqItems = reqRows.filter((r) => r.needed > 0).length;
+              const readyCount = Math.max(0, totalReqItems - deficitCount);
+              const readyPct = totalReqItems > 0 ? Math.round((readyCount / totalReqItems) * 100) : 100;
+              const ringR = 14;
+              const ringCirc = 2 * Math.PI * ringR;
+              const ringOff = ringCirc * (1 - readyPct / 100);
+              const elemAttr = escapeAttr(String(charMeta.element || 'geo').toLowerCase());
+
               return `
-              <article class="card prefarm-card">
+              <article class="ed-pf-plate" data-element="${elemAttr}">
                 <div class="prefarm-head">
                   <div class="prefarm-char">
-                    <span class="rank-badge mono ${target.tier <= 2 ? 'rank-top' : ''}">${target.tierLabel}</span>
-                    <div class="prefarm-avatar" data-element="${escapeAttr(String(charMeta.element || '').toLowerCase())}" title="${escapeAttr(`${charMeta.name} (${charMeta.element})`)}">
+                    <span class="rank-badge mono ${target.tier <= 2 ? 'rank-top' : ''}">${escapeAttr(target.tierLabel)}</span>
+                    <div class="ed-pf-ring-wrap" title="${readyPct}% of material rows satisfied">
+                      <svg class="ed-pf-ring-svg" viewBox="0 0 36 36" aria-hidden="true">
+                        <circle class="ed-pf-ring-bg" cx="18" cy="18" r="${ringR}" />
+                        <circle class="ed-pf-ring-fg" cx="18" cy="18" r="${ringR}" stroke-dasharray="${ringCirc.toFixed(1)}" stroke-dashoffset="${ringOff.toFixed(1)}" />
+                      </svg>
+                      <span class="mono">${readyPct}%</span>
+                    </div>
+                    <div class="prefarm-avatar" data-element="${elemAttr}" title="${escapeAttr(`${charMeta.name} (${charMeta.element})`)}">
                       ${renderAssetIcon('characters', target.characterKey, charMeta.name, 'icon-lg')}
                     </div>
                     <div>
-                      <div class="item-name">${charMeta.name}</div>
-                      <div class="item-meta mono">
-                        Lv.${target.currentLevel} → Lv.${target.targetLevel} •
+                      <div class="ed-item-name">${escapeAttr(charMeta.name)}</div>
+                      <div class="ed-item-meta mono">
+                        Lv.${target.currentLevel} → Lv.${target.targetLevel} ·
                         Talents ${target.currentTalent.auto}/${target.currentTalent.skill}/${target.currentTalent.burst} →
-                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` • ${weaponMeta.name} (${target.weaponCurrentLevel || 1}→${target.weaponTargetLevel || 90})` : ''}
+                        ${target.targetTalent.auto}/${target.targetTalent.skill}/${target.targetTalent.burst}${weaponMeta ? ` · ${escapeAttr(weaponMeta.name)} (${target.weaponCurrentLevel || 1}→${target.weaponTargetLevel || 90})` : ''}
                       </div>
                       ${
                         bossMeta?.bossName
-                          ? `<div class="item-meta mono" style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
-                              ${bossMeta.bossIcon ? `<img src="${bossMeta.bossIcon}" alt="${bossMeta.bossName}" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:4px;object-fit:cover;" />` : ''}
-                              <span>Boss: ${bossMeta.bossName}</span>
-                              ${bossMeta.bossUnreleased ? '<span class="pill pill-coral mono">Unreleased (7.2)</span>' : ''}
+                          ? `<div class="ed-pf-boss-row">
+                              ${bossMeta.bossIcon ? `<img src="${escapeAttr(bossMeta.bossIcon)}" alt="${escapeAttr(bossMeta.bossName)}" loading="lazy" referrerpolicy="no-referrer" class="ed-pf-boss-icon" />` : ''}
+                              <span>Boss: ${escapeAttr(bossMeta.bossName)}</span>
+                              ${bossMeta.bossUnreleased ? '<span class="pill pill-coral">Unreleased (7.2)</span>' : ''}
                             </div>`
                           : ''
                       }
@@ -368,15 +384,15 @@ export function renderPrefarmTab(container, state, handlers) {
                   </div>
 
                   <div class="prefarm-controls">
-                    <span class="pill ${deficitCount > 0 ? 'pill-coral' : 'pill-mint'} mono">
-                      ${deficitCount > 0 ? `${deficitCount} DEFICITS` : 'READY TO BUILD'}
+                    <span class="pill ${deficitCount > 0 ? 'pill-coral' : 'pill-mint'}">
+                      ${deficitCount > 0 ? `<span class="mono">${deficitCount}</span> Deficits` : 'Ready to Build'}
                     </span>
                     ${
                       !isReadOnly
                         ? `
-                      <button type="button" class="btn btn-ghost btn-xs ${targetsOpen ? 'active' : ''}" data-pf-toggle-targets="${escapeAttr(targetStateKey)}">⚙ Targets</button>
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>▲</button>
-                      <button type="button" class="btn btn-ghost btn-xs" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>▼</button>
+                      <button type="button" class="btn btn-ghost btn-xs ${targetsOpen ? 'active' : ''}" data-pf-toggle-targets="${escapeAttr(targetStateKey)}">Targets</button>
+                      <button type="button" class="btn btn-ghost btn-xs" aria-label="Move ${escapeAttr(charMeta.name)} up" data-pf-move="up" data-pf-id="${target.id}" ${idx === 0 || queue[idx - 1].tier !== target.tier ? 'disabled' : ''}>▲</button>
+                      <button type="button" class="btn btn-ghost btn-xs" aria-label="Move ${escapeAttr(charMeta.name)} down" data-pf-move="down" data-pf-id="${target.id}" ${idx === queue.length - 1 || queue[idx + 1].tier !== target.tier ? 'disabled' : ''}>▼</button>
                       <button type="button" class="btn btn-danger btn-xs" data-pf-remove="${target.id ?? ''}" data-pf-rank="${target.rank ?? idx + 1}">Remove</button>`
                         : ''
                     }
@@ -387,49 +403,49 @@ export function renderPrefarmTab(container, state, handlers) {
                   targetsOpen && !isReadOnly
                     ? `<div class="prefarm-targets-edit">
                   <label class="mini-field">
-                    <span>TIER</span>
+                    <span>Tier</span>
                     <select class="select-sm mono" data-pf-edit="tier" data-pf-id="${target.id}" ${disabledAttr}>
                       ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${target.tier === n ? 'selected' : ''}>#${n}</option>`).join('')}
                     </select>
                   </label>
                   <label class="mini-field">
-                    <span>CUR LVL</span>
+                    <span>Cur Level</span>
                     <input type="number" min="1" max="95" class="input-mono sm" data-pf-edit="currentLevel" data-pf-id="${target.id}" value="${target.currentLevel}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>TGT LVL</span>
+                    <span>Tgt Level</span>
                     <input type="number" min="1" max="95" class="input-mono sm" data-pf-edit="targetLevel" data-pf-id="${target.id}" value="${target.targetLevel}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>TGT A</span>
+                    <span>Tgt A</span>
                     <input type="number" min="1" max="10" class="input-mono sm" data-pf-edit="tAuto" data-pf-id="${target.id}" value="${target.targetTalent.auto}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>TGT E</span>
+                    <span>Tgt E</span>
                     <input type="number" min="1" max="10" class="input-mono sm" data-pf-edit="tSkill" data-pf-id="${target.id}" value="${target.targetTalent.skill}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>TGT Q</span>
+                    <span>Tgt Q</span>
                     <input type="number" min="1" max="10" class="input-mono sm" data-pf-edit="tBurst" data-pf-id="${target.id}" value="${target.targetTalent.burst}" ${disabledAttr} />
                   </label>
                   <label class="mini-field">
-                    <span>WEAPON (${charMeta.weaponType})</span>
+                    <span>Weapon (${escapeAttr(charMeta.weaponType)})</span>
                     <select class="select-sm" data-pf-edit="weaponKey" data-pf-id="${target.id}" ${disabledAttr}>
                       <option value="">— None —</option>
                       ${allWeaponKeys
                         .filter((wk) => wk === target.weaponKey || getWeaponMeta(wk).weaponType === charMeta.weaponType)
-                        .map((wk) => `<option value="${wk}" ${target.weaponKey === wk ? 'selected' : ''}>${getWeaponMeta(wk).name}</option>`)
+                        .map((wk) => `<option value="${escapeAttr(wk)}" ${target.weaponKey === wk ? 'selected' : ''}>${escapeAttr(getWeaponMeta(wk).name)}</option>`)
                         .join('')}
                     </select>
                   </label>
                   ${
                     target.weaponKey
                       ? `<label class="mini-field">
-                          <span>WPN CUR</span>
+                          <span>Weapon Cur</span>
                           <input type="number" min="1" max="90" class="input-mono sm" data-pf-edit="weaponCurrentLevel" data-pf-id="${target.id}" value="${target.weaponCurrentLevel || 1}" ${disabledAttr} />
                         </label>
                         <label class="mini-field">
-                          <span>WPN TGT</span>
+                          <span>Weapon Tgt</span>
                           <input type="number" min="1" max="90" class="input-mono sm" data-pf-edit="weaponTargetLevel" data-pf-id="${target.id}" value="${target.weaponTargetLevel || 90}" ${disabledAttr} />
                         </label>`
                       : ''
@@ -446,7 +462,7 @@ export function renderPrefarmTab(container, state, handlers) {
                             const itemCount = Math.max(1, fam.rows.length);
                             return `
                           <section class="prefarm-cluster span-${fam.span}">
-                            <div class="prefarm-cluster-label mono">${escapeAttr(fam.label)}</div>
+                            <div class="prefarm-cluster-label">${escapeAttr(fam.label)}</div>
                             <div class="prefarm-cluster-tiles prefarm-tile-grid" style="--item-count:${itemCount}">
                               ${fam.rows.map((r) => renderReqChipHtml(r, targetStateKey)).join('')}
                             </div>
@@ -460,11 +476,11 @@ export function renderPrefarmTab(container, state, handlers) {
                 ${
                   surplusRows.length
                     ? `<div class="prefarm-surplus-bar">
-                        <div class="prefarm-surplus-summary mono">
-                          <span class="text-mint">✓ Ready in Bag (${surplusRows.length}):</span>
+                        <div class="prefarm-surplus-summary">
+                          <span class="text-mint">Ready in Bag (<span class="mono">${surplusRows.length}</span>):</span>
                           <span class="prefarm-surplus-inline muted">
                             ${surplusRows
-                              .map((r) => `${escapeAttr(r.name)} (+${formatCompactNumber(r.surplus)})`)
+                              .map((r) => `${escapeAttr(r.name)} (<span class="mono">+${formatCompactNumber(r.surplus)}</span>)`)
                               .join(' · ')}
                           </span>
                           <button type="button" class="btn btn-ghost btn-xs prefarm-surplus-toggle" data-pf-toggle-surplus="${escapeAttr(targetStateKey)}">
@@ -484,7 +500,7 @@ export function renderPrefarmTab(container, state, handlers) {
               </article>`;
             })
             .join('')
-        : '<article class="card"><div class="empty-state">No characters in the Prefarm Queue yet.</div></article>'}
+        : '<div class="ed-empty-state">No characters in the Prefarm Queue yet.</div>'}
     </div>
   `;
 
@@ -530,7 +546,7 @@ export function renderPrefarmTab(container, state, handlers) {
         </div>
 
         <div class="mat-inspector-section">
-          <div class="mat-inspector-label mono">INVENTORY &amp; QUEUE BREAKDOWN</div>
+          <div class="mat-inspector-label">Inventory &amp; Queue Breakdown</div>
           <div class="mat-inspector-stats mono">
             <div class="mat-stat-box"><span>In Bag</span><strong>${rawBagCount.toLocaleString()}</strong></div>
             <div class="mat-stat-box"><span>Reserved Upstream</span><strong>${reserved > 0 ? `-${reserved.toLocaleString()} (${escapeAttr(row?.reservedByLabel || '#1')})` : '0'}</strong></div>
@@ -541,32 +557,52 @@ export function renderPrefarmTab(container, state, handlers) {
         </div>
 
         <div class="mat-inspector-section">
-          <div class="mat-inspector-label mono">WHERE TO FIND</div>
+          <div class="mat-inspector-label">Where to Find</div>
           <div class="mat-inspector-sources" data-mat-sources>
-            <span class="muted mono">Loading drop locations…</span>
+            <span class="muted">Loading drop locations…</span>
           </div>
         </div>
 
         <div class="mat-inspector-section">
-          <div class="mat-inspector-label mono">IN-GAME DESCRIPTION</div>
+          <div class="mat-inspector-label">In-Game Description</div>
           <p class="mat-inspector-desc muted" data-mat-desc>Loading description…</p>
         </div>
       </div>
     `;
 
+    const prevFocus = document.activeElement;
+    const closeBtn = backdrop.querySelector('.mat-inspector-close');
     const close = () => {
       backdrop.remove();
       document.removeEventListener('keydown', onKey);
+      if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
     };
     const onKey = (e) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') {
+        close();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = backdrop.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) close();
     });
-    backdrop.querySelector('.mat-inspector-close')?.addEventListener('click', close);
+    closeBtn?.addEventListener('click', close);
     document.addEventListener('keydown', onKey);
     document.body.appendChild(backdrop);
+    closeBtn?.focus();
 
     const details = await getMaterialDetails(matKey);
     if (!document.body.contains(backdrop)) return;
@@ -608,14 +644,7 @@ export function renderPrefarmTab(container, state, handlers) {
   };
 
   container.querySelectorAll('.prefarm-tile[data-pf-inspect]').forEach((tile) => {
-    const trigger = () => openMaterialModal(tile.dataset.pfInspect, tile.dataset.pfTarget || '');
-    tile.addEventListener('click', trigger);
-    tile.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        trigger();
-      }
-    });
+    tile.addEventListener('click', () => openMaterialModal(tile.dataset.pfInspect, tile.dataset.pfTarget || ''));
   });
 
   if (!isReadOnly) {

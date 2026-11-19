@@ -18,12 +18,12 @@ import {
   computeGoodImportDiff,
   validateGoodV3
 } from './good-importer.js';
-import { renderHudTab } from './ui-hud.js?v=20261114w';
-import { renderVaultTab } from './ui-vault.js';
-import { renderPrefarmTab } from './ui-prefarm.js?v=20261115h';
-import { renderRosterTab } from './ui-roster.js?v=20261115ah';
-import { renderArmoryTab } from './ui-armory.js?v=20261115v';
-import { renderTeamsTab } from './ui-teams.js?v=20261115ah';
+import { renderHudTab } from './ui-hud.js?v=20261119v1';
+import { renderVaultTab } from './ui-vault.js?v=20261118v2';
+import { renderPrefarmTab } from './ui-prefarm.js?v=20261119v1';
+import { renderRosterTab } from './ui-roster.js?v=20261119v5';
+import { renderArmoryTab } from './ui-armory.js?v=20261119v2';
+import { renderTeamsTab } from './ui-teams.js?v=20261119v2';
 import { CHANGELOG } from './changelog.js?v=20261115ab';
 
 const SESSION_KEY = 'genshin_sheet_session_v1';
@@ -526,6 +526,16 @@ async function handleLogin(username, passphrase = '') {
 
   try {
     const res = await loginAccount(username, passphrase);
+    if (window.PasswordCredential && navigator.credentials?.store) {
+      try {
+        const cred = new window.PasswordCredential({
+          id: String(username || '').trim(),
+          password: String(passphrase || ''),
+          name: res?.displayName || String(username || '').trim()
+        });
+        navigator.credentials.store(cred).catch(() => {});
+      } catch {}
+    }
     applyAuthenticatedSession(res);
   } catch (err) {
     if (errEl) errEl.textContent = err.message;
@@ -589,6 +599,9 @@ function setupGoodImportModal() {
   document.getElementById('btn-close-import')?.addEventListener('click', closeModal);
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
   });
 
   dropzone?.addEventListener('click', () => fileInput?.click());
@@ -673,12 +686,12 @@ function setupSystemDrawer() {
 
     body.innerHTML = `
       <div class="drawer-section">
-        <div class="card-eyebrow">PROFILE &amp; PRIVACY</div>
+        <div class="drawer-section-title">Profile &amp; Privacy</div>
         <label class="mini-field">
-          <span>DISPLAY NAME</span>
-          <input id="profile-display-name" type="text" maxlength="24" class="input-mono" value="${ownName.replace(/"/g, '&quot;')}" placeholder="Display Name" />
+          <span>Display Name</span>
+          <input id="profile-display-name" type="text" maxlength="24" class="input-mono" value="${ownName.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" placeholder="Display Name" />
         </label>
-        <label class="toggle-chip" style="margin-top:8px;">
+        <label class="ed-toggle-chip" style="margin-top:8px;width:100%;">
           <input id="profile-is-public" type="checkbox" ${isPublic ? 'checked' : ''} />
           <span>Allow other users to view my sheet (Read-Only)</span>
         </label>
@@ -688,32 +701,32 @@ function setupSystemDrawer() {
       </div>
 
       <div class="drawer-section">
-        <div class="card-eyebrow">DATA VERSION &amp; SOURCE</div>
+        <div class="drawer-section-title">Data Version &amp; Source</div>
         <div class="drawer-stat-row">
           <span>Active Source</span>
           ${sourceBadge}
         </div>
-        <div class="drawer-stat-row mono">
+        <div class="drawer-stat-row">
           <span>API / Patch Version</span>
-          <strong class="text-gold">${st.lunarisVer}</strong>
+          <strong class="mono text-gold">${st.lunarisVer}</strong>
         </div>
-        <div class="drawer-stat-row mono">
+        <div class="drawer-stat-row">
           <span>Indexed Assets</span>
-          <span>${st.charCount} chars · ${st.weaponCount} wpns · ${st.materialCount} mats</span>
+          <span class="mono">${st.charCount} chars · ${st.weaponCount} wpns · ${st.materialCount} mats</span>
         </div>
-        <div class="drawer-stat-row mono">
+        <div class="drawer-stat-row">
           <span>Last Synced</span>
-          <span>${syncedText}</span>
+          <span class="mono">${syncedText}</span>
         </div>
-        <div class="drawer-stat-row mono">
+        <div class="drawer-stat-row">
           <span>Browser Cache</span>
-          <span>${cacheText}</span>
+          <span class="mono">${cacheText}</span>
         </div>
       </div>
 
       ${admin ? `
       <div class="drawer-section">
-        <div class="card-eyebrow">ADMIN · SYNC ACTIONS</div>
+        <div class="drawer-section-title">Admin · Sync Actions</div>
         <button type="button" id="btn-refresh-catalog" class="btn btn-gold" style="width:100%;">
           Check for API Updates &amp; Clear Cache
         </button>
@@ -723,7 +736,7 @@ function setupSystemDrawer() {
       </div>
 
       <div class="drawer-section">
-        <div class="card-eyebrow">AUTOMATED PATCH SNAPSHOTS</div>
+        <div class="drawer-section-title">Automated Patch Snapshots</div>
         <p class="muted" style="font-size:12px;margin:0 0 10px;line-height:1.45;">
           GitHub Actions checks <code>lunaris.moe/data/version.json</code> every 12 hours and updates <code>data/live-snapshot.json</code> whenever a new patch or hotfix drops.
         </p>
@@ -804,6 +817,9 @@ function setupSystemDrawer() {
   backdrop.addEventListener('click', (e) => {
     if (e.target === backdrop) backdrop.hidden = true;
   });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !backdrop.hidden) backdrop.hidden = true;
+  });
 }
 
 function openServerModal() {
@@ -824,9 +840,25 @@ function setupServerModal() {
     modal.hidden = true;
   };
   document.getElementById('btn-server-trigger')?.addEventListener('click', openServerModal);
+  const themeBtn = document.getElementById('btn-theme-toggle');
+  if (themeBtn) {
+    const syncThemeLabel = (theme) => {
+      themeBtn.textContent = theme === 'light' ? 'Theme: Papyrus' : 'Theme: Obsidian';
+    };
+    syncThemeLabel(document.documentElement.dataset.theme || localStorage.getItem('aaru_theme') || 'dark');
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('aaru_theme', next);
+      syncThemeLabel(next);
+    });
+  }
   closeBtn?.addEventListener('click', close);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) close();
   });
 
   modal.querySelectorAll('[data-server-choice]').forEach((btn) => {
@@ -861,23 +893,23 @@ function renderFixesAndFeatsPage(container) {
   };
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / RELEASE NOTES</div>
-        <h1 class="section-title">Fixes &amp; Feats</h1>
+        <h1 class="ed-page-title">Fixes &amp; Feats</h1>
         <p class="section-subtitle muted">Known bugs, recent fixes, and upcoming features.</p>
       </div>
-      <div class="header-meta mono">
-        LATEST: <span class="text-gold">${CHANGELOG[0]?.date || '—'}</span>
+      <div class="ed-hud-meta">
+        <span>Latest</span>
+        <strong class="mono text-gold">${CHANGELOG[0]?.date || '—'}</strong>
       </div>
-    </div>
+    </header>
 
     <div class="fixes-page-list">
       ${CHANGELOG.map(
         (entry, idx) => `
-        <article class="card changelog-entry ${idx === 0 ? 'is-latest' : ''}">
+        <article class="ed-changelog-plate ${idx === 0 ? 'is-latest' : ''}">
           <div class="changelog-entry-head">
-            <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <span class="pill mono ${idx === 0 ? 'pill-mint' : ''}">${entry.version}</span>
               <strong class="changelog-title">${entry.title}</strong>
             </div>
@@ -939,25 +971,25 @@ function renderCreditsTab(container) {
   ];
 
   container.innerHTML = `
-    <div class="section-header">
+    <header class="ed-roster-head">
       <div>
-        <div class="eyebrow">AARUDB / CREDITS</div>
-        <h1 class="section-title">Community Sources &amp; Credits</h1>
+        <h1 class="ed-page-title">Community Sources &amp; Credits</h1>
+        <p class="section-subtitle muted">Theorycrafting math, catalog APIs, and asset providers powering AaruDB.</p>
       </div>
-      <div class="header-meta mono">
+      <div class="ed-hud-meta">
         <a href="https://github.com/KQM-git/TCL" target="_blank" rel="noopener noreferrer" class="pill pill-gold">KQM-git/TCL ↗</a>
       </div>
-    </div>
+    </header>
 
-    <div class="credits-grid">
+    <div class="ed-credits-grid">
       ${sources
         .map(
           (s) => `
-        <article class="card credit-card">
-          <div class="card-eyebrow">DATA &amp; THEORYCRAFT SOURCE</div>
+        <article class="ed-credit-plate">
+          <div class="drawer-section-title">Data &amp; Theorycraft Source</div>
           <h2 class="credit-title">${s.name}</h2>
           <p class="credit-role">${s.role}</p>
-          <div class="credit-links mono">
+          <div class="credit-links">
             <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs">${s.url.replace(/^https?:\/\//, '')} ↗</a>
             ${
               s.secondaryUrl

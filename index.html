@@ -3,46 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>AaruDB</title>
+  <title>AaruDB — Deshretian Ley-Line Archive</title>
   <link rel="icon" type="image/png" href="./favicon.png?v=20261113ad" />
   <link rel="apple-touch-icon" href="./favicon.png?v=20261113ad" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Recursive:slnt,wght,CASL,MONO@-15..0,300..1000,0..1,0..1&family=Roboto+Flex:opsz,wdth,wght,GRAD@8..144,25..151,100..1000,-200..150&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./styles.css?v=20261115x" />
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem('aaru_theme') || 'dark';
+  </script>
+  <link rel="stylesheet" href="./styles.css?v=20261119v15" />
 </head>
 <body>
-  <!-- Maintenance Gate -->
-  <main id="maintenance-screen" class="login-screen" style="position:fixed;inset:0;z-index:9999;background:var(--bg-void, #070b14);">
-    <section class="login-card card" style="text-align:center;max-width:460px;">
-      <div class="eyebrow">AARUDB / MAINTENANCE</div>
-      <h1 class="login-title" style="margin-top:8px;">Under Maintenance</h1>
-      <p class="login-subtitle" style="margin-bottom:0;line-height:1.6;">
+  <!-- Maintenance Gate (auto-bypassed on localhost or ?preview=1) -->
+  <main id="maintenance-screen" class="gate-screen" style="position:fixed;inset:0;z-index:9999;">
+    <section class="gate-plate">
+      <div class="gate-astrolabe" aria-hidden="true"></div>
+      <div class="eyebrow">AaruDB · Archive Maintenance</div>
+      <h1 class="gate-title">Under Maintenance</h1>
+      <p class="gate-copy">
         Under Maintenance for upkeep! Admin is cleaning house and will let you know once the website's finished maintenance. Thank you for your patience!
       </p>
     </section>
   </main>
+  <script>
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.search.includes('preview=1')) {
+      document.getElementById('maintenance-screen')?.setAttribute('hidden', '');
+    }
+  </script>
 
-  <!-- Login Screen -->
-  <main id="login-screen" class="login-screen">
-    <section class="login-card card">
-      <div class="eyebrow">AARUDB / AUTHENTICATION</div>
-      <h1 class="login-title">Sign In</h1>
-      <p class="login-subtitle">
-        Enter your account key and passphrase.
-      </p>
+  <!-- Sign-In Gate -->
+  <main id="login-screen" class="gate-screen">
+    <section class="gate-plate">
+      <div class="gate-astrolabe" aria-hidden="true"></div>
+      <div class="eyebrow">AaruDB · Ley-Line Authentication</div>
+      <h1 class="gate-title">Sign In</h1>
+      <p class="gate-copy">Enter your account key and passphrase to open your archive.</p>
 
-      <form id="login-form" class="login-form">
+      <form id="login-form" class="gate-form" method="post" action="/" autocomplete="on">
         <label class="mini-field">
-          <span>ACCOUNT KEY</span>
-          <input id="login-username" type="text" autocomplete="username" placeholder="Enter account key" required class="input-mono" />
+          <span>Account Key</span>
+          <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Enter account key" required class="input-mono" />
         </label>
         <label class="mini-field">
-          <span>PASSPHRASE</span>
-          <input id="login-passphrase" type="password" autocomplete="current-password" placeholder="••••••••" class="input-mono" />
+          <span>Passphrase</span>
+          <input id="login-passphrase" name="password" type="password" autocomplete="current-password" placeholder="••••••••" class="input-mono" />
         </label>
         <div id="login-error" class="error-text"></div>
         <button id="login-submit-btn" type="submit" class="btn btn-gold full-width">Enter AaruDB</button>
@@ -50,126 +58,98 @@
     </section>
   </main>
 
-  <!-- Session Restore Loading Screen -->
-  <main id="session-restore-screen" class="login-screen" hidden>
-    <section class="login-card card" style="text-align: center;">
-      <div class="eyebrow">AARUDB / SESSION</div>
-      <h1 class="login-title" style="margin-top: 8px;">Restoring Session</h1>
-      <p class="login-subtitle" style="margin-bottom: 0;">
-        <span class="btn-spinner"></span> Syncing your account...
-      </p>
+  <!-- Session Restore Gate -->
+  <main id="session-restore-screen" class="gate-screen" hidden>
+    <section class="gate-plate" style="text-align:center;">
+      <div class="eyebrow">AaruDB · Session</div>
+      <h1 class="gate-title">Restoring Session</h1>
+      <p class="gate-copy">Syncing saved profile and Ley-Line state...</p>
     </section>
   </main>
 
-  <!-- Main Application Shell -->
-  <div id="app-shell" class="app-shell" hidden>
-    <!-- Left Navigation Rail -->
-    <aside class="nav-rail" aria-label="Primary Navigation">
-      <div class="rail-top">
-        <div class="rail-logo" title="AaruDB">
-          <svg viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
-            <polygon points="14,2 26,14 14,26 2,14" fill="none" stroke="currentColor" stroke-width="2" />
-            <polygon points="14,7 21,14 14,21 7,14" fill="currentColor" opacity="0.85" />
+  <!-- Editorial App Shell -->
+  <div id="app-shell" class="aaru-shell" hidden>
+    <!-- Top Masthead -->
+    <header class="telemetry-bar aaru-masthead">
+      <div class="telemetry-left">
+        <span class="aaru-mark" aria-hidden="true">
+          <svg viewBox="0 0 28 28" width="20" height="20">
+            <circle cx="14" cy="14" r="10.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.55" />
+            <polygon points="14,4 22,14 14,24 6,14" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="14" cy="14" r="2.2" fill="currentColor" />
           </svg>
-        </div>
+        </span>
+        <span id="topbar-breadcrumb" class="telemetry-crumb mono">AaruDB / Central HUD</span>
+        <button type="button" id="btn-server-trigger" class="telemetry-server-pill mono" title="Change Game Server">NA · Resets in --h --m</button>
       </div>
 
-      <nav class="rail-nav" aria-label="Primary Views">
-        <button type="button" class="nav-tab active" data-tab-btn="hud" title="Central HUD">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
-          <span>HUD</span>
+      <div class="telemetry-right">
+        <div class="brand-sub mono">
+          <span id="active-user-badge"></span>
+          <span id="sync-mode-badge" class="pill mono">Offline / Mock</span>
+          <button type="button" id="btn-create-invite" class="btn btn-outline btn-sm" hidden>+ Invite</button>
+        </div>
+        <button type="button" id="btn-changelog" class="btn btn-ghost btn-sm btn-changelog">
+          Fixes &amp; Feats
+          <span id="changelog-dot" class="changelog-dot" hidden></span>
         </button>
-        <button type="button" class="nav-tab" data-tab-btn="vault" title="Inventory Vault">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-          <span>Vault</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="prefarm" title="Prefarm Queue">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          <span>Prefarm</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="roster" title="Roster">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>Roster</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="armory" title="Armory">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/></svg>
-          <span>Armory</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="teams" title="Team Comps">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span>Teams</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="changelog" title="Fixes &amp; Feats">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>
-          <span>Fixes</span>
-        </button>
-        <button type="button" class="nav-tab" data-tab-btn="credits" title="Credits &amp; Formulas">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          <span>Credits</span>
-        </button>
-      </nav>
-
-      <div class="rail-bottom">
-        <button type="button" id="btn-system-drawer" class="rail-sys-btn" aria-label="System & Data Menu" title="System &amp; Patch Telemetry">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-          <span id="system-status-dot" class="status-dot" title="Catalog Status"></span>
-        </button>
+        <select id="account-switcher" class="account-switcher mono" aria-label="Switch Account View" title="Switch Account View"></select>
+        <button type="button" id="btn-theme-toggle" class="btn btn-ghost btn-sm mono" aria-label="Toggle archive theme" title="Toggle Obsidian / Papyrus theme">Theme: Obsidian</button>
+        <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">+ Import GOOD</button>
+        <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
       </div>
-    </aside>
+    </header>
 
-    <!-- Workspace Column -->
-    <div class="shell-workspace">
-      <header class="telemetry-bar">
-        <div class="telemetry-left">
-          <span id="topbar-breadcrumb" class="telemetry-crumb mono">AARUDB / CENTRAL HUD</span>
-          <button type="button" id="btn-server-trigger" class="telemetry-server-pill mono" title="Change Game Server">NA · RESETS IN --H --M</button>
+    <!-- Horizontal Archive Index Bar -->
+    <nav class="aaru-index-nav" aria-label="Primary Views">
+      <div class="aaru-index-tabs">
+        <button type="button" class="nav-tab active" data-tab-btn="hud">Central HUD</button>
+        <button type="button" class="nav-tab" data-tab-btn="vault">Vault</button>
+        <button type="button" class="nav-tab" data-tab-btn="prefarm">Prefarm</button>
+        <button type="button" class="nav-tab" data-tab-btn="roster">Roster</button>
+        <button type="button" class="nav-tab" data-tab-btn="armory">Armory</button>
+        <button type="button" class="nav-tab" data-tab-btn="teams">Teams Lab</button>
+        <button type="button" class="nav-tab" data-tab-btn="changelog">Fixes &amp; Feats</button>
+        <button type="button" class="nav-tab" data-tab-btn="credits">Credits</button>
+      </div>
+      <button type="button" id="btn-system-drawer" class="rail-sys-btn mono" aria-label="System & Data Menu" title="System & Patch Telemetry">
+        <span id="system-status-dot" class="status-dot"></span>
+        <span>System</span>
+      </button>
+    </nav>
+
+    <div id="readonly-banner" class="readonly-banner mono" hidden></div>
+
+    <main class="main-container">
+      <section id="tab-hud" class="tab-view active" data-tab="hud"></section>
+      <section id="tab-vault" class="tab-view" data-tab="vault"></section>
+      <section id="tab-prefarm" class="tab-view" data-tab="prefarm"></section>
+      <section id="tab-roster" class="tab-view" data-tab="roster"></section>
+      <section id="tab-armory" class="tab-view" data-tab="armory"></section>
+      <section id="tab-teams" class="tab-view" data-tab="teams"></section>
+      <section id="tab-changelog" class="tab-view" data-tab="changelog"></section>
+      <section id="tab-credits" class="tab-view" data-tab="credits"></section>
+
+      <footer class="app-attribution">
+        <div>
+          Data &amp; assets pulled via <a href="https://gi.yatta.moe" target="_blank" rel="noopener">Project Amber</a> &amp; <a href="https://lunaris.moe" target="_blank" rel="noopener">Lunaris</a>. Damage, reaction &amp; ER reference data sourced from <a href="https://library.keqingmains.com" target="_blank" rel="noopener">KeqingMains TCL</a> · <a href="#credits" data-tab-btn="credits">Credits</a>.
         </div>
-
-        <div class="telemetry-right">
-          <div class="brand-sub mono">
-            <span id="active-user-badge"></span>
-            <span id="sync-mode-badge" class="pill mono">OFFLINE / MOCK</span>
-            <button type="button" id="btn-create-invite" class="btn btn-outline btn-sm" hidden>+ Invite</button>
-          </div>
-          <button type="button" id="btn-changelog" class="btn btn-ghost btn-sm btn-changelog">
-            Fixes &amp; Feats
-            <span id="changelog-dot" class="changelog-dot" hidden></span>
-          </button>
-          <select id="account-switcher" class="account-switcher mono" aria-label="Switch Account View" title="Switch Account View"></select>
-          <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">+ Import GOOD</button>
-          <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
+        <div>
+          AaruDB isn't endorsed by miHoYo and doesn't reflect the views or opinions of miHoYo or anyone officially involved in producing or managing Genshin Impact. Genshin Impact and miHoYo are trademarks or registered trademarks of miHoYo. Genshin Impact © miHoYo.
         </div>
-      </header>
-
-      <div id="readonly-banner" class="readonly-banner mono" hidden></div>
-
-      <main class="main-container">
-        <section class="tab-view active" data-tab="hud"></section>
-        <section class="tab-view" data-tab="vault" hidden></section>
-        <section class="tab-view" data-tab="prefarm" hidden></section>
-        <section class="tab-view" data-tab="roster" hidden></section>
-        <section class="tab-view" data-tab="armory" hidden></section>
-        <section class="tab-view" data-tab="teams" hidden></section>
-        <section class="tab-view" data-tab="changelog" hidden></section>
-        <section class="tab-view" data-tab="credits" hidden></section>
-      </main>
-
-      <footer class="app-footer">
-        <p>Data &amp; assets pulled via <a href="https://gi.yatta.moe" target="_blank" rel="noopener noreferrer">Project Amber</a> &amp; <a href="https://lunaris.moe" target="_blank" rel="noopener noreferrer">Lunaris</a>. Damage, reaction &amp; ER reference data sourced from <a href="https://github.com/KQM-git/TCL" target="_blank" rel="noopener noreferrer">KeqingMains TCL</a> · <a href="#credits">Credits</a>.</p>
-        <p class="footer-disclaimer">Aaru DB isn’t endorsed by <a href="https://mihoyo.com/" target="_blank" rel="noopener noreferrer">miHoYo</a> and doesn’t reflect the views or opinions of miHoYo or anyone officially involved in producing or managing <a href="https://genshin.mihoyo.com/" target="_blank" rel="noopener noreferrer">Genshin Impact</a>. Genshin Impact and miHoYo are trademarks or registered trademarks of miHoYo. Genshin Impact &copy; miHoYo.</p>
       </footer>
-    </div>
+    </main>
   </div>
 
-  <!-- Server Region Selection Modal -->
+  <!-- Server Selector Modal -->
   <div id="server-modal" class="modal-backdrop" hidden>
     <div class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="server-modal-title" style="max-width: 520px;">
       <div class="modal-head">
         <div>
-          <div class="eyebrow">AARUDB / SERVER REGION</div>
+          <div class="eyebrow">AaruDB · Server Region</div>
           <h2 id="server-modal-title" class="card-title">Select Your Game Server</h2>
         </div>
-        <button type="button" id="btn-close-server" class="btn btn-ghost btn-xs">✕</button>
+        <button type="button" id="btn-close-server" class="btn btn-ghost btn-xs" aria-label="Close modal">✕</button>
       </div>
       <div class="server-grid">
         <button type="button" class="server-option-btn" data-server-choice="NA">
@@ -197,20 +177,20 @@
     <div class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
       <div class="modal-head">
         <div>
-          <div class="eyebrow">IRMINSUL GOOD V3 IMPORTER</div>
+          <div class="eyebrow">Irminsul GOOD v3 Importer</div>
           <h2 id="import-modal-title" class="card-title">Drag &amp; Drop GOOD v3 JSON Export</h2>
         </div>
-        <button type="button" id="btn-close-import" class="btn btn-ghost btn-xs">✕</button>
+        <button type="button" id="btn-close-import" class="btn btn-ghost btn-xs" aria-label="Close modal">✕</button>
       </div>
 
       <div id="good-dropzone" class="dropzone">
-        <div class="mono text-gold">DROP IRMINSUL .JSON FILE HERE</div>
+        <div class="mono text-gold">Drop Irminsul .json file here</div>
         <div class="muted">or click to browse (supports <code>format: "GOOD", version: 3</code>)</div>
         <input id="good-file-input" type="file" accept=".json,application/json" hidden />
       </div>
 
       <label class="mini-field">
-        <span>OR PASTE RAW GOOD V3 JSON</span>
+        <span>Or paste raw GOOD v3 JSON</span>
         <textarea id="good-paste-input" rows="4" class="textarea-lab mono" placeholder='{"format":"GOOD","version":3,"source":"Irminsul",...}'></textarea>
       </label>
 
@@ -228,10 +208,10 @@
     <aside id="system-drawer" class="system-drawer card" role="dialog" aria-modal="true" aria-labelledby="system-drawer-title">
       <div class="modal-head">
         <div>
-          <div class="eyebrow">SYSTEM / DATA &amp; VERSION TELEMETRY</div>
+          <div class="eyebrow">System · Data &amp; Version Telemetry</div>
           <h2 id="system-drawer-title" class="card-title">Catalog &amp; Snapshot Sync</h2>
         </div>
-        <button type="button" id="btn-close-drawer" class="btn btn-ghost btn-xs">✕</button>
+        <button type="button" id="btn-close-drawer" class="btn btn-ghost btn-xs" aria-label="Close drawer">✕</button>
       </div>
 
       <div id="system-drawer-body" class="drawer-body"></div>
@@ -243,28 +223,28 @@
     <div class="modal-card card register-modal" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
       <div class="modal-head">
         <div>
-          <div class="eyebrow">AARUDB / INVITE REGISTRATION</div>
+          <div class="eyebrow">AaruDB · Invite Registration</div>
           <h2 id="register-modal-title" class="card-title">Create Account</h2>
         </div>
-        <button type="button" id="btn-close-register" class="btn btn-ghost btn-xs">✕</button>
+        <button type="button" id="btn-close-register" class="btn btn-ghost btn-xs" aria-label="Close modal">✕</button>
       </div>
 
-      <form id="register-form" class="login-form">
+      <form id="register-form" class="gate-form">
         <label class="mini-field">
-          <span>USERNAME</span>
-          <input id="reg-username" type="text" autocomplete="username" placeholder="e.g. tsukishimaboymum" required class="input-mono" />
+          <span>Username</span>
+          <input id="reg-username" type="text" autocomplete="username" placeholder="e.g. sunny_aaru" required class="input-mono" />
           <span id="reg-username-hint" class="field-hint mono">3–20 chars: lowercase letters, numbers, or underscores</span>
         </label>
         <label class="mini-field">
-          <span>DISPLAY NAME</span>
-          <input id="reg-display-name" type="text" maxlength="24" placeholder="e.g. Tsukishima" required class="input-mono" />
+          <span>Display Name</span>
+          <input id="reg-display-name" type="text" maxlength="24" placeholder="e.g. Sunny" required class="input-mono" />
         </label>
         <label class="mini-field">
-          <span>PASSWORD</span>
+          <span>Password</span>
           <input id="reg-password" type="password" autocomplete="new-password" minlength="6" placeholder="Min 6 characters" required class="input-mono" />
         </label>
         <label class="mini-field">
-          <span>VERIFY PASSWORD</span>
+          <span>Verify Password</span>
           <input id="reg-confirm-password" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password" required class="input-mono" />
         </label>
         <div id="register-error" class="error-text"></div>
@@ -276,6 +256,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/app.js?v=20261116a"></script>
+  <script type="module" src="./js/app.js?v=20261118h"></script>
 </body>
 </html>

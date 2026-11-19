@@ -42,9 +42,10 @@ export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-ic
   const fallbackSrc = getFallbackAssetUrl(type, pascalKey);
   const primarySrc = fallbackSrc || customSrc;
   const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
-  const safeAlt = (alt || pascalKey || '').replace(/"/g, '&quot;');
+  const safeAlt = String(alt || '').replace(/"/g, '&quot;');
+  const isDecorative = alt === '';
 
-  return `<span class="asset-wrap ${className}" data-key="${safeAlt}">
+  return `<span class="asset-wrap ${className}" data-key="${safeAlt || pascalKey}"${isDecorative ? ' aria-hidden="true"' : ''}>
     <img
       src="${primarySrc}"
       alt="${safeAlt}"
@@ -53,6 +54,34 @@ export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-ic
       decoding="async"
       referrerpolicy="no-referrer"
       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+    />
+    <span class="asset-monogram" style="display:none;">${initials}</span>
+  </span>`;
+}
+
+/**
+ * Renders full-body Gacha Splash Art (Enka UI_Gacha_AvatarImg_*) with automatic
+ * fallback to the standard character avatar PNG/WebP or monogram.
+ */
+export function renderGachaSplash(pascalKey, alt = '') {
+  const avatarUrl = getFallbackAssetUrl('characters', pascalKey) || getAssetUrl('characters', pascalKey);
+  const splashUrl = avatarUrl.includes('UI_AvatarIcon_')
+    ? avatarUrl.replace('UI_AvatarIcon_', 'UI_Gacha_AvatarImg_')
+    : avatarUrl;
+  const isSplash = splashUrl !== avatarUrl;
+  const safeAlt = String(alt || pascalKey || '').replace(/"/g, '&quot;');
+  const safeAvatar = avatarUrl.replace(/"/g, '&quot;');
+  const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
+
+  return `<span class="asset-wrap ed-gacha-splash-wrap${isSplash ? ' has-splash' : ''}">
+    <img
+      src="${splashUrl}"
+      alt="${safeAlt}"
+      class="asset-img ed-gacha-splash-img"
+      loading="eager"
+      decoding="async"
+      referrerpolicy="no-referrer"
+      onerror="if(this.dataset.fb!=='1'&&'${safeAvatar}'){this.dataset.fb='1';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;

@@ -1055,6 +1055,11 @@ export function rankWeaponsByArchetype(
         (scalingStatsSet.has('DEF') && isDefSubstat) ||
         (scalingStatsSet.has('HP') && isHpSubstat) ||
         (scalingStatsSet.has('EM') && /mastery|em/i.test(substat));
+      const isBaseAtkBuffer = isBufferArch && (profile.functionTags || []).includes('ATK Buffer');
+      const baseAtkBufferPts = isBaseAtkBuffer
+        ? Math.round((Math.max(350, Number(cand.baseAtk) || 454) - 350) * 0.22) +
+          (STANDARD_5_WEAPONS.has(cand.name) ? 6 : 0)
+        : 0;
       const partyBuffScalingBonus = !isHealerLocked && !missingMechanic && mTags.has('party_buff') && hasSupportScalingMatch ? 20 : 0;
       const sigSupportBonus = isSupSignature && !missingMechanic && !isHealerLocked ? 16 : 0;
 
@@ -1065,6 +1070,7 @@ export function rankWeaponsByArchetype(
         skillResetPts +
         defensiveScalingScore +
         erThresholdPts +
+        baseAtkBufferPts +
         partyBuffScalingBonus +
         sigSupportBonus +
         capFillPts +

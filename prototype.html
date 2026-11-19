@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AaruDB — Tactical Genshin Planner (Prototype)</title>
+  <link rel="icon" type="image/png" href="./favicon.png?v=20261113ad" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./prototype.css?v=20261119p5" />
+</head>
+<body>
+  <!-- Auth Gate -->
+  <main id="proto-login" class="proto-gate" hidden>
+    <section class="proto-gate-card">
+      <div class="proto-brand-row">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <polygon points="12 2 21 12 12 22 3 12" />
+          <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+        </svg>
+        <span class="proto-brand-name">AaruDB</span>
+      </div>
+      <h1 class="proto-gate-title">Sign in to your archive</h1>
+      <p class="proto-gate-copy">Syncs with your Google Apps Script backend, GOOD v3 scans, and partner rosters.</p>
+
+      <form id="proto-login-form" class="proto-form">
+        <label class="proto-field">
+          <span>Username</span>
+          <input id="proto-username" type="text" autocomplete="username" placeholder="e.g. luna" required />
+        </label>
+        <label class="proto-field">
+          <span>Password</span>
+          <input id="proto-password" type="password" autocomplete="current-password" placeholder="Enter password" />
+        </label>
+        <div id="proto-login-error" class="proto-error" role="alert"></div>
+        <button type="submit" id="proto-login-submit" class="p-btn p-btn-primary">Sign In</button>
+      </form>
+
+      <div class="proto-quick-row">
+        <button type="button" class="p-btn p-btn-ghost" data-proto-quick="luna">Preview as Luna</button>
+        <button type="button" class="p-btn p-btn-ghost" data-proto-quick="sunny">Preview as Sunny</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Prototype Workspace Shell -->
+  <div id="proto-shell" class="proto-shell" hidden>
+    <!-- Left Navigation Rail (232px Desktop / Bottom Bar Mobile) -->
+    <aside class="proto-rail" aria-label="Workspace Navigation">
+      <div class="proto-rail-top">
+        <div class="proto-brand-row">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <polygon points="12 2 21 12 12 22 3 12" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          </svg>
+          <span class="proto-brand-name">AaruDB</span>
+          <span id="proto-sync-dot" class="proto-sync-dot" title="Sync Status"></span>
+        </div>
+
+        <div class="proto-account-box">
+          <select id="proto-account-select" class="proto-select" aria-label="Switch Account"></select>
+          <span id="proto-sync-label" class="proto-sync-text mono">Offline</span>
+        </div>
+      </div>
+
+      <nav class="proto-nav" aria-label="Primary Views">
+        <button type="button" class="proto-nav-item active" data-ptab="hud">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>Today</span>
+        </button>
+        <button type="button" class="proto-nav-item" data-ptab="prefarm">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Prefarm</span>
+        </button>
+        <button type="button" class="proto-nav-item" data-ptab="roster">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Roster</span>
+        </button>
+        <button type="button" class="proto-nav-item" data-ptab="armory">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
+          <span>Armory</span>
+        </button>
+        <button type="button" class="proto-nav-item" data-ptab="teams">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Teams Lab</span>
+        </button>
+        <button type="button" class="proto-nav-item" data-ptab="vault">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span>Vault</span>
+        </button>
+      </nav>
+
+      <div class="proto-rail-foot">
+        <button type="button" id="proto-open-import" class="p-btn p-btn-primary p-btn-full">+ Import GOOD</button>
+        <div class="proto-foot-links">
+          <button type="button" id="proto-open-system" class="p-btn p-btn-ghost p-btn-sm">System</button>
+          <a href="./index.html?preview=1" class="p-btn p-btn-ghost p-btn-sm">Classic UI</a>
+          <button type="button" id="proto-logout" class="p-btn p-btn-ghost p-btn-sm">Sign out</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Column -->
+    <div class="proto-workspace">
+      <!-- Slim 52px Command Header -->
+      <header class="proto-topbar">
+        <div class="proto-topbar-left">
+          <h1 id="proto-view-title" class="proto-view-title">Today</h1>
+          <span id="proto-readonly-pill" class="p-badge p-badge-amber" hidden>Read-Only Partner View</span>
+        </div>
+
+        <div class="proto-topbar-right">
+          <div class="proto-search-wrap">
+            <input id="proto-quick-jump" type="search" class="proto-search" placeholder="Jump to character or material ( / )" aria-label="Quick jump to character or material" />
+            <div id="proto-jump-results" class="proto-jump-menu" hidden></div>
+          </div>
+          <button type="button" id="proto-server-btn" class="p-btn p-btn-outline p-btn-sm mono">NA · --h --m</button>
+        </div>
+      </header>
+
+      <!-- Active View Container -->
+      <main id="proto-main" class="proto-main"></main>
+    </div>
+  </div>
+
+  <!-- Server Selector Modal -->
+  <div id="proto-server-modal" class="p-modal-backdrop" hidden>
+    <div class="p-modal" role="dialog" aria-modal="true" aria-labelledby="proto-server-title">
+      <div class="p-modal-head">
+        <h2 id="proto-server-title">Server Region</h2>
+        <button type="button" id="proto-close-server" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+      </div>
+      <div class="proto-server-grid">
+        <button type="button" class="p-btn p-btn-outline" data-pserver="NA">North America (UTC-5)</button>
+        <button type="button" class="p-btn p-btn-outline" data-pserver="EU">Europe (UTC+1)</button>
+        <button type="button" class="p-btn p-btn-outline" data-pserver="ASIA">Asia (UTC+8)</button>
+        <button type="button" class="p-btn p-btn-outline" data-pserver="SAR">TW / HK / MO (UTC+8)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOD v3 Import Modal -->
+  <div id="proto-import-modal" class="p-modal-backdrop" hidden>
+    <div class="p-modal p-modal-lg" role="dialog" aria-modal="true" aria-labelledby="proto-import-title">
+      <div class="p-modal-head">
+        <h2 id="proto-import-title">Import GOOD v3 Scan</h2>
+        <button type="button" id="proto-close-import" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+      </div>
+      <div class="p-modal-body">
+        <div id="proto-dropzone" class="p-dropzone">
+          Drop GOOD JSON file here or click to browse
+          <input id="proto-file-input" type="file" accept=".json,application/json" hidden />
+        </div>
+        <textarea id="proto-good-paste" rows="4" class="p-textarea mono" placeholder='Or paste GOOD v3 JSON payload...'></textarea>
+        <div id="proto-import-preview" class="p-import-preview"></div>
+        <div class="p-modal-foot">
+          <button type="button" id="proto-commit-import" class="p-btn p-btn-primary" disabled>Confirm &amp; Sync</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Telemetry Modal -->
+  <div id="proto-system-modal" class="p-modal-backdrop" hidden>
+    <div class="p-modal" role="dialog" aria-modal="true" aria-labelledby="proto-system-title">
+      <div class="p-modal-head">
+        <h2 id="proto-system-title">System &amp; Catalog</h2>
+        <button type="button" id="proto-close-system" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+      </div>
+      <div id="proto-system-body" class="p-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="proto-toast" class="p-toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./js/prototype-app.js?v=20261119p5"></script>
+</body>
+</html>
