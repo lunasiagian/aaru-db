@@ -47,7 +47,7 @@ const SESSION_KEY = 'genshin_sheet_session_v1';
 const VIEW_TITLES = {
   hud: 'Today',
   prefarm: 'Prefarm Queue',
-  roster: 'Roster',
+  roster: 'Characters',
   armory: 'Armory',
   teams: 'Teams Lab',
   vault: 'Vault'
@@ -65,6 +65,7 @@ const state = {
   focusedTargetId: null,
   rosterSearch: '',
   rosterElement: 'All',
+  rosterOwnership: 'owned',
   inspectedCharKey: null,
   vaultCategory: 'All',
   vaultSearch: '',
@@ -142,7 +143,10 @@ function setActiveTab(tab) {
   withViewTransition(() => {
     state.activeTab = tab;
     document.querySelectorAll('[data-ptab]').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.ptab === tab);
+      const isActive = btn.dataset.ptab === tab;
+      btn.classList.toggle('active', isActive);
+      if (isActive) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
     });
     const titleEl = document.getElementById('proto-view-title');
     if (titleEl) titleEl.textContent = VIEW_TITLES[tab];
@@ -170,26 +174,30 @@ function updateChrome() {
 function populateAccountSelect() {
   const sel = document.getElementById('proto-account-select');
   if (!sel || !state.sessionUser) return;
-  const users = state.visibleUsers?.length ? state.visibleUsers : [state.sessionUser];
+  const rawUsers = state.visibleUsers?.length ? state.visibleUsers : [{ user: state.sessionUser, displayName: state.sessionUser }];
+  const users = rawUsers.map((u) => (typeof u === 'string' ? { user: u, displayName: u } : u));
   sel.innerHTML = users
     .map((u) => {
-      const label = u === state.sessionUser ? `${u} (You)` : `${u} (Partner)`;
-      const selected = (state.viewingPartner ? state.partnerUser : state.sessionUser) === u ? 'selected' : '';
-      return `<option value="${esc(u)}" ${selected}>${esc(label)}</option>`;
+      const key = u.user;
+      const name = u.displayName || key;
+      const label = key === state.sessionUser ? `${name} (You)` : `${name} (Partner)`;
+      const selected = (state.viewingPartner ? state.partnerUser : state.sessionUser) === key ? 'selected' : '';
+      return `<option value="${esc(key)}" ${selected}>${esc(label)}</option>`;
     })
     .join('');
 }
 
 async function applySession(res) {
-  state.sessionUser = res.user;
+  const userKey = res.account?.user || res.user;
+  state.sessionUser = userKey;
   state.ownAccount = res.account;
-  state.visibleUsers = res.visibleUsers || [res.user];
+  state.visibleUsers = res.visibleUsers?.length ? res.visibleUsers : [{ user: userKey, displayName: res.account?.displayName || userKey }];
   state.viewingPartner = false;
   state.partnerAccount = null;
   state.partnerUser = null;
   setReadOnlyViewState(false);
 
-  const savedServer = localStorage.getItem(`aaru_server_${res.user}`);
+  const savedServer = localStorage.getItem(`aaru_server_${userKey}`);
   if (savedServer && SERVER_REGIONS[savedServer]) state.serverId = savedServer;
 
   document.getElementById('proto-login').hidden = true;
@@ -204,54 +212,56 @@ async function applySession(res) {
 function renderTodayView(container, account) {
   const readOnly = isReadOnly();
   const disabled = readOnly ? 'disabled' : '';
-  const spares = calcSpareReserves(account);
-  const wits = calcEffectiveHerosWit(account);
-  const purse = calcCoinPurse(account);
-  const wishGoal = account.wishGoal || DEFAULT_WISH_GOAL;
-  const wishProj = calcWishGoalProjection(purse.limitedPulls, wishGoal);
+  const wallet = account.wallet || {};
+  const inventory = account.inventory || {};
   const serverInfo = getServerResetInfo(state.serverId);
-  const todayName = serverInfo.todayName || 'Monday';
+  const todayName = serverInfo.inGameDay || serverInfo.todayName || 'Monday';
 
   const queue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
-  const waterfall = calculateWaterfallPrefarm(account);
-  const pool = calculatePrioritySharedPool(account);
+  const waterfall = calculateWaterfallPrefarm(queue, inventory, wallet);
+  const sharedPool = calculatePrioritySharedPool(queue, inventory, wallet, todayName);
+  const poolItems = Array.isArray(sharedPool) ? sharedPool : [];
+
+  const spares = calcSpareReserves(account, poolItems);
+  const wits = calcEffectiveHerosWit(inventory);
+  const purse = calcCoinPurse(wallet);
+  const wishGoal = { ...DEFAULT_WISH_GOAL, ...(wallet.wishGoal || {}) };
+  const wishProj = calcWishGoalProjection(wallet, wishGoal);
 
   const targetsWithTel = queue.map((t) => {
-    const wf = waterfall.find((w) => w.characterKey === t.characterKey);
-    const readiness = calcTargetReadinessPct(t, wf);
-    const tel = calcTargetTelemetry(t, wf);
+    const readiness = calcTargetReadinessPct(waterfall.get(t.id) || []);
+    const tel = calcTargetTelemetry(t, poolItems, state.serverId || 'NA');
     return { ...t, readiness, telemetry: tel };
   });
 
-  const activeItems = (pool.items || []).filter((item) => {
-    if (!state.focusedTargetId) return item.deficit > 0 || item.neededTotal > 0;
-    const consumers = item.alloc?.targets || item.consumers || [];
-    return consumers.some((c) => c.characterKey === state.focusedTargetId);
+  const activeItems = poolItems.filter((item) => {
+    if (item.kind === 'mora' || item.kind === 'exp') return false;
+    if (!state.focusedTargetId) return item.deficit > 0;
+    return (item.alloc?.targets || []).some((c) => c.characterKey === state.focusedTargetId || c.targetId === state.focusedTargetId);
   });
   const topBottlenecks = activeItems.filter((i) => i.deficit > 0).slice(0, 8);
 
   const domainsToday = getDomainScheduleForDay(todayName) || [];
   const enrichedDomains = domainsToday
     .map((dom) => {
-      const matKeys = new Set((dom.rewards || []).map((r) => normalizeAssetKey(r.key || r.name)));
+      const rewardNorms = new Set((dom.rewards || []).map((r) => normalizeAssetKey(r.key)));
+      const rewardNames = new Set((dom.rewards || []).map((r) => r.name));
       const matches = [];
       for (const t of queue) {
         const cm = getCharacterMeta(t.characterKey);
-        const bookKey = normalizeAssetKey(cm.talentBook || '');
-        if (bookKey && matKeys.has(bookKey)) {
-          matches.push({ badge: t.tierLabel, name: cm.name });
+        if (rewardNorms.has(cm.domainMatKey) || rewardNames.has(cm.talentBook)) {
+          matches.push({ badge: t.tierLabel, name: cm.name, characterKey: t.characterKey });
         }
       }
       return { ...dom, matches };
     })
+    .filter((dom) => !state.focusedTargetId || dom.matches.some((m) => m.characterKey === state.focusedTargetId))
     .sort((a, b) => b.matches.length - a.matches.length);
 
   const dailyList = account.checklist?.daily || [];
   const weeklyList = account.checklist?.weekly || [];
-  const dailyDone = dailyList.filter((c) => c.done).length;
-  const weeklyDone = weeklyList.filter((c) => c.done).length;
-  const dailyPct = dailyList.length ? Math.round((dailyDone / dailyList.length) * 100) : 0;
-  const weeklyPct = weeklyList.length ? Math.round((weeklyDone / weeklyList.length) * 100) : 0;
+  const dailyOpen = dailyList.filter((c) => !c.done).length;
+  const weeklyOpen = weeklyList.filter((c) => !c.done).length;
   const topDomain = enrichedDomains.find((d) => d.matches.length > 0);
 
   container.innerHTML = `
@@ -311,7 +321,7 @@ function renderTodayView(container, account) {
                 const el = String(cm.element || '').toLowerCase();
                 const active = state.focusedTargetId === t.characterKey ? 'is-active' : '';
                 return `
-                  <button type="button" class="p-target-card ${active}" data-el="${esc(el)}" data-p-focus="${esc(t.characterKey)}">
+                  <button type="button" class="p-target-card ${active}" data-el="${esc(el)}" data-p-focus="${esc(t.characterKey)}" aria-pressed="${Boolean(active)}">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;">
                       <div class="p-row-left">
                         ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-xs')}
@@ -336,7 +346,7 @@ function renderTodayView(container, account) {
                         .map((c) => c.characterName || getCharacterMeta(c.characterKey).name)
                         .join(', ');
                       return `
-                        <div class="p-row p-row-clickable" data-p-jump-mat="${esc(item.name)}" title="Open in Vault">
+                        <button type="button" class="p-row p-row-clickable" data-p-jump-mat="${esc(item.name)}" title="Open in Vault">
                           <div class="p-row-left">
                             ${renderAssetIcon('materials', item.key, item.name, 'icon-xs')}
                             <div>
@@ -348,7 +358,7 @@ function renderTodayView(container, account) {
                             <div class="p-bar"><span style="width:${pct}%"></span></div>
                             <span class="mono text-coral" style="font-size:12.5px;min-width:48px;text-align:right;">-${item.deficit.toLocaleString()}</span>
                           </div>
-                        </div>`;
+                        </button>`;
                     })
                     .join('')
                 : '<div class="muted" style="font-size:13px;">All tracked materials for this selection are satisfied.</div>'
@@ -358,35 +368,39 @@ function renderTodayView(container, account) {
 
         <section class="p-panel">
           <div class="p-panel-head">
-            <h2 class="p-panel-title">Daily &amp; Weekly Loop</h2>
-            <span class="p-badge mono ${dailyDone === dailyList.length && dailyList.length ? 'p-badge-mint' : ''}">${dailyDone}/${dailyList.length} Daily · ${weeklyDone}/${weeklyList.length} Weekly</span>
+            <h2 class="p-panel-title">Active Reminders</h2>
+            <span class="p-badge ${dailyOpen + weeklyOpen === 0 ? 'p-badge-mint' : 'p-badge-amber'}">${
+              dailyOpen + weeklyOpen === 0 ? 'All Caught Up' : `${dailyOpen} Daily · ${weeklyOpen} Weekly Open`
+            }</span>
           </div>
-          <div class="p-check-grid">
-            <div>
-              <div class="p-row-sub" style="margin-bottom:4px;">Daily Routine</div>
-              <div class="p-check-meter ${dailyPct === 100 ? 'is-complete' : ''}"><span style="width:${dailyPct}%"></span></div>
-              ${dailyList
-                .map(
-                  (c) => `
-                  <label class="p-check-item ${c.done ? 'is-done' : ''}">
-                    <input type="checkbox" data-p-check="daily" data-p-cid="${esc(c.id)}" ${c.done ? 'checked' : ''} ${disabled} />
-                    <span>${esc(c.label)}</span>
-                  </label>`
-                )
-                .join('')}
+          <div class="p-list" style="gap:14px;">
+            <div class="p-reminder-group">
+              <div class="p-row-sub">Daily</div>
+              <div class="p-reminder-chips">
+                ${[...dailyList].sort((a, b) => Number(a.done) - Number(b.done))
+                  .map(
+                    (c) => `
+                    <button type="button" class="p-rem-chip ${c.done ? 'is-done' : ''}" data-p-check="daily" data-p-cid="${esc(c.id)}" ${disabled} aria-pressed="${Boolean(c.done)}">
+                      <span class="p-rem-dot" aria-hidden="true"></span>
+                      <span>${esc(c.label)}</span>
+                    </button>`
+                  )
+                  .join('')}
+              </div>
             </div>
-            <div>
-              <div class="p-row-sub" style="margin-bottom:4px;">Weekly &amp; Endgame</div>
-              <div class="p-check-meter ${weeklyPct === 100 ? 'is-complete' : ''}"><span style="width:${weeklyPct}%"></span></div>
-              ${weeklyList
-                .map(
-                  (c) => `
-                  <label class="p-check-item ${c.done ? 'is-done' : ''}">
-                    <input type="checkbox" data-p-check="weekly" data-p-cid="${esc(c.id)}" ${c.done ? 'checked' : ''} ${disabled} />
-                    <span>${esc(c.label)}</span>
-                  </label>`
-                )
-                .join('')}
+            <div class="p-reminder-group">
+              <div class="p-row-sub">Weekly &amp; Endgame</div>
+              <div class="p-reminder-chips">
+                ${[...weeklyList].sort((a, b) => Number(a.done) - Number(b.done))
+                  .map(
+                    (c) => `
+                    <button type="button" class="p-rem-chip ${c.done ? 'is-done' : ''}" data-p-check="weekly" data-p-cid="${esc(c.id)}" ${disabled} aria-pressed="${Boolean(c.done)}">
+                      <span class="p-rem-dot" aria-hidden="true"></span>
+                      <span>${esc(c.label)}</span>
+                    </button>`
+                  )
+                  .join('')}
+              </div>
             </div>
           </div>
         </section>
@@ -398,10 +412,12 @@ function renderTodayView(container, account) {
           <span class="p-badge mono">${enrichedDomains.filter((d) => d.matches.length).length} Priority</span>
         </div>
         <div class="p-list">
-          ${enrichedDomains
-            .slice(0, 8)
-            .map(
-              (dom) => `
+          ${
+            enrichedDomains.length
+              ? enrichedDomains
+                  .slice(0, 8)
+                  .map(
+                    (dom) => `
               <div class="p-row">
                 <div>
                   <div class="p-row-title">${esc(dom.name)}</div>
@@ -416,8 +432,10 @@ function renderTodayView(container, account) {
                 </div>
                 <span class="p-badge">${esc(dom.domainType)}</span>
               </div>`
-            )
-            .join('')}
+                  )
+                  .join('')
+              : '<div class="muted" style="font-size:13px;">No open domains match the focused target today.</div>'
+          }
         </div>
       </section>
     </div>
@@ -441,19 +459,21 @@ function renderTodayView(container, account) {
       setActiveTab('vault');
     });
   });
-  container.querySelectorAll('[data-p-check]').forEach((cb) => {
-    cb.addEventListener('change', async () => {
+  container.querySelectorAll('[data-p-check]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
       if (readOnly) return;
-      const group = cb.dataset.pCheck;
-      const id = cb.dataset.pCid;
+      const group = btn.dataset.pCheck;
+      const id = btn.dataset.pCid;
       const list = account.checklist?.[group] || [];
       const item = list.find((x) => x.id === id);
-      if (item) item.done = cb.checked;
+      if (item) item.done = !item.done;
       renderTodayView(container, account);
       try {
-        await saveAccountSection(state.sessionUser, 'checklist', account.checklist);
+        if (!state.isPreviewDemo) {
+          await saveAccountSection(state.sessionUser, 'checklist', account.checklist);
+        }
       } catch (err) {
-        showToast(`Checklist save failed: ${err.message}`);
+        showToast(`Reminder save failed: ${err.message}`);
       }
     });
   });
@@ -462,7 +482,9 @@ function renderTodayView(container, account) {
 /* ---------- View 2: Prefarm Queue ---------- */
 function renderPrefarmView(container, account) {
   const queue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
-  const waterfall = calculateWaterfallPrefarm(account);
+  const waterfall = calculateWaterfallPrefarm(queue, account.inventory || {}, account.wallet || {});
+  const sharedPool = calculatePrioritySharedPool(queue, account.inventory || {}, account.wallet || {}, getServerResetInfo(state.serverId).inGameDay || 'Monday');
+  const poolItems = Array.isArray(sharedPool) ? sharedPool : [];
 
   container.innerHTML = `
     <div class="p-table-wrap">
@@ -483,11 +505,10 @@ function renderPrefarmView(container, account) {
               ? queue
                   .map((t) => {
                     const cm = getCharacterMeta(t.characterKey);
-                    const wf = waterfall.find((w) => w.characterKey === t.characterKey);
-                    const pct = calcTargetReadinessPct(t, wf);
-                    const tel = calcTargetTelemetry(t, wf);
+                    const pct = calcTargetReadinessPct(waterfall.get(t.id) || []);
+                    const tel = calcTargetTelemetry(t, poolItems, state.serverId || 'NA');
                     return `
-                      <tr style="cursor:pointer;" data-p-open-char="${esc(t.characterKey)}">
+                      <tr style="cursor:pointer;" tabindex="0" role="link" data-p-open-char="${esc(t.characterKey)}">
                         <td class="mono text-gold">${esc(t.tierLabel)}</td>
                         <td>
                           <div class="p-row-left">
@@ -510,9 +531,16 @@ function renderPrefarmView(container, account) {
   `;
 
   container.querySelectorAll('[data-p-open-char]').forEach((row) => {
-    row.addEventListener('click', () => {
+    const open = () => {
       state.inspectedCharKey = row.dataset.pOpenChar;
       setActiveTab('roster');
+    };
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
     });
   });
 }
@@ -536,15 +564,15 @@ function renderStatRadarSvg(combat) {
   const labels = axes
     .map((ax, i) => {
       const [x, y] = pt(i, 1.32);
-      return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" fill="#7B889E" font-size="9" font-family="JetBrains Mono, monospace">${ax.label}</text>`;
+      return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" fill="var(--p-text-muted)" font-size="9" font-family="var(--p-font-mono)">${ax.label}</text>`;
     })
     .join('');
 
   return `
     <svg viewBox="0 0 150 150" width="150" height="150" aria-hidden="true">
-      <polygon points="${ringPts(1)}" fill="none" stroke="#252E40" stroke-width="1" />
-      <polygon points="${ringPts(0.6)}" fill="none" stroke="#252E40" stroke-width="1" stroke-dasharray="2 2" />
-      <polygon class="p-radar-poly" points="${polyPts}" fill="var(--el-wash, rgba(94,234,212,0.18))" stroke="var(--el-ink, #5EEAD4)" stroke-width="1.6" />
+      <polygon points="${ringPts(1)}" fill="none" stroke="var(--p-border)" stroke-width="1" />
+      <polygon points="${ringPts(0.6)}" fill="none" stroke="var(--p-border)" stroke-width="1" stroke-dasharray="2 2" />
+      <polygon class="p-radar-poly" points="${polyPts}" fill="var(--el-wash, rgba(94,234,212,0.18))" stroke="var(--el-ink, var(--p-accent))" stroke-width="1.6" />
       ${labels}
     </svg>`;
 }
@@ -582,6 +610,11 @@ function renderRosterView(container, account) {
       </div>
 
       <section class="p-dossier-hero" data-el="${esc(elAttr)}" data-rarity="${char.meta.rarity || 5}">
+        <svg class="p-dossier-astrolabe" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="92" fill="none" stroke="var(--p-gold)" stroke-width="0.8" stroke-dasharray="4 6" />
+          <circle cx="100" cy="100" r="72" fill="none" stroke="var(--el-ink, var(--p-accent))" stroke-width="0.9" opacity="0.65" />
+          <polygon points="100,14 186,100 100,186 14,100" fill="none" stroke="var(--p-gold)" stroke-width="0.6" opacity="0.5" />
+        </svg>
         <div class="p-portrait-box" style="view-transition-name:hero-portrait;">
           ${renderGachaSplash(char.key, char.meta.name)}
           <div class="p-const-strip">
@@ -591,9 +624,9 @@ function renderRosterView(container, account) {
           </div>
         </div>
 
-        <div>
+        <div style="position:relative;z-index:1;">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <h2 style="margin:0;font-size:28px;font-weight:700;letter-spacing:-0.02em;view-transition-name:hero-name;">${esc(char.meta.name)}</h2>
+            <h2 class="proto-dossier-name" style="view-transition-name:hero-name;">${esc(char.meta.name)}</h2>
             <span class="mono muted">Lv.${char.level || 1} · A/E/Q ${(char.talents || [1, 1, 1]).join('/')} · ${combat?.cv?.toFixed(1) || '0.0'} CV</span>
           </div>
 
@@ -657,18 +690,30 @@ function renderRosterView(container, account) {
                 .join('')}
             </select>
           </label>
-          <label class="proto-field" style="width:96px;">
+          <label class="proto-field" style="width:90px;">
             <span>Target Lv</span>
             <input type="number" name="targetLevel" min="1" max="100" value="${char.targetLevel || 90}" class="p-input mono" ${disabled} />
           </label>
-          <label class="proto-field" style="width:96px;">
+          <label class="proto-field" style="width:68px;">
+            <span>Target A</span>
+            <input type="number" name="targetA" min="1" max="10" value="${(char.targetTalents || [9, 9, 9])[0]}" class="p-input mono" ${disabled} />
+          </label>
+          <label class="proto-field" style="width:68px;">
+            <span>Target E</span>
+            <input type="number" name="targetE" min="1" max="10" value="${(char.targetTalents || [9, 9, 9])[1]}" class="p-input mono" ${disabled} />
+          </label>
+          <label class="proto-field" style="width:68px;">
+            <span>Target Q</span>
+            <input type="number" name="targetQ" min="1" max="10" value="${(char.targetTalents || [9, 9, 9])[2]}" class="p-input mono" ${disabled} />
+          </label>
+          <label class="proto-field" style="width:88px;">
             <span>Priority #</span>
             <input type="number" name="priorityRank" min="1" max="99" value="${char.priorityRank || ''}" class="p-input mono" ${disabled} />
           </label>
-          ${!readOnly ? '<button type="submit" class="p-btn p-btn-primary">Save Target</button>' : ''}
+          ${!readOnly ? '<button type="submit" id="p-save-target-btn" class="p-btn p-btn-primary">Save Target</button>' : ''}
         </form>
       </section>
-    `;
+  `;
 
     document.getElementById('p-back-roster')?.addEventListener('click', () => {
       withViewTransition(() => {
@@ -679,87 +724,149 @@ function renderRosterView(container, account) {
     document.getElementById('p-target-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (readOnly) return;
+      const saveBtn = document.getElementById('p-save-target-btn');
       const fd = new FormData(e.target);
       const updated = {
         ...char,
+        owned: true,
         status: fd.get('status'),
         targetLevel: Number(fd.get('targetLevel') || 90),
+        targetTalents: [
+          Number(fd.get('targetA') || 9),
+          Number(fd.get('targetE') || 9),
+          Number(fd.get('targetQ') || 9)
+        ],
         priorityRank: fd.get('priorityRank') ? Number(fd.get('priorityRank')) : null
       };
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+      }
       try {
         if (!state.isPreviewDemo) {
           await upsertRosterRow(state.sessionUser, char.key, updated);
         }
         const idx = (account.characters || []).findIndex((c) => c.key === char.key);
         if (idx >= 0) account.characters[idx] = updated;
+        else account.characters = [...(account.characters || []), updated];
         showToast(`Saved ${char.meta.name}`);
       } catch (err) {
         showToast(`Save failed: ${err.message}`);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Target';
+        }
       }
     });
     return;
   }
 
   const elements = ['All', 'Pyro', 'Hydro', 'Electro', 'Cryo', 'Anemo', 'Geo', 'Dendro'];
-  const filtered = chars
-    .filter((c) => c.owned)
-    .filter((c) => state.rosterElement === 'All' || c.meta.element === state.rosterElement)
-    .filter((c) => !state.rosterSearch || c.meta.name.toLowerCase().includes(state.rosterSearch.toLowerCase()))
-    .sort((a, b) => (b.level || 0) - (a.level || 0));
+  const ownershipTabs = [
+    { id: 'owned', label: 'Owned' },
+    { id: 'all', label: 'All' },
+    { id: 'unowned', label: 'Unowned' }
+  ];
 
   container.innerHTML = `
     <div class="p-toolbar">
-      <div class="p-filter-pills">
-        ${elements
-          .map(
-            (el) =>
-              `<button type="button" class="p-pill-btn ${state.rosterElement === el ? 'active' : ''}" data-p-el="${el}">${el}</button>`
-          )
-          .join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <div class="p-filter-pills" role="group" aria-label="Ownership filter">
+          ${ownershipTabs
+            .map(
+              (o) =>
+                `<button type="button" class="p-pill-btn ${state.rosterOwnership === o.id ? 'active' : ''}" data-p-own="${o.id}" aria-pressed="${state.rosterOwnership === o.id}">${o.label}</button>`
+            )
+            .join('')}
+        </div>
+        <div class="p-filter-pills" role="group" aria-label="Element filter">
+          ${elements
+            .map(
+              (el) =>
+                `<button type="button" class="p-pill-btn ${state.rosterElement === el ? 'active' : ''}" data-p-el="${el}" aria-pressed="${state.rosterElement === el}">${el}</button>`
+            )
+            .join('')}
+        </div>
       </div>
-      <input type="search" id="p-roster-search" class="proto-search" style="max-width:240px;" placeholder="Filter owned roster..." value="${esc(state.rosterSearch)}" />
+      <input type="search" id="p-roster-search" class="proto-search" style="max-width:240px;" placeholder="Filter characters..." aria-label="Filter characters" value="${esc(state.rosterSearch)}" />
     </div>
 
-    <div class="p-roster-grid">
-      ${filtered
-        .map((c) => {
-          const elAttr = String(c.meta.element || '').toLowerCase();
-          const isTarget = c.status === 'Active Prefarm' || prefarmSet.has(c.key);
-          return `
-          <button type="button" class="p-char-tile" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
-            ${isTarget ? '<span class="p-badge p-badge-mint" style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;">Target</span>' : ''}
-            ${renderAssetIcon('characters', c.key, c.meta.name, '')}
-            <span class="p-char-name">${esc(c.meta.name)}</span>
-            <span class="p-char-sub mono">Lv.${c.level || 1} · C${c.constellation || 0}</span>
-          </button>`;
-        })
-        .join('')}
-    </div>
+    <div id="p-roster-grid" class="p-roster-grid"></div>
   `;
 
+  const renderRosterCards = () => {
+    const grid = document.getElementById('p-roster-grid');
+    if (!grid) return;
+    const filtered = chars
+      .filter((c) => {
+        if (state.rosterOwnership === 'owned') return c.owned;
+        if (state.rosterOwnership === 'unowned') return !c.owned;
+        return true;
+      })
+      .filter((c) => state.rosterElement === 'All' || c.meta.element === state.rosterElement)
+      .filter((c) => !state.rosterSearch || c.meta.name.toLowerCase().includes(state.rosterSearch.toLowerCase()))
+      .sort((a, b) => Number(b.owned) - Number(a.owned) || (b.level || 0) - (a.level || 0) || a.meta.name.localeCompare(b.meta.name));
+
+    grid.innerHTML = filtered.length
+      ? filtered
+          .map((c) => {
+            const elAttr = String(c.meta.element || '').toLowerCase();
+            const isTarget = c.status === 'Active Prefarm' || prefarmSet.has(c.key);
+            return `
+            <button type="button" class="p-char-tile ${c.owned ? '' : 'is-unowned'}" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
+              ${isTarget ? '<span class="p-badge p-badge-mint" style="position:absolute;top:8px;right:8px;font-size:12px;padding:1px 7px;">Target</span>' : ''}
+              ${renderAssetIcon('characters', c.key, c.meta.name, '')}
+              <span class="p-char-name">${esc(c.meta.name)}</span>
+              <span class="p-char-sub mono">${c.owned ? `Lv.${c.level || 1} · C${c.constellation || 0}` : 'Unowned'}</span>
+            </button>`;
+          })
+          .join('')
+      : '<div class="p-panel muted" style="grid-column:1/-1;">No characters match your current filter.</div>';
+
+    grid.querySelectorAll('[data-p-char]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const avatar = btn.querySelector('.asset-wrap');
+        const nameEl = btn.querySelector('.p-char-name');
+        if (avatar) avatar.style.viewTransitionName = 'hero-portrait';
+        if (nameEl) nameEl.style.viewTransitionName = 'hero-name';
+        withViewTransition(() => {
+          state.inspectedCharKey = btn.dataset.pChar;
+          renderRosterView(container, account);
+        });
+      });
+    });
+    attachCardTilt(grid);
+  };
+
+  renderRosterCards();
+
+  container.querySelectorAll('[data-p-own]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.rosterOwnership = btn.dataset.pOwn;
+      container.querySelectorAll('[data-p-own]').forEach((b) => {
+        const active = b.dataset.pOwn === state.rosterOwnership;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderRosterCards();
+    });
+  });
   container.querySelectorAll('[data-p-el]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.rosterElement = btn.dataset.pEl;
-      renderRosterView(container, account);
+      container.querySelectorAll('[data-p-el]').forEach((b) => {
+        const active = b.dataset.pEl === state.rosterElement;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderRosterCards();
     });
   });
   document.getElementById('p-roster-search')?.addEventListener('input', (e) => {
     state.rosterSearch = e.target.value;
-    renderRosterView(container, account);
+    renderRosterCards();
   });
-  container.querySelectorAll('[data-p-char]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const avatar = btn.querySelector('.asset-wrap');
-      const nameEl = btn.querySelector('.p-char-name');
-      if (avatar) avatar.style.viewTransitionName = 'hero-portrait';
-      if (nameEl) nameEl.style.viewTransitionName = 'hero-name';
-      withViewTransition(() => {
-        state.inspectedCharKey = btn.dataset.pChar;
-        renderRosterView(container, account);
-      });
-    });
-  });
-  attachCardTilt(container);
 }
 
 /* ---------- View 4: Armory (Visual Weapon Cards) ---------- */
@@ -859,7 +966,7 @@ function renderTeamsView(container, account) {
                           const wKey = m.weaponKey || owned?.equippedWeapon?.key;
                           const wMeta = wKey ? getWeaponMeta(wKey) : null;
                           return `
-                            <div class="p-squad-slot" data-el="${esc(elAttr)}" data-p-jump-char="${esc(m.characterKey)}">
+                            <button type="button" class="p-squad-slot" data-el="${esc(elAttr)}" data-p-jump-char="${esc(m.characterKey)}">
                               <div class="p-row-left">
                                 ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
                                 <div style="min-width:0;">
@@ -875,7 +982,7 @@ function renderTeamsView(container, account) {
                                      </div>`
                                   : ''
                               }
-                            </div>`;
+                            </button>`;
                         })
                         .join('')}
                     </div>
@@ -900,8 +1007,9 @@ function renderVaultView(container, account) {
   const readOnly = isReadOnly();
   const disabled = readOnly ? 'disabled' : '';
   const inv = account.inventory || {};
-  const pool = calculatePrioritySharedPool(account);
-  const neededMap = new Map((pool.items || []).map((i) => [i.key, i.neededTotal || 0]));
+  const queue = sortAndLabelPrefarmQueue(account.prefarmQueue || []);
+  const sharedPool = calculatePrioritySharedPool(queue, inv, account.wallet || {}, getServerResetInfo(state.serverId).inGameDay || 'Monday');
+  const neededMap = new Map((Array.isArray(sharedPool) ? sharedPool : []).map((i) => [i.key, i.neededTotal || 0]));
 
   const rows = Object.entries(inv)
     .map(([key, count]) => {
@@ -924,15 +1032,15 @@ function renderVaultView(container, account) {
 
   container.innerHTML = `
     <div class="p-toolbar">
-      <div class="p-filter-pills">
+      <div class="p-filter-pills" role="group" aria-label="Material categories">
         ${cats
           .map(
             (cat) =>
-              `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}">${esc(cat)}</button>`
+              `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}" aria-pressed="${state.vaultCategory === cat}">${esc(cat)}</button>`
           )
           .join('')}
       </div>
-      <input type="search" id="p-vault-search" class="proto-search" style="max-width:240px;" placeholder="Filter materials..." value="${esc(state.vaultSearch)}" />
+      <input type="search" id="p-vault-search" class="proto-search" style="max-width:240px;" placeholder="Filter materials..." aria-label="Filter materials" value="${esc(state.vaultSearch)}" />
     </div>
 
     <div class="p-table-wrap">
@@ -946,69 +1054,100 @@ function renderVaultView(container, account) {
             <th>In Bag</th>
           </tr>
         </thead>
-        <tbody>
-          ${rows
-            .slice(0, 120)
-            .map(
-              (r) => `
-              <tr>
-                <td>
-                  <div class="p-row-left">
-                    ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
-                    <strong>${esc(r.name)}</strong>
-                  </div>
-                </td>
-                <td class="muted">${esc(r.category)}</td>
-                <td class="mono">${r.needed ? r.needed.toLocaleString() : '—'}</td>
-                <td class="mono ${r.needed ? (r.net < 0 ? 'text-coral' : 'text-mint') : 'muted'}">${
-                  r.needed ? (r.net >= 0 ? `+${r.net.toLocaleString()}` : r.net.toLocaleString()) : '—'
-                }</td>
-                <td>
-                  <div class="p-vault-ctrl">
-                    <input type="number" min="0" class="p-vault-input mono" value="${r.owned}" data-p-vinput="${esc(r.key)}" ${disabled} />
-                    ${!readOnly ? `<button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="1">+1</button><button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="10">+10</button>` : ''}
-                  </div>
-                </td>
-              </tr>`
-            )
-            .join('')}
-        </tbody>
+        <tbody id="p-vault-tbody"></tbody>
       </table>
     </div>
+    <div id="p-vault-count" class="muted mono" style="font-size:12px;"></div>
   `;
-
-  container.querySelectorAll('[data-p-vcat]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.vaultCategory = btn.dataset.pVcat;
-      renderVaultView(container, account);
-    });
-  });
-  document.getElementById('p-vault-search')?.addEventListener('input', (e) => {
-    state.vaultSearch = e.target.value;
-    renderVaultView(container, account);
-  });
 
   const commitMat = async (key, val) => {
     if (readOnly) return;
     account.inventory[key] = Math.max(0, Number(val || 0));
     try {
-      await saveAccountSection(state.sessionUser, 'inventory', account.inventory);
+      if (!state.isPreviewDemo) {
+        await saveAccountSection(state.sessionUser, 'inventory', account.inventory);
+      }
     } catch (err) {
       showToast(`Vault save failed: ${err.message}`);
     }
   };
 
-  container.querySelectorAll('[data-p-vinput]').forEach((input) => {
-    input.addEventListener('change', () => commitMat(input.dataset.pVinput, input.value));
-  });
-  container.querySelectorAll('[data-p-vadd]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const k = btn.dataset.pVadd;
-      const delta = Number(btn.dataset.pDelta || 1);
-      const next = Math.max(0, Number(account.inventory[k] || 0) + delta);
-      await commitMat(k, next);
-      renderVaultView(container, account);
+  const renderVaultRows = () => {
+    const tbody = document.getElementById('p-vault-tbody');
+    if (!tbody) return;
+    const filtered = rows.filter((r) => state.vaultCategory === 'All' || r.category === state.vaultCategory)
+      .filter((r) => !state.vaultSearch || r.name.toLowerCase().includes(state.vaultSearch.toLowerCase()));
+
+    const countEl = document.getElementById('p-vault-count');
+    if (countEl) {
+      countEl.textContent = filtered.length > 120
+        ? `Showing 120 of ${filtered.length} materials — filter to narrow`
+        : `${filtered.length} materials`;
+    }
+
+    tbody.innerHTML = filtered.length
+      ? filtered
+          .slice(0, 120)
+          .map(
+            (r) => `
+            <tr>
+              <td>
+                <div class="p-row-left">
+                  ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
+                  <strong>${esc(r.name)}</strong>
+                </div>
+              </td>
+              <td class="muted">${esc(r.category)}</td>
+              <td class="mono">${r.needed ? r.needed.toLocaleString() : '—'}</td>
+              <td class="mono ${r.needed ? (r.net < 0 ? 'text-coral' : 'text-mint') : 'muted'}">${
+                r.needed ? (r.net >= 0 ? `+${r.net.toLocaleString()}` : r.net.toLocaleString()) : '—'
+              }</td>
+              <td>
+                <div class="p-vault-ctrl">
+                  <input type="number" min="0" class="p-vault-input mono" aria-label="${esc(r.name)} count" value="${r.owned}" data-p-vinput="${esc(r.key)}" ${disabled} />
+                  ${!readOnly ? `<button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="1">+1</button><button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="10">+10</button>` : ''}
+                </div>
+              </td>
+            </tr>`
+          )
+          .join('')
+      : '<tr><td colspan="5" class="muted">No materials match your filter.</td></tr>';
+
+    tbody.querySelectorAll('[data-p-vinput]').forEach((input) => {
+      input.addEventListener('change', () => commitMat(input.dataset.pVinput, input.value));
     });
+    tbody.querySelectorAll('[data-p-vadd]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const k = btn.dataset.pVadd;
+        const delta = Number(btn.dataset.pDelta || 1);
+        const next = Math.max(0, Number(account.inventory[k] || 0) + delta);
+        const rowObj = rows.find((x) => x.key === k);
+        if (rowObj) {
+          rowObj.owned = next;
+          rowObj.net = next - rowObj.needed;
+        }
+        await commitMat(k, next);
+        renderVaultRows();
+      });
+    });
+  };
+
+  renderVaultRows();
+
+  container.querySelectorAll('[data-p-vcat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.vaultCategory = btn.dataset.pVcat;
+      container.querySelectorAll('[data-p-vcat]').forEach((b) => {
+        const active = b.dataset.pVcat === state.vaultCategory;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderVaultRows();
+    });
+  });
+  document.getElementById('p-vault-search')?.addEventListener('input', (e) => {
+    state.vaultSearch = e.target.value;
+    renderVaultRows();
   });
 }
 
@@ -1017,12 +1156,17 @@ function renderActiveView() {
   const account = getActiveAccount();
   if (!container || !account) return;
 
-  if (state.activeTab === 'hud') renderTodayView(container, account);
-  else if (state.activeTab === 'prefarm') renderPrefarmView(container, account);
-  else if (state.activeTab === 'roster') renderRosterView(container, account);
-  else if (state.activeTab === 'armory') renderArmoryView(container, account);
-  else if (state.activeTab === 'teams') renderTeamsView(container, account);
-  else if (state.activeTab === 'vault') renderVaultView(container, account);
+  try {
+    if (state.activeTab === 'hud') renderTodayView(container, account);
+    else if (state.activeTab === 'prefarm') renderPrefarmView(container, account);
+    else if (state.activeTab === 'roster') renderRosterView(container, account);
+    else if (state.activeTab === 'armory') renderArmoryView(container, account);
+    else if (state.activeTab === 'teams') renderTeamsView(container, account);
+    else if (state.activeTab === 'vault') renderVaultView(container, account);
+  } catch (err) {
+    console.error('Prototype view render failed:', err);
+    container.innerHTML = `<div class="p-panel text-coral">Render error in ${esc(state.activeTab)}: ${esc(err.message)}</div>`;
+  }
 }
 
 /* ---------- Shell Interactions (Quick Jump, Modals, Auth) ---------- */
@@ -1038,10 +1182,17 @@ function setupQuickJump() {
     }
   });
 
+  const closeJump = () => {
+    menu.hidden = true;
+    input.setAttribute('aria-expanded', 'false');
+  };
+
+  let jumpIdx = -1;
   input.addEventListener('input', () => {
     const q = input.value.trim().toLowerCase();
+    jumpIdx = -1;
     if (!q) {
-      menu.hidden = true;
+      closeJump();
       return;
     }
     const account = getActiveAccount();
@@ -1056,20 +1207,21 @@ function setupQuickJump() {
 
     const hits = [...chars, ...mats];
     if (!hits.length) {
-      menu.hidden = true;
+      closeJump();
       return;
     }
     menu.innerHTML = hits
       .map(
         (h) =>
-          `<button type="button" class="proto-jump-item" data-jtype="${h.type}" data-jkey="${esc(h.key)}" data-jlabel="${esc(h.label)}"><span>${esc(h.label)}</span><span class="muted">${h.type === 'char' ? 'Roster' : 'Vault'}</span></button>`
+          `<button type="button" class="proto-jump-item" role="option" data-jtype="${h.type}" data-jkey="${esc(h.key)}" data-jlabel="${esc(h.label)}"><span>${esc(h.label)}</span><span class="muted">${h.type === 'char' ? 'Characters' : 'Vault'}</span></button>`
       )
       .join('');
     menu.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
 
     menu.querySelectorAll('.proto-jump-item').forEach((btn) => {
       btn.addEventListener('click', () => {
-        menu.hidden = true;
+        closeJump();
         input.value = '';
         if (btn.dataset.jtype === 'char') {
           state.inspectedCharKey = btn.dataset.jkey;
@@ -1083,27 +1235,71 @@ function setupQuickJump() {
     });
   });
 
+  input.addEventListener('keydown', (e) => {
+    if (menu.hidden) return;
+    const opts = [...menu.querySelectorAll('.proto-jump-item')];
+    if (e.key === 'Escape') {
+      closeJump();
+    } else if (e.key === 'ArrowDown' && opts.length) {
+      e.preventDefault();
+      jumpIdx = (jumpIdx + 1) % opts.length;
+      opts.forEach((o, i) => o.classList.toggle('is-selected', i === jumpIdx));
+    } else if (e.key === 'ArrowUp' && opts.length) {
+      e.preventDefault();
+      jumpIdx = (jumpIdx - 1 + opts.length) % opts.length;
+      opts.forEach((o, i) => o.classList.toggle('is-selected', i === jumpIdx));
+    } else if (e.key === 'Enter' && jumpIdx >= 0 && opts[jumpIdx]) {
+      e.preventDefault();
+      opts[jumpIdx].click();
+    }
+  });
+
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.proto-search-wrap')) menu.hidden = true;
+    if (!e.target.closest('.proto-search-wrap')) closeJump();
   });
 }
 
 function setupModals() {
-  const bindBackdropModal = (modalId, openBtnId, closeBtnId, onOpen) => {
+  const bindBackdropModal = (modalId, openBtnIds, closeBtnId, onOpen) => {
     const modal = document.getElementById(modalId);
     if (!modal) return;
-    document.getElementById(openBtnId)?.addEventListener('click', () => {
+    let lastTrigger = null;
+    const ids = Array.isArray(openBtnIds) ? openBtnIds : [openBtnIds];
+    const open = (trigger) => {
+      lastTrigger = trigger || document.activeElement;
       if (onOpen) onOpen();
       modal.hidden = false;
-    });
-    document.getElementById(closeBtnId)?.addEventListener('click', () => {
+      const focusTarget = modal.querySelector('button, input, select, textarea, [href]');
+      focusTarget?.focus();
+    };
+    const close = () => {
       modal.hidden = true;
+      lastTrigger?.focus?.();
+    };
+    modal._closeModal = close;
+    ids.forEach((id) => {
+      document.getElementById(id)?.addEventListener('click', (e) => open(e.currentTarget));
     });
+    document.getElementById(closeBtnId)?.addEventListener('click', close);
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.hidden = true;
+      if (e.target === modal) close();
+    });
+    modal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab' || modal.hidden) return;
+      const focusables = [...modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]')];
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal.hidden) modal.hidden = true;
+      if (e.key === 'Escape' && !modal.hidden) close();
     });
   };
 
@@ -1112,25 +1308,63 @@ function setupModals() {
     btn.addEventListener('click', () => {
       state.serverId = btn.dataset.pserver;
       if (state.sessionUser) localStorage.setItem(`aaru_server_${state.sessionUser}`, state.serverId);
-      document.getElementById('proto-server-modal').hidden = true;
+      document.getElementById('proto-server-modal')._closeModal?.();
       updateChrome();
       renderActiveView();
     });
   });
 
-  bindBackdropModal('proto-system-modal', 'proto-open-system', 'proto-close-system', () => {
+  bindBackdropModal('proto-system-modal', ['proto-open-system', 'proto-mobile-menu-btn'], 'proto-close-system', () => {
     const st = getCatalogStatus();
     const body = document.getElementById('proto-system-body');
     if (!body) return;
+    const acctOpts = document.getElementById('proto-account-select')?.innerHTML || '';
     body.innerHTML = `
       <div class="p-row"><span>Catalog Source</span><strong class="mono">${esc(st.source || 'snapshot')}</strong></div>
       <div class="p-row"><span>Version</span><strong class="mono">${esc(st.lunarisVer || '—')}</strong></div>
       <button type="button" id="p-refresh-cat" class="p-btn p-btn-outline">Refresh Live Catalog</button>
-    `;
-    document.getElementById('p-refresh-cat')?.addEventListener('click', async () => {
-      await refreshLiveCatalog();
-      renderActiveView();
-      showToast('Catalog refreshed');
+      <div style="border-top:1px solid var(--p-border);padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <label class="proto-field">
+          <span>Account View</span>
+          <select id="p-modal-acct-select" class="proto-select">${acctOpts}</select>
+        </label>
+        <button type="button" id="p-modal-import-btn" class="p-btn p-btn-primary">+ Import GOOD</button>
+        <div style="display:flex;gap:8px;">
+          <a href="./index.html?preview=1" class="p-btn p-btn-outline" style="flex:1;">Classic UI</a>
+          <button type="button" id="p-modal-logout-btn" class="p-btn p-btn-outline" style="flex:1;">Sign out</button>
+        </div>
+      </div>
+  `;
+    document.getElementById('p-refresh-cat')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Refreshing...';
+      try {
+        await refreshLiveCatalog();
+        renderActiveView();
+        showToast('Catalog refreshed');
+      } catch (err) {
+        showToast(`Catalog refresh failed: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Refresh Live Catalog';
+      }
+    });
+    document.getElementById('p-modal-acct-select')?.addEventListener('change', (e) => {
+      const sideSel = document.getElementById('proto-account-select');
+      if (sideSel) {
+        sideSel.value = e.target.value;
+        sideSel.dispatchEvent(new Event('change'));
+      }
+      document.getElementById('proto-system-modal')._closeModal?.();
+    });
+    document.getElementById('p-modal-import-btn')?.addEventListener('click', () => {
+      document.getElementById('proto-system-modal')._closeModal?.();
+      document.getElementById('proto-open-import')?.click();
+    });
+    document.getElementById('p-modal-logout-btn')?.addEventListener('click', () => {
+      document.getElementById('proto-system-modal')._closeModal?.();
+      document.getElementById('proto-logout')?.click();
     });
   });
 
@@ -1158,26 +1392,63 @@ function setupModals() {
   };
 
   dropzone?.addEventListener('click', () => fileInput?.click());
+  dropzone?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput?.click();
+    }
+  });
+  dropzone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('is-dragover');
+  });
+  dropzone?.addEventListener('dragleave', () => dropzone.classList.remove('is-dragover'));
+  dropzone?.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('is-dragover');
+    const f = e.dataTransfer?.files?.[0];
+    if (f) processRaw(await f.text());
+  });
   fileInput?.addEventListener('change', async (e) => {
     const f = e.target.files?.[0];
     if (f) processRaw(await f.text());
   });
   pasteArea?.addEventListener('input', (e) => {
-    if (e.target.value.trim().startsWith('{')) processRaw(e.target.value.trim());
+    const val = e.target.value.trim();
+    if (!val) {
+      state.pendingGoodImport = null;
+      previewBox.innerHTML = '';
+      commitBtn.disabled = true;
+      return;
+    }
+    processRaw(val);
   });
   commitBtn?.addEventListener('click', async () => {
     if (!state.pendingGoodImport || isReadOnly()) return;
     const { raw, diff } = state.pendingGoodImport;
-    await commitGoodImport(state.sessionUser, raw, diff.mergedAccount);
-    state.ownAccount = diff.mergedAccount;
-    document.getElementById('proto-import-modal').hidden = true;
-    renderActiveView();
-    showToast('GOOD v3 imported & synced');
+    commitBtn.disabled = true;
+    commitBtn.textContent = 'Syncing...';
+    try {
+      await commitGoodImport(state.sessionUser, raw, diff.mergedAccount);
+      state.ownAccount = diff.mergedAccount;
+      document.getElementById('proto-import-modal')._closeModal?.();
+      renderActiveView();
+      showToast('GOOD v3 imported & synced');
+    } catch (err) {
+      showToast(`Import failed: ${err.message}`);
+    } finally {
+      commitBtn.disabled = false;
+      commitBtn.textContent = 'Confirm & Sync';
+    }
   });
 }
 
 async function bootstrap() {
-  await loadCatalog();
+  try {
+    await loadCatalog();
+  } catch (err) {
+    showToast(`Catalog load warning: ${err.message}`);
+  }
 
   document.querySelectorAll('[data-ptab]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1188,27 +1459,37 @@ async function bootstrap() {
 
   document.getElementById('proto-account-select')?.addEventListener('change', async (e) => {
     const target = e.target.value;
-    if (target === state.sessionUser) {
-      state.viewingPartner = false;
-      setReadOnlyViewState(false);
-    } else if (state.isPreviewDemo) {
-      state.partnerUser = target;
-      state.partnerAccount = cloneMockAccount(target);
-      state.viewingPartner = true;
-      setReadOnlyViewState(true);
-    } else {
-      const res = await fetchPartnerAccount(target);
-      state.partnerUser = target;
-      state.partnerAccount = res.account;
-      state.viewingPartner = true;
-      setReadOnlyViewState(true);
+    try {
+      if (target === state.sessionUser) {
+        state.viewingPartner = false;
+        setReadOnlyViewState(false);
+      } else if (state.isPreviewDemo) {
+        state.partnerUser = target;
+        state.partnerAccount = cloneMockAccount(target);
+        state.viewingPartner = true;
+        setReadOnlyViewState(true);
+      } else {
+        const res = await fetchPartnerAccount(target);
+        state.partnerUser = target;
+        state.partnerAccount = res.account;
+        state.viewingPartner = true;
+        setReadOnlyViewState(true);
+      }
+      updateChrome();
+      renderActiveView();
+    } catch (err) {
+      showToast(`Account switch failed: ${err.message}`);
+      populateAccountSelect();
     }
-    updateChrome();
-    renderActiveView();
   });
 
   document.getElementById('proto-logout')?.addEventListener('click', () => {
     state.isPreviewDemo = false;
+    state.sessionUser = null;
+    state.ownAccount = null;
+    state.partnerAccount = null;
+    state.partnerUser = null;
+    state.inspectedCharKey = null;
     logoutAccount();
     sessionStorage.removeItem(SESSION_KEY);
     document.getElementById('proto-shell').hidden = true;
@@ -1230,13 +1511,26 @@ async function bootstrap() {
     e.preventDefault();
     const user = document.getElementById('proto-username').value.trim();
     const pass = document.getElementById('proto-password').value;
+    const errEl = document.getElementById('proto-login-error');
+    const submitBtn = document.getElementById('proto-login-submit');
+    if (errEl) errEl.textContent = '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+    }
     try {
       state.isPreviewDemo = false;
       const res = await loginAccount(user, pass);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: res.user }));
+      const userKey = res.account?.user || res.user || user;
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: userKey }));
       await applySession(res);
     } catch (err) {
-      document.getElementById('proto-login-error').textContent = err.message;
+      if (errEl) errEl.textContent = err.message;
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
     }
   });
 
@@ -1247,13 +1541,8 @@ async function bootstrap() {
   setupQuickJump();
   setupModals();
 
-  // Restore session or auto-preview
+  // Restore real session first; only fall back to ?preview=1 demo if not signed in
   const params = new URLSearchParams(window.location.search);
-  if (params.get('preview') === '1') {
-    await enterPreviewSession('luna');
-    return;
-  }
-
   try {
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) {
@@ -1262,6 +1551,13 @@ async function bootstrap() {
         const cached = getCachedAccountSession(user);
         if (cached) {
           await applySession(cached);
+          if (!isOfflineMode()) {
+            restoreAccountSession(user)
+              .then((fresh) => {
+                if (state.sessionUser === user && fresh?.account) applySession(fresh);
+              })
+              .catch(() => {});
+          }
           return;
         }
         const fresh = await restoreAccountSession(user);
@@ -1271,6 +1567,11 @@ async function bootstrap() {
     }
   } catch {
     sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  if (params.get('preview') === '1') {
+    await enterPreviewSession('luna');
+    return;
   }
 
   document.getElementById('proto-login').hidden = false;
