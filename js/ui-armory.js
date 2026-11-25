@@ -5,7 +5,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261115ag';
+} from './catalog.js?v=20261120aj';
 
 const STAT_LABELS = {
   atk_: 'ATK%',

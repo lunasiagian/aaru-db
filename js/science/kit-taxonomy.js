@@ -1,5 +1,5 @@
-import { getCharacterMeta, getKqmEntry } from '../catalog.js?v=20261115ag';
-import { calcTalentUpgradeCost } from '../calculations.js?v=20261114w';
+import { getCharacterMeta, getKqmEntry, getStaticKitProfile } from '../catalog.js?v=20261121p64';
+import { calcTalentUpgradeCost } from '../calculations.js?v=20261125p68';
 
 const STAT_BOUNDS = {
   em: [200, 2000],
@@ -37,7 +37,38 @@ export function extractStatCaps(kitData, talentLevels = null) {
     ...passives.map((p) => `${p.name} ${p.description}`)
   ].join('\n');
 
-  // 1. Explicit threshold mentions (e.g. "1,000 Elemental Mastery", "40,000 Max HP")
+  // 1. Passive scaling ratio caps (both % and flat, including "in excess of <baseline>" thresholds)
+  for (const p of passives) {
+    const desc = stripMarkup(p.description || '');
+    const m = desc.match(
+      /every\s+(?:([\d,]+)\s+(?:points?\s+of\s+)?)?(Max\s+HP|HP|ATK|DEF|Elemental\s+Mastery)[\s\S]{0,160}?(?:by|increases?[^.\d]{0,40})\s*([\d,]+(?:\.\d+)?)(%?)\b[\s\S]{0,200}?max(?:imum)?(?:\s+(?:increase|of))?[^.\d]*([\d,]+(?:\.\d+)?)(%?)/i
+    );
+    if (m) {
+      const unitStep = m[1] ? Number(m[1].replace(/,/g, '')) : 1;
+      const statWord = m[2].toUpperCase();
+      const excessMatch = desc.slice(m.index, m.index + 160).match(/in\s+excess\s+of\s+([\d,]+)/i);
+      const baseline = excessMatch ? Number(excessMatch[1].replace(/,/g, '')) : 0;
+      const perStep = Number(m[3].replace(/,/g, ''));
+      const isPct = m[4] === '%' || m[5] === '%';
+      const maxGain = Number(m[5].replace(/,/g, ''));
+      if (perStep > 0 && maxGain > 0) {
+        let derived = baseline + (maxGain / perStep) * unitStep;
+        const statKey =
+          statWord.includes('HP')
+            ? 'maxHp'
+            : statWord.includes('DEF')
+              ? 'totalDef'
+              : statWord.includes('MASTERY')
+                ? 'em'
+                : 'totalAtk';
+        // Handle datamine phrasing like "every point of ATK ... 0.7% ... max 14%" (actually per 100 ATK)
+        if (isPct && unitStep === 1 && baseline === 0 && statKey !== 'em' && derived < 500) derived *= 100;
+        addUniqueCap(caps, statKey, derived, `${p.slot} Scaling Cap (${Math.round(derived).toLocaleString()})`);
+      }
+    }
+  }
+
+  // 2. Explicit threshold mentions (e.g. "1,000 Elemental Mastery", skipping "in excess of <floor>" baselines)
   const explicitPatterns = [
     { re: /([\d,]+)\s+Elemental Mastery/gi, statKey: 'em', prefix: 'Passive EM Cap' },
     { re: /([\d,]+)\s+Max HP/gi, statKey: 'maxHp', prefix: 'Passive HP Cap' },
@@ -47,12 +78,14 @@ export function extractStatCaps(kitData, talentLevels = null) {
   for (const { re, statKey, prefix } of explicitPatterns) {
     let m;
     while ((m = re.exec(fullText)) !== null) {
+      const before = fullText.slice(Math.max(0, m.index - 24), m.index);
+      if (/(?:excess\s+of|above|over)\s*$/i.test(before)) continue;
       const val = Number(m[1].replace(/,/g, ''));
       addUniqueCap(caps, statKey, val, `${prefix} (${val.toLocaleString()})`);
     }
   }
 
-  // 2. Multiplier-table ratio caps (e.g. "Max ATK Bonus" 400 / "ATK Bonus Ratio" 10% -> 4,000 ATK)
+  // 3. Multiplier-table ratio caps (e.g. "Max ATK Bonus" 400 / "ATK Bonus Ratio" 10% -> 4,000 ATK)
   for (const t of talents) {
     const mult = t.multipliers || {};
     const lvIdx = getTalentLevelForKind(t.kind, talentLevels) - 1;
@@ -78,33 +111,7 @@ export function extractStatCaps(kitData, talentLevels = null) {
     }
   }
 
-  // 3. Passive scaling ratio caps (e.g. "Every point of ATK ... by 0.7%. The maximum increase ... is 14%")
-  for (const p of passives) {
-    const desc = p.description || '';
-    const m = desc.match(
-      /every\s+(?:([\d,]+)\s+points?\s+of\s+|point\s+of\s+)(ATK|Max HP|HP|DEF|Elemental Mastery)[\s\S]{0,140}?by\s+([\d.]+)%[\s\S]{0,160}?max(?:imum)?(?:\s+increase)?[^.\d]*([\d.]+)%/i
-    );
-    if (m) {
-      const unitStep = m[1] ? Number(m[1].replace(/,/g, '')) : 1;
-      const statWord = m[2].toUpperCase();
-      const perStep = Number(m[3]);
-      const maxPct = Number(m[4]);
-      if (perStep > 0 && maxPct > 0) {
-        let derived = (maxPct / perStep) * unitStep;
-        const statKey =
-          statWord.includes('HP')
-            ? 'maxHp'
-            : statWord.includes('DEF')
-              ? 'totalDef'
-              : statWord.includes('MASTERY')
-                ? 'em'
-                : 'totalAtk';
-        // Handle datamine phrasing like "every point of ATK ... 0.7% ... max 14%" (actually per 100 ATK)
-        if (unitStep === 1 && statKey !== 'em' && derived < 500) derived *= 100;
-        addUniqueCap(caps, statKey, derived, `${p.slot} Scaling Cap (${Math.round(derived).toLocaleString()})`);
-      }
-    }
-  }
+  // 4. (Removed duplicate passive loop; handled in step 1 above)
 
   return caps;
 }
@@ -125,7 +132,7 @@ export { parseFirstNumber, stripMarkup };
 /**
  * Deterministically classify a character's combat role, utility vector, and conditional kit triggers.
  */
-export function classifyCharacterRole(charKey, kitData, constellation = 0) {
+export function classifyCharacterRole(charKey, kitData, constellation = 0, weaponContext = null) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
   const ownedCon = Number(constellation) || 0;
@@ -294,6 +301,19 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     functionTags.push(dmgM ? `DMG% Buffer (+${dmgM[1]})` : 'DMG% Buffer');
   }
 
+  const hasBaseDmgBuff =
+    /(?:active\s+character|off-field\s+party\s+members|other\s+nearby\s+party\s+members)[\s\S]{0,160}?(?:increases?\s+the\s+dmg\s+dealt|additive\s+base\s+dmg|base\s+dmg)/i.test(
+      nonNormalText
+    ) ||
+    sentences.some(
+      (s) =>
+        /base\s+dmg|additive\s+base\s+dmg|increases?\s+the\s+dmg\s+dealt|reaction\s+dmg\s+from\s+the\s+above\s+effect/i.test(s) &&
+        matchesAllyBuff(s, '(?:DMG|Damage)\\s+dealt')
+    );
+  if (hasBaseDmgBuff) {
+    functionTags.push('Base DMG Buffer');
+  }
+
   if (sentences.some((s) => matchesAllyBuff(s, '\\bATK\\b'))) {
     functionTags.push('ATK Buffer');
   }
@@ -302,7 +322,7 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     const crM = critSentence.match(/crit\s+rate[^.]{0,30}?by\s+([\d.]+%)/i);
     functionTags.push(crM ? `CRIT Buffer (+${crM[1]})` : 'CRIT Buffer');
   }
-  if (/res\s+(?:is\s+decreased|will\s+decrease)|decreases?\s+(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+)?res/i.test(nonNormalText)) {
+  if (/res\s+(?:is\s+decreased|will\s+decrease)|(?:decreas|reduc)(?:es?|ing)\s+(?:nearby\s+)?(?:opponents'?\s+)?(?:elemental\s+|physical\s+|all\s+|pyro\s+|hydro\s+|electro\s+|cryo\s+|dendro\s+|anemo\s+|geo\s+)?res\b/i.test(nonNormalText)) {
     functionTags.push('RES Shred');
   }
   if (/def\s+is\s+decreased|decreases?\s+(?:opponents'?\s+)?def\b|ignores?\s+[\d.]+%\s+of\s+opponents'?\s+def/i.test(nonNormalText)) {
@@ -422,13 +442,41 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     (hasPartyHeal || functionTags.some((t) => /EM Buffer|Crowd Control|Reaction Enabler/.test(t))) &&
     !hasChargedCarryFocus;
 
+  const wepKey = String(weaponContext?.weaponKey || '');
+  const wepStats = weaponContext?.weaponStats || null;
+  const wepText = stripMarkup(
+    `${wepStats?.passiveName || ''} ${wepStats?.passiveDesc || wepStats?.description || ''}`
+  );
+  const isTeamBuffWeapon =
+    /thrillingtales|elegyfortheend|freedomsworn|keyofkhajnisut|hakushinring|songofbrokenpines|millennialmovement/i.test(
+      wepKey
+    ) ||
+    /(?:when\s+the\s+character\s+taking\s+the\s+field|all\s+nearby\s+party\s+members|increases?\s+(?:the\s+)?(?:atk|em|elemental\s+mastery|dmg)\s+of\s+(?:all\s+)?nearby\s+party)/i.test(
+      wepText
+    );
+  const isFavoniusWeapon =
+    /favonius/i.test(wepKey) || /crit\s+hits?[^.]{0,50}generate[^.]{0,30}elemental\s+particles/i.test(wepText);
+  if (isFavoniusWeapon && !functionTags.includes('Energy Battery')) {
+    functionTags.push('Energy Battery');
+  }
+
   const hasCritAscension = /crit/i.test(meta?.ascensionStat || kitData?.ascensionStat || '');
+  const teamBuffTagCount = functionTags.filter((t) =>
+    /Buffer|RES Shred|DEF Shred|Team Healer|Shielder|Energy Battery/i.test(t)
+  ).length;
+  const isStrongPassiveSupport =
+    !hasCritAscension &&
+    !usesNormalAttack &&
+    (hasBaseDmgBuff || teamBuffTagCount >= 2 || (isTeamBuffWeapon && teamBuffTagCount >= 1));
+
   let fieldRole = 'On-Field Carry';
   if (isNightsoulSamplerSupport && hasPartyHeal) {
     // e.g. Xilonen in >=2 PHEC teams, Jean, Xianyun: quick-tap support even if NA/Plunge has elemental hits
     fieldRole = 'Quickswap Support';
   } else if ((hasInfusion || hasChargedCarryFocus) && !isDriverArchetype) {
     fieldRole = 'On-Field Carry';
+  } else if (isStrongPassiveSupport) {
+    fieldRole = 'Quickswap Support';
   } else if (hasOffField && !usesNormalAttack) {
     fieldRole = 'Off-Field Sub-DPS';
   } else if (isDriverArchetype && usesNormalAttack) {
@@ -467,6 +515,21 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
       { id: 'On-Field Driver', label: 'On-Field Driver', unlocked: true, condition: 'Burst-window Hydro NA driver' },
       { id: 'Creative Carry (Critkomi)', label: 'Creative Carry (Critkomi)', unlocked: true, condition: 'Meme/Crit build bypassing -100% CR passive' }
     );
+  } else if (fieldRole === 'Quickswap Support' && hasOffField) {
+    flexModes.push({
+      id: 'Off-Field Sub-DPS',
+      label: 'Off-Field Sub-DPS',
+      unlocked: true,
+      condition: 'Personal off-field Skill/Burst damage build'
+    });
+    if (weaponType === 'Catalyst' || hasPartyHeal) {
+      flexModes.push({
+        id: 'On-Field Driver',
+        label: 'On-Field Driver',
+        unlocked: true,
+        condition: 'Elemental NA/CA enabler for off-field sub-DPS'
+      });
+    }
   } else if (fieldRole === 'Quickswap Support' && (weaponType === 'Catalyst' || hasPartyHeal)) {
     flexModes.push({
       id: 'On-Field Driver',
@@ -508,6 +571,35 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
   }
 
   const dedupedTags = [...new Set(functionTags)];
+  const burstCost = Number(kitData?.burstCost || 60);
+  const isBurstCentric =
+    burstCost >= 60 || /elemental\s+burst[^.]{0,50}(?:dmg|grant|buff|field|coordinated)/i.test(nonNormalText);
+  const capabilities = [...dedupedTags];
+  if (hasOffField && !capabilities.includes('Off-Field')) capabilities.push('Off-Field');
+  if (hasInfusion && !capabilities.includes('Elemental Infusion')) capabilities.push('Elemental Infusion');
+  if (isBurstCentric && !capabilities.includes('Burst-Centric')) capabilities.push('Burst-Centric');
+
+  const buildLenses = [];
+  const addLens = (id, label, condition, isDefault = false) => {
+    if (!id || buildLenses.some((l) => l.id === id)) return;
+    buildLenses.push({ id, label: label || id, condition: condition || '', isDefault });
+  };
+  addLens(fieldRole, fieldRole, 'Primary kit role', true);
+  for (const fm of flexModes) {
+    if (fm?.unlocked !== false) addLens(fm.id, fm.label, fm.condition, false);
+  }
+  if (fieldRole !== 'Quickswap Support' && (teamBuffTagCount > 0 || hasPartyHeal || hasShield || isTeamBuffWeapon)) {
+    addLens('Quickswap Support', 'Support / Utility', 'Team buffing, healing, or shielding utility', false);
+  }
+  if (fieldRole !== 'Off-Field Sub-DPS' && (hasOffField || hasCoordinatedTrigger || isBurstCentric)) {
+    addLens('Off-Field Sub-DPS', 'Off-Field Sub-DPS', 'Personal off-field Skill/Burst damage', false);
+  }
+  if (fieldRole !== 'On-Field Carry' && (hasInfusion || hasChargedCarryFocus)) {
+    addLens('On-Field Carry', 'On-Field Carry', 'Infusion or active Charged/Normal carry window', false);
+  }
+  if (fieldRole !== 'On-Field Driver' && (isDriverArchetype || (weaponType === 'Catalyst' && hasOffField))) {
+    addLens('On-Field Driver', 'On-Field Driver', 'Elemental NA/CA enabler for off-field triggers', false);
+  }
 
   return {
     charKey,
@@ -515,6 +607,8 @@ export function classifyCharacterRole(charKey, kitData, constellation = 0) {
     primaryRole: fieldRole,
     functionTags: dedupedTags,
     utilityTags: dedupedTags.slice(0, 4),
+    capabilities,
+    buildLenses,
     selfDurability,
     flexModes,
     kitTriggers,
@@ -543,7 +637,39 @@ export function resolveMemberTeamRole(charKey, kitData, constellation = 0, teamM
  * Deterministically inspect hydrated talents & passives to classify kit scaling,
  * non-crit mechanics, useful substats, role, and passive stat caps.
  */
-export function analyzeCharacterKit(charKey, kitData, talentLevels = null, constellation = 0) {
+function evaluateNetEnergyDemand(kitData, constellation = 0) {
+  const burstCost = Number(kitData?.burstCost) || 60;
+  const ownedCon = Number(constellation) || 0;
+  const activeCons = (kitData?.constellations || []).filter((c) => Number(c.level) <= ownedCon);
+  const sources = [
+    ...(kitData?.talents || []).map((t) => stripMarkup(`${t?.name || ''} ${t?.description || ''}`)),
+    ...(kitData?.passives || []).map((p) => stripMarkup(`${p?.name || ''} ${p?.description || ''}`)),
+    ...activeCons.map((c) => stripMarkup(`${c?.name || ''} ${c?.description || ''}`))
+  ];
+
+  let selfEnergyRefund = 0;
+  for (const text of sources) {
+    const sentences = text.split(/(?<=[.!?\n])\s+|\n+/);
+    for (const s of sentences) {
+      const m = s.match(/(?:restores?|regenerates?|regains?)\s+([\d.]+)\s+(?:Elemental\s+)?Energy/i);
+      if (!m) continue;
+      // Only count self-energy refunds (exclude pure team-only energy grants if explicitly for other allies)
+      const isOtherOnly = /(?:other\s+nearby\s+party\s+members|allies\s+other\s+than)/i.test(s);
+      if (isOtherOnly) continue;
+      const amt = Number(m[1]) || 0;
+      if (amt <= 0 || amt > 45) continue;
+      const maxTimesMatch = s.match(/(?:up\s+to|max(?:imum)?\s+of)\s+(\d+)\s+times/i);
+      const procs = maxTimesMatch ? Math.min(5, Number(maxTimesMatch[1]) || 1) : 1;
+      selfEnergyRefund += amt * procs;
+    }
+  }
+  selfEnergyRefund = Math.min(burstCost, Math.round(selfEnergyRefund));
+  const netBurstCost = Math.max(0, burstCost - selfEnergyRefund);
+  const netEnergyDemand = netBurstCost >= 65 ? 'high' : netBurstCost >= 45 ? 'moderate' : 'low';
+  return { burstCost, selfEnergyRefund, netBurstCost, netEnergyDemand };
+}
+
+export function analyzeCharacterKit(charKey, kitData, talentLevels = null, constellation = 0, weaponContext = null) {
   const talents = kitData?.talents || [];
   const passives = kitData?.passives || [];
 
@@ -558,13 +684,18 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
       passiveText
     );
 
-  const labelText = talents.flatMap((t) => t.labels || []).join(' ');
-  const hpHits = (fullText.match(/\bmax\s*hp\b/gi) || []).length + (labelText.match(/\bhp\b/gi) || []).length;
+  const labelText = talents.flatMap((t) => t.labels || []).filter((l) => !/inherited\s+hp|hp\s+cost|hp\s+regeneration/i.test(l)).join(' ');
+  const hpScaleSentences = stripMarkup(fullText)
+    .split(/(?<=[.!?\n])\s+|\n+/)
+    .filter((s) => !/(?:consumes?|loses?|restores?|regenerates?|drains?|inherited\s+hp|cost)[^.]{0,35}\bmax\s*hp\b/i.test(s))
+    .join('\n');
+  const hpHits = (hpScaleSentences.match(/\bmax\s*hp\b/gi) || []).length + (labelText.match(/\bhp\b/gi) || []).length;
   const hasHpScaling =
     /\bhp\b/i.test(labelText) ||
     /(?:dmg|damage|shield|heal|healing|bonus)[^.]{0,45}(?:of|based\s+on)\s+(?:her|his|their|\w+'s)?\s*max\s*hp/i.test(
-      fullText
-    );
+      hpScaleSentences
+    ) ||
+    /every\s+[\d,]+\s+max\s*hp/i.test(hpScaleSentences);
   const cleanFullText = stripMarkup(fullText);
   const defHits = (cleanFullText.match(/\bdef\b/gi) || []).length;
   const emHits = (cleanFullText.match(/\belemental\s+mastery\b/gi) || []).length;
@@ -576,6 +707,13 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     /atk\s+bonus[^.]{0,60}max\s*hp|converts?[^.]{0,60}hp[^.]{0,60}\batk\b|increases?[^.]{0,40}\batk\b[^.]{0,60}based\s+on[^.]{0,30}max\s*hp/i.test(
       cleanFullText
     );
+  const hasEmToDmgConv =
+    /(?:each|every)\s+(?:\d+\s+)?points?\s+of[^.]{0,40}elemental\s+mastery[^.]{0,90}(?:dmg|damage)\s*(?:bonus|dealt)?\s*(?:is\s+|will\s+be\s+)?increas/i.test(
+      cleanFullText
+    ) ||
+    /elemental\s+mastery[^.]{0,60}increases?[^.]{0,40}(?:dmg|damage)\s*(?:dealt|bonus)/i.test(cleanFullText);
+  const hasErToDmgConv =
+    /energy\s+recharge[^.]{0,80}(?:electro|hydro|pyro|cryo|anemo|geo|dendro)?\s*dmg\s+bonus/i.test(cleanFullText);
 
   let primaryScaling = 'ATK';
   let usefulSubstats = ['atk_', 'critRate_', 'critDMG_', 'enerRech_'];
@@ -589,15 +727,15 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
   } else if (hasHpToAtkConv || (hpHits >= 3 && hasHpScaling)) {
     primaryScaling = 'HP';
     usefulSubstats = ['hp_', 'critRate_', 'critDMG_', 'enerRech_'];
-  } else if (emHits >= 3 && !/normal attack dmg/i.test(labelText)) {
+  } else if ((emHits >= 3 || (hasEmToDmgConv && emHits >= 2)) && !/normal attack dmg/i.test(labelText)) {
     primaryScaling = 'EM';
     usefulSubstats = ['eleMas', 'enerRech_', 'critRate_', 'critDMG_'];
-  } else if (emHits >= 2) {
+  } else if (emHits >= 2 || hasEmToDmgConv) {
     usefulSubstats = ['atk_', 'eleMas', 'critRate_', 'critDMG_', 'enerRech_'];
   }
 
   const statCaps = extractStatCaps(kitData, talentLevels);
-  const roleInfo = classifyCharacterRole(charKey, kitData, constellation);
+  const roleInfo = classifyCharacterRole(charKey, kitData, constellation, weaponContext);
 
   const cleanPassiveText = stripMarkup(
     [...passives, ...(Array.isArray(kitData?.passiveTalents) ? kitData.passiveTalents : [])]
@@ -630,8 +768,54 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     archetypeLock = 'Bloom-Core';
   }
 
+  const wepKey = String(weaponContext?.weaponKey || '');
+  const wepStats = weaponContext?.weaponStats || null;
+  const wepText = stripMarkup(
+    `${wepStats?.passiveName || ''} ${wepStats?.passiveDesc || wepStats?.description || ''}`
+  );
+  const isMonoElementWeapon =
+    /thefirstgreatmagic/i.test(wepKey) || /party\s+member\s+with\s+the\s+same\s+elemental\s+type/i.test(wepText);
+  const isTeamBuffWeapon =
+    /thrillingtales|elegyfortheend|freedomsworn|keyofkhajnisut|hakushinring/i.test(wepKey) ||
+    /(?:when\s+the\s+character\s+taking\s+the\s+field|all\s+nearby\s+party\s+members)/i.test(wepText);
+  const isFavoniusWeapon =
+    /favonius/i.test(wepKey) || /crit\s+hits?[^.]{0,50}generate[^.]{0,30}elemental\s+particles/i.test(wepText);
+
+  const monoMatch = cleanPassiveText.match(/(?:each|every)\s+(?:other\s+)?(Pyro|Hydro|Electro|Cryo|Anemo|Geo|Dendro)\s+party\s+member/i);
+  const charElem = getCharacterMeta(charKey)?.element || '';
+  if (!archetypeLock && monoMatch) {
+    archetypeLock = `Mono-${monoMatch[1].charAt(0).toUpperCase()}${monoMatch[1].slice(1).toLowerCase()}`;
+  } else if (!archetypeLock && isMonoElementWeapon && charElem && charElem !== 'Unknown') {
+    archetypeLock = `Mono-${charElem}`;
+  }
+
   const hasStellarGlimmer =
     /stellar[\s-]*(?:glimmer|conduct|swirl|vortex|linchpin)|polestar\s+field/i.test(cleanFullText);
+  if (!archetypeLock && hasStellarGlimmer && /stellar\s+swirl/i.test(cleanFullText) && /hydro/i.test(cleanFullText) && /cryo/i.test(cleanFullText)) {
+    archetypeLock = 'Stellar-Swirl';
+  }
+
+  const energyEconomy = evaluateNetEnergyDemand(kitData, constellation);
+  const staticProf = getStaticKitProfile(charKey);
+  const sf = staticProf?.features || null;
+
+  if (sf?.has_stat_threshold_cap && sf.threshold_stat && Number(sf.threshold_cap_value) > 0) {
+    const capMap = { hp_: 'maxHp', atk_: 'totalAtk', def_: 'totalDef', eleMas: 'em' };
+    const mappedKey = capMap[sf.threshold_stat];
+    if (mappedKey) {
+      addUniqueCap(statCaps, mappedKey, Number(sf.threshold_cap_value), `Kit Cap (${Number(sf.threshold_cap_value).toLocaleString()})`);
+    }
+  }
+
+  const reactionConverterType =
+    sf?.reaction_converter_type && sf.reaction_converter_type !== 'none'
+      ? sf.reaction_converter_type
+      : /moonsign\s+benediction|lunar[-\s](?:charged|bloom|crystallize|reaction)/i.test(cleanFullText)
+        ? 'lunar'
+        : hasStellarGlimmer
+          ? 'stellar'
+          : 'none';
+  const enablesReactionCrit = Boolean(sf?.enables_reaction_crit) || reactionConverterType !== 'none';
 
   return {
     charKey,
@@ -642,7 +826,25 @@ export function analyzeCharacterKit(charKey, kitData, talentLevels = null, const
     roleInfo,
     archetypeLock,
     hasStellarGlimmer,
-    burstCost: Number(kitData?.burstCost) || 60
+    hasEmToDmgConv,
+    hasErToDmgConv,
+    reactionConverterType,
+    enablesReactionCrit,
+    hasDualStance: Boolean(sf?.has_dual_stance_or_mode),
+    hasConstellationRoleShift: Boolean(sf?.has_constellation_role_shift),
+    roleProbabilities: staticProf?.roleProbabilities || null,
+    staticPlaystyleLenses: staticProf?.playstyleLenses || null,
+    staticRecommendedSets: staticProf?.recommendedSets || null,
+    clusterId: staticProf?.clusterId ?? null,
+    needsReview: Boolean(staticProf?.needsReview),
+    weaponReinforcement: { isTeamBuffWeapon, isFavoniusWeapon, isMonoElementWeapon },
+    burstCost: sf?.burst_energy_cost || energyEconomy.burstCost,
+    selfEnergyRefund: sf?.flat_energy_refund_est ?? energyEconomy.selfEnergyRefund,
+    netBurstCost:
+      sf?.burst_energy_cost != null
+        ? Math.max(0, sf.burst_energy_cost - (sf.flat_energy_refund_est || 0))
+        : energyEconomy.netBurstCost,
+    netEnergyDemand: sf?.net_energy_demand || energyEconomy.netEnergyDemand
   };
 }
 

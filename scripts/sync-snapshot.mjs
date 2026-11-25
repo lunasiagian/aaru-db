@@ -76,12 +76,13 @@ async function main() {
     }
   }
 
-  const [avatarRes, weaponRes, materialRes, upgradeRes, monsterRes] = await Promise.allSettled([
+  const [avatarRes, weaponRes, materialRes, upgradeRes, monsterRes, reliquaryRes] = await Promise.allSettled([
     fetchJson('https://gi.yatta.moe/api/v2/en/avatar'),
     fetchJson('https://gi.yatta.moe/api/v2/en/weapon'),
     fetchJson('https://gi.yatta.moe/api/v2/en/material'),
     fetchJson('https://gi.yatta.moe/api/v2/en/upgrade'),
-    fetchJson('https://gi.yatta.moe/api/v2/en/monster')
+    fetchJson('https://gi.yatta.moe/api/v2/en/monster'),
+    fetchJson('https://gi.yatta.moe/api/v2/en/reliquary')
   ]);
 
   const slim = {
@@ -90,7 +91,8 @@ async function main() {
     _matIdLookup: {},
     characters: {},
     weapons: {},
-    materials: {}
+    materials: {},
+    artifacts: {}
   };
 
   const matNormById = new Map();
@@ -147,11 +149,12 @@ async function main() {
   }
 
   if (avatarRes.status === 'fulfilled' && avatarRes.value?.data?.items) {
-    for (const item of Object.values(avatarRes.value.data.items)) {
+    for (const [id, item] of Object.entries(avatarRes.value.data.items)) {
       const norm = normalizeAssetKey(item.name);
       if (!norm || !item.icon) continue;
       const upg = avatarUpgradeByNorm.get(norm);
       slim.characters[norm] = {
+        id: String(id),
         pascalKey: toPascal(item.name),
         name: item.name,
         rarity: Number(item.rank) || 5,
@@ -165,11 +168,12 @@ async function main() {
   }
 
   if (weaponRes.status === 'fulfilled' && weaponRes.value?.data?.items) {
-    for (const item of Object.values(weaponRes.value.data.items)) {
+    for (const [id, item] of Object.entries(weaponRes.value.data.items)) {
       const norm = normalizeAssetKey(item.name);
       if (!norm || !item.icon || item.isWeaponSkin) continue;
       const upg = weaponUpgradeByNorm.get(norm);
       slim.weapons[norm] = {
+        id: String(id),
         pascalKey: toPascal(item.name),
         name: item.name,
         rarity: Number(item.rank) || 4,
@@ -180,11 +184,25 @@ async function main() {
     }
   }
 
-  const [lCharRes, lWepRes, lMatRes, lMonRes] = await Promise.allSettled([
+  if (reliquaryRes.status === 'fulfilled' && reliquaryRes.value?.data?.items) {
+    for (const [id, item] of Object.entries(reliquaryRes.value.data.items)) {
+      const norm = normalizeAssetKey(item.name);
+      if (!norm || !item.icon) continue;
+      slim.artifacts[norm] = {
+        setId: String(id),
+        name: item.name,
+        icon: item.icon,
+        levelList: item.levelList || []
+      };
+    }
+  }
+
+  const [lCharRes, lWepRes, lMatRes, lMonRes, lRelRes] = await Promise.allSettled([
     fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/charlist.json`),
     fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/weaponlist.json`),
     fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/materiallist.json`),
-    fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/monsterlist.json`)
+    fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/monsterlist.json`),
+    fetchJson(`https://api.lunaris.moe/data/${encodeURIComponent(lunarisVer)}/reliquarylist.json`)
   ]);
 
   const yattaMonsterIds = new Set(
@@ -234,13 +252,15 @@ async function main() {
       const iconName = String(item.CardImg || '').replace(/^UI_Gacha_AvatarIcon_/, 'UI_AvatarIcon_');
       const entry = {
         lunarisId: charId,
+        unreleased: true,
         pascalKey: toPascal(name),
         name,
         rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : 4,
         element: item.element || 'Unknown',
         weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
         region: 'Teyvat',
-        icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : ''
+        icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : '',
+        gachaImg: item.GachaImg ? `https://api.lunaris.moe/data/assets/gachaimg/${item.GachaImg}.webp` : ''
       };
       try {
         await sleep(100);
@@ -276,6 +296,7 @@ async function main() {
       if (!norm || slim.weapons[norm]) continue;
       const entry = {
         lunarisId: wepId,
+        unreleased: true,
         pascalKey: toPascal(name),
         name,
         rarity: item.qualityType === 'QUALITY_ORANGE' ? 5 : item.qualityType === 'QUALITY_PURPLE' ? 4 : 3,
@@ -300,8 +321,24 @@ async function main() {
     }
   }
 
+  if (lRelRes.status === 'fulfilled' && lRelRes.value) {
+    for (const [setId, item] of Object.entries(lRelRes.value)) {
+      const name = item?.enName || item?.name;
+      const norm = normalizeAssetKey(name);
+      if (!norm || slim.artifacts[norm] || !item?.icon) continue;
+      slim.artifacts[norm] = {
+        setId: String(setId),
+        name,
+        icon: item.icon,
+        source: 'lunaris'
+      };
+    }
+  }
+
   fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(slim));
-  console.log(`Wrote ${SNAPSHOT_PATH} (${Object.keys(slim.characters).length} chars, ${Object.keys(slim.weapons).length} weapons, ${Object.keys(slim.materials).length} mats).`);
+  console.log(
+    `Wrote ${SNAPSHOT_PATH} (${Object.keys(slim.characters).length} chars, ${Object.keys(slim.weapons).length} weapons, ${Object.keys(slim.materials).length} mats, ${Object.keys(slim.artifacts).length} artifact sets).`
+  );
 }
 
 main().catch((err) => {

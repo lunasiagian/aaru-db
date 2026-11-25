@@ -1,0 +1,437 @@
+{
+  "_meta": {
+    "description": "Declarative kit patches and Gold Anchor multi-labels for hyperspecific kits. Compiled into kit_profiles.json by ETL.",
+    "supplyDemandDims": [
+      "resShred",
+      "teamHeal",
+      "shield",
+      "teamAtk",
+      "teamEm",
+      "teamDmgPct",
+      "teamBaseDmg",
+      "offFieldAura",
+      "battery",
+      "hpFluctuation",
+      "crowdControl"
+    ]
+  },
+  "patches": {
+    "Skirk": {
+      "goldRoles": ["on_field_carry", "off_field_sub_dps"],
+      "factions": [],
+      "zeroEnergy": true,
+      "teamElementLock": {
+        "only": ["Hydro", "Cryo"],
+        "minEach": 1,
+        "label": "Hydro & Cryo Allies Only",
+        "penaltyNote": "Non-Hydro/Cryo teammates disable Death's Crossing / Rift Resonance team passive bonuses."
+      },
+      "channelShares": { "direct": 0.92, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.45 },
+      "demandOverrides": { "resShred": 0.95, "teamBaseDmg": 0.75, "teamDmgPct": 0.85, "offFieldAura": 0.85, "teamHeal": 0.35 }
+    },
+    "Escoffier": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "sustain_utility"],
+      "factions": [],
+      "teamElementLock": {
+        "only": ["Hydro", "Cryo"],
+        "minEach": 0,
+        "label": "Hydro / Cryo Shred Scaling (55% at 4)",
+        "penaltyNote": "Non-Hydro/Cryo teammates reduce A4 RES shred steeply (down from 55%)."
+      },
+      "channelShares": { "direct": 0.9, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "resShred": 1.0, "teamHeal": 0.95, "offFieldAura": 0.9, "battery": 0.45 },
+      "demandOverrides": { "offFieldAura": 0.5 }
+    },
+    "Chevreuse": {
+      "goldRoles": ["support_buffer", "sustain_utility"],
+      "primaryScaler": "hp_",
+      "preferDoubleHp": true,
+      "teamElementLock": {
+        "only": ["Pyro", "Electro"],
+        "minEach": 1,
+        "label": "Pyro & Electro Only (Overloaded)",
+        "penaltyNote": "Slotting Anemo/Hydro/Cryo/Dendro/Geo disables Chevreuse A1 40% Pyro/Electro RES Shred."
+      },
+      "statThresholdCurve": { "statKey": "hp_", "floor": 0, "ceiling": 40000, "label": "40,000 Max HP (+40% ATK Cap)" },
+      "channelShares": { "direct": 0.85, "amp": 0.0, "additive": 0.0, "transformative": 0.15, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "resShred": 0.95, "teamAtk": 0.9, "teamHeal": 0.65, "battery": 0.35 },
+      "demandOverrides": { "offFieldAura": 0.6 }
+    },
+    "Nilou": {
+      "goldRoles": ["reaction_enabler", "sustain_utility"],
+      "quadraticAoe": true,
+      "teamElementLock": {
+        "only": ["Hydro", "Dendro"],
+        "minEach": 1,
+        "label": "Hydro & Dendro Only (Bountiful Core)",
+        "penaltyNote": "Adding Pyro/Electro/Cryo/Anemo/Geo turns off Bountiful Cores and swaps Nilou to standard Hydro DPS."
+      },
+      "statThresholdCurve": { "statKey": "hp_", "floor": 30000, "ceiling": 74444, "label": "74,444 Max HP (400% Bloom Bonus)" },
+      "channelShares": { "direct": 0.15, "amp": 0.0, "additive": 0.0, "transformative": 0.85, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.85, "teamEm": 0.5 },
+      "demandOverrides": { "teamHeal": 0.95, "offFieldAura": 0.9, "teamEm": 0.7 }
+    },
+    "Durin": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "factions": ["Hexerei"],
+      "explicitModes": [
+        {
+          "id": "white_flame",
+          "label": "White Flame (Support / Shred)",
+          "lens": "Quickswap Support",
+          "condition": "Double-tap Skill: -20% Pyro & reaction RES shred + Hexerei/Team buffing",
+          "channelShares": { "direct": 0.65, "amp": 0.35, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "supplyOverrides": { "resShred": 0.85, "teamDmgPct": 0.5, "offFieldAura": 0.85 }
+        },
+        {
+          "id": "dark_decay",
+          "label": "Dark Decay (Vape/Melt Sub-DPS)",
+          "lens": "Off-Field Sub-DPS",
+          "condition": "Skill -> Normal Attack -> Burst: +40% Vaporize/Melt DMG off-field carry",
+          "channelShares": { "direct": 0.35, "amp": 0.65, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "supplyOverrides": { "resShred": 0.1, "offFieldAura": 0.9 }
+        }
+      ],
+      "channelShares": { "direct": 0.5, "amp": 0.5, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "resShred": 0.8, "offFieldAura": 0.9, "battery": 0.25 },
+      "demandOverrides": { "offFieldAura": 0.7, "teamEm": 0.5 }
+    },
+    "Vodyanitsa": {
+      "goldRoles": ["support_buffer", "off_field_sub_dps", "reaction_enabler"],
+      "factions": ["Stellar"],
+      "statThresholdCurve": { "statKey": "hp_", "floor": 40000, "ceiling": 65000, "label": "40k -> 65k Max HP (Lead Vocal & Chorus Cap)" },
+      "explicitModes": [
+        {
+          "id": "buffer_65k",
+          "label": "65k HP Buffer (Lead Vocal / Chorus)",
+          "lens": "Quickswap Support",
+          "condition": "Maximize HP toward 65,000 cap for +6,500 Stellar Swirl / +3,500 Hydro+Cryo Base DMG + -35% Anemo RES shred",
+          "channelShares": { "direct": 0.2, "amp": 0.0, "additive": 0.5, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.3 },
+          "supplyOverrides": { "teamBaseDmg": 1.0, "resShred": 0.85, "offFieldAura": 0.75, "teamIr": 0.6 }
+        },
+        {
+          "id": "subdps",
+          "label": "Off-Field Sub-DPS",
+          "lens": "Off-Field Sub-DPS",
+          "condition": "Balance HP% with CRIT/ER for personal Burst & Skill Hydro/Stellar damage",
+          "channelShares": { "direct": 0.45, "amp": 0.0, "additive": 0.25, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.3 }
+        }
+      ],
+      "channelShares": { "direct": 0.25, "amp": 0.0, "additive": 0.45, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.3 },
+      "supplyOverrides": { "teamBaseDmg": 0.95, "resShred": 0.85, "offFieldAura": 0.75, "crowdControl": 0.4 },
+      "demandOverrides": { "offFieldAura": 0.75, "battery": 0.6 }
+    },
+    "Flins": {
+      "goldRoles": ["on_field_carry", "reaction_enabler"],
+      "factions": ["Moonsign"],
+      "statThresholdCurve": { "statKey": "atk_", "floor": 0, "ceiling": 2000, "label": "2,000 ATK (Whispering Flame +160 EM Cap)" },
+      "channelShares": { "direct": 0.2, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.8, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamEm": 0.1 },
+      "demandOverrides": { "offFieldAura": 0.95, "resShred": 0.85, "teamEm": 0.65, "teamAtk": 0.65, "teamDmgPct": 0.05, "battery": 0.7 }
+    },
+    "Odette": {
+      "goldRoles": ["off_field_sub_dps", "on_field_carry", "reaction_enabler"],
+      "factions": ["Stellar"],
+      "statThresholdCurve": { "statKey": "atk_", "floor": 1000, "ceiling": 3000, "label": "1k -> 3k ATK (+30% Stellar Glimmer DMG Cap)" },
+      "channelShares": { "direct": 0.3, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.7 },
+      "supplyOverrides": { "offFieldAura": 0.75, "teamDmgPct": 0.3 },
+      "demandOverrides": { "offFieldAura": 0.85, "resShred": 0.85, "teamBaseDmg": 0.85, "teamAtk": 0.7 }
+    },
+    "Xilonen": {
+      "goldRoles": ["support_buffer", "sustain_utility", "on_field_carry"],
+      "factions": ["Nightsoul"],
+      "elementCountRule": {
+        "group": ["Pyro", "Hydro", "Electro", "Cryo"],
+        "minCount": 2,
+        "activeRole": "Quickswap Support",
+        "fallbackRole": "On-Field Carry",
+        "label": ">= 2 PHEC Samplers (Support RES Shred & Heal)",
+        "fallbackNote": "With < 2 Pyro/Hydro/Electro/Cryo allies, Source Samples shift Xilonen into On-Field Geo Carry."
+      },
+      "channelShares": { "direct": 1.0, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "resShred": 0.95, "teamHeal": 0.85, "teamDmgPct": 0.75 },
+      "demandOverrides": { "offFieldAura": 0.35 }
+    },
+    "Furina": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "sustain_utility"],
+      "canSnapshot": false,
+      "explicitModes": [
+        {
+          "id": "ousia",
+          "label": "Ousia (Salon Sub-DPS + Fanfare)",
+          "lens": "Off-Field Sub-DPS",
+          "condition": "Drains party HP for Salon Member DMG & stacks up to +75% Team DMG Bonus via Burst Fanfare",
+          "channelShares": { "direct": 1.0, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "supplyOverrides": { "teamDmgPct": 1.0, "offFieldAura": 0.95, "hpFluctuation": 1.0 }
+        },
+        {
+          "id": "pneuma",
+          "label": "Pneuma (Singer Healer)",
+          "lens": "Quickswap Support",
+          "condition": "Summons Singer of Many Waters for active-character HP healing",
+          "channelShares": { "direct": 0.6, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "supplyOverrides": { "teamHeal": 0.9, "teamDmgPct": 0.5 }
+        }
+      ],
+      "channelShares": { "direct": 1.0, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamDmgPct": 1.0, "offFieldAura": 0.95, "hpFluctuation": 1.0 },
+      "demandOverrides": { "teamHeal": 1.0, "battery": 0.65 }
+    },
+    "Bennett": {
+      "goldRoles": ["support_buffer", "sustain_utility"],
+      "primaryScaler": "hp_",
+      "baseAtkOnlyBuffer": true,
+      "constellationShifts": [
+        {
+          "minCon": 6,
+          "unlocksLens": "On-Field Carry",
+          "label": "C6 Pyro Infusion & +15% Pyro DMG",
+          "note": "Unlocks On-Field Pyro Carry/Infusion teams (override caution with physical/Cryo/Hydro overrides)."
+        }
+      ],
+      "channelShares": { "direct": 0.85, "amp": 0.15, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamAtk": 1.0, "teamHeal": 0.9, "battery": 0.65 },
+      "demandOverrides": { "battery": 0.25 }
+    },
+    "Lyney": {
+      "goldRoles": ["on_field_carry"],
+      "elementCountRule": {
+        "group": ["Pyro"],
+        "minCount": 2,
+        "activeRole": "On-Field Carry",
+        "fallbackRole": "On-Field Carry",
+        "label": "Mono-Pyro A4 (+60% + 20% per Pyro ally)",
+        "fallbackNote": "Each Pyro ally boosts A4 DMG% up to +100% total against Pyro-affected foes."
+      },
+      "channelShares": { "direct": 0.9, "amp": 0.1, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "hpFluctuation": 0.55 },
+      "demandOverrides": { "shield": 0.75, "resShred": 0.85, "teamAtk": 0.9 }
+    },
+    "Tartaglia": {
+      "goldRoles": ["on_field_carry", "reaction_enabler"],
+      "quadraticAoe": true,
+      "channelShares": { "direct": 0.55, "amp": 0.45, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.2 },
+      "demandOverrides": { "teamAtk": 0.9, "resShred": 0.85, "crowdControl": 0.85, "offFieldAura": 0.85 }
+    },
+    "Ganyu": {
+      "goldRoles": ["on_field_carry", "off_field_sub_dps"],
+      "quadraticAoe": true,
+      "channelShares": { "direct": 0.65, "amp": 0.35, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.75, "teamDmgPct": 0.35 },
+      "demandOverrides": { "shield": 0.8, "teamAtk": 0.8, "resShred": 0.8 }
+    },
+    "Shenhe": {
+      "goldRoles": ["support_buffer"],
+      "channelShares": { "direct": 0.25, "amp": 0.0, "additive": 0.75, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamBaseDmg": 1.0, "resShred": 0.65, "teamDmgPct": 0.55, "battery": 0.4 },
+      "demandOverrides": { "battery": 0.7, "teamAtk": 0.3 }
+    },
+    "KaedeharaKazuha": {
+      "goldRoles": ["support_buffer", "reaction_enabler"],
+      "quadraticAoe": true,
+      "constellationShifts": [
+        { "minCon": 6, "unlocksLens": "On-Field Carry", "label": "C6 Anemo Infusion & EM Plunge/NA DMG" }
+      ],
+      "channelShares": { "direct": 0.25, "amp": 0.0, "additive": 0.0, "transformative": 0.75, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "resShred": 0.9, "teamDmgPct": 0.95, "crowdControl": 1.0, "offFieldAura": 0.6 },
+      "demandOverrides": { "teamEm": 0.3 }
+    },
+    "Zhongli": {
+      "goldRoles": ["support_buffer", "sustain_utility"],
+      "primaryScaler": "hp_",
+      "explicitModes": [
+        {
+          "id": "shield_hp",
+          "label": "Shield Support (HP%)",
+          "lens": "Quickswap Support",
+          "condition": "Max HP focus for Jade Shield absorption + -20% universal Elemental & Physical RES shred",
+          "channelShares": { "direct": 0.95, "amp": 0.0, "additive": 0.0, "transformative": 0.05, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "statWeightsOverride": { "hp_": 1.0, "hp": 0.5, "enerRech_": 0.4, "critRate_": 0.25, "critDMG_": 0.25, "atk_": 0.15 }
+        },
+        {
+          "id": "burst_hybrid",
+          "label": "Burst / Hybrid (HP · CRIT)",
+          "lens": "Off-Field Sub-DPS",
+          "condition": "HP% + Geo DMG% + CRIT for Planet Befall meteor burst damage alongside shield utility",
+          "channelShares": { "direct": 0.95, "amp": 0.0, "additive": 0.0, "transformative": 0.05, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+          "statWeightsOverride": { "hp_": 0.9, "hp": 0.45, "critRate_": 1.0, "critDMG_": 1.0, "atk_": 0.65, "enerRech_": 0.55 }
+        }
+      ],
+      "channelShares": { "direct": 0.95, "amp": 0.0, "additive": 0.0, "transformative": 0.05, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "shield": 1.0, "resShred": 0.75, "crowdControl": 0.35 },
+      "demandOverrides": {}
+    },
+    "Varka": {
+      "goldRoles": ["on_field_carry"],
+      "primaryScaler": "atk_",
+      "factions": ["Hexerei"],
+      "channelShares": { "direct": 1.0, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": {},
+      "demandOverrides": { "resShred": 0.85, "teamAtk": 0.85, "teamDmgPct": 0.8, "offFieldAura": 0.6 }
+    },
+    "HuTao": {
+      "goldRoles": ["on_field_carry"],
+      "primaryScaler": "hp_",
+      "channelShares": { "direct": 0.35, "amp": 0.65, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": {},
+      "demandOverrides": { "offFieldAura": 0.95, "resShred": 0.85, "shield": 0.6 }
+    },
+    "Alhaitham": {
+      "goldRoles": ["on_field_carry", "reaction_enabler"],
+      "channelShares": { "direct": 0.45, "amp": 0.0, "additive": 0.55, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.2 },
+      "demandOverrides": { "offFieldAura": 0.9, "teamEm": 0.85, "resShred": 0.85, "battery": 0.5 }
+    },
+    "Mavuika": {
+      "goldRoles": ["on_field_carry", "off_field_sub_dps", "support_buffer"],
+      "factions": ["Nightsoul"],
+      "zeroEnergy": true,
+      "channelShares": { "direct": 0.45, "amp": 0.55, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.85, "teamDmgPct": 0.65 },
+      "demandOverrides": { "resShred": 0.9, "teamAtk": 0.75, "offFieldAura": 0.8 }
+    },
+    "Xiangling": {
+      "goldRoles": ["off_field_sub_dps", "reaction_enabler"],
+      "canSnapshot": true,
+      "channelShares": { "direct": 0.3, "amp": 0.7, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.95, "teamAtk": 0.25 },
+      "demandOverrides": { "battery": 1.0, "teamAtk": 0.9, "resShred": 0.8 }
+    },
+    "Xingqiu": {
+      "goldRoles": ["off_field_sub_dps", "reaction_enabler", "sustain_utility"],
+      "canSnapshot": false,
+      "channelShares": { "direct": 0.9, "amp": 0.1, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 1.0, "teamHeal": 0.25, "resShred": 0.2 },
+      "demandOverrides": { "battery": 0.65 }
+    },
+    "Yelan": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "primaryScaler": "hp_",
+      "canSnapshot": false,
+      "constellationShifts": [{ "minCon": 1, "label": "C1 (+1 Skill charge reduces ER need by ~30%)" }],
+      "channelShares": { "direct": 0.9, "amp": 0.1, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.95, "teamDmgPct": 0.75 },
+      "demandOverrides": { "battery": 0.7 }
+    },
+    "Beidou": {
+      "goldRoles": ["off_field_sub_dps", "sustain_utility"],
+      "canSnapshot": true,
+      "quadraticAoe": true,
+      "channelShares": { "direct": 0.85, "amp": 0.0, "additive": 0.15, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "shield": 0.5, "offFieldAura": 0.75, "resShred": 0.3 },
+      "demandOverrides": { "battery": 0.9 }
+    },
+    "Charlotte": {
+      "goldRoles": ["sustain_utility", "support_buffer"],
+      "channelShares": { "direct": 0.9, "amp": 0.0, "additive": 0.0, "transformative": 0.1, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamHeal": 1.0, "offFieldAura": 0.65 },
+      "demandOverrides": { "battery": 0.75 }
+    },
+    "Mika": {
+      "goldRoles": ["sustain_utility", "support_buffer"],
+      "channelShares": { "direct": 1.0, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamHeal": 0.95, "teamDmgPct": 0.35 },
+      "demandOverrides": { "battery": 0.6 }
+    },
+    "SangonomiyaKokomi": {
+      "goldRoles": ["sustain_utility", "reaction_enabler", "off_field_sub_dps"],
+      "channelShares": { "direct": 0.55, "amp": 0.0, "additive": 0.0, "transformative": 0.45, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamHeal": 1.0, "offFieldAura": 0.9 },
+      "demandOverrides": {}
+    },
+    "Nahida": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "statThresholdCurve": { "statKey": "eleMas", "floor": 0, "ceiling": 1000, "label": "1,000 EM (+250 Team EM & A4 Cap)" },
+      "channelShares": { "direct": 0.35, "amp": 0.0, "additive": 0.65, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 1.0, "teamEm": 1.0 },
+      "demandOverrides": {}
+    },
+    "RaidenShogun": {
+      "goldRoles": ["on_field_carry", "off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "channelShares": { "direct": 0.75, "amp": 0.0, "additive": 0.15, "transformative": 0.1, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "battery": 1.0, "teamDmgPct": 0.55, "offFieldAura": 0.8 },
+      "demandOverrides": { "teamAtk": 0.8, "resShred": 0.85 }
+    },
+    "Anastasya": {
+      "goldRoles": ["on_field_carry", "off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "primaryScaler": "atk_",
+      "factions": ["Stellar"],
+      "statThresholdCurve": {
+        "statKey": "atk_",
+        "floor": 0,
+        "ceiling": 2000,
+        "label": "2,000 ATK (+14% Stellar-Conduct & Stellar Swirl Base DMG Cap)"
+      },
+      "explicitModes": [
+        {
+          "id": "blessing_love",
+          "label": "Tap E: Blessing of Love (Off-Field / Buffer)",
+          "lens": "Quickswap Support",
+          "condition": "Tap E deploys Palestar Crown off-field, seals herself off-field & shares +12% CRIT DMG Accolades + Stellar Glimmer buffs",
+          "channelShares": { "direct": 0.25, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.75 },
+          "statWeightsOverride": { "atk_": 1.0, "critRate_": 0.85, "critDMG_": 0.85, "enerRech_": 0.8, "eleMas": 0.5 }
+        },
+        {
+          "id": "blessing_honor",
+          "label": "Hold E: Blessing of Honor (On-Field NA Carry)",
+          "lens": "On-Field Carry",
+          "condition": "Hold E switches to Blessed Spear 5-hit Cryo/Stellar NA combo (cannot CA) & seals teammates to stack Accolades",
+          "channelShares": { "direct": 0.35, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.65 },
+          "statWeightsOverride": { "atk_": 1.0, "critRate_": 1.0, "critDMG_": 1.0, "enerRech_": 0.55, "eleMas": 0.5 }
+        }
+      ],
+      "channelShares": { "direct": 0.3, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.7 },
+      "supplyOverrides": { "offFieldAura": 0.85, "teamDmgPct": 0.6, "teamBaseDmg": 0.8 },
+      "demandOverrides": { "offFieldAura": 0.8, "resShred": 0.85 }
+    },
+    "KujouSara": {
+      "goldRoles": ["support_buffer", "off_field_sub_dps"],
+      "baseAtkOnlyBuffer": true,
+      "channelShares": { "direct": 0.85, "amp": 0.0, "additive": 0.15, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamAtk": 0.95 },
+      "demandOverrides": { "battery": 0.85 }
+    },
+    "Iansan": {
+      "goldRoles": ["support_buffer", "sustain_utility"],
+      "baseAtkOnlyBuffer": true,
+      "factions": ["Nightsoul"],
+      "channelShares": { "direct": 0.85, "amp": 0.0, "additive": 0.15, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "teamAtk": 0.95, "teamHeal": 0.55 },
+      "demandOverrides": {}
+    },
+    "Columbina": {
+      "goldRoles": ["support_buffer", "off_field_sub_dps", "reaction_enabler"],
+      "primaryScaler": "hp_",
+      "factions": ["Moonsign"],
+      "baselineCritRate": 48.2,
+      "canSnapshot": false,
+      "channelShares": { "direct": 0.25, "amp": 0.0, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.75, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.95, "teamEm": 0.5 },
+      "demandOverrides": { "battery": 0.75 }
+    },
+    "Fischl": {
+      "goldRoles": ["off_field_sub_dps", "reaction_enabler"],
+      "factions": ["Hexerei"],
+      "canSnapshot": true,
+      "channelShares": { "direct": 0.6, "amp": 0.0, "additive": 0.4, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.95, "battery": 0.7 },
+      "demandOverrides": {}
+    },
+    "Kaeya": {
+      "goldRoles": ["off_field_sub_dps", "reaction_enabler"],
+      "canSnapshot": true,
+      "channelShares": { "direct": 0.65, "amp": 0.35, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.85, "battery": 0.5 },
+      "demandOverrides": {}
+    },
+    "Rosaria": {
+      "goldRoles": ["off_field_sub_dps", "support_buffer", "reaction_enabler"],
+      "canSnapshot": true,
+      "channelShares": { "direct": 0.65, "amp": 0.35, "additive": 0.0, "transformative": 0.0, "lunar_crit": 0.0, "stellar_crit": 0.0 },
+      "supplyOverrides": { "offFieldAura": 0.85, "battery": 0.6 },
+      "demandOverrides": {}
+    }
+  }
+}

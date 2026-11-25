@@ -8,49 +8,50 @@ web
 
 ## Users
 
-The primary user, Sunny, and friends managing individual Genshin Impact accounts (with read-only partner/friend account switching) to plan character builds, prefarm ascension/talent materials, track wish reserves, and benchmark endgame team compositions.
+The primary user, Sunny, and friends managing individual Genshin Impact accounts (with read-only partner/friend account switching) to plan character builds, prefarm ascension/talent materials across patch cycles, track wish reserves, and benchmark endgame team compositions.
 
 ## Product Purpose
 
-AaruDB (`aaru-db.pages.dev`) is a single-page Genshin Impact account manager, theorycrafting reference manual, and resource planner designed as a reprogrammed Deshretian Ley-Line archive. Success means importing an Irminsul GOOD v3 account scan and immediately seeing accurate build efficiency (`wRV%`, `CV`), kit-matched BiS vs. accessible weapon tiers, burst ER comfort across Solo/Double-Element/Stygian & Theatre baselines, and exact resin, Mora, and crafting deficits across active build targets.
+AaruDB (`aaru-db.pages.dev`) is a single-page Genshin Impact account manager, theorycrafting reference manual, and resource planner designed as an archival Ley-Line workspace. Success means importing an Irminsul GOOD v3 account scan and immediately seeing accurate build efficiency (`wRV%`, `CV`), context-aware BiS vs. accessible weapon and artifact rankings, burst ER comfort across Spiral Abyss / Stygian Onslaught (0E) / Imaginarium Theater, and exact resin, Mora, and calendar-aware farming pivots across active build targets.
 
 ## Positioning
 
-Unlike generic Genshin wikis or static tier lists, AaruDB computes deterministic, kit-parsed recommendations directly from the user's own GOOD v3 inventory, artifact substats, weapon refinements, and saved Teams Lab squads—powered by KQM Theorycrafting Library (TCL) ER baselines, reaction math, and live Project Amber / Lunaris patch data.
+Unlike generic Genshin wikis or static tier lists, AaruDB computes deterministic, kit-parsed recommendations directly from the user's own GOOD v3 inventory, artifact substats, weapon refinements, and saved Teams Lab squads—powered by Dimbreath `AnimeGameData` + Lunaris ETL profiles, KQM Theorycrafting Library (TCL) ER baselines, vector synergy scoring, and a real-time 6-week Genshin patch calendar.
 
 ## Operating Context
 
 - **Primary Workflows:**
-  - **Multi-Account Cloud Sync & Imports:** Individual user logins (you, Sunny, and friends) backed by Google Sheets via Google Apps Script (`apps-script/`), alongside direct Irminsul GOOD v3 JSON imports to sync your full 100+ character roster, weapons, artifacts, and bag inventory.
-  - **Central HUD & Prefarm Priority Router:** Live resin recharge, domain rotations, pull/pity reserves (`Coin Purse` with Gnostic Hymn BP milestones), and shared material bottlenecks across active build targets (`Anastasya`, `Danica`, etc.), automatically calculating exact resin, Mora, and crafting deficits.
-  - **Roster Dossier & Build Science Engine:** Top Character Selector Ribbon + full-width 3-column Swiss Hero Spread and 4-chapter vertical-scroll dossier evaluating equipped artifacts (`wRV%`, `CV`, ER% breakpoints across Solo, Double-Element, and Stygian/Theatre), ranking BiS vs. accessible weapon tiers, and presenting full talent/passive/constellation kits with toggleable `Razor Mode`.
-  - **Teams & Endgame Lab:** Benchmarks team compositions, weapon conflicts, `archetypeLock` cores, and rotations for Spiral Abyss, Imaginarium Theatre, Stygian Onslaught, and Miliastra.
-- **Sync & Persistence:** Static ES modules (`index.html`, `js/`, `styles.css`) backed by Google Apps Script (`apps-script/`) for live multi-user sync, `localStorage` stale-while-revalidate caching, and offline mock mode.
+  - **Multi-Account Cloud Sync & Imports:** Individual user logins (you, Sunny, and friends) backed by Google Sheets via Google Apps Script (`apps-script/`), alongside direct Irminsul GOOD v3 JSON imports to sync 100+ character rosters, weapons, artifacts, and bag inventory.
+  - **Today HUD & 6-Week Patch Calendar:** Tracks the 04:00-reset-adjusted in-game date, 42-day patch / 21-day banner half cadence (anchored to `7.3 Phase 1` on `2026-12-16 02:00 UTC` / `Dec 15, 9:00 PM Toronto EST` / `Dec 16, 9:00 AM Jakarta WIB`, assuming `Anastasya + Danica` Phase 1 and Phase 2 TBA), natural Resin budget (`180/day`), remaining weekday/All-Open domain days, automatic **All Domains Open** unlocks during the first 7 days of each banner half, and **New Boss Week-1 Lock** alerts when a queued character's World Boss isn't out until next patch (e.g., Danica's `Chimeric Shellspinner`).
+  - **Build Order (Lv.80 Ready → Crowns) & Blossom of Wealth:** Applies 3-to-1 upward alchemy crafting and priority material sharing across Talent Books, Weapon Mats, Common/Elite drops, and Elemental Gems. Plans **Lv.80 Ready (`Lv.80` + talents `≤ 8`, `0` Crowns)** across `#1` then `#2` before **Lv.90 & Crowns** with clear switch guidance. Accounts for daily Mora (`~85K/day`) plus remaining Battle Pass Mora (`2.16M` Gnostic Hymn / `720K` Free BP) to recommend when to start running Blossom of Wealth Ley Lines.
+  - **Character Dossier & Context-Aware Build Science:** Evaluates equipped artifacts (`wRV%`, `CV`, ER% breakpoints), scores weapons and artifact sets via `js/science/context-engine.js` across `Spiral Abyss` (100% E), `Stygian Onslaught` (0E), and `Imaginarium Theater`, detects non-snapshotting buff discounts and team weapon conflicts, and presents full talent/passive/constellation kits with toggleable `Razor Mode`.
+  - **Teams Lab & Vault:** Benchmarks 4-slot squads, directed pairwise synergies, weapon conflicts, and bag inventory deficits.
+- **Surfaces & Sync:** Active workspace at `prototype.html` (`prototype.css`, `js/prototype-app.js`) alongside legacy production `index.html` (`styles.css`, `js/app.js`), backed by Google Apps Script (`apps-script/`), `localStorage` stale-while-revalidate caching, and offline mock mode.
 
 ## Capabilities and Constraints
 
-- **No Build Step:** Vanilla HTML, CSS, and ES Modules served directly (local dev via `scripts/serve.ps1` on port `8080`, production on static hosting).
-- **Browser Test Suite:** Verified via `test.html` + `tests/build-science.test.js` (35 deterministic unit & fuzz assertions covering kit taxonomy, `wRV%`, burst cadence, archetype weapon rankings, and live catalog precedence).
-- **Data Sources:** Project Amber (`gi.yatta.moe`), Lunaris (`lunaris.moe` + `data/live-snapshot.json`), Enka.Network icons, KQM TCL (`data/kqm-tcl.json` + `js/science/reaction-math.js`), and GOOD v3 JSON import.
+- **No Build Step:** Vanilla HTML, CSS, and ES Modules served directly (local preview on port `8080`, production on static hosting).
+- **Offline Data ETL & Verification:** Python ETL (`scripts/dimbreath_loader.py`, `scripts/build_kit_profiles.py`, `scripts/build_weapons_index.py`, `scripts/build_enemies_index.py`) and `scripts/sync-snapshot.mjs` generate `data/kit_profiles.json` (`127` profiles), `data/set_vectors.json` (`60` sets), `data/weapons_index.json` (`259` weapons), `data/enemies_index.json` (`568` enemies), and `data/live-snapshot.json` with strict zero-spoiler guardrails (no TextMap/Quest/NPC leaks). Verified via `scripts/verify_upgrade.mjs` (7 acceptance checks) and `test.html` + `tests/build-science.test.js`.
+- **Data Sources:** Dimbreath `AnimeGameData`, Project Amber (`gi.yatta.moe`), Lunaris (`lunaris.moe` + `data/live-snapshot.json`), Enka.Network icons, KQM TCL (`data/kqm-tcl.json` + `js/science/reaction-math.js`), and GOOD v3 JSON import.
 - **Read-Only Partner View:** Switching to a partner's account disables all mutating controls while preserving full inspection of their builds, armory, and teams.
 
 ## Brand Commitments
 
 - **Name:** AaruDB
-- **Tone & Copy:** Terse, human, domain-accurate Genshin terminology (`Build Overview`, `My Characters`, `Razor Mode`, `Wish`, `Owned`)—avoiding generic SaaS/AI boilerplate.
-- **Community Attribution:** Dedicated `Credits` tab linking KQM TCL, KQM Stellar Glimmer & Lunar Reaction guides, Project Amber, Lunaris, Enka.Network, and Genshin Optimizer (GOOD).
+- **Tone & Copy:** Terse, human, domain-accurate Genshin terminology (`Today`, `Prefarm`, `Characters`, `Armory`, `Teams Lab`, `Vault`, `Razor Mode`, `Wish`)—preserving canonical Genshin copywriting without generic SaaS boilerplate or invented roleplay fluff.
+- **Community Attribution:** Credits KQM TCL, Dimbreath `AnimeGameData`, Project Amber, Lunaris, Enka.Network, and Genshin Optimizer (GOOD).
 
 ## Evidence on Hand
 
-- `data/catalog.json`, `data/live-snapshot.json`, `data/weapons_index.json`, `data/kqm-tcl.json`
-- `js/science/kit-taxonomy.js`, `js/science/stat-math.js`, `js/science/weapon-engine.js`, `js/science/reaction-math.js`
-- `tests/build-science.test.js` & `test.html`
+- `data/catalog.json`, `data/live-snapshot.json`, `data/kit_profiles.json`, `data/set_vectors.json`, `data/weapons_index.json`, `data/enemies_index.json`, `data/kqm-tcl.json`
+- `js/calculations.js`, `js/catalog.js`, `js/science/context-engine.js`, `js/science/kit-taxonomy.js`, `js/science/stat-math.js`, `js/science/weapon-engine.js`, `js/science/reaction-math.js`
+- `scripts/verify_upgrade.mjs`, `tests/build-science.test.js`, `test.html`
 
 ## Product Principles
 
-1. **Account-Truth First:** Recommendations adapt to the user's actual owned weapons, refinements, artifacts, ER%, and saved squads rather than theoretical C6R5 assumptions.
-2. **Deterministic Kit Science:** Roles, archetypes, stat weights, and reaction locks (`Stellar Glimmer`, `Lunar`, `Freeze-Core`) are derived transparently from parsed talent/passive data and KQM math.
-3. **High-Density Clarity:** Dense numerical telemetry (`tabular-nums`) paired with clean visual hierarchy so build gaps are readable at a glance.
+1. **Account-Truth First:** Recommendations adapt to the user's actual owned weapons, refinements, artifacts, ER%, bag inventory, and calendar window rather than theoretical C6R5 assumptions.
+2. **Deterministic Kit & Resin Science:** Roles, stat weights, reaction locks, two-pass prefarm pivots, and passive-adjusted Mora horizons are derived transparently from parsed game data and exact drop/resin curves.
+3. **High-Density Clarity:** Dense numerical telemetry (`tabular-nums`) paired with quiet, scan-first hierarchy so build gaps and daily resin calls are readable in seconds.
 4. **Zero-Friction Sync:** Instant local render with background Apps Script persistence and graceful offline fallback.
 
 ## Accessibility & Inclusion

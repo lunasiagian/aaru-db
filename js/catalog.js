@@ -1,11 +1,15 @@
 let cachedCatalog = null;
 let cachedKqmTcl = {};
 let cachedWeaponsIndex = [];
-const CATALOG_VERSION = '20261116c';
+let cachedKitProfiles = {};
+let cachedSetVectors = [];
+let cachedGaugeTable = {};
+let cachedEnemiesIndex = [];
+const CATALOG_VERSION = '20261121g';
 const STATIC_CATALOG_CACHE_KEY = `aaru_static_catalog_${CATALOG_VERSION}`;
 const CATALOG_CACHE_PREFIX = 'aaru_catalog_v';
 const CATALOG_LATEST_PTR = 'aaru_catalog_latest_patch';
-const KIT_CACHE_KEY = 'aaru_kit_cache_v6';
+const KIT_CACHE_KEY = 'aaru_kit_cache_v9';
 const CATALOG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const YATTA_UI_BASE = 'https://gi.yatta.moe/assets/UI/';
 
@@ -350,7 +354,8 @@ async function fetchYattaCatalog(forceRefresh = false) {
               element: item.element || 'Unknown',
               weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
               region: 'Teyvat',
-              icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : ''
+              icon: iconName ? `https://api.lunaris.moe/data/assets/avataricon/${iconName}.webp` : '',
+              gachaImg: item.GachaImg ? `https://api.lunaris.moe/data/assets/gachaimg/${item.GachaImg}.webp` : ''
             };
           }
         }
@@ -452,9 +457,15 @@ export function getCatalogStatus() {
 }
 
 export async function refreshLiveCatalog() {
+  kitCacheMem = null;
   try {
     for (const k of Object.keys(localStorage)) {
-      if (k.startsWith(CATALOG_CACHE_PREFIX) || k.startsWith('aaru_yatta_catalog_') || k === CATALOG_LATEST_PTR) {
+      if (
+        k.startsWith(CATALOG_CACHE_PREFIX) ||
+        k.startsWith('aaru_yatta_catalog_') ||
+        k.startsWith('aaru_kit_cache_') ||
+        k === CATALOG_LATEST_PTR
+      ) {
         localStorage.removeItem(k);
       }
     }
@@ -490,12 +501,16 @@ export async function loadCatalog() {
       const cachedRaw = localStorage.getItem(STATIC_CATALOG_CACHE_KEY);
       if (cachedRaw) {
         const parsed = JSON.parse(cachedRaw);
-        if (parsed?.catalog && Array.isArray(parsed?.weaponsIndex) && parsed.weaponsIndex.length > 0) {
+        if (parsed?.catalog && Array.isArray(parsed?.weaponsIndex) && parsed.weaponsIndex.length > 0 && parsed?.kitProfiles && Array.isArray(parsed?.setVectors)) {
           cachedCatalog = parsed.catalog;
           cachedKqmTcl = parsed.kqmTcl || {};
           cachedWeaponsIndex = parsed.weaponsIndex;
-          // Hydrate Yatta maps synchronously from cache or snapshot; refresh live API in background
-          fetchYattaCatalog(false).catch(() => {});
+          cachedKitProfiles = parsed.kitProfiles || {};
+          cachedSetVectors = parsed.setVectors || [];
+          cachedEnemiesIndex = parsed.enemiesIndex || [];
+          // Hydrate snapshot first (zero external requests on cold start); fall back to Yatta only if snapshot missing
+          const snapOk = await loadSnapshotFallback();
+          if (!snapOk) fetchYattaCatalog(false).catch(() => {});
           return cachedCatalog;
         }
       }
@@ -504,10 +519,14 @@ export async function loadCatalog() {
     }
   }
 
-  const [catRes, kqmRes, wepIdxRes] = await Promise.allSettled([
+  const [catRes, kqmRes, wepIdxRes, kitProfRes, setVecRes, gaugeRes, enemiesRes] = await Promise.allSettled([
     fetch('./data/catalog.json', { cache: 'no-cache' }),
     fetch('./data/kqm-tcl.json', { cache: 'no-cache' }),
-    fetch('./data/weapons_index.json', { cache: 'no-cache' })
+    fetch('./data/weapons_index.json', { cache: 'no-cache' }),
+    fetch('./data/kit_profiles.json', { cache: 'no-cache' }),
+    fetch('./data/set_vectors.json', { cache: 'no-cache' }),
+    fetch('./data/gauge_table.json', { cache: 'no-cache' }),
+    fetch('./data/enemies_index.json', { cache: 'no-cache' })
   ]);
 
   if (kqmRes.status === 'fulfilled' && kqmRes.value?.ok) {
@@ -527,6 +546,42 @@ export async function loadCatalog() {
     }
   }
 
+  if (kitProfRes.status === 'fulfilled' && kitProfRes.value?.ok) {
+    try {
+      const kpJson = await kitProfRes.value.json();
+      cachedKitProfiles = kpJson?.profiles || {};
+    } catch {
+      cachedKitProfiles = {};
+    }
+  }
+
+  if (setVecRes.status === 'fulfilled' && setVecRes.value?.ok) {
+    try {
+      const svJson = await setVecRes.value.json();
+      cachedSetVectors = Array.isArray(svJson?.sets) ? svJson.sets : [];
+    } catch {
+      cachedSetVectors = [];
+    }
+  }
+
+  if (gaugeRes.status === 'fulfilled' && gaugeRes.value?.ok) {
+    try {
+      const gJson = await gaugeRes.value.json();
+      cachedGaugeTable = gJson?.units || {};
+    } catch {
+      cachedGaugeTable = {};
+    }
+  }
+
+  if (enemiesRes.status === 'fulfilled' && enemiesRes.value?.ok) {
+    try {
+      const eJson = await enemiesRes.value.json();
+      cachedEnemiesIndex = Array.isArray(eJson?.enemies) ? eJson.enemies : [];
+    } catch {
+      cachedEnemiesIndex = [];
+    }
+  }
+
   try {
     if (catRes.status !== 'fulfilled' || !catRes.value?.ok) {
       throw new Error(`HTTP ${catRes.value?.status || 'fetch error'}`);
@@ -543,7 +598,10 @@ export async function loadCatalog() {
         JSON.stringify({
           catalog: cachedCatalog,
           kqmTcl: cachedKqmTcl,
-          weaponsIndex: cachedWeaponsIndex
+          weaponsIndex: cachedWeaponsIndex,
+          kitProfiles: cachedKitProfiles,
+          setVectors: cachedSetVectors,
+          enemiesIndex: cachedEnemiesIndex
         })
       );
     } catch {
@@ -572,8 +630,9 @@ export async function loadCatalog() {
       }
     };
   }
-  // Do not block initial render on 7 external API calls if Yatta cache is cold
-  fetchYattaCatalog(false).catch(() => {});
+  // Snapshot-first runtime on static hosts; external Yatta/Lunaris only if snapshot missing
+  const snapOk = await loadSnapshotFallback();
+  if (!snapOk) fetchYattaCatalog(false).catch(() => {});
   return cachedCatalog;
 }
 
@@ -590,6 +649,33 @@ export function getKqmEntry(pascalKey) {
     if (normalizeAssetKey(k) === norm) return v;
   }
   return null;
+}
+
+export function getStaticKitProfile(pascalKey) {
+  if (!pascalKey || !cachedKitProfiles) return null;
+  if (cachedKitProfiles[pascalKey]) return cachedKitProfiles[pascalKey];
+  const norm = normalizeAssetKey(pascalKey);
+  if (cachedKitProfiles[norm]) return cachedKitProfiles[norm];
+  for (const [k, v] of Object.entries(cachedKitProfiles)) {
+    if (normalizeAssetKey(k) === norm) return v;
+  }
+  return null;
+}
+
+export function getAllStaticKitProfiles() {
+  return cachedKitProfiles || {};
+}
+
+export function getStaticSetVectors() {
+  return cachedSetVectors || [];
+}
+
+export function getGaugeTable() {
+  return cachedGaugeTable || {};
+}
+
+export function getEnemiesIndex() {
+  return cachedEnemiesIndex || [];
 }
 
 export function splitPascalCase(key) {
@@ -1019,14 +1105,37 @@ const ARTIFACT_SLOT_NUM = {
  * @returns {string} Icon URL or empty string if unknown.
  */
 export function getArtifactIcon(setKey, slotKey) {
-  const entry = yattaMaps.artifacts.get(normalizeAssetKey(setKey));
-  if (!entry?.icon) return '';
+  const norm = normalizeAssetKey(setKey);
   const slotNum = ARTIFACT_SLOT_NUM[String(slotKey || '').toLowerCase()] || '4';
-  const baseIcon = String(entry.icon).replace(/_\d+$/, `_${slotNum}`);
-  if (entry.source === 'lunaris') {
-    return `https://api.lunaris.moe/data/assets/reliquary/${baseIcon}.webp`;
+  const entry = yattaMaps.artifacts.get(norm);
+  if (entry?.icon) {
+    const baseIcon = String(entry.icon).replace(/_\d+$/, `_${slotNum}`);
+    if (entry.source === 'lunaris') {
+      return `https://api.lunaris.moe/data/assets/reliquary/${baseIcon}.webp`;
+    }
+    return `https://enka.network/ui/${baseIcon}.png`;
   }
-  return `https://gi.yatta.moe/assets/UI/reliquary/${baseIcon}.png`;
+  const vec = (cachedSetVectors || []).find(
+    (s) => s.lookupKey === norm || normalizeAssetKey(s.name) === norm || normalizeAssetKey(s.key) === norm
+  );
+  if (vec?.setId) {
+    return `https://enka.network/ui/UI_RelicIcon_${vec.setId}_${slotNum}.png`;
+  }
+  if (vec?.icon) {
+    return String(vec.icon).replace(/_\d+(\.png)$/i, `_${slotNum}$1`);
+  }
+  return '';
+}
+
+export function getArtifactSetMeta(setKey) {
+  const norm = normalizeAssetKey(setKey);
+  return (
+    yattaMaps.artifacts.get(norm) ||
+    (cachedSetVectors || []).find(
+      (s) => s.lookupKey === norm || normalizeAssetKey(s.name) === norm || normalizeAssetKey(s.key) === norm
+    ) ||
+    null
+  );
 }
 
 const FIGHT_PROP_TO_STAT = {
@@ -1194,6 +1303,9 @@ function parseYattaAvatarKit(data, curveData) {
     }
   }
 
+  const effectsInfo = data?.dictionary?.effectsInfo || null;
+  const resolveYattaText = (raw) => resolveYattaDictionaryText(raw, effectsInfo);
+
   const talents = [];
   const passives = [];
   let burstCost = 0;
@@ -1205,7 +1317,7 @@ function parseYattaAvatarKit(data, curveData) {
   for (const [, t] of talentEntries) {
     if (!t?.name) continue;
     const tType = Number(t.type);
-    const desc = cleanYattaText(t.description);
+    const desc = resolveYattaText(t.description);
     if (tType === 0 || tType === 1) {
       const kind = activeIdx === 0 ? 'normal' : activeIdx === 1 ? 'skill' : 'burst';
       activeIdx += 1;
@@ -1234,7 +1346,7 @@ function parseYattaAvatarKit(data, curveData) {
     .map(([idx, c]) => ({
       level: Number(idx) + 1,
       name: c?.name || `Constellation ${Number(idx) + 1}`,
-      description: cleanYattaText(c?.description || '')
+      description: resolveYattaText(c?.description || '')
     }))
     .filter((c) => c.level >= 1 && c.level <= 6 && c.name);
 
@@ -1248,16 +1360,91 @@ function parseYattaAvatarKit(data, curveData) {
   };
 }
 
+function resolveYattaDictionaryText(rawDesc, effectsInfo) {
+  const src = String(rawDesc || '');
+  if (!effectsInfo || typeof effectsInfo !== 'object') return cleanYattaText(src);
+  const appended = [];
+  const seenKeys = new Set();
+  for (const m of src.matchAll(/\{LINK#(N\d+)\}/gi)) {
+    const key = m[1].toUpperCase();
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    const entry = effectsInfo[key] || effectsInfo[m[1]];
+    if (!entry?.description) continue;
+    const paramByFull = new Map();
+    if (Array.isArray(entry.params)) {
+      for (const p of entry.params) {
+        if (p?.skillFull && p?.skillParam) paramByFull.set(p.skillFull, p.skillParam);
+      }
+    }
+    const resolvedDesc = String(entry.description).replace(/\{PARAM#([^}:]+)(?::([^}]+))?\}/gi, (_, fullKey, fmt = '') => {
+      const sp = paramByFull.get(fullKey);
+      if (!sp || sp.paramValue == null) return '';
+      const val = Number(sp.paramValue) * (Number(sp.paramMultiplier) || 1);
+      if (!Number.isFinite(val)) return String(sp.paramValue);
+      const effFmt = fmt || sp.format || '';
+      if (/P$/i.test(effFmt)) {
+        const decMatch = effFmt.match(/F(\d+)P/i);
+        const dec = decMatch ? Number(decMatch[1]) : 0;
+        return `${(val * 100).toFixed(dec)}%`;
+      }
+      return Math.round(val).toLocaleString();
+    });
+    appended.push(`<color=#FFD780FF>${entry.name || 'Note'}</color>: ${resolvedDesc}`);
+  }
+  const combined = appended.length ? `${src}\n\n${appended.join('\n')}` : src;
+  return cleanYattaText(combined);
+}
+
+function resolveHyperlinkParams(text, params = []) {
+  return String(text || '').replace(/\{PARAM#[^|}]*\|(\d+)[^}:]*(?::([^}]+))?\}/gi, (_, idxStr, fmt = '') => {
+    const val = params?.[Number(idxStr) - 1];
+    if (val === undefined || val === null || val === '') return '';
+    const num = Number(val);
+    if (!Number.isFinite(num)) return String(val);
+    if (/P$/i.test(fmt)) {
+      const decMatch = fmt.match(/F(\d+)P/i);
+      const dec = decMatch ? Number(decMatch[1]) : 0;
+      return `${(num * 100).toFixed(dec)}%`;
+    }
+    return Math.round(num).toLocaleString();
+  });
+}
+
+function resolveLunarisText(rawDesc, linkMap, params = []) {
+  const src = String(rawDesc || '');
+  if (!linkMap || !linkMap.size) return cleanYattaText(src);
+  const appended = [];
+  const seenIds = new Set();
+  for (const m of src.matchAll(/\{LINK#N(\d+)\}/gi)) {
+    const id = m[1];
+    if (seenIds.has(id)) continue;
+    seenIds.add(id);
+    const entry = linkMap.get(id);
+    if (entry?.description) {
+      const resolvedDesc = resolveHyperlinkParams(entry.description, params);
+      appended.push(`<color=#FFD780FF>${entry.name || 'Note'}</color>: ${resolvedDesc}`);
+    }
+  }
+  const combined = appended.length ? `${src}\n\n${appended.join('\n')}` : src;
+  return cleanYattaText(combined);
+}
+
 function parseLunarisCharKit(detail) {
   const skills = detail?.skills || {};
   const talents = [];
+  const linkMap = new Map(
+    (Array.isArray(detail?.hyperlinks) ? detail.hyperlinks : [])
+      .filter((h) => h && h.id != null)
+      .map((h) => [String(h.id), h])
+  );
 
   const na = skills.normalattack || detail?.attacks;
   if (na?.name) {
     talents.push({
       kind: 'normal',
       name: na.name,
-      description: cleanYattaText(na.description || na.desc || ''),
+      description: resolveLunarisText(na.description || na.desc || '', linkMap, na.params),
       costElemVal: 0,
       labels: Object.keys(na.multipliers || {}),
       multipliers: na.multipliers || {}
@@ -1269,7 +1456,7 @@ function parseLunarisCharKit(detail) {
     talents.push({
       kind: 'skill',
       name: es.name,
-      description: cleanYattaText(es.description || es.desc || ''),
+      description: resolveLunarisText(es.description || es.desc || '', linkMap, es.params),
       costElemVal: 0,
       labels: Object.keys(es.multipliers || {}),
       multipliers: es.multipliers || {}
@@ -1283,7 +1470,7 @@ function parseLunarisCharKit(detail) {
     talents.push({
       kind: 'burst',
       name: eb.name,
-      description: cleanYattaText(eb.description || eb.desc || ''),
+      description: resolveLunarisText(eb.description || eb.desc || '', linkMap, eb.params),
       costElemVal: burstCost,
       labels: Object.keys(eb.multipliers || {}),
       multipliers: eb.multipliers || {}
@@ -1293,7 +1480,7 @@ function parseLunarisCharKit(detail) {
   const rawPassives = Array.isArray(detail?.passives)
     ? detail.passives
     : Object.entries(detail?.passives || {})
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
         .map(([, v]) => v);
 
   const passives = rawPassives
@@ -1304,19 +1491,19 @@ function parseLunarisCharKit(detail) {
       return {
         slot,
         name: p.name || `Passive ${idx + 1}`,
-        description: cleanYattaText(p.description || p.desc || '')
+        description: resolveLunarisText(p.description || p.desc || '', linkMap, p.params)
       };
     });
 
   const constellations = Object.entries(detail?.constellations || {})
-    .sort((a, b) => a[0].localeCompare(b[0]))
+    .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
     .map(([key, c], idx) => {
       const m = key.match(/(\d+)/);
       const lv = m ? Number(m[1]) : idx + 1;
       return {
         level: lv,
         name: c?.name || `Constellation ${lv}`,
-        description: cleanYattaText(c?.description || c?.desc || '')
+        description: resolveLunarisText(c?.description || c?.desc || '', linkMap, c?.params)
       };
     })
     .filter((c) => c.level >= 1 && c.level <= 6 && c.name);
@@ -1382,19 +1569,54 @@ export function getWeaponStats(pascalKey) {
 
 const pendingKitFetches = new Map();
 
+let yattaAvatarIdMapPromise = null;
+async function resolveYattaAvatarId(norm) {
+  const existing = yattaMaps.characters.get(norm)?.id;
+  if (existing) return existing;
+  if (!yattaAvatarIdMapPromise) {
+    yattaAvatarIdMapPromise = fetch('https://gi.yatta.moe/api/v2/en/avatar')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        const items = json?.data?.items || {};
+        for (const [id, item] of Object.entries(items)) {
+          const n = normalizeAssetKey(item?.name);
+          if (!n) continue;
+          const prev = yattaMaps.characters.get(n);
+          if (prev) {
+            prev.id = String(id);
+          } else {
+            yattaMaps.characters.set(n, {
+              id: String(id),
+              name: item.name,
+              rarity: Number(item.rank) || 5,
+              element: ELEMENT_MAP[item.element] || item.element || 'Unknown',
+              weaponType: WEAPON_TYPE_MAP[item.weaponType] || 'Sword',
+              icon: item.icon ? `https://enka.network/ui/${item.icon}.png` : ''
+            });
+          }
+        }
+        return yattaMaps.characters;
+      })
+      .catch(() => yattaMaps.characters);
+  }
+  await yattaAvatarIdMapPromise;
+  return yattaMaps.characters.get(norm)?.id || null;
+}
+
 export async function ensureCharacterKitAndStats(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const cache = loadKitCache();
   if (cache.chars[norm]) return cache.chars[norm];
-  const entry = yattaMaps.characters.get(norm);
-  if (!entry) return null;
+  let entry = yattaMaps.characters.get(norm);
   if (pendingKitFetches.has(norm)) return pendingKitFetches.get(norm);
 
   const task = (async () => {
     try {
-      if (entry.id) {
+      const charId = entry?.unreleased ? null : entry?.id || (await resolveYattaAvatarId(norm));
+      entry = yattaMaps.characters.get(norm) || entry;
+      if (charId) {
         const [detailRes, curveData] = await Promise.all([
-          fetch(`https://gi.yatta.moe/api/v2/en/avatar/${encodeURIComponent(entry.id)}`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`https://gi.yatta.moe/api/v2/en/avatar/${encodeURIComponent(charId)}`).then((r) => (r.ok ? r.json() : null)),
           fetchCurve('avatar')
         ]);
         if (detailRes?.data) {
@@ -1404,7 +1626,7 @@ export async function ensureCharacterKitAndStats(pascalKey) {
           return parsed;
         }
       }
-      if (entry.lunarisId && yattaMaps.lunarisVer) {
+      if (entry?.lunarisId && yattaMaps.lunarisVer) {
         const url = `https://api.lunaris.moe/data/${encodeURIComponent(yattaMaps.lunarisVer)}/en/char/${encodeURIComponent(entry.lunarisId)}.json`;
         const res = await fetch(url);
         if (res.ok) {
@@ -1433,6 +1655,14 @@ let yattaWeaponIdMapPromise = null;
 async function resolveYattaWeaponId(norm) {
   const existing = yattaMaps.weapons.get(norm)?.id;
   if (existing) return existing;
+  const idxHit = (cachedWeaponsIndex || []).find(
+    (w) => normalizeAssetKey(w.key) === norm || normalizeAssetKey(w.name) === norm
+  );
+  if (idxHit?.id) {
+    const prev = yattaMaps.weapons.get(norm) || {};
+    yattaMaps.weapons.set(norm, { ...prev, id: String(idxHit.id) });
+    return String(idxHit.id);
+  }
   if (!yattaWeaponIdMapPromise) {
     yattaWeaponIdMapPromise = fetch('https://gi.yatta.moe/api/v2/en/weapon')
       .then((r) => (r.ok ? r.json() : null))

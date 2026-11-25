@@ -1,2 +1,12 @@
 node_modules/
 genshin_export_*.json
+.venv/
+scripts/.dimbreath_cache/
+scripts/.lunaris_cache/
+scripts/.yatta_cache/
+scripts/.bin/
+scripts/__pycache__/
+*.pyc
+.agents/skills/
+skills-lock.json
+*TextMap*.json

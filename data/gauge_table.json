@@ -1,0 +1,222 @@
+{
+  "version": "7.2.52",
+  "notes": "Elemental Gauge Theory (GU) & application cadence lookup for Teams Lab aura stability checks.",
+  "units": {
+    "Xingqiu": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.0,
+      "unitsPerSec": 1.05,
+      "constellationShifts": {
+        "6": { "unitsPerSec": 1.45, "note": "C6 adds 5-sword waves + energy refund, stabilizing solo Hydro Vaporize." }
+      }
+    },
+    "Yelan": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.0,
+      "unitsPerSec": 0.95,
+      "constellationShifts": {
+        "2": { "unitsPerSec": 1.28, "note": "C2 fires an extra Hydro arrow every 1.8s, matching C0-C5 Xingqiu aura." }
+      }
+    },
+    "Furina": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.6,
+      "unitsPerSec": 0.65,
+      "constellationShifts": {}
+    },
+    "SangonomiyaKokomi": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 2.0,
+      "unitsPerSec": 0.55,
+      "constellationShifts": {}
+    },
+    "Columbina": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.5,
+      "unitsPerSec": 0.72,
+      "constellationShifts": {}
+    },
+    "Xiangling": {
+      "element": "Pyro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.15,
+      "unitsPerSec": 0.92,
+      "constellationShifts": {
+        "4": { "unitsPerSec": 0.95, "note": "C4 extends Pyronado duration by 40% (14s total)." }
+      }
+    },
+    "Mavuika": {
+      "element": "Pyro",
+      "role": "dual",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 2.0,
+      "unitsPerSec": 0.55,
+      "constellationShifts": {}
+    },
+    "Durin": {
+      "element": "Pyro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.5,
+      "unitsPerSec": 0.7,
+      "constellationShifts": {}
+    },
+    "Yoimiya": {
+      "element": "Pyro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.25,
+      "unitsPerSec": 0.78,
+      "preferredAura": "Hydro"
+    },
+    "HuTao": {
+      "element": "Pyro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 0.95,
+      "unitsPerSec": 1.05,
+      "preferredAura": "Hydro"
+    },
+    "Arlecchino": {
+      "element": "Pyro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.35,
+      "unitsPerSec": 0.74,
+      "preferredAura": "Hydro"
+    },
+    "Klee": {
+      "element": "Pyro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 0.7,
+      "unitsPerSec": 1.35,
+      "preferredAura": "Hydro"
+    },
+    "Tartaglia": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 0.65,
+      "unitsPerSec": 1.55,
+      "constellationShifts": {}
+    },
+    "KamisatoAyato": {
+      "element": "Hydro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.2,
+      "unitsPerSec": 0.85,
+      "preferredAura": "Pyro"
+    },
+    "Neuvillette": {
+      "element": "Hydro",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.1,
+      "unitsPerSec": 0.9,
+      "preferredAura": "Electro"
+    },
+    "Nahida": {
+      "element": "Dendro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.5,
+      "appCadenceSec": 2.5,
+      "unitsPerSec": 0.85,
+      "constellationShifts": {}
+    },
+    "Lauma": {
+      "element": "Dendro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.8,
+      "unitsPerSec": 0.65,
+      "constellationShifts": {}
+    },
+    "Emilie": {
+      "element": "Dendro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.5,
+      "unitsPerSec": 0.7,
+      "constellationShifts": {}
+    },
+    "Fischl": {
+      "element": "Electro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.0,
+      "unitsPerSec": 1.05,
+      "constellationShifts": {
+        "6": { "unitsPerSec": 1.4, "note": "C6 Oz coordinates with every Normal Attack, spiking Electro uptime." }
+      }
+    },
+    "YaeMiko": {
+      "element": "Electro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.5,
+      "unitsPerSec": 0.72,
+      "constellationShifts": {}
+    },
+    "Ineffa": {
+      "element": "Electro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.6,
+      "unitsPerSec": 0.68,
+      "constellationShifts": {}
+    },
+    "Citlali": {
+      "element": "Cryo",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.5,
+      "unitsPerSec": 0.7,
+      "constellationShifts": {}
+    },
+    "Escoffier": {
+      "element": "Cryo",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.6,
+      "unitsPerSec": 0.68,
+      "constellationShifts": {}
+    },
+    "Rosaria": {
+      "element": "Cryo",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 2.0,
+      "unitsPerSec": 0.55,
+      "constellationShifts": {}
+    },
+    "Ganyu": {
+      "element": "Cryo",
+      "role": "trigger_driver",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.8,
+      "unitsPerSec": 0.65,
+      "preferredAura": "Pyro"
+    },
+    "Vodyanitsa": {
+      "element": "Hydro",
+      "role": "aura_provider",
+      "gaugeUnits": 1.0,
+      "appCadenceSec": 1.6,
+      "unitsPerSec": 0.68,
+      "constellationShifts": {}
+    }
+  }
+}

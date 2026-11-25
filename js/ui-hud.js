@@ -7,7 +7,7 @@ import {
   getMaterialMeta,
   getWeaponMeta,
   normalizeAssetKey
-} from './catalog.js?v=20261115ag';
+} from './catalog.js?v=20261120aj';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,
@@ -21,7 +21,7 @@ import {
   DEFAULT_WISH_GOAL,
   getServerResetInfo,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261114w';
+} from './calculations.js?v=20261120x';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 let focusedTargetId = null;

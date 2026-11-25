@@ -1,4 +1,4 @@
-import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261115ag';
+import { getCatalog, getCharacterMeta, getMaterialMeta, getWeaponMeta } from './catalog.js?v=20261121p64';
 
 /**
  * Effective Hero's Wit = 4★ + 0.25 × 3★ + 0.05 × 2★
@@ -11,6 +11,7 @@ export const SERVER_REGIONS = {
 };
 
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /**
  * Computes the current in-game day (adjusted for 04:00 server reset) and
@@ -23,6 +24,9 @@ export function getServerResetInfo(serverId = 'NA', nowMs = Date.now()) {
   const inGameMs = nowMs + offsetMs - resetBoundaryMs;
   const inGameDate = new Date(inGameMs);
   const inGameDay = WEEKDAY_NAMES[inGameDate.getUTCDay()];
+  const monthShort = MONTH_SHORT[inGameDate.getUTCMonth()];
+  const dayOfMonth = inGameDate.getUTCDate();
+  const shortDate = `${inGameDay.slice(0, 3)}, ${monthShort} ${dayOfMonth}`;
 
   const dayMs = 86400_000;
   const elapsedInDay = ((inGameMs % dayMs) + dayMs) % dayMs;
@@ -34,6 +38,9 @@ export function getServerResetInfo(serverId = 'NA', nowMs = Date.now()) {
   return {
     server,
     inGameDay,
+    monthShort,
+    dayOfMonth,
+    shortDate,
     msUntilReset,
     hours,
     minutes,
@@ -91,7 +98,7 @@ export function calcCoinPurse(wallet = {}) {
 }
 
 export const DEFAULT_WISH_GOAL = {
-  label: 'Dec 16 Banner Target',
+  label: '7.3 Phase 1 (Anastasya + Danica)',
   targetDate: '2026-12-16',
   targetPulls: 180,
   charPity: 0,
@@ -401,7 +408,7 @@ export function calcTalentUpgradeCost(charKey, currentLvl, targetLvl) {
   return {
     mora,
     books,
-    bookName: charMeta?.talentBook || 'Gold',
+    bookName: charMeta?.talentBook || '',
     weekly,
     weeklyMat: charMeta?.weeklyMat || '',
     crown
@@ -457,7 +464,7 @@ function computeRawTargetRequirements(target) {
   // 3. Talents (Auto / Skill / Burst)
   const talentCurve = curves.talentByLevel || DEFAULT_TALENT_CURVE;
 
-  const bookBase = charMeta.talentBook || 'Gold';
+  const bookBase = charMeta.talentBook || '';
   const slots = ['auto', 'skill', 'burst'];
   for (const slot of slots) {
     const cT = Math.max(1, Math.min(10, Number(target.currentTalent?.[slot]) || 1));
@@ -466,8 +473,10 @@ function computeRawTargetRequirements(target) {
       const step = talentCurve[lvl];
       if (!step) continue;
       addReq('Mora', step.mora || 0);
-      const prefix = step.bookTier === 'Teachings' ? 'TeachingsOf' : step.bookTier === 'Guide' ? 'GuideTo' : 'PhilosophiesOf';
-      addReq(`${prefix}${bookBase}`, step.bookCount || 0);
+      if (bookBase) {
+        const prefix = step.bookTier === 'Teachings' ? 'TeachingsOf' : step.bookTier === 'Guide' ? 'GuideTo' : 'PhilosophiesOf';
+        addReq(`${prefix}${bookBase}`, step.bookCount || 0);
+      }
       if (step.weekly && charMeta.weeklyMat) addReq(charMeta.weeklyMat, step.weekly);
       if (step.crown) addReq('CrownOfInsight', step.crown);
       const tCommon = TALENT_COMMON_CURVE[lvl];
@@ -1243,8 +1252,6 @@ export function calcSpareReserves(account = {}, sharedPool = []) {
   };
 }
 
-const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /**
  * Calculates estimated resin days, real calendar landing date (relative to server),
  * and the true bottleneck gatekeeper for a priority target.
@@ -1309,7 +1316,7 @@ export function calcTargetTelemetry(target, sharedPool = [], serverId = 'NA', no
       label: `Ley Line / EXP locked (~${resinDays}d · ${Math.round(totalUnfundedResin).toLocaleString()} Resin)`
     };
   } else {
-    gatekeeper = { type: 'ready', label: 'Fully funded — ready to build' };
+    gatekeeper = { type: 'ready', label: 'All mats ready — ready to build' };
   }
 
   return {
@@ -1352,4 +1359,356 @@ export function calcResinAllocationSummary(sharedPool = []) {
     }));
 
   return { totalResin, buckets };
+}
+
+/**
+ * Genshin 6-week (42-day) Patch & 21-day Banner Half Calendar anchored to
+ * Version 7.3 Launch: 2026-12-16 02:00 UTC (Dec 15, 21:00 EST Toronto / Dec 16, 09:00 WIB Jakarta).
+ * Also models the 7-day All-Domains-Open surge at the start of each 21-day banner half.
+ */
+export const PATCH_7_3_EPOCH_MS = Date.UTC(2026, 11, 16, 2, 0, 0);
+const PATCH_CYCLE_MS = 42 * 86400_000;
+const BANNER_HALF_MS = 21 * 86400_000;
+
+const KNOWN_BANNER_HALVES = {
+  '7.2-1': { label: '7.2 Phase 1', bannerNote: 'Phase 1 Banner' },
+  '7.2-2': { label: '7.2 Phase 2', bannerNote: 'Pre-7.3 Prefarm Window' },
+  '7.3-1': { label: '7.3 Phase 1', bannerNote: 'Anastasya + Danica (assumed 21d)', featuredKeys: ['Anastasya', 'Danica'] },
+  '7.3-2': { label: '7.3 Phase 2', bannerNote: '2nd Half Lineup TBA (21d)', featuredKeys: [] }
+};
+
+function formatVersionFrom73Offset(patchOffset) {
+  const minor = 3 + patchOffset;
+  if (minor >= 0 && minor <= 8) return `7.${minor}`;
+  const totalTenths = 73 + patchOffset;
+  return `${Math.floor(totalTenths / 10)}.${((totalTenths % 10) + 10) % 10}`;
+}
+
+export function getPatchCalendarInfo(serverId = 'NA', nowMs = Date.now()) {
+  const resetInfo = getServerResetInfo(serverId, nowMs);
+  const patchOffset = Math.floor((nowMs - PATCH_7_3_EPOCH_MS) / PATCH_CYCLE_MS);
+  const version = formatVersionFrom73Offset(patchOffset);
+  const patchStartMs = PATCH_7_3_EPOCH_MS + patchOffset * PATCH_CYCLE_MS;
+  const elapsedMs = Math.max(0, nowMs - patchStartMs);
+  const dayInPatch = Math.min(42, Math.floor(elapsedMs / 86400_000) + 1);
+  const phase = dayInPatch <= 21 ? 1 : 2;
+  const dayInPhase = phase === 1 ? dayInPatch : dayInPatch - 21;
+
+  // First 7 days of each 21-day banner half unlock all Talent & Weapon domains regardless of weekday
+  const isAllDomainsOpenSurge = dayInPhase >= 1 && dayInPhase <= 7;
+  const surgeDaysRemaining = isAllDomainsOpenSurge ? 8 - dayInPhase : 0;
+
+  const nextPhaseStartMs = phase === 1 ? patchStartMs + BANNER_HALF_MS : patchStartMs + PATCH_CYCLE_MS;
+  const nextVersion = phase === 1 ? version : formatVersionFrom73Offset(patchOffset + 1);
+  const nextPhase = phase === 1 ? 2 : 1;
+
+  const curKey = `${version}-${phase}`;
+  const nextKey = `${nextVersion}-${nextPhase}`;
+  const curMeta = KNOWN_BANNER_HALVES[curKey] || { label: `${version} Phase ${phase}`, bannerNote: `Phase ${phase} (21d)` };
+  const nextMeta = KNOWN_BANNER_HALVES[nextKey] || { label: `${nextVersion} Phase ${nextPhase}`, bannerNote: `Phase ${nextPhase} (21d)` };
+
+  const msToNextPhase = Math.max(0, nextPhaseStartMs - nowMs);
+  const daysToNextPhase = Number((msToNextPhase / 86400_000).toFixed(2));
+  const wholeDaysToNext = Math.floor(msToNextPhase / 86400_000);
+  const remHoursToNext = Math.floor((msToNextPhase % 86400_000) / 3600_000);
+  const naturalResinToNext = Math.floor((msToNextPhase / 3600_000) * 7.5); // 1 Resin / 8m = 7.5/hr = 180/day
+
+  const weekdayCounts = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
+  let allOpenDaysBeforeNext = 0;
+  for (let probe = nowMs; probe < nextPhaseStartMs; probe += 86400_000) {
+    const pElapsed = Math.max(0, probe - patchStartMs);
+    const pDayPatch = Math.min(42, Math.floor(pElapsed / 86400_000) + 1);
+    const pDayPhase = pDayPatch <= 21 ? pDayPatch : pDayPatch - 21;
+    const dName = getServerResetInfo(serverId, probe).inGameDay;
+    const short = WEEKDAY_SHORT[dName] || dName.slice(0, 3);
+    if (pDayPhase >= 1 && pDayPhase <= 7) {
+      allOpenDaysBeforeNext += 1;
+    } else if (short === 'Sun') {
+      allOpenDaysBeforeNext += 1;
+      weekdayCounts.Sun += 1;
+    } else if (weekdayCounts[short] !== undefined) {
+      weekdayCounts[short] += 1;
+    }
+  }
+
+  const nextLocalDate = new Date(nextPhaseStartMs + resetInfo.server.offsetHours * 3600_000);
+  const nextPhaseDateShort = `${MONTH_SHORT[nextLocalDate.getUTCMonth()]} ${nextLocalDate.getUTCDate()}`;
+  const nextDualTzText =
+    nextKey === '7.3-1'
+      ? 'Dec 15, 9:00 PM Toronto · Dec 16, 9:00 AM Jakarta'
+      : `${nextPhaseDateShort} (${resetInfo.server.short})`;
+
+  return {
+    ...resetInfo,
+    version,
+    phase,
+    dayInPatch,
+    dayInPhase,
+    currentLabel: curMeta.label,
+    currentBannerNote: curMeta.bannerNote,
+    isAllDomainsOpenSurge,
+    surgeDaysRemaining,
+    effectiveScheduleDay: isAllDomainsOpenSurge ? 'Sunday' : resetInfo.inGameDay,
+    nextVersion,
+    nextPhase,
+    nextLabel: nextMeta.label,
+    nextBannerNote: nextMeta.bannerNote,
+    nextFeaturedKeys: nextMeta.featuredKeys || [],
+    nextPhaseStartMs,
+    nextPhaseDateShort,
+    nextDualTzText,
+    daysToNextPhase,
+    countdownToNextText: `${wholeDaysToNext}d ${String(remHoursToNext).padStart(2, '0')}h`,
+    naturalResinToNext,
+    weekdayCounts,
+    allOpenDaysBeforeNext,
+    monThuSlots: weekdayCounts.Mon + weekdayCounts.Thu,
+    tueFriSlots: weekdayCounts.Tue + weekdayCounts.Fri,
+    wedSatSlots: weekdayCounts.Wed + weekdayCounts.Sat,
+    sunSlots: allOpenDaysBeforeNext
+  };
+}
+
+function buildFunctionalFloorTarget(target) {
+  const curLvl = Math.max(1, Number(target.currentLevel) || 1);
+  const tgtLvl = Math.max(curLvl, Number(target.targetLevel) || 90);
+  const funcLvl = Math.max(curLvl, Math.min(tgtLvl, 80));
+  const cT = target.currentTalent || {
+    auto: target.currentTalents?.[0] ?? 1,
+    skill: target.currentTalents?.[1] ?? 1,
+    burst: target.currentTalents?.[2] ?? 1
+  };
+  const tT = target.targetTalent || {
+    auto: target.targetTalents?.[0] ?? 6,
+    skill: target.targetTalents?.[1] ?? 9,
+    burst: target.targetTalents?.[2] ?? 9
+  };
+  return {
+    ...target,
+    targetLevel: funcLvl,
+    currentTalent: cT,
+    targetTalent: {
+      auto: Math.max(Number(cT.auto) || 1, Math.min(Number(tT.auto) || 1, 8)),
+      skill: Math.max(Number(cT.skill) || 1, Math.min(Number(tT.skill) || 1, 8)),
+      burst: Math.max(Number(cT.burst) || 1, Math.min(Number(tT.burst) || 1, 8))
+    },
+    weaponTargetLevel: Math.max(Number(target.weaponCurrentLevel) || 1, Math.min(Number(target.weaponTargetLevel) || 90, 90))
+  };
+}
+
+function estimateBookSeriesResinFromRows(wfRows = []) {
+  let t2Def = 0;
+  let t3Def = 0;
+  let t4Def = 0;
+  for (const r of wfRows) {
+    if (r.deficit <= 0) continue;
+    if (/^TeachingsOf/.test(r.key)) t2Def += r.deficit;
+    else if (/^GuideTo/.test(r.key)) t3Def += r.deficit;
+    else if (/^PhilosophiesOf/.test(r.key)) t4Def += r.deficit;
+  }
+  const equiv = t4Def + t3Def / 3 + t2Def / 9;
+  if (equiv <= 0) return { runs: 0, resin: 0 };
+  const runs = Math.max(1, Math.ceil(equiv / 2.2));
+  return { runs, resin: runs * 20 };
+}
+
+/**
+ * Two-Pass Milestone Waterfall:
+ * Pass 1 allocates books, EXP, and Mora so ALL active priority targets reach their
+ * Day-1 Functional Floor (Lv.80 + Talents <= 8, 0 Crowns) before Pass 2 allocates
+ * expensive Lv.80->90 & Talent 9->10 Crown polish.
+ */
+export function calculateTwoPassMilestonePlan(prefarmQueue = [], inventory = {}, wallet = null, serverId = 'NA', nowMs = Date.now()) {
+  const patchCal = getPatchCalendarInfo(serverId, nowMs);
+  const sorted = sortAndLabelPrefarmQueue(prefarmQueue);
+  const funcQueue = sorted.map((t) => buildFunctionalFloorTarget(t));
+  const funcWf = calculateWaterfallPrefarm(funcQueue, inventory, wallet);
+  const maxWf = calculateWaterfallPrefarm(sorted, inventory, wallet);
+
+  const byId = new Map();
+  let funcTotalMoraNeeded = 0;
+
+  const targetSummaries = sorted.map((t, idx) => {
+    const fTarget = funcQueue[idx];
+    const fRows = funcWf.get(t.id) || [];
+    const mRows = maxWf.get(t.id) || [];
+    const funcPct = calcTargetReadinessPct(fRows);
+    const maxPct = calcTargetReadinessPct(mRows);
+
+    const fMoraRow = fRows.find((r) => r.key === 'Mora');
+    if (fMoraRow && t.tier <= 2) funcTotalMoraNeeded += fMoraRow.needed || 0;
+
+    const cm = getCharacterMeta(t.characterKey);
+    const bookBase = cm?.talentBook || '';
+    const domInfo = bookBase ? getDomainInfoForReward(`PhilosophiesOf${bookBase}`, patchCal.inGameDay) : { days: [] };
+    const nonSunDays = (domInfo.days || []).filter((d) => d !== 'Sun');
+    const dedicatedSlots = nonSunDays.reduce((acc, d) => acc + (patchCal.weekdayCounts[d] || 0), 0);
+
+    const funcBooks = estimateBookSeriesResinFromRows(fRows);
+    const maxBooks = estimateBookSeriesResinFromRows(mRows);
+
+    const bossMeta = cm?.bossMat ? getMaterialMeta(cm.bossMat) : null;
+    const bossRow = mRows.find((r) => r.key === cm?.bossMat);
+    const bossDeficit = bossRow?.deficit || 0;
+    const bossResin = bossDeficit > 0 ? Math.ceil(bossDeficit / 2.5) * 40 : 0;
+    const bossUnreleased = Boolean(bossMeta?.bossUnreleased);
+
+    const ft = fTarget.targetTalent;
+    const summary = {
+      id: t.id,
+      characterKey: t.characterKey,
+      name: cm?.name || t.characterKey,
+      tier: t.tier,
+      tierLabel: t.tierLabel,
+      funcLabel: `Lv.${fTarget.targetLevel} · ${ft.auto}/${ft.skill}/${ft.burst}`,
+      funcPct,
+      maxPct,
+      funcReady: funcPct >= 100,
+      funcBookResin: funcBooks.resin,
+      maxBookResin: maxBooks.resin,
+      bookName: bookBase,
+      bookDays: nonSunDays,
+      dedicatedSlotsBeforeBanner: dedicatedSlots,
+      bossName: bossMeta?.bossName || '',
+      bossUnreleased,
+      bossDeficit,
+      bossResin
+    };
+    byId.set(t.id, summary);
+    return summary;
+  });
+
+  const t1 = targetSummaries[0] || null;
+  const t2 = targetSummaries[1] || null;
+  let pivotHeadline = '';
+  let pivotDetail = '';
+  let pivotTone = 'accent';
+
+  if (t1 && t2) {
+    const sameBooks = Boolean(t1.bookName && t1.bookName === t2.bookName);
+    const t1DaysText = t1.bookDays.length ? t1.bookDays.join('/') : 'Open Days';
+    const t2DaysText = t2.bookDays.length ? t2.bookDays.join('/') : 'Open Days';
+
+    if (!t1.funcReady && !t2.funcReady) {
+      pivotTone = 'gold';
+      if (!sameBooks && t1.bookName && t2.bookName) {
+        pivotHeadline = `Farm Both Books on Weekdays · Hold ${t1.name}'s Lv.9–10 Talents`;
+        pivotDetail = `Farm ${t1.bookName} (${t1DaysText} · ${t1.dedicatedSlotsBeforeBanner} days left) for ${t1.name} and ${t2.bookName} (${t2DaysText} · ${t2.dedicatedSlotsBeforeBanner} days left) for ${t2.name}. Spend Sundays & Mora on ${t1.name} until Lv.80 Ready (${t1.funcLabel}, ${t1.funcPct}%), then switch Sundays to ${t2.name} (${t2.funcLabel}, ${t2.funcPct}%).`;
+      } else {
+        pivotHeadline = `Finish ${t1.name} Lv.80 Ready (${t1.funcLabel}) First`;
+        pivotDetail = `Stop ${t1.name} at Lv.80 Ready (${t1.funcPct}%${t1.funcBookResin ? ` · ~${t1.funcBookResin} Book Resin left` : ''}) and switch to ${t2.name} (${t2.funcLabel}) before spending 56 Philosophies & 2.3M Mora on Crowns.`;
+      }
+    } else if (t1.funcReady && !t2.funcReady) {
+      pivotTone = 'mint';
+      pivotHeadline = `Switch to ${t2.name} (${t2.funcLabel})`;
+      pivotDetail = `${t1.name} is playable Day 1 (Lv.80 Ready). Hold ${t1.name}'s Lv.90 & Crowns and spend Sundays, off-days, and Mora on ${t2.name} (${t2.funcPct}% Lv.80 Ready) so both are playable on banner day.`;
+    } else {
+      pivotTone = 'mint';
+      pivotHeadline = `Both ${t1.name} & ${t2.name} Are Playable Day 1`;
+      pivotDetail = `Lv.80 & ≤8 Talents are covered for both characters. Free to spend remaining Resin & Mora on ${t1.name}'s Lv.90 and Crowns (${t1.maxPct}% Max).`;
+    }
+  } else if (t1) {
+    pivotHeadline = t1.funcReady
+      ? `${t1.name} Playable Day 1 (${t1.maxPct}% Max)`
+      : `Next Goal: ${t1.name} Lv.80 Ready (${t1.funcLabel} · ${t1.funcPct}%)`;
+    pivotDetail = t1.bookName
+      ? `${t1.bookName} opens ${t1.bookDays.join('/')} (${t1.dedicatedSlotsBeforeBanner} weekday + ${patchCal.sunSlots} All-Open days before ${patchCal.nextLabel}).`
+      : 'Finish guaranteed Ascension & Talent mats before spending Resin on Artifacts.';
+  }
+
+  const lockedBossTargets = targetSummaries.filter((x) => x.tier <= 2 && x.bossUnreleased && x.bossResin > 0);
+  let surgeWarning = '';
+  if (lockedBossTargets.length) {
+    const names = lockedBossTargets.map((x) => `${x.name} (${x.bossName || 'New Boss'}: ~${x.bossResin} Resin)`).join(' + ');
+    const totalLockedResin = lockedBossTargets.reduce((s, x) => s + x.bossResin, 0);
+    const lockedDays = (totalLockedResin / 180).toFixed(1);
+    surgeWarning = `New Boss Week-1 Lock: ${names} unlocks in ${patchCal.nextLabel} (~${lockedDays} of the 7 All Domains Open days). Finish Talent & Weapon domains before ${patchCal.nextPhaseDateShort} so Week-1 Resin goes straight to the new boss.`;
+  }
+
+  return {
+    patchCal,
+    byId,
+    targets: targetSummaries,
+    funcTotalMoraNeeded,
+    pivotHeadline,
+    pivotDetail,
+    pivotTone,
+    surgeWarning
+  };
+}
+
+function compactMoraText(n) {
+  const abs = Math.abs(Number(n) || 0);
+  if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  if (abs >= 10_000) return `${(abs / 1_000).toFixed(0)}K`;
+  return Math.round(abs).toLocaleString();
+}
+
+/**
+ * Passive-Adjusted Mora Horizon Calculator:
+ * Accounts for passive daily Mora + remaining Battle Pass Mora before recommending
+ * Blossom of Wealth (60,000 Mora / 20 Resin = 540K Mora/day @ 180 Resin), and computes
+ * the latest safe calendar date to start farming Ley Lines.
+ */
+export function calcMoraStrategy(account = {}, sharedPool = [], twoPassPlan = null, patchCal = null, nowMs = Date.now()) {
+  const cal = patchCal || twoPassPlan?.patchCal || getPatchCalendarInfo('NA', nowMs);
+  const wallet = account?.wallet || {};
+  const inventory = account?.inventory || {};
+  const bagMora = Number(wallet.mora ?? inventory.Mora?.count ?? 0);
+  const moraItem = (sharedPool || []).find((i) => i.kind === 'mora');
+  const maxNeededMora = Number(moraItem?.neededTotal ?? 0);
+  const funcNeededMora = Number(twoPassPlan?.funcTotalMoraNeeded ?? maxNeededMora);
+
+  const goal = { ...DEFAULT_WISH_GOAL, ...(wallet.wishGoal || {}) };
+  const hasBp = goal.hasBattlePass !== false;
+  const bpLevel = Math.min(50, Math.max(1, Math.floor(Number(goal.bpLevel) || 30)));
+  const remainingBpMora = Math.round(((50 - bpLevel) / 50) * (hasBp ? 2_160_000 : 720_000));
+  const dailyPassiveMora = 85_000; // Commissions + Expeditions + Bounties/Requests + Event baseline
+  const projectedPassiveMora = Math.round(cal.daysToNextPhase * dailyPassiveMora) + remainingBpMora;
+
+  const funcNetDeficit = Math.max(0, funcNeededMora - bagMora - projectedPassiveMora);
+  const maxNetDeficit = Math.max(0, maxNeededMora - bagMora - projectedPassiveMora);
+
+  const funcRuns = funcNetDeficit > 0 ? Math.ceil(funcNetDeficit / 60_000) : 0;
+  const maxRuns = maxNetDeficit > 0 ? Math.ceil(maxNetDeficit / 60_000) : 0;
+  const funcResin = funcRuns * 20;
+  const maxResin = maxRuns * 20;
+  const funcDays = funcResin > 0 ? Math.ceil(funcResin / 180) : 0;
+  const maxDays = maxResin > 0 ? Math.ceil(maxResin / 180) : 0;
+
+  const startMs = Math.max(nowMs, cal.nextPhaseStartMs - maxDays * 86400_000);
+  const startLocal = new Date(startMs + cal.server.offsetHours * 3600_000);
+  const startDateShort = `${MONTH_SHORT[startLocal.getUTCMonth()]} ${startLocal.getUTCDate()}`;
+
+  let statusTone = 'mint';
+  let badgeText = '0 Ley Lines Needed';
+  let recommendation = `Daily Mora + ${hasBp ? 'Gnostic Hymn' : 'Free BP'} (~+${compactMoraText(projectedPassiveMora)} by ${cal.nextPhaseDateShort}) covers all queued upgrades.`;
+
+  if (maxNetDeficit > 0 && funcNetDeficit <= 0) {
+    statusTone = 'gold';
+    badgeText = `Start ~${startDateShort} (Tue/Fri)`;
+    recommendation = `Lv.80 Ready covered! ~${compactMoraText(maxNetDeficit)} short for Lv.90 & Crowns after ~+${compactMoraText(projectedPassiveMora)} daily/BP Mora (~${maxDays}d / ${maxResin.toLocaleString()} Resin — run Blossom of Wealth on Tue/Fri or wait for Ley Line Overflow).`;
+  } else if (funcNetDeficit > 0) {
+    const isUrgent = maxDays >= Math.max(1, Math.floor(cal.daysToNextPhase) - 4);
+    statusTone = isUrgent ? 'coral' : 'gold';
+    badgeText = startMs <= nowMs + 86400_000 ? 'Farm Tue/Fri Now' : `Start by ${startDateShort}`;
+    recommendation = `Short ~${compactMoraText(funcNetDeficit)} Mora for Lv.80 Ready (~${compactMoraText(maxNetDeficit)} for Lv.90/Crowns) after ~+${compactMoraText(projectedPassiveMora)} daily/BP Mora — plan ~${maxDays}d (${maxResin.toLocaleString()} Resin) of Blossom of Wealth starting ${startDateShort} on Tue/Fri.`;
+  }
+
+  return {
+    bagMora,
+    funcNeededMora,
+    maxNeededMora,
+    projectedPassiveMora,
+    funcNetDeficit,
+    maxNetDeficit,
+    funcResin,
+    maxResin,
+    funcDays,
+    maxDays,
+    startDateShort,
+    statusTone,
+    badgeText,
+    recommendation
+  };
 }

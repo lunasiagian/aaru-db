@@ -1,4 +1,4 @@
-import { getMaterialMeta } from './catalog.js?v=20261115ag';
+import { getMaterialMeta } from './catalog.js?v=20261121p64';
 import { postImportGoodJson } from './api.js?v=20261116a';
 
 export function validateGoodV3(payload) {

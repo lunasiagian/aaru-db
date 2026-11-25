@@ -1,187 +1,198 @@
 ---
 name: AaruDB
-description: Swiss Editorial Astrolabe Plate design system for a reprogrammed Deshretian Ley-Line archive with zero-grey dual themes (Nocturnal Lapis Archive & Sunlit Sumeru Papyrus), variable Roboto Flex prose, and Recursive monospace telemetry.
+description: Teyvat Observatory — Neutral Obsidian Slate Operate-mode workspace with antique gold hairlines, Ley-Line cyan focus accents, Fraunces display titles, Inter UI copy, and JetBrains Mono tabular telemetry.
 colors:
-  bg-canvas: "#070b16"
-  bg-surface: "#0d1426"
-  bg-inset: "#141e38"
-  border-subtle: "#233256"
-  border-deshret: "#4a3b22"
-  accent-rust: "#e0653b"
-  accent-gold: "#e5b84b"
-  accent-leyline: "#2dd4bf"
-  text-primary: "#f3ead8"
-  text-secondary: "#9fb0d4"
-  text-muted: "#687ba6"
-  hydro-cyan: "#38bdf8"
-  pyro-coral: "#f87171"
-  anemo-mint: "#34d399"
-  electro-violet: "#c084fc"
-  dendro-lime: "#84cc16"
-  cryo-frost: "#67e8f9"
-  geo-amber: "#fbbf24"
+  bg-canvas: "#060812"
+  bg-surface: "#0C1120"
+  bg-surface-2: "#121A2F"
+  bg-hover: "#1A2440"
+  border-gold: "rgba(212, 175, 55, 0.16)"
+  border-gold-strong: "rgba(212, 175, 55, 0.34)"
+  accent-cyan: "#5EEAD4"
+  accent-cyan-hover: "#86F4E2"
+  accent-ink: "#071316"
+  accent-gold: "#D4AF37"
+  semantic-mint: "#34D399"
+  semantic-coral: "#F87171"
+  semantic-amber: "#FBBF24"
+  semantic-purple: "#A78BFA"
+  text-primary: "#F0F3FA"
+  text-secondary: "#B2BED6"
+  text-muted: "#7E8BA8"
+  el-pyro: "#F87171"
+  el-hydro: "#38BDF8"
+  el-electro: "#C084FC"
+  el-cryo: "#67E8F9"
+  el-anemo: "#34D399"
+  el-geo: "#FBBF24"
+  el-dendro: "#84CC16"
 typography:
   display:
-    fontFamily: "'Roboto Flex', sans-serif"
-    fontSize: "2.125rem"
-    fontWeight: 750
-    lineHeight: 1.08
-    letterSpacing: "0em"
-    fontVariation: "'wght' 750, 'wdth' 115, 'opsz' 36"
+    fontFamily: "'Fraunces', Georgia, serif"
+    fontSize: "1.75rem"
+    fontWeight: 600
+    lineHeight: 1.15
+    letterSpacing: "-0.02em"
   headline:
-    fontFamily: "'Roboto Flex', sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 650
-    lineHeight: 1.3
-    letterSpacing: "0em"
-    fontVariation: "'wght' 650, 'wdth' 108, 'opsz' 20"
-  body:
-    fontFamily: "'Roboto Flex', sans-serif"
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
     fontSize: "0.9375rem"
-    fontWeight: 420
-    lineHeight: 1.55
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "-0.01em"
+  body:
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
     letterSpacing: "0em"
-    fontVariation: "'wght' 420, 'wdth' 100, 'opsz' 14, 'GRAD' 0"
   label:
-    fontFamily: "'Roboto Flex', sans-serif"
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 500
-    lineHeight: 1.25
+    lineHeight: 1.3
     letterSpacing: "0em"
-    fontVariation: "'wght' 500, 'wdth' 90, 'opsz' 13, 'GRAD' 20"
   mono:
-    fontFamily: "'Recursive', monospace"
-    fontSize: "0.9375rem"
+    fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace"
+    fontSize: "0.8125rem"
     fontWeight: 500
     lineHeight: 1.4
     letterSpacing: "0em"
-    fontVariation: "'MONO' 1, 'CASL' 0, 'wght' 500"
     fontFeature: "'tnum' 1"
 rounded:
-  xs: "2px"
-  sm: "2px"
-  md: "2px"
-  lg: "2px"
-  pill: "2px"
+  sm: "8px"
+  md: "12px"
+  pill: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
-  md: "12px"
+  md: "14px"
   lg: "20px"
-  xl: "32px"
+  xl: "28px"
 components:
-  button-target:
-    backgroundColor: "{colors.bg-inset}"
+  button-primary:
+    backgroundColor: "{colors.accent-cyan}"
+    textColor: "{colors.accent-ink}"
+    rounded: "{rounded.sm}"
+    padding: "8px 14px"
+  button-outline:
+    backgroundColor: "{colors.bg-surface-2}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.sm}"
-    padding: "6px 12px"
-  button-target-active:
-    backgroundColor: "rgba(224, 101, 59, 0.14)"
-    textColor: "{colors.accent-rust}"
-  subtab-underline:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-secondary}"
-    padding: "8px 2px 10px"
-  subtab-underline-active:
-    textColor: "{colors.text-primary}"
-  stat-cell:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-primary}"
-    rounded: "0px"
-    padding: "6px 2px"
-  dossier-stage:
+    padding: "8px 14px"
+  panel-surface:
     backgroundColor: "{colors.bg-surface}"
     textColor: "{colors.text-primary}"
-    rounded: "{rounded.lg}"
-    padding: "18px 20px"
+    rounded: "{rounded.md}"
+    padding: "16px 20px"
+  badge-pill:
+    backgroundColor: "{colors.bg-surface-2}"
+    textColor: "{colors.text-secondary}"
+    rounded: "{rounded.pill}"
+    padding: "3px 9px"
 ---
 
 # Design System: AaruDB
 
 ## Overview
 
-**Creative North Star: "Swiss Editorial Astrolabe Plate"**
+**Creative North Star: "Teyvat Observatory — Obsidian Slate"**
 
-AaruDB models a reprogrammed Deshretian Ley-Line archive as a high-craft Swiss editorial reference manual. Rather than trapping build math inside nested rounded SaaS boxes, pages are structured with continuous `1px` horizontal and vertical hairline dividers, mid-rule section headers (`── Section Title ──`), concentric `1px` astrolabe portrait rings, and clean factual telemetry with zero roleplay fluff.
+AaruDB's active workspace (`prototype.html` / `prototype.css`) is an Operate-mode Genshin Impact command deck built for daily resin decisions, patch-calendar prefarming, and high-density build inspection. Deep nocturnal obsidian surfaces (`#060812` → `#0C1120` → `#121A2F`) carry whisper-thin `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`) and high-contrast Ley-Line cyan (`#5EEAD4`) primary actions, keeping attention on live numbers and character/material icons rather than ornamental chrome.
 
-The system enforces a strict **Zero-Grey Rule** across both themes—every surface, border, input, badge, and ink carries either deep midnight lapis/cobalt temperature (`dark`, default) or warm sunlit Sumeru papyrus/walnut temperature (`light`), anchored by Great Red Sand terracotta rust (`--accent-rust`), Deshret gold (`--accent-gold`), and oxidized malachite (`--accent-leyline`).
+The layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`. *(Legacy production `index.html` / `styles.css` retains the dual Nocturnal Lapis & Sunlit Papyrus `Roboto Flex` + `Recursive` system until `prototype.html` graduates.)*
 
 **Key Characteristics:**
-- Strict zero-grey dual theme: **Nocturnal Lapis Archive** (`#070b16` / `#0d1426` / `#141e38`) and **Sunlit Sumeru Papyrus** (`#f4ede0` / `#faf5eb` / `#eae0ce`)
-- De-carded Swiss hairline grid (`2px` max corner radius, `0` resting drop shadows, `1px` structural dividers)
-- Variable `Roboto Flex` AP-Playbook prose (`max-width: 66ch`, `line-height: 1.55`, `GRAD` hover) paired with `Recursive` `MONO` tabular telemetry
-- Full-width vertical-scroll Roster Dossier with top Character Selector Ribbon, 3-column Hero Spread, and 52px Sticky Telemetry Dock
+- Deep Obsidian Slate tonal stack (`#060812` / `#0C1120` / `#121A2F` / `#1A2440`) framed by `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`)
+- Single focal CTA accent in Ley-Line cyan (`#5EEAD4`), paired with antique gold (`#D4AF37`) for milestones/targets, mint (`#34D399`) for funded/ready states, and coral (`#F87171`) for deficits and Surge Trap alerts
+- Three-role typography: `Fraunces` page titles, `Inter` UI chrome & prose, and `JetBrains Mono` `tabular-nums` for all telemetry
+- Flat, single-layer Operate workspace: floating top command bar, centered stage, full-width patch calendar strip, 2-column strategy & resin grid, and zero nested cards
 
 ## Colors
 
-The palette enforces chromatic temperature across every token—no neutral or slate greys (`#1e293b`, `#334155`, `#475569`, `#808080`) appear anywhere.
+Chromatic midnight slate surfaces eliminate washed-out neutral greys while keeping contrast crisp across dense tables and telemetry strips.
 
-### Primary & Mineral Accents
-- **Great Red Sand Rust (`--accent-rust`):** `#e0653b` (dark) / `#b54424` (light) — Primary focal anchor, `+ Import GOOD` CTA, active filter keystones, deficit telemetry (`LOW ER`, shortages), and vertical portrait spine.
-- **Deshret Gold / Antique Brass (`--accent-gold`):** `#e5b84b` (dark) / `#a87b22` (light) — Active navigation indicators, astrolabe rings, and constellation `C1–C6` badges.
-- **Ley-Line Malachite (`--accent-leyline`):** `#2dd4bf` (dark) / `#1b7266` (light) — Synced status, resin readiness, and positive delta telemetry.
-- **7-Element Scoping (`[data-element]`):** Contextual `--el-ink` and `--el-wash` tuned separately for `[data-theme="dark"]` and `[data-theme="light"]` to drive the `4px` left dossier spine and active character highlights.
+### Primary & Semantic Accents
+- **Ley-Line Cyan (`--p-accent`):** `#5EEAD4` (hover `#86F4E2`, dark ink `#071316`) — Primary CTAs (`+ Import`), active focus rings, and interactive progress highlights.
+- **Antique Gold (`--p-gold`):** `#D4AF37` — Brand emblem, active navigation indicators, All Domains Open badges, and `1px` structural border tint (`rgba(212, 175, 55, 0.16)` / `0.34`).
+- **Ready Mint (`--p-mint`):** `#34D399` — `100%` Lv.80 Ready completion, `0 Ley Lines Needed` Mora status, and safe ER/readiness states.
+- **Deficit Coral (`--p-coral`):** `#F87171` — Material shortages, urgent Blossom of Wealth warnings, and **New Boss Week-1 Lock** alerts.
+- **Caution Amber (`--p-amber`):** `#FBBF24` — Partner read-only banner and mid-priority warnings.
+- **7-Element Palette (`--el-*`):** Pyro `#F87171`, Hydro `#38BDF8`, Electro `#C084FC`, Cryo `#67E8F9`, Anemo `#34D399`, Geo `#FBBF24`, Dendro `#84CC16`.
 
-### Chromatic Neutrals
-- **Nocturnal Lapis (`dark`, default):** Canvas `#070b16`, Surface `#0d1426`, Inset `#141e38`, Border `#233256`, Bronze Frame `#4a3b22`, Primary Ink `#f3ead8`, Secondary `#9fb0d4`, Muted `#687ba6`.
-- **Sunlit Papyrus (`light`):** Canvas `#f4ede0`, Surface `#faf5eb`, Inset `#eae0ce`, Border `#d4c6ae`, Brass Frame `#a87b22`, Primary Ink `#23190e`, Secondary `#6b5842`, Muted `#968167`.
+### Neutral Obsidian Stack
+- **Canvas (`--p-bg`):** `#060812` with subtle overhead gold (`rgba(212, 175, 55, 0.08)`) and cyan (`rgba(94, 234, 212, 0.06)`) radial ambient wash.
+- **Surface (`--p-surface`):** `#0C1120` — Top command bar, primary panels, and modal containers.
+- **Elevated Inset (`--p-surface-2`):** `#121A2F` — Secondary buttons, inputs, and table header bands.
+- **Interactive Hover (`--p-hover`):** `#1A2440` — Row and button hover states.
+- **Ink Ramp:** Primary `#F0F3FA`, Secondary `#B2BED6`, Muted `#7E8BA8`.
 
 ### Named Rules
-**The Zero-Grey Chromatic Rule.** Never introduce neutral or slate greys (`#1e293b`, `#334155`, `#475569`, `#64748b`, `#94a3b8`, `#808080`); every surface, input, pill, and ink must belong to either the Lapis or Papyrus chromatic ramp.
+**The One-Layer Surface Rule.** Never nest bordered cards inside bordered cards; inside a panel, separate subsections with `1px` horizontal hairlines (`--p-border`) or whitespace instead of extra boxes.
 
 ## Typography
 
-**Display Font:** `'Roboto Flex'` (`sans-serif` fallback)
-**Body Font:** `'Roboto Flex'` (`system-ui, sans-serif` fallback)
-**Telemetry Font:** `'Recursive'` (`monospace` fallback)
+**Display Font:** `'Fraunces'` (`Georgia, serif` fallback)
+**Body & UI Font:** `'Inter'` (`system-ui, -apple-system, sans-serif` fallback)
+**Telemetry Font:** `'JetBrains Mono'` (`ui-monospace, SFMono-Regular, monospace` fallback)
 
-**Character:** AP Playbook editorial legibility—Title Case for headings/tabs, Sentence case for prose/status copy, `max-width: 66ch` on long-form descriptions, and `Recursive` `MONO 1` tabular numerals for all combat stats and ledger totals.
+**Character:** Quiet editorial authority at the top of each view (`Fraunces`), neutral high-legibility controls (`Inter`), and razor-aligned tabular figures (`JetBrains Mono`) for resin math, countdowns, and combat multipliers.
 
 ### Hierarchy
-- **Display** (`'wght' 750, 'wdth' 115, 'opsz' 36`, `34px`, `line-height: 1.08`): Character hero titles.
-- **Headline** (`'wght' 650, 'wdth' 108, 'opsz' 20`, `13.5px–14px`): Mid-rule section headers (`── Section Title ──`) and sticky dock links.
-- **Body** (`'wght' 420, 'wdth' 100, 'opsz' 14, 'GRAD' 0`, `15px`, `line-height: 1.55`, `max-width: 66ch`): Talent descriptions, Razor Mode summaries, and synergy notes.
-- **Label** (`'wght' 500, 'wdth' 90, 'opsz' 13, 'GRAD' 20 → 65` on hover, `11px–12px`): Ribbon chips, weapon rows, and utility tags.
-- **Mono Telemetry** (`Recursive`, `'MONO' 1, 'CASL' 0`, `'wght' 500/650`, `'slnt' -6` for live deltas, `tabular-nums`): Combat stats, `wRV%`, `CV`, `ER%`, and wish ledger.
+- **Display** (`Fraunces`, `600`, `28px`, `line-height: 1.15`, `-0.02em`): View titles (`Today`, `Prefarm`, `Characters`, `Armory`, `Teams Lab`, `Vault`).
+- **Headline** (`Inter`, `600`, `15px`, `line-height: 1.3`): Panel titles (`Priority Targets`, `Open Domains`, `Milestone Pivot`).
+- **Body** (`Inter`, `400`, `14px`, `line-height: 1.5`): Strategy explanations, Surge Trap callouts, and kit/build prose.
+- **Label** (`Inter`, `500`, `12px`, `line-height: 1.3`): Status badges, filter chips, and compact metadata.
+- **Mono Telemetry** (`JetBrains Mono`, `500`, `12px–13px`, `tabular-nums`): Patch countdowns, Resin budgets, `Func X% · Max Y%`, Mora horizons, `wRV%`, `CV`, and `ER%`.
 
 ### Named Rules
-**The Numbers-Only Mono Rule.** Reserve `Recursive` monospace strictly for numerical telemetry, rankings, and stat deltas; prose headers and descriptions stay in `Roboto Flex`.
+**The No-Kicker Rule.** Never stack small uppercase eyebrow/kicker labels directly above section headings; let the heading and its inline right-hand metadata badge carry the context cleanly.
 
 ## Layout
 
-Full-width vertical-scroll Roster workspace (`max-width: 1520px`), pairing a top **Character Selector Ribbon** (Search, Element, Sort, `All Characters` drawer toggle, and horizontal portrait chips) with a full-width **3-Column Hero Spread** (`260px` Astrolabe Portrait | `1fr` Underlined Current Stats | `360px` Held Weapon & Artifacts), a **52px Sticky Telemetry Dock**, and 4 natural vertical-scroll chapters (`01` Materials, `02` Weapons, `03` Artifacts & ER, `04` Talents & Codex). Below `1180px`, the Hero Spread wraps the loadout column; below `760px`, all spreads stack to a single column.
+Centered single-column Observatory stage (`max-width: 1280px`) anchored beneath a sticky top command bar (`AaruDB` mark + account switcher on left, 6 primary view tabs centered, Quick Jump `/`, server date/reset button, and `+ Import` on right).
+
+On `Today`, information flows top-to-bottom in strict decision order:
+1. **Patch Calendar Strip (`.p-patch-bar`):** In-game date, 42-day patch/phase day, All Domains Open status, dual-timezone next-banner countdown, natural Resin budget, and remaining weekday/All-Open domain days.
+2. **Resource Strip (`.p-resource-strip`):** Live Mora (+ Blossom of Wealth timing badge), Hero's Wit, Fragile Resin, and Primogem/Fate reserves.
+3. **2-Column Strategy Strip (`.p-strategy-strip`):** Build Order (`Lv.80 → Crown`) + New Boss Week-1 Lock alert (left) paired with Best Domain Today + Blossom of Wealth note (right); collapses to `1fr` at `<= 960px`.
+4. **Build Queue & Open Domains:** Character cards with dual-layer `Lv.80 X% · Max Y%` progress bars and domain tiles auto-unlocked during the first 7 days of each banner half.
 
 ## Elevation & Depth
 
-Surfaces are flat at rest. Depth comes strictly from 3-step tonal contrast (`--bg-canvas` → `--bg-surface` → `--bg-inset`) and `1px` hairline dividers (`--border-subtle` / `--border-deshret`), with `box-shadow: none` on all resting cards and panels.
+Surfaces are flat at rest—depth is conveyed through the 3-step Obsidian Slate tonal ladder (`#060812` → `#0C1120` → `#121A2F`) and `1px` antique gold hairlines (`--p-border`), with no ambient resting drop shadows. Elevated shadows are reserved strictly for modal dialogs and floating search popovers.
 
 ### Named Rules
-**The Flat-By-Default Rule.** Cards, strips, and ledger rows never use ambient drop shadows at rest; active states shift border accent (`--accent-rust` / `--el-ink`) and `GRAD` weight.
+**The Hairline-Only Rule.** Structural borders stay at `1px solid var(--p-border)` (or `var(--p-border-strong)` on focus/hover); never use thick (`> 1px`) colored left or right accent stripes on cards or alert banners.
 
 ## Shapes
 
-Crisp editorial book-plate geometry (`2px` max corner radius across all cards, inputs, buttons, and tiles; `0px` on underlined stat ledger rows) paired with `1px` hairline dividers, `3px–4px` vertical spines (`--accent-rust` / `--el-ink`), and concentric circular `50%` astrolabe rings behind character portraits.
+Controlled, modern-archival geometry: `12px` (`--p-radius`) on primary panels and modals, `8px` (`--p-radius-sm`) on buttons, inputs, and compact tiles, and `999px` pill radii strictly on small status badges and progress tracks.
 
 ## Components
 
 ### Buttons
-- **Primary CTA (`.btn-gold`):** Great Red Sand rust fill (`--accent-rust`) with `#faf5eb` ink, shifting to `--accent-gold` on hover.
-- **Target Toggle:** Inset fill (`--bg-inset`) with `1px` border, shifting to `--el-wash` and `--el-ink` when active.
+- **Shape:** Gently rounded (`8px`).
+- **Primary (`.p-btn-primary`):** Ley-Line cyan (`#5EEAD4`) with deep ink (`#071316`), `8px 14px` padding, shifting to `#86F4E2` on hover.
+- **Outline (`.p-btn-outline`):** Inset slate (`#121A2F`) with `1px` strong gold hairline (`rgba(212, 175, 55, 0.34)`), shifting to `#1A2440` on hover.
+- **Focus / Active:** `2px solid #5EEAD4` focus-visible outline (`2px` offset); `1px` downward press micro-feedback on `:active`.
 
-### Chips & Pills
-- **Ribbon Chips & Utility Tags:** `2px` radius with `Roboto Flex` `GRAD 20 → 65` hover transition and zero neutral grey.
+### Badges & Telemetry Pills
+- **Style:** `999px` pill with `1px` translucent semantic border and `JetBrains Mono` `12px` `tabular-nums` copy (`mint`, `gold`, `coral`, `amber`, `accent`).
+
+### Dual-Layer Progress Bars (`.p-bar-dual`)
+- **Behavior:** Renders Pass-1 Functional readiness (`Lv.80 · ≤8`) in mint/gold over the full Max/Crown readiness track so players can judge Day-1 playability at a glance.
 
 ### Navigation
-- **Left App Rail + Top Telemetry Bar + Sticky Dossier Dock:** Theme switcher (`Theme: Obsidian` / `Theme: Papyrus` persisted in `localStorage`) and scroll-linked `52px` sticky telemetry bar with `var(--accent-rust)` active chapter highlight.
+- **Top Command Bar (`.proto-command-bar`):** Sticky translucent obsidian bar (`#0C1120`) with `1px` bottom gold hairline, 6 view pills with active gold/cyan emphasis, and responsive mobile menu collapse.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** enforce zero neutral/slate greys across both `dark` (Lapis) and `light` (Papyrus) modes.
-- **Do** render all numerical stats (`HP`, `ATK`, `CRIT`, `ER%`, `wRV%`, pulls) in `Recursive` monospace with `tabular-nums`.
-- **Do** use Title Case for headings/tabs and Sentence case for prose/status badges.
+- **Do** keep every numerical figure (dates, resin, Mora, `Func %`, `Max %`, `wRV%`, `CV`, `ER%`) in `JetBrains Mono` with `tabular-nums`.
+- **Do** preserve authentic Genshin Impact terminology (`Domains`, `Blossom of Wealth`, `Fragile Resin`, `Talents`, `Ascension`).
+- **Do** keep surfaces flat at rest with `1px` gold hairlines and single-layer panels.
 
 ### Don't:
-- **Don't** add ambient drop shadows, glassmorphism, or large rounded SaaS card wrappers (`> 2px`).
-- **Don't** use `text-transform: uppercase` on prose headings, tabs, or table headers.
-- **Don't** break existing JS data pipelines (`GOOD` import, Apps Script sync, `wRV%`, `Razor Mode`).
+- **Don't** nest bordered cards inside bordered cards or add `> 1px` colored left/right accent stripes.
+- **Don't** place uppercase eyebrow/kicker labels above section headings.
+- **Don't** break live data pipelines (`GOOD v3` import, Apps Script sync, Dimbreath/Lunaris catalog hydration, or `verify_upgrade.mjs`).

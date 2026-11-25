@@ -1,4 +1,11 @@
-import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261115ag';
+import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261121p64';
+
+function toEnkaUrlIfReleased(url, live) {
+  if (!url || live?.unreleased) return url || '';
+  if (url.startsWith('https://enka.network/ui/')) return url;
+  const m = url.match(/(UI_(?:AvatarIcon|Gacha_AvatarImg|EquipIcon|RelicIcon|MonsterIcon|ItemIcon)_[A-Za-z0-9_]+)\.(?:png|webp)$/i);
+  return m ? `https://enka.network/ui/${m[1]}.png` : url;
+}
 
 /**
  * Hybrid Icon Resolver
@@ -39,21 +46,27 @@ export function getFallbackAssetUrl(type, pascalKey) {
  */
 export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-icon') {
   const customSrc = getAssetUrl(type, pascalKey);
-  const fallbackSrc = getFallbackAssetUrl(type, pascalKey);
-  const primarySrc = fallbackSrc || customSrc;
+  const live = getLiveAssetEntry(type, pascalKey);
+  const rawFallback = getFallbackAssetUrl(type, pascalKey);
+  const enkaSrc = toEnkaUrlIfReleased(rawFallback, live);
+  const primarySrc = enkaSrc || rawFallback || customSrc;
+  const secondarySrc = (enkaSrc && rawFallback && enkaSrc !== rawFallback ? rawFallback : '').replace(/"/g, '&quot;');
   const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
   const safeAlt = String(alt || '').replace(/"/g, '&quot;');
   const isDecorative = alt === '';
+  const onerrorJs = secondarySrc
+    ? `if(this.dataset.fb!=='1'){this.dataset.fb='1';this.src='${secondarySrc}';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}`
+    : `this.style.display='none';this.nextElementSibling.style.display='flex';`;
 
   return `<span class="asset-wrap ${className}" data-key="${safeAlt || pascalKey}"${isDecorative ? ' aria-hidden="true"' : ''}>
     <img
       src="${primarySrc}"
       alt="${safeAlt}"
-      class="asset-img${fallbackSrc ? '' : ' is-custom-pixel'}"
+      class="asset-img${rawFallback ? '' : ' is-custom-pixel'}"
       loading="lazy"
       decoding="async"
       referrerpolicy="no-referrer"
-      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+      onerror="${onerrorJs}"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;
@@ -61,15 +74,26 @@ export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-ic
 
 /**
  * Renders full-body Gacha Splash Art (Enka UI_Gacha_AvatarImg_*) with automatic
- * fallback to the standard character avatar PNG/WebP or monogram.
+ * fallback to the catalog/Lunaris URL, standard character avatar, or monogram.
  */
 export function renderGachaSplash(pascalKey, alt = '') {
-  const avatarUrl = getFallbackAssetUrl('characters', pascalKey) || getAssetUrl('characters', pascalKey);
-  const splashUrl = avatarUrl.includes('UI_AvatarIcon_')
-    ? avatarUrl.replace('UI_AvatarIcon_', 'UI_Gacha_AvatarImg_')
-    : avatarUrl;
+  const rawAvatar = getFallbackAssetUrl('characters', pascalKey) || getAssetUrl('characters', pascalKey);
+  const live = getLiveAssetEntry('characters', pascalKey);
+  const avatarUrl = toEnkaUrlIfReleased(rawAvatar, live) || rawAvatar;
+  const catalogSplash = getCatalog()?.characters?.[pascalKey]?.gachaImg || '';
+  const rawSplash =
+    live?.gachaImg ||
+    catalogSplash ||
+    (rawAvatar.includes('/assets/avataricon/UI_AvatarIcon_')
+      ? rawAvatar.replace('/assets/avataricon/UI_AvatarIcon_', '/assets/gachaimg/UI_Gacha_AvatarImg_')
+      : rawAvatar.includes('UI_AvatarIcon_')
+        ? rawAvatar.replace('UI_AvatarIcon_', 'UI_Gacha_AvatarImg_')
+        : rawAvatar);
+  const splashUrl = toEnkaUrlIfReleased(rawSplash, live) || rawSplash;
+  const fallbackChain = splashUrl !== rawSplash && rawSplash ? rawSplash : avatarUrl;
   const isSplash = splashUrl !== avatarUrl;
   const safeAlt = String(alt || pascalKey || '').replace(/"/g, '&quot;');
+  const safeFallback = fallbackChain.replace(/"/g, '&quot;');
   const safeAvatar = avatarUrl.replace(/"/g, '&quot;');
   const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
 
@@ -81,7 +105,7 @@ export function renderGachaSplash(pascalKey, alt = '') {
       loading="eager"
       decoding="async"
       referrerpolicy="no-referrer"
-      onerror="if(this.dataset.fb!=='1'&&'${safeAvatar}'){this.dataset.fb='1';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+      onerror="if(this.dataset.fb!=='1'&&'${safeFallback}'){this.dataset.fb='1';this.src='${safeFallback}';}else if(this.dataset.fb!=='2'&&'${safeAvatar}'){this.dataset.fb='2';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;

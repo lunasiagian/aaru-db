@@ -1,0 +1,440 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T09:16:30-05:00",
+  "title": "Design System: AaruDB",
+  "extensions": {
+    "colorMeta": {
+      "bg-canvas": {
+        "role": "neutral",
+        "displayName": "Obsidian Slate Canvas",
+        "canonical": "#060812",
+        "tonalRamp": [
+          "#03040a",
+          "#060812",
+          "#0a0e1f",
+          "#101630",
+          "#172045",
+          "#212e61",
+          "#32458a",
+          "#5067b8"
+        ]
+      },
+      "bg-surface": {
+        "role": "neutral",
+        "displayName": "Observatory Panel Surface",
+        "canonical": "#0C1120",
+        "tonalRamp": [
+          "#060912",
+          "#090d1a",
+          "#0C1120",
+          "#121a30",
+          "#192442",
+          "#23335c",
+          "#354c85",
+          "#546fb3"
+        ]
+      },
+      "bg-surface-2": {
+        "role": "neutral",
+        "displayName": "Elevated Slate Inset",
+        "canonical": "#121A2F",
+        "tonalRamp": [
+          "#090d18",
+          "#0e1424",
+          "#121A2F",
+          "#1a2542",
+          "#233259",
+          "#30457a",
+          "#4661a6",
+          "#6a87cf"
+        ]
+      },
+      "bg-hover": {
+        "role": "neutral",
+        "displayName": "Interactive Slate Hover",
+        "canonical": "#1A2440",
+        "tonalRamp": [
+          "#0c111f",
+          "#131a2e",
+          "#1A2440",
+          "#243257",
+          "#304373",
+          "#415a99",
+          "#5c79bf",
+          "#86a1e0"
+        ]
+      },
+      "border-gold": {
+        "role": "accent",
+        "displayName": "Antique Gold Hairline",
+        "canonical": "rgba(212, 175, 55, 0.16)",
+        "tonalRamp": [
+          "#2b230b",
+          "#4a3c12",
+          "#6e591b",
+          "#947824",
+          "#b8962e",
+          "#D4AF37",
+          "#e6ca6e",
+          "#f7e8b2"
+        ]
+      },
+      "border-gold-strong": {
+        "role": "accent",
+        "displayName": "Strong Antique Gold Hairline",
+        "canonical": "rgba(212, 175, 55, 0.34)",
+        "tonalRamp": [
+          "#2b230b",
+          "#4a3c12",
+          "#6e591b",
+          "#947824",
+          "#b8962e",
+          "#D4AF37",
+          "#e6ca6e",
+          "#f7e8b2"
+        ]
+      },
+      "accent-cyan": {
+        "role": "primary",
+        "displayName": "Ley-Line Cyan",
+        "canonical": "#5EEAD4",
+        "tonalRamp": [
+          "#072b26",
+          "#0d473f",
+          "#14695d",
+          "#1d9181",
+          "#2ec2ad",
+          "#5EEAD4",
+          "#9cf5e7",
+          "#d5fcf6"
+        ]
+      },
+      "accent-cyan-hover": {
+        "role": "primary",
+        "displayName": "Luminous Ley-Line Cyan",
+        "canonical": "#86F4E2",
+        "tonalRamp": [
+          "#08302a",
+          "#0f4f46",
+          "#187568",
+          "#23a18f",
+          "#40cfba",
+          "#86F4E2",
+          "#b8faf0",
+          "#e3fdf9"
+        ]
+      },
+      "accent-ink": {
+        "role": "neutral",
+        "displayName": "Deep Cyan Button Ink",
+        "canonical": "#071316",
+        "tonalRamp": [
+          "#03080a",
+          "#071316",
+          "#0e252b",
+          "#173c45",
+          "#225763",
+          "#327a8a",
+          "#4fa4b8",
+          "#85cedf"
+        ]
+      },
+      "accent-gold": {
+        "role": "secondary",
+        "displayName": "Antique Gold",
+        "canonical": "#D4AF37",
+        "tonalRamp": [
+          "#2b230b",
+          "#4a3c12",
+          "#6e591b",
+          "#947824",
+          "#b8962e",
+          "#D4AF37",
+          "#e6ca6e",
+          "#f7e8b2"
+        ]
+      },
+      "semantic-mint": {
+        "role": "accent",
+        "displayName": "Funded Mint",
+        "canonical": "#34D399",
+        "tonalRamp": [
+          "#022c22",
+          "#064e3b",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34D399",
+          "#6ee7b7",
+          "#d1fae5"
+        ]
+      },
+      "semantic-coral": {
+        "role": "accent",
+        "displayName": "Deficit Coral",
+        "canonical": "#F87171",
+        "tonalRamp": [
+          "#450a0a",
+          "#7f1d1d",
+          "#991b1b",
+          "#dc2626",
+          "#ef4444",
+          "#F87171",
+          "#fca5a5",
+          "#fee2e2"
+        ]
+      },
+      "semantic-amber": {
+        "role": "accent",
+        "displayName": "Caution Amber",
+        "canonical": "#FBBF24",
+        "tonalRamp": [
+          "#451a03",
+          "#78350f",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#FBBF24",
+          "#fde68a",
+          "#fef3c7"
+        ]
+      },
+      "semantic-purple": {
+        "role": "accent",
+        "displayName": "Domain Violet",
+        "canonical": "#A78BFA",
+        "tonalRamp": [
+          "#2e1065",
+          "#4c1d95",
+          "#6d28d9",
+          "#7c3aed",
+          "#8b5cf6",
+          "#A78BFA",
+          "#ddd6fe",
+          "#f5f3ff"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Observatory Frost Ink",
+        "canonical": "#F0F3FA",
+        "tonalRamp": [
+          "#3d4454",
+          "#5d677d",
+          "#818da6",
+          "#a8b4cc",
+          "#ccd5e8",
+          "#F0F3FA",
+          "#f7f9fc",
+          "#ffffff"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Slate Silver Ink",
+        "canonical": "#B2BED6",
+        "tonalRamp": [
+          "#2e3647",
+          "#455069",
+          "#606e8c",
+          "#7e8eb0",
+          "#98a8c7",
+          "#B2BED6",
+          "#d2dbeb",
+          "#edf1f7"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Slate Caption",
+        "canonical": "#7E8BA8",
+        "tonalRamp": [
+          "#212633",
+          "#333b4d",
+          "#48536b",
+          "#616e8a",
+          "#7E8BA8",
+          "#9da8c2",
+          "#c2cadb",
+          "#e3e7f0"
+        ]
+      },
+      "el-pyro": {
+        "role": "accent",
+        "displayName": "Pyro Coral",
+        "canonical": "#F87171",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#dc2626", "#ef4444", "#F87171", "#fca5a5", "#fee2e2"]
+      },
+      "el-hydro": {
+        "role": "accent",
+        "displayName": "Hydro Cyan",
+        "canonical": "#38BDF8",
+        "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#0ea5e9", "#38BDF8", "#bae6fd", "#e0f2fe"]
+      },
+      "el-electro": {
+        "role": "accent",
+        "displayName": "Electro Violet",
+        "canonical": "#C084FC",
+        "tonalRamp": ["#2e1065", "#4c1d95", "#6d28d9", "#7c3aed", "#a855f7", "#C084FC", "#e9d5ff", "#f3e8ff"]
+      },
+      "el-cryo": {
+        "role": "accent",
+        "displayName": "Cryo Frost",
+        "canonical": "#67E8F9",
+        "tonalRamp": ["#083344", "#164e63", "#0e7490", "#0891b2", "#06b6d4", "#67E8F9", "#cffafe", "#ecfeff"]
+      },
+      "el-anemo": {
+        "role": "accent",
+        "displayName": "Anemo Mint",
+        "canonical": "#34D399",
+        "tonalRamp": ["#022c22", "#064e3b", "#047857", "#059669", "#10b981", "#34D399", "#a7f3d0", "#d1fae5"]
+      },
+      "el-geo": {
+        "role": "accent",
+        "displayName": "Geo Amber",
+        "canonical": "#FBBF24",
+        "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#FBBF24", "#fde68a", "#fef3c7"]
+      },
+      "el-dendro": {
+        "role": "accent",
+        "displayName": "Dendro Lime",
+        "canonical": "#84CC16",
+        "tonalRamp": ["#1a2e05", "#365314", "#4d7c0f", "#65a30d", "#84CC16", "#a3e635", "#bef264", "#ecfccb"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Observatory View Title",
+        "purpose": "View titles (Today, Prefarm, Characters, Armory, Teams Lab, Vault) in Fraunces 600."
+      },
+      "headline": {
+        "displayName": "Panel Section Heading",
+        "purpose": "Panel titles (Priority Targets, Open Domains, Milestone Pivot) in Inter 600."
+      },
+      "body": {
+        "displayName": "Operational UI Prose",
+        "purpose": "Strategy explanations, Surge Trap callouts, and kit/build prose in Inter 400."
+      },
+      "label": {
+        "displayName": "Status & Filter Label",
+        "purpose": "Status badges, filter chips, and compact metadata in Inter 500."
+      },
+      "mono": {
+        "displayName": "Tabular Resin & Combat Telemetry",
+        "purpose": "Patch countdowns, Resin budgets, Func/Max %, Mora horizons, wRV%, CV, and ER% in JetBrains Mono with tabular-nums."
+      }
+    },
+    "shadows": [
+      {
+        "name": "modal-elevation",
+        "value": "0 20px 50px rgba(0, 0, 0, 0.55)",
+        "purpose": "Modal dialogs and floating Quick Jump popovers only; resting panels stay flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-control",
+        "value": "140ms ease",
+        "purpose": "Background and border-color transitions on buttons, tabs, and rows."
+      },
+      {
+        "name": "press-micro",
+        "value": "80ms ease",
+        "purpose": "Subtle 1px downward tactile feedback on active button press."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "strategy-collapse",
+        "value": "960px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "stage-max",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary & Outline Buttons",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "High-contrast Ley-Line cyan primary action paired with gold-hairline inset outline button.",
+      "html": "<div class=\"ds-btn-row\">\n  <button type=\"button\" class=\"ds-btn ds-btn-primary\">+ Import</button>\n  <button type=\"button\" class=\"ds-btn ds-btn-outline\">NA · Wed, Nov 25 · 06h 42m</button>\n</div>",
+      "css": ".ds-btn-row { display: inline-flex; gap: 8px; align-items: center; }\n.ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid transparent; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color 140ms ease, border-color 140ms ease, transform 80ms ease; }\n.ds-btn:active { transform: translateY(1px); }\n.ds-btn:focus-visible { outline: 2px solid #5EEAD4; outline-offset: 2px; }\n.ds-btn-primary { background: #5EEAD4; color: #071316; font-weight: 600; }\n.ds-btn-primary:hover { background: #86F4E2; }\n.ds-btn-outline { background: #121A2F; color: #F0F3FA; border-color: rgba(212, 175, 55, 0.34); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; }\n.ds-btn-outline:hover { background: #1A2440; }"
+    },
+    {
+      "name": "Patch Calendar Strip",
+      "kind": "custom",
+      "refersTo": "panel-surface",
+      "description": "Full-width top telemetry strip showing in-game date, 42-day patch cadence, 7-day All-Open Surge status, and next-banner Resin budget.",
+      "html": "<section class=\"ds-patch-bar\">\n  <div class=\"ds-patch-left\">\n    <span class=\"ds-badge ds-badge-gold\">All Domains Open (7d left)</span>\n    <span class=\"ds-patch-meta\">Wed, Nov 25 · 7.2 Phase 2 (Day 22/42)</span>\n  </div>\n  <div class=\"ds-patch-right\">\n    <span class=\"ds-mono\">7.3 Phase 1 in 20d 20h · 3,750 Resin</span>\n  </div>\n</section>",
+      "css": ".ds-patch-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: 12px; background: #0C1120; border: 1px solid rgba(212, 175, 55, 0.16); color: #F0F3FA; font-family: 'Inter', system-ui, sans-serif; }\n.ds-patch-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n.ds-patch-meta { font-size: 13px; color: #B2BED6; }\n.ds-mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: #F0F3FA; }\n.ds-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; }\n.ds-badge-gold { background: rgba(212, 175, 55, 0.14); border: 1px solid rgba(212, 175, 55, 0.36); color: #D4AF37; }"
+    },
+    {
+      "name": "Dual-Layer Readiness Bar",
+      "kind": "custom",
+      "refersTo": "badge-pill",
+      "description": "Two-pass prefarm progress bar overlaying Day-1 Functional (Lv.80 <=8) readiness over Max/Crown readiness.",
+      "html": "<div class=\"ds-dual-wrap\">\n  <div class=\"ds-dual-head\">\n    <span>Anastasya</span>\n    <span class=\"ds-dual-nums\">Lv.80 57% · Max 43%</span>\n  </div>\n  <div class=\"ds-bar-dual\">\n    <div class=\"ds-bar-func\" style=\"width: 57%;\"></div>\n    <div class=\"ds-bar-max\" style=\"width: 43%;\"></div>\n  </div>\n</div>",
+      "css": ".ds-dual-wrap { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: #0C1120; border: 1px solid rgba(212, 175, 55, 0.16); color: #F0F3FA; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; }\n.ds-dual-head { display: flex; justify-content: space-between; align-items: center; }\n.ds-dual-nums { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: #B2BED6; }\n.ds-bar-dual { position: relative; height: 8px; border-radius: 999px; background: #121A2F; overflow: hidden; }\n.ds-bar-func { position: absolute; inset: 0 auto 0 0; background: rgba(212, 175, 55, 0.48); border-radius: 999px; }\n.ds-bar-max { position: absolute; inset: 0 auto 0 0; background: #34D399; border-radius: 999px; }"
+    },
+    {
+      "name": "Semantic Telemetry Badges",
+      "kind": "chip",
+      "refersTo": "badge-pill",
+      "description": "Compact pill indicators for Mora start timing, Surge Trap boss locks, and Day-1 Functional readiness.",
+      "html": "<div class=\"ds-pills\">\n  <span class=\"ds-pill ds-pill-mint\">0 Ley Lines Needed</span>\n  <span class=\"ds-pill ds-pill-gold\">Start ~Dec 7 (Tue/Fri)</span>\n  <span class=\"ds-pill ds-pill-coral\">New Boss Week-1 Lock</span>\n</div>",
+      "css": ".ds-pills { display: inline-flex; flex-wrap: wrap; gap: 8px; }\n.ds-pill { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; border: 1px solid transparent; }\n.ds-pill-mint { background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.36); color: #34D399; }\n.ds-pill-gold { background: rgba(212, 175, 55, 0.14); border-color: rgba(212, 175, 55, 0.36); color: #D4AF37; }\n.ds-pill-coral { background: rgba(248, 113, 113, 0.14); border-color: rgba(248, 113, 113, 0.36); color: #F87171; }"
+    },
+    {
+      "name": "Observatory Command Bar Nav",
+      "kind": "nav",
+      "refersTo": "panel-surface",
+      "description": "Sticky top navigation pills with subtle hover fill and active antique-gold highlight.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary Views\">\n  <button type=\"button\" class=\"ds-nav-item ds-nav-active\" aria-current=\"page\">Today</button>\n  <button type=\"button\" class=\"ds-nav-item\">Prefarm</button>\n  <button type=\"button\" class=\"ds-nav-item\">Characters</button>\n  <button type=\"button\" class=\"ds-nav-item\">Teams Lab</button>\n</nav>",
+      "css": ".ds-nav { display: inline-flex; gap: 4px; padding: 6px; border-radius: 12px; background: #0C1120; border: 1px solid rgba(212, 175, 55, 0.16); }\n.ds-nav-item { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 12px; color: #B2BED6; font-family: 'Inter', system-ui, sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color 140ms ease, color 140ms ease; }\n.ds-nav-item:hover { background: #1A2440; color: #F0F3FA; }\n.ds-nav-item:focus-visible { outline: 2px solid #5EEAD4; outline-offset: 2px; }\n.ds-nav-active { background: rgba(212, 175, 55, 0.14); border-color: rgba(212, 175, 55, 0.34); color: #F0F3FA; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Teyvat Observatory — Obsidian Slate",
+    "overview": "AaruDB's active workspace (`prototype.html` / `prototype.css`) is an Operate-mode Genshin Impact command deck built for daily resin decisions, patch-calendar prefarming, and high-density build inspection. Deep nocturnal obsidian surfaces (`#060812` → `#0C1120` → `#121A2F`) carry whisper-thin `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`) and high-contrast Ley-Line cyan (`#5EEAD4`) primary actions, keeping attention on live numbers and character/material icons rather than ornamental chrome.\n\nThe layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`.",
+    "keyCharacteristics": [
+      "Deep Obsidian Slate tonal stack (#060812 / #0C1120 / #121A2F / #1A2440) framed by 1px antique gold hairlines (rgba(212, 175, 55, 0.16))",
+      "Single focal CTA accent in Ley-Line cyan (#5EEAD4), paired with antique gold (#D4AF37) for milestones/targets, mint (#34D399) for funded/ready states, and coral (#F87171) for deficits and Surge Trap alerts",
+      "Three-role typography: Fraunces page titles, Inter UI chrome & prose, and JetBrains Mono tabular-nums for all telemetry",
+      "Flat, single-layer Operate workspace: floating top command bar, centered stage, full-width patch calendar strip, 2-column strategy & resin grid, and zero nested cards"
+    ],
+    "rules": [
+      {
+        "name": "The One-Layer Surface Rule",
+        "body": "Never nest bordered cards inside bordered cards; inside a panel, separate subsections with 1px horizontal hairlines (--p-border) or whitespace instead of extra boxes.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Kicker Rule",
+        "body": "Never stack small uppercase eyebrow/kicker labels directly above section headings; let the heading and its inline right-hand metadata badge carry the context cleanly.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline-Only Rule",
+        "body": "Structural borders stay at 1px solid var(--p-border) (or var(--p-border-strong) on focus/hover); never use thick (> 1px) colored left or right accent stripes on cards or alert banners.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep every numerical figure (dates, resin, Mora, Func %, Max %, wRV%, CV, ER%) in JetBrains Mono with tabular-nums.",
+      "Do preserve authentic Genshin Impact terminology (Domains, Blossom of Wealth, Fragile Resin, Talents, Ascension).",
+      "Do keep surfaces flat at rest with 1px gold hairlines and single-layer panels."
+    ],
+    "donts": [
+      "Don't nest bordered cards inside bordered cards or add > 1px colored left/right accent stripes.",
+      "Don't place uppercase eyebrow/kicker labels above section headings.",
+      "Don't break live data pipelines (GOOD v3 import, Apps Script sync, Dimbreath/Lunaris catalog hydration, or verify_upgrade.mjs)."
+    ]
+  }
+}

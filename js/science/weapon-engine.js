@@ -1,4 +1,4 @@
-import { getCharacterMeta, getKqmEntry, getWeaponsIndex } from '../catalog.js?v=20261115ag';
+import { getCharacterMeta, getKqmEntry, getWeaponsIndex } from '../catalog.js?v=20261121p64';
 import {
   analyzeCharacterKit,
   buildKitProfile,

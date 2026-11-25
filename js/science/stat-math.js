@@ -1,4 +1,4 @@
-import { getCharacterMeta, getKqmEntry } from '../catalog.js?v=20261115ag';
+import { getCharacterMeta, getKqmEntry } from '../catalog.js?v=20261121p64';
 import {
   analyzeCharacterKit,
   classifyBurstCadence,
@@ -144,7 +144,7 @@ export function computeSubstatWeights(kitAnalysis, weaponKey = '', artifacts = [
   const role = kitAnalysis?.roleInfo?.fieldRole || kitAnalysis?.roleInfo?.primaryRole || 'Quickswap Support';
   const tags = kitAnalysis?.roleInfo?.functionTags || kitAnalysis?.roleInfo?.utilityTags || [];
   const isPureSupport = role === 'Quickswap Support' && !tags.some((t) => /Sub-DPS|Carry|Driver/i.test(t));
-  const isFavonius = /favonius/i.test(String(weaponKey || ''));
+  const isFavonius = /favonius/i.test(String(weaponKey || '')) || Boolean(kitAnalysis?.weaponReinforcement?.isFavoniusWeapon);
   const primary = String(kitAnalysis?.primaryScaling || 'ATK');
   const usefulSet = new Set(kitAnalysis?.usefulSubstats || []);
 
@@ -169,14 +169,15 @@ export function computeSubstatWeights(kitAnalysis, weaponKey = '', artifacts = [
     if (!isPureSupport) weights.atk = 0.25;
   }
 
-  if (usefulSet.has('eleMas') && weights.eleMas < 1.0) weights.eleMas = 0.5;
-  else if (weights.eleMas === 0 && isUsefulSecondaryEm(kitAnalysis)) weights.eleMas = 0.4;
+  if (kitAnalysis?.hasEmToDmgConv && weights.eleMas < 0.75) weights.eleMas = primary.startsWith('EM') ? 1.0 : 0.75;
+  else if (usefulSet.has('eleMas') && weights.eleMas < 1.0) weights.eleMas = 0.5;
+  else if (weights.eleMas === 0 && (kitAnalysis?.enablesReactionCrit || isUsefulSecondaryEm(kitAnalysis))) weights.eleMas = 0.45;
   if (usefulSet.has('atk_') && weights.atk_ < 1.0) weights.atk_ = 0.5;
 
   const meta = getCharacterMeta(kitAnalysis?.charKey);
   const hasCritAscension = /crit/i.test(kitAnalysis?.ascensionStat || meta?.ascensionStat || '');
   if (!isNonCrit) {
-    if (!isPureSupport || hasCritAscension || role === 'On-Field Carry' || role === 'Off-Field Sub-DPS') {
+    if (!isPureSupport || kitAnalysis?.enablesReactionCrit || hasCritAscension || role === 'On-Field Carry' || role === 'Off-Field Sub-DPS') {
       weights.critRate_ = 1.0;
       weights.critDMG_ = 1.0;
     } else if (isFavonius) {
@@ -239,11 +240,84 @@ export function evaluateBuildDiagnostics(combatStats, artifacts = [], kitAnalysi
 /**
  * Computes exact total character combat stats and Weighted Roll Value (wRV%).
  */
-export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null) {
+export function inferBuildLensFromGear(kitAnalysis, weaponKey = '', artifacts = []) {
+  const lenses = kitAnalysis?.roleInfo?.buildLenses || [];
+  const defaultLens = kitAnalysis?.roleInfo?.primaryRole || 'Quickswap Support';
+  const hasLens = (id) => lenses.some((l) => l.id === id);
+
+  const setCounts = {};
+  for (const a of artifacts || []) {
+    if (a?.setKey) setCounts[a.setKey] = (setCounts[a.setKey] || 0) + 1;
+  }
+  const has4pc = (keys) => keys.some((k) => (setCounts[k] || 0) >= 4);
+
+  const supportSets = [
+    'NoblesseOblige',
+    'TenacityOfTheMillelith',
+    'ViridescentVenerer',
+    'DeepwoodMemories',
+    'ScrollOfTheHeroOfCinderCity',
+    'SongOfDaysPast',
+    'OceanHuedClam',
+    'MaidenBeloved'
+  ];
+  const offFieldSets = ['GoldenTroupe', 'EmblemOfSeveredFate'];
+  const carrySets = [
+    'MarechausseeHunter',
+    'CrimsonWitchOfFlames',
+    'BlizzardStrayer',
+    'DesertPavilionChronicle',
+    'GladiatorsFinale',
+    'ShimenawasReminiscence',
+    'FragmentOfHarmonicWhimsy'
+  ];
+
+  const isTeamBuffWep =
+    Boolean(kitAnalysis?.weaponReinforcement?.isTeamBuffWeapon) ||
+    /thrillingtales|elegyfortheend|freedomsworn|keyofkhajnisut|hakushinring|favonius/i.test(String(weaponKey || ''));
+
+  if ((has4pc(supportSets) || isTeamBuffWep) && hasLens('Quickswap Support')) {
+    return { lens: 'Quickswap Support', reason: defaultLens === 'Quickswap Support' ? 'Kit default' : 'Gear-inferred' };
+  }
+  if (has4pc(offFieldSets) && hasLens('Off-Field Sub-DPS')) {
+    return { lens: 'Off-Field Sub-DPS', reason: defaultLens === 'Off-Field Sub-DPS' ? 'Kit default' : 'Gear-inferred' };
+  }
+  if (has4pc(carrySets) && hasLens('On-Field Carry')) {
+    return { lens: 'On-Field Carry', reason: defaultLens === 'On-Field Carry' ? 'Kit default' : 'Gear-inferred' };
+  }
+
+  return { lens: defaultLens, reason: 'Kit default' };
+}
+
+export function computeCharacterCombatStats(char, weapon, artifacts = [], kitData = null, weaponStats = null, explicitLens = '', weightOverrides = null) {
   const effectiveTalents = computeEffectiveTalents(char, kitData);
-  const kitAnalysis = analyzeCharacterKit(char?.key, kitData, effectiveTalents.effective, char?.constellation || 0);
+  const baseKitAnalysis = analyzeCharacterKit(
+    char?.key,
+    kitData,
+    effectiveTalents.effective,
+    char?.constellation || 0,
+    { weaponKey: weapon?.key || '', weaponStats }
+  );
+  const validLenses = new Set((baseKitAnalysis?.roleInfo?.buildLenses || []).map((l) => l.id));
+  const activeLens =
+    explicitLens && validLenses.has(explicitLens)
+      ? { lens: explicitLens, reason: 'Selected' }
+      : inferBuildLensFromGear(baseKitAnalysis, weapon?.key || '', artifacts);
+  const kitAnalysis =
+    activeLens.lens && activeLens.lens !== baseKitAnalysis?.roleInfo?.primaryRole
+      ? {
+          ...baseKitAnalysis,
+          roleInfo: {
+            ...baseKitAnalysis.roleInfo,
+            primaryRole: activeLens.lens,
+            fieldRole: activeLens.lens
+          }
+        }
+      : baseKitAnalysis;
   const burstCadence = classifyBurstCadence(char, kitData, kitAnalysis, artifacts);
-  const substatWeights = computeSubstatWeights(kitAnalysis, weapon?.key || '', artifacts, burstCadence);
+  const substatWeights = weightOverrides
+    ? { ...computeSubstatWeights(kitAnalysis, weapon?.key || '', artifacts, burstCadence), ...weightOverrides }
+    : computeSubstatWeights(kitAnalysis, weapon?.key || '', artifacts, burstCadence);
   const charBase = pickCharBaseStats(char, kitData);
   const wepBase = pickWeaponStats(weapon, weaponStats);
 
@@ -275,6 +349,32 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
   }
   if (wepBase.subKey) {
     applyStat(wepBase.subKey, Number(wepBase.subVal) || 0);
+  }
+
+  const setCounts = new Map();
+  for (const a of artifacts) {
+    const sk = String(a?.setKey || a?.setName || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+    if (sk) setCounts.set(sk, (setCounts.get(sk) || 0) + 1);
+  }
+  const sortedSets = [...setCounts.entries()].sort((a, b) => b[1] - a[1]);
+  let offPieceSlot = null;
+  if (artifacts.length >= 4 && sortedSets.length) {
+    const [topSet, topCount] = sortedSets[0];
+    const activeSets = topCount >= 4 ? new Set([topSet]) : new Set(sortedSets.filter(([, c]) => c >= 2).slice(0, 2).map(([s]) => s));
+    const slotPriority = ['goblet', 'circlet', 'sands', 'plume', 'flower'];
+    const offCands = artifacts.filter(
+      (a) => !activeSets.has(String(a?.setKey || a?.setName || '').replace(/[^a-z0-9]/gi, '').toLowerCase())
+    );
+    if (offCands.length) {
+      offCands.sort((a, b) => {
+        const ia = slotPriority.indexOf(String(a?.slotKey || '').toLowerCase());
+        const ib = slotPriority.indexOf(String(b?.slotKey || '').toLowerCase());
+        return (ia === -1 ? 9 : ia) - (ib === -1 ? 9 : ib);
+      });
+      offPieceSlot = String(offCands[0]?.slotKey || 'goblet').toLowerCase();
+    } else if (artifacts.length >= 5) {
+      offPieceSlot = 'goblet';
+    }
   }
 
   let subCv = 0;
@@ -369,7 +469,9 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
     burstCadence,
     diagnostics,
     totalRolls: Math.round(totalRolls * 10) / 10,
-    kitAnalysis
+    offPieceSlot,
+    kitAnalysis,
+    activeLens
   };
 }
 
