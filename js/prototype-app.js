@@ -119,7 +119,10 @@ const state = {
   vaultSortKey: 'needed',
   vaultSortDir: 'desc',
   pendingGoodImport: null,
-  isPreviewDemo: false
+  isPreviewDemo: false,
+  prefarmSubTab: 'queue',
+  prefarmAddOpen: false,
+  prefarmSaveTimer: null
 };
 
 function esc(str) {
@@ -1281,7 +1284,16 @@ function renderTodayView(container, account) {
   });
 }
 
-/* ---------- View 2: Prefarm Queue & Resin Efficiency Lab ---------- */
+/* ---------- View 2: Kinetic Prefarm Queue Deck ---------- */
+function runPrefarmTransition(fn) {
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if (!reduced && typeof document.startViewTransition === 'function') {
+    document.startViewTransition(() => fn());
+  } else {
+    fn();
+  }
+}
+
 function renderPrefarmView(container, account) {
   const readOnly = isReadOnly();
   const patchCal = getPatchCalendarInfo(state.serverId);
@@ -1330,14 +1342,25 @@ function renderPrefarmView(container, account) {
     }
   );
 
-  const saveQueue = async (nextQueue) => {
+  const commitQueue = (nextQueue, { animate = true, debounceMs = 0 } = {}) => {
     account.prefarmQueue = nextQueue;
-    renderPrefarmView(container, account);
+    const paint = () => renderPrefarmView(container, account);
+    if (animate) runPrefarmTransition(paint);
+    else paint();
     if (state.isPreviewDemo) return;
-    try {
-      await saveAccountSection(state.sessionUser, 'prefarmQueue', account.prefarmQueue);
-    } catch (err) {
-      showToast(`Prefarm save failed: ${err.message}`);
+    const persist = async () => {
+      try {
+        await saveAccountSection(state.sessionUser, 'prefarmQueue', account.prefarmQueue);
+      } catch (err) {
+        showToast(`Prefarm save failed: ${err.message}`);
+      }
+    };
+    if (debounceMs > 0) {
+      clearTimeout(state.prefarmSaveTimer);
+      state.prefarmSaveTimer = setTimeout(persist, debounceMs);
+    } else {
+      clearTimeout(state.prefarmSaveTimer);
+      persist();
     }
   };
 
@@ -1347,24 +1370,48 @@ function renderPrefarmView(container, account) {
     boss: 'var(--p-accent)',
     leyline: 'var(--p-text-secondary)'
   };
-  const resinDaysTotal = resinSummary.totalResin > 0 ? Math.ceil(resinSummary.totalResin / 180) : 0;
+  const activeTab = state.prefarmSubTab === 'domains' ? 'domains' : 'queue';
+  const resinDelta = patchCal.naturalResinToNext - resinSummary.totalResin;
+  const resinDeltaText =
+    resinSummary.totalResin <= 0
+      ? 'All Mats Ready'
+      : resinDelta >= 0
+        ? `+${resinDelta.toLocaleString()} Spare before ${patchCal.nextLabel}`
+        : `${resinDelta.toLocaleString()} Short before ${patchCal.nextLabel}`;
 
   container.innerHTML = `
-    <section class="p-panel">
-      <div class="p-panel-head" style="flex-wrap:wrap;gap:8px;">
-        <div>
-          <h2 class="p-panel-title">Guaranteed Upgrade Resin Allocation &amp; Time-Gates</h2>
-          <div class="p-row-sub">Total guaranteed upgrade cost for Priority #1 &amp; #2 targets before RNG artifact farming.</div>
+    <section class="p-panel p-pf-command">
+      <div class="p-pf-topbar">
+        <div class="p-pf-subtabs" role="tablist" aria-label="Prefarm Sections">
+          <button type="button" role="tab" aria-selected="${activeTab === 'queue'}" class="p-pf-subtab ${activeTab === 'queue' ? 'is-active' : ''}" data-pf-tab="queue">
+            <span>Build Queue</span>
+            <span class="p-pf-count mono">${targetsWithTel.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected="${activeTab === 'domains'}" class="p-pf-subtab ${activeTab === 'domains' ? 'is-active' : ''}" data-pf-tab="domains">
+            <span>Artifact Domains</span>
+            <span class="p-pf-count mono">${domainReport.domains.length}</span>
+          </button>
         </div>
-        <span class="p-badge mono ${resinSummary.totalResin > 0 ? 'p-badge-gold' : 'p-badge-mint'}">${
-          resinSummary.totalResin > 0
-            ? `${resinSummary.totalResin.toLocaleString()} Resin (~${resinDaysTotal}d @ 180/day)`
-            : 'All Guaranteed Mats Funded'
-        }</span>
+        <div class="p-pf-top-right">
+          <span class="p-pf-resin-pill mono ${resinSummary.totalResin <= 0 || resinDelta >= 0 ? 'is-ok' : 'is-short'}" title="Guaranteed upgrade Resin needed vs natural Resin before ${esc(patchCal.nextLabel)}">
+            ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
+            <strong>${resinSummary.totalResin.toLocaleString()}</strong>
+            <span class="muted">/ ~${patchCal.naturalResinToNext.toLocaleString()}</span>
+            <span class="p-pf-delta">${esc(resinDeltaText)}</span>
+          </span>
+          ${
+            !readOnly && activeTab === 'queue'
+              ? `<button type="button" class="p-btn p-btn-primary p-btn-sm" data-pf-toggle-add aria-expanded="${Boolean(state.prefarmAddOpen)}">${
+                  state.prefarmAddOpen ? 'Close' : '+ Add Character'
+                }</button>`
+              : ''
+          }
+        </div>
       </div>
+
       ${
         resinSummary.buckets.length
-          ? `<div class="p-resin-bar" role="img" aria-label="Resin allocation breakdown">
+          ? `<div class="p-resin-bar" role="img" aria-label="Resin breakdown">
                ${resinSummary.buckets
                  .map(
                    (b) =>
@@ -1372,258 +1419,273 @@ function renderPrefarmView(container, account) {
                  )
                  .join('')}
              </div>
-             <div class="p-resin-legend">
-               ${resinSummary.buckets
-                 .map(
-                   (b) =>
-                     `<span class="p-resin-leg-item mono"><span class="p-resin-dot" style="background:${bucketColorMap[b.id] || 'var(--p-accent)'};"></span>${esc(b.label)}: <strong>${b.resin.toLocaleString()}</strong> (${b.pct}%)</span>`
-                 )
-                 .join('')}
-             </div>`
-          : '<div class="muted" style="font-size:13px;">No guaranteed upgrade Resin deficits remain for active queue tiers.</div>'
-      }
-      ${
-        weeklyGates.length
-          ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-               ${weeklyGates
-                 .map(
-                   (t) =>
-                     `<span class="p-badge mono p-cond-warn">${esc(getCharacterMeta(t.characterKey).name)}: ${esc(t.tel.gatekeeper.label)}</span>`
-                 )
-                 .join('')}
-             </div>`
-          : ''
-      }
-      ${
-        twoPass.pivotHeadline
-          ? `<div class="p-pf-pivot-summary">
-               <div><strong>${esc(twoPass.pivotHeadline)}:</strong> <span class="muted">${esc(twoPass.pivotDetail)}</span></div>
-               <div class="p-mora-note"><strong>Blossom of Wealth (${esc(moraStrategy.badgeText)}):</strong> ${esc(moraStrategy.recommendation)}</div>
-               ${twoPass.surgeWarning ? `<div class="p-surge-warn">${esc(twoPass.surgeWarning)}</div>` : ''}
+             <div class="p-pf-legend-row">
+               <div class="p-resin-legend">
+                 ${resinSummary.buckets
+                   .map(
+                     (b) =>
+                       `<span class="p-resin-leg-item mono"><span class="p-resin-dot" style="background:${bucketColorMap[b.id] || 'var(--p-accent)'};"></span>${esc(b.label)} <strong>${b.resin.toLocaleString()}</strong></span>`
+                   )
+                   .join('')}
+               </div>
+               <div class="p-pf-flags">
+                 <span class="p-badge mono ${moraStrategy.statusTone === 'coral' ? 'p-badge-coral' : moraStrategy.statusTone === 'gold' ? 'p-badge-amber' : 'p-badge-mint'}">${renderAssetIcon('materials', 'Mora', 'Mora', 'icon-xs')} ${esc(moraStrategy.badgeText)}</span>
+                 ${weeklyGates
+                   .map(
+                     (t) =>
+                       `<span class="p-badge mono p-cond-warn">${esc(getCharacterMeta(t.characterKey).name)} · ~${t.tel.weeklyWeeks}w Weekly</span>`
+                   )
+                   .join('')}
+               </div>
              </div>`
           : ''
       }
-    </section>
-
-    <section class="p-panel">
-      <div class="p-panel-head" style="flex-wrap:wrap;gap:10px;">
-        <div>
-          <h2 class="p-panel-title">Artifact Domain &amp; Strongbox Efficiency Lab</h2>
-          <div class="p-row-sub">Matches your ML Build Mode sets to domains so you farm 2-for-1 domains directly and Strongbox single-set fodder.</div>
-        </div>
-        <div class="p-lens-pills" role="group" aria-label="Domain Analysis Scope">
-          <button type="button" class="p-pill-btn ${scope === 'queue' ? 'active' : ''}" data-pf-scope="queue">Prefarm Queue (${queueKeys.length})</button>
-          <button type="button" class="p-pill-btn ${scope === 'teams' ? 'active' : ''}" data-pf-scope="teams">Teams Lab (${teamKeys.length})</button>
-          <button type="button" class="p-pill-btn ${scope === 'owned' ? 'active' : ''}" data-pf-scope="owned">All Owned (${ownedKeys.length})</button>
-        </div>
-      </div>
 
       ${
-        domainReport.domains.length
-          ? `<div class="p-dom-eff-list">
-               ${domainReport.domains
-                 .slice(0, 10)
-                 .map((d) => {
-                   const badgeCls =
-                     d.verdictTone === 'mint'
-                       ? 'p-badge-mint'
-                       : d.verdictTone === 'gold'
-                         ? 'p-badge-gold'
-                         : d.verdictTone === 'warn'
-                           ? 'p-cond-warn'
-                           : '';
-                   return `
-                     <article class="p-dom-eff-row">
-                       <div class="p-dom-eff-head">
-                         <div>
-                           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                             <strong style="font-size:14px;">${esc(d.domain)}</strong>
-                             <span class="p-badge mono">${esc(d.region)}</span>
-                           </div>
-                           <div class="p-row-sub" style="margin-top:2px;">${esc(d.reason)}</div>
-                         </div>
-                         <span class="p-badge mono ${badgeCls}">${esc(d.verdict)}</span>
-                       </div>
-                       <div class="p-dom-sets-pair">
-                         ${d.sets
-                           .map((s) => {
-                             const sIcon = getArtifactIcon(s.name, 'flower') || s.icon || '';
-                             const isUnused = s.matchedChars.length === 0;
-                             return `
-                               <div class="p-dom-set-slot ${isUnused ? 'is-unused' : ''}">
-                                 <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                                   ${sIcon ? `<img src="${esc(sIcon)}" alt="" class="icon-xs" loading="lazy" />` : ''}
-                                   <button type="button" class="p-btn p-btn-ghost p-btn-xs" style="padding:0;text-align:left;font-weight:600;" data-p-artset="4pc ${esc(s.name)}" title="Inspect 4pc ${esc(s.name)}">
-                                     ${esc(s.name)}
-                                   </button>
-                                 </div>
-                                 <div class="p-dom-char-chips">
-                                   ${
-                                     s.matchedChars.length
-                                       ? s.matchedChars
-                                           .map(
-                                             (mc) =>
-                                               `<button type="button" class="p-badge mono ${mc.rank === 1 ? 'p-badge-gold' : ''}" style="cursor:pointer;" data-p-open-char="${esc(mc.key)}" title="Open ${esc(mc.name)} Dossier">#${mc.rank} ${esc(mc.name)}</button>`
-                                           )
-                                           .join('')
-                                       : '<span class="muted" style="font-size:11.5px;">Unused drop</span>'
-                                   }
-                                 </div>
-                               </div>`;
-                           })
-                           .join('')}
-                       </div>
-                     </article>`;
-                 })
-                 .join('')}
-             </div>`
-          : `<div class="muted" style="font-size:13px;padding:6px 0;">${
-              scope === 'queue'
-                ? 'Your Prefarm Queue is empty — add targets below or switch scope to Teams Lab / All Owned.'
-                : 'No characters available in this scope to analyze.'
-            }</div>`
-      }
-    </section>
-
-    ${
-      !readOnly
-        ? `<section class="p-panel">
-             <div class="p-panel-head"><h2 class="p-panel-title">Add Prefarm Target</h2></div>
-             <form id="p-pf-add-form" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
-               <label class="proto-field" style="min-width:170px;flex:1;">
+        !readOnly && activeTab === 'queue' && state.prefarmAddOpen
+          ? `<form id="p-pf-add-form" class="p-pf-add-drawer">
+               <label class="proto-field p-pf-field-char">
                  <span>Character</span>
                  <select name="characterKey" class="proto-select" required>
                    ${allCharKeys.map((k) => `<option value="${esc(k)}">${esc(getCharacterMeta(k).name)}</option>`).join('')}
                  </select>
                </label>
-               <label class="proto-field" style="width:78px;">
-                 <span>Tier</span>
+               <label class="proto-field p-pf-field-sm">
+                 <span>Priority</span>
                  <input type="number" name="tier" min="1" max="5" value="1" class="p-input mono" />
                </label>
-               <label class="proto-field" style="width:82px;">
-                 <span>Target Lv</span>
+               <label class="proto-field p-pf-field-sm">
+                 <span>Lv.</span>
                  <input type="number" name="targetLevel" min="1" max="100" value="90" class="p-input mono" />
                </label>
-               <label class="proto-field" style="width:66px;">
+               <label class="proto-field p-pf-field-xs">
                  <span>A</span>
                  <input type="number" name="tAuto" min="1" max="10" value="6" class="p-input mono" />
                </label>
-               <label class="proto-field" style="width:66px;">
+               <label class="proto-field p-pf-field-xs">
                  <span>E</span>
                  <input type="number" name="tSkill" min="1" max="10" value="9" class="p-input mono" />
                </label>
-               <label class="proto-field" style="width:66px;">
+               <label class="proto-field p-pf-field-xs">
                  <span>Q</span>
                  <input type="number" name="tBurst" min="1" max="10" value="9" class="p-input mono" />
                </label>
-               <button type="submit" class="p-btn p-btn-primary">Add Target</button>
-             </form>
-           </section>`
-        : ''
-    }
+               <button type="submit" class="p-btn p-btn-primary">Add</button>
+             </form>`
+          : ''
+      }
+    </section>
 
-    <div class="p-table-wrap">
-      <table class="p-table">
-        <thead>
-          <tr>
-            <th>Priority</th>
-            <th>Character</th>
-            <th>Level Target</th>
-            <th>Talents</th>
-            <th>Readiness</th>
-            <th>Time-Gate / ETA</th>
-            <th>Materials</th>
-            ${!readOnly ? '<th>Actions</th>' : ''}
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            targetsWithTel.length
-              ? targetsWithTel
-                  .map((t, idx) => {
-                    const cm = getCharacterMeta(t.characterKey);
-                    const cTal = t.currentTalent ? `${t.currentTalent.auto}/${t.currentTalent.skill}/${t.currentTalent.burst}` : (t.currentTalents || [1, 1, 1]).join('/');
-                    const tTal = t.targetTalent ? `${t.targetTalent.auto}/${t.targetTalent.skill}/${t.targetTalent.burst}` : (t.targetTalents || [9, 9, 9]).join('/');
-                    const isExpanded = state.prefarmExpandedId === t.id;
-                    const detailRows = t.wfRows.filter((r) => r.deficit > 0 || r.reservedByPrev > 0);
-                    const colCount = readOnly ? 7 : 8;
-                    return `
-                      <tr>
-                        <td class="mono text-gold">${esc(t.tierLabel)}</td>
-                        <td>
-                          <button type="button" class="p-btn p-btn-ghost p-btn-sm" style="padding-left:0;" data-p-open-char="${esc(t.characterKey)}">
-                            ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-xs')}
-                            <strong>${esc(cm.name)}</strong>
-                          </button>
-                        </td>
-                        <td class="mono">${t.currentLevel || 1} → ${t.targetLevel || 90}</td>
-                        <td class="mono">${cTal} → ${tTal}</td>
-                        <td class="mono">
-                          <span class="${(t.ms?.funcPct ?? t.pct) >= 100 ? 'text-mint' : 'text-gold'}">Lv.80 ${t.ms?.funcPct ?? t.pct}%</span>
-                          <span class="muted"> · Max ${t.pct}%</span>
-                        </td>
-                        <td class="mono muted">${esc(t.tel.etaLabel)}${t.ms?.bossUnreleased ? ' · <span class="text-amber">7.3 Boss</span>' : ''}</td>
-                        <td>
-                          <button type="button" class="p-btn p-btn-outline p-btn-xs ${isExpanded ? 'active' : ''}" data-p-pf-expand="${esc(t.id)}" aria-expanded="${isExpanded}">
-                            ${isExpanded ? 'Hide' : `Details (${detailRows.length})`}
-                          </button>
-                        </td>
-                        ${
-                          !readOnly
-                            ? `<td>
-                                 <div style="display:flex;gap:4px;">
-                                   <button type="button" class="p-btn p-btn-outline p-btn-xs" data-p-pf-move="up" data-p-pf-id="${esc(t.id)}" ${idx === 0 ? 'disabled' : ''} aria-label="Move ${esc(cm.name)} up">↑</button>
-                                   <button type="button" class="p-btn p-btn-outline p-btn-xs" data-p-pf-move="down" data-p-pf-id="${esc(t.id)}" ${idx === queue.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(cm.name)} down">↓</button>
-                                   <button type="button" class="p-btn p-btn-outline p-btn-xs text-coral" data-p-pf-del="${esc(t.id)}" aria-label="Remove ${esc(cm.name)}">×</button>
+    ${
+      activeTab === 'queue'
+        ? `<section class="p-pf-deck" aria-label="Build Queue">
+             ${
+               targetsWithTel.length
+                 ? targetsWithTel
+                     .map((t, idx) => {
+                       const cm = getCharacterMeta(t.characterKey);
+                       const el = String(cm.element || '').toLowerCase();
+                       const funcPct = t.ms?.funcPct ?? t.pct;
+                       const tLv = Number(t.targetLevel) || 90;
+                       const tA = Number(t.targetTalent?.auto ?? t.targetTalents?.[0] ?? 6);
+                       const tE = Number(t.targetTalent?.skill ?? t.targetTalents?.[1] ?? 9);
+                       const tQ = Number(t.targetTalent?.burst ?? t.targetTalents?.[2] ?? 9);
+                       const missingRows = t.wfRows.filter((r) => r.deficit > 0 || r.reservedByPrev > 0);
+                       const isExpanded = state.prefarmExpandedId === t.id;
+                       const visibleRows = isExpanded ? missingRows : missingRows.slice(0, 8);
+                       const extraCount = Math.max(0, missingRows.length - visibleRows.length);
+                       const safeVt = String(t.id || idx).replace(/[^a-zA-Z0-9_-]/g, '');
+                       return `
+                         <article class="p-pf-card" data-el="${esc(el)}" style="view-transition-name:pf-${safeVt};">
+                           <div class="p-pf-card-main">
+                             <div class="p-pf-id">
+                               <span class="p-pf-rank mono">${esc(t.tierLabel)}</span>
+                               <button type="button" class="p-target-portrait p-pf-portrait-btn" data-p-open-char="${esc(t.characterKey)}" title="Open ${esc(cm.name)} Sheet">
+                                 ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-hud-char')}
+                               </button>
+                               <div class="p-pf-title-col">
+                                 <div class="p-pf-name-row">
+                                   <button type="button" class="p-pf-name-btn" data-p-open-char="${esc(t.characterKey)}">${esc(cm.name)}</button>
+                                   ${t.ms?.bossUnreleased ? `<span class="p-badge p-badge-amber mono">7.3 Boss</span>` : ''}
                                  </div>
-                               </td>`
-                            : ''
-                        }
-                      </tr>
-                      ${
-                        isExpanded
-                          ? `<tr class="p-pf-expand-row">
-                               <td colspan="${colCount}">
+                                 <div class="p-pf-sub-pills">
+                                   ${
+                                     t.ms?.bookName
+                                       ? `<span class="p-pf-book-chip mono">${renderAssetIcon('materials', `PhilosophiesOf${t.ms.bookName}`, t.ms.bookName, 'icon-xs')}<span>${esc(t.ms.bookName)} · ${esc(t.ms.bookDays.join('/') || 'Sun')}</span></span>`
+                                       : ''
+                                   }
+                                   <span class="p-pf-eta mono">${esc(t.tel.etaLabel)}</span>
+                                 </div>
+                               </div>
+                             </div>
+
+                             <div class="p-pf-steppers" aria-label="Target Level and Talents">
+                               <div class="p-pf-step">
+                                 <span class="p-pf-step-lbl">Lv</span>
                                  ${
-                                   detailRows.length
-                                     ? `<div class="p-pf-wf-grid">
-                                          ${detailRows
-                                            .map(
-                                              (r) => `
-                                              <div class="p-pf-wf-item">
-                                                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                                                  ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
-                                                  <div style="min-width:0;">
-                                                    <div class="p-row-title" style="font-size:12.5px;">${esc(r.name)}</div>
-                                                    <div class="p-row-sub mono" style="font-size:11px;">Owned ${r.owned.toLocaleString()} / Need ${r.needed.toLocaleString()}</div>
-                                                    ${
-                                                      r.reservedByPrev > 0
-                                                        ? `<div class="text-gold mono" style="font-size:11px;">Shared mat: ${r.reservedByPrev.toLocaleString()} saved for ${esc(r.reservedByLabel || 'higher priority')}</div>`
-                                                        : ''
-                                                    }
-                                                  </div>
-                                                </div>
-                                                <span class="mono ${r.deficit > 0 ? 'text-coral' : 'text-mint'}" style="font-size:12px;white-space:nowrap;">${
-                                                  r.deficit > 0 ? `-${r.deficit.toLocaleString()}` : 'Ready'
-                                                }</span>
-                                              </div>`
-                                            )
-                                            .join('')}
-                                        </div>`
-                                     : '<div class="muted" style="font-size:12.5px;">All materials for this character are ready.</div>'
+                                   !readOnly
+                                     ? `<button type="button" class="p-pf-step-btn" data-pf-step="level" data-pf-dir="-10" data-pf-id="${esc(t.id)}" aria-label="Decrease target level">−</button>`
+                                     : ''
                                  }
-                               </td>
-                             </tr>`
-                          : ''
-                      }`;
-                  })
-                  .join('')
-              : `<tr><td colspan="${readOnly ? 7 : 8}" class="muted">No characters in Prefarm Queue. Add one above to start tracking bottlenecks.</td></tr>`
-          }
-        </tbody>
-      </table>
-    </div>
+                                 <strong class="mono">${tLv}</strong>
+                                 ${
+                                   !readOnly
+                                     ? `<button type="button" class="p-pf-step-btn" data-pf-step="level" data-pf-dir="10" data-pf-id="${esc(t.id)}" aria-label="Increase target level">+</button>`
+                                     : ''
+                                 }
+                               </div>
+                               ${[
+                                 ['auto', 'A', tA],
+                                 ['skill', 'E', tE],
+                                 ['burst', 'Q', tQ]
+                               ]
+                                 .map(
+                                   ([field, lbl, val]) => `
+                                 <div class="p-pf-step">
+                                   <span class="p-pf-step-lbl">${lbl}</span>
+                                   ${
+                                     !readOnly
+                                       ? `<button type="button" class="p-pf-step-btn" data-pf-step="${field}" data-pf-dir="-1" data-pf-id="${esc(t.id)}" aria-label="Decrease ${lbl}">−</button>`
+                                       : ''
+                                   }
+                                   <strong class="mono ${val === 10 ? 'text-gold' : ''}">${val}</strong>
+                                   ${
+                                     !readOnly
+                                       ? `<button type="button" class="p-pf-step-btn" data-pf-step="${field}" data-pf-dir="1" data-pf-id="${esc(t.id)}" aria-label="Increase ${lbl}">+</button>`
+                                       : ''
+                                   }
+                                 </div>`
+                                 )
+                                 .join('')}
+                             </div>
+
+                             <div class="p-pf-progress-col">
+                               <div class="p-pf-pct-row mono">
+                                 <span class="${funcPct >= 100 ? 'text-mint' : 'text-gold'}">${funcPct >= 100 ? 'Lv.80 ✓' : `Lv.80 ${funcPct}%`}</span>
+                                 <span class="muted">Max ${t.pct}%</span>
+                               </div>
+                               <div class="p-bar p-bar-dual" title="Lv.80 Ready: ${funcPct}% · Full Max: ${t.pct}%">
+                                 <span class="p-bar-func" style="width:${funcPct}%;"></span>
+                                 <span class="p-bar-max" style="width:${t.pct}%;"></span>
+                               </div>
+                             </div>
+
+                             ${
+                               !readOnly
+                                 ? `<div class="p-pf-actions">
+                                      <button type="button" class="p-btn p-btn-outline p-btn-xs" data-p-pf-move="up" data-p-pf-id="${esc(t.id)}" ${idx === 0 ? 'disabled' : ''} aria-label="Move ${esc(cm.name)} up">↑</button>
+                                      <button type="button" class="p-btn p-btn-outline p-btn-xs" data-p-pf-move="down" data-p-pf-id="${esc(t.id)}" ${idx === queue.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(cm.name)} down">↓</button>
+                                      <button type="button" class="p-btn p-btn-outline p-btn-xs text-coral" data-p-pf-del="${esc(t.id)}" aria-label="Remove ${esc(cm.name)}">×</button>
+                                    </div>`
+                                 : ''
+                             }
+                           </div>
+
+                           <div class="p-pf-mat-strip">
+                             ${
+                               visibleRows.length
+                                 ? visibleRows
+                                     .map(
+                                       (r) => `
+                                       <button type="button" class="p-pf-mat-chip ${r.reservedByPrev > 0 ? 'is-shared' : ''}" data-p-jump-mat="${esc(r.name)}" title="${esc(r.name)} · Owned ${r.owned.toLocaleString()} / Need ${r.needed.toLocaleString()}${r.reservedByPrev > 0 ? ` (${r.reservedByPrev.toLocaleString()} saved for ${r.reservedByLabel || 'higher priority'})` : ''}">
+                                         ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
+                                         <span class="p-pf-mat-name">${esc(r.name)}</span>
+                                         <span class="mono ${r.deficit > 0 ? 'text-coral' : 'text-mint'}">${r.deficit > 0 ? `-${r.deficit.toLocaleString()}` : '✓'}</span>
+                                       </button>`
+                                     )
+                                     .join('') +
+                                   (extraCount > 0 || isExpanded
+                                     ? `<button type="button" class="p-pf-mat-more mono" data-p-pf-expand="${esc(t.id)}">${isExpanded ? 'Show less' : `+${extraCount} more`}</button>`
+                                     : '')
+                                 : '<span class="p-badge p-badge-mint mono">All materials ready</span>'
+                             }
+                           </div>
+                         </article>`;
+                     })
+                     .join('')
+                 : `<div class="p-panel muted">No characters queued yet — click <strong>+ Add Character</strong> above.</div>`
+             }
+           </section>`
+        : `<section class="p-panel" aria-label="Artifact Domains &amp; Strongbox">
+             <div class="p-panel-head" style="flex-wrap:wrap;gap:10px;">
+               <h2 class="p-panel-title">Artifact Domains &amp; Strongbox</h2>
+               <div class="p-lens-pills" role="group" aria-label="Domain Scope">
+                 <button type="button" class="p-pill-btn ${scope === 'queue' ? 'active' : ''}" data-pf-scope="queue">Queue (${queueKeys.length})</button>
+                 <button type="button" class="p-pill-btn ${scope === 'teams' ? 'active' : ''}" data-pf-scope="teams">Teams (${teamKeys.length})</button>
+                 <button type="button" class="p-pill-btn ${scope === 'owned' ? 'active' : ''}" data-pf-scope="owned">Owned (${ownedKeys.length})</button>
+               </div>
+             </div>
+             ${
+               domainReport.domains.length
+                 ? `<div class="p-dom-eff-grid">
+                      ${domainReport.domains
+                        .slice(0, 10)
+                        .map((d) => {
+                          const badgeCls =
+                            d.verdictTone === 'mint'
+                              ? 'p-badge-mint'
+                              : d.verdictTone === 'gold'
+                                ? 'p-badge-gold'
+                                : d.verdictTone === 'warn'
+                                  ? 'p-cond-warn'
+                                  : '';
+                          return `
+                            <article class="p-dom-eff-card">
+                              <div class="p-dom-eff-head">
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">
+                                  <strong style="font-size:14px;">${esc(d.domain)}</strong>
+                                  <span class="p-badge mono">${esc(d.region)}</span>
+                                </div>
+                                <span class="p-badge mono ${badgeCls}">${esc(d.verdict)}</span>
+                              </div>
+                              <div class="p-dom-sets-pair">
+                                ${d.sets
+                                  .map((s) => {
+                                    const sIcon = getArtifactIcon(s.name, 'flower') || s.icon || '';
+                                    const isUnused = s.matchedChars.length === 0;
+                                    return `
+                                      <div class="p-dom-set-slot ${isUnused ? 'is-unused' : ''}">
+                                        <button type="button" class="p-dom-set-btn" data-p-artset="4pc ${esc(s.name)}" title="Inspect 4pc ${esc(s.name)}">
+                                          ${sIcon ? `<img src="${esc(sIcon)}" alt="" class="icon-xs" loading="lazy" />` : ''}
+                                          <span>${esc(s.name)}</span>
+                                        </button>
+                                        <div class="p-dom-char-chips">
+                                          ${
+                                            s.matchedChars.length
+                                              ? s.matchedChars
+                                                  .map(
+                                                    (mc) =>
+                                                      `<button type="button" class="p-badge mono ${mc.rank === 1 ? 'p-badge-gold' : ''}" data-p-open-char="${esc(mc.key)}">#${mc.rank} ${esc(mc.name)}</button>`
+                                                  )
+                                                  .join('')
+                                              : '<span class="muted" style="font-size:11.5px;">Fodder</span>'
+                                          }
+                                        </div>
+                                      </div>`;
+                                  })
+                                  .join('')}
+                              </div>
+                            </article>`;
+                        })
+                        .join('')}
+                    </div>`
+                 : '<div class="muted" style="font-size:13px;">No characters in this scope.</div>'
+             }
+           </section>`
+    }
   `;
+
+  container.querySelectorAll('[data-pf-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.prefarmSubTab = btn.dataset.pfTab;
+      runPrefarmTransition(() => renderPrefarmView(container, account));
+    });
+  });
+
+  container.querySelector('[data-pf-toggle-add]')?.addEventListener('click', () => {
+    state.prefarmAddOpen = !state.prefarmAddOpen;
+    renderPrefarmView(container, account);
+  });
 
   container.querySelectorAll('[data-pf-scope]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1640,6 +1702,14 @@ function renderPrefarmView(container, account) {
     });
   });
 
+  container.querySelectorAll('[data-p-jump-mat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.vaultCategory = 'All';
+      state.vaultSearch = btn.dataset.pJumpMat;
+      setActiveTab('vault');
+    });
+  });
+
   container.querySelectorAll('[data-p-artset]').forEach((btn) => {
     btn.addEventListener('click', () => openArtifactSetInspector(btn.dataset.pArtset, btn));
   });
@@ -1651,7 +1721,32 @@ function renderPrefarmView(container, account) {
     });
   });
 
-  document.getElementById('p-pf-add-form')?.addEventListener('submit', async (e) => {
+  container.querySelectorAll('[data-pf-step]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (readOnly) return;
+      const id = btn.dataset.pfId;
+      const field = btn.dataset.pfStep;
+      const dir = Number(btn.dataset.pfDir) || 0;
+      const next = (account.prefarmQueue || []).map((item) => {
+        if (item.id !== id) return item;
+        if (field === 'level') {
+          const cur = Number(item.targetLevel) || 90;
+          const nextLv = Math.max(20, Math.min(90, cur + dir));
+          return { ...item, targetLevel: nextLv };
+        }
+        const curT = item.targetTalent || {
+          auto: item.targetTalents?.[0] ?? 6,
+          skill: item.targetTalents?.[1] ?? 9,
+          burst: item.targetTalents?.[2] ?? 9
+        };
+        const nextVal = Math.max(1, Math.min(10, (Number(curT[field]) || 1) + dir));
+        return { ...item, targetTalent: { ...curT, [field]: nextVal } };
+      });
+      commitQueue(next, { animate: false, debounceMs: 450 });
+    });
+  });
+
+  document.getElementById('p-pf-add-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     if (readOnly) return;
     const fd = new FormData(e.target);
@@ -1673,12 +1768,13 @@ function renderPrefarmView(container, account) {
       weaponCurrentLevel: existingChar?.equippedWeapon?.level || 1,
       weaponTargetLevel: 90
     };
-    await saveQueue([...(account.prefarmQueue || []), newItem]);
+    state.prefarmAddOpen = false;
+    commitQueue([...(account.prefarmQueue || []), newItem], { animate: true });
     showToast(`Added ${getCharacterMeta(characterKey).name} to Prefarm`);
   });
 
   container.querySelectorAll('[data-p-pf-move]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const id = btn.dataset.pPfId;
       const dir = btn.dataset.pPfMove;
       const list = [...(account.prefarmQueue || [])];
@@ -1687,15 +1783,15 @@ function renderPrefarmView(container, account) {
       const swap = dir === 'up' ? idx - 1 : idx + 1;
       if (swap < 0 || swap >= list.length) return;
       [list[idx], list[swap]] = [list[swap], list[idx]];
-      await saveQueue(list);
+      commitQueue(list, { animate: true });
     });
   });
 
   container.querySelectorAll('[data-p-pf-del]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const id = btn.dataset.pPfDel;
-      await saveQueue((account.prefarmQueue || []).filter((x) => x.id !== id));
-      showToast('Removed target');
+      commitQueue((account.prefarmQueue || []).filter((x) => x.id !== id), { animate: true });
+      showToast('Removed from Queue');
     });
   });
 }
