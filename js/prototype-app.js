@@ -42,7 +42,7 @@ import {
   getServerResetInfo,
   SERVER_REGIONS,
   sortAndLabelPrefarmQueue
-} from './calculations.js?v=20261125p68';
+} from './calculations.js?v=20261126p73';
 import {
   fetchPartnerAccount,
   getCachedAccountSession,
@@ -969,28 +969,51 @@ function renderTodayView(container, account) {
   const leadTarget = targetsWithTel[0] || null;
   const leadMeta = leadTarget ? getCharacterMeta(leadTarget.characterKey) : null;
   const leadEl = leadMeta ? String(leadMeta.element || '').toLowerCase() : '';
+  const featuredKeys = (patchCal.nextFeaturedKeys || []).length
+    ? patchCal.nextFeaturedKeys
+    : targetsWithTel.slice(0, 2).map((t) => t.characterKey);
 
   container.innerHTML = `
     <section class="p-patch-bar p-hud-hero" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
       ${leadTarget ? `<div class="p-hud-hero-art" aria-hidden="true">${renderGachaSplash(leadTarget.characterKey, '')}</div>` : ''}
       <div class="p-patch-primary">
         <div class="p-patch-now">
-          <span class="p-badge mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} (Day ${patchCal.dayInPatch}/42)</span>
+          <span class="p-badge p-hero-pill-date mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} · Day ${patchCal.dayInPatch}/42</span>
           ${
             patchCal.isAllDomainsOpenSurge
-              ? `<span class="p-badge p-badge-mint mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily">All Domains Open · ${patchCal.surgeDaysRemaining}d left</span>`
-              : `<span class="p-badge mono">Daily Reset · ${esc(patchCal.countdownText)}</span>`
+              ? `<span class="p-badge p-hero-pill-open mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily"><span class="p-hero-dot" aria-hidden="true"></span>All Domains Open · ${patchCal.surgeDaysRemaining}d left</span>`
+              : `<span class="p-badge p-hero-pill-date mono">Daily Reset · ${esc(patchCal.countdownText)}</span>`
           }
         </div>
-        <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)} — ${esc(patchCal.nextBannerNote)}</h2>
-        <div class="p-row-sub mono">${esc(patchCal.nextDualTzText)}</div>
+        <div class="p-hud-hero-banner-row">
+          <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)}</h2>
+          ${
+            featuredKeys.length
+              ? `<div class="p-hero-featured">${featuredKeys
+                  .map((k) => {
+                    const fm = getCharacterMeta(k);
+                    const fel = String(fm.element || '').toLowerCase();
+                    const active = state.focusedTargetId === k ? 'is-active' : '';
+                    return `<button type="button" class="p-hero-featured-chip ${active}" data-el="${esc(fel)}" data-p-focus="${esc(k)}" title="Filter materials for ${esc(fm.name)}">
+                      ${renderAssetIcon('characters', k, fm.name, 'icon-xs')}
+                      <span>${esc(fm.name)}</span>
+                    </button>`;
+                  })
+                  .join('')}</div>`
+              : `<span class="p-row-sub">${esc(patchCal.nextBannerNote)}</span>`
+          }
+        </div>
+        <div class="p-hero-local-time mono">Drops ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</div>
       </div>
       <div class="p-patch-metrics">
         <div class="p-hud-countdown">
           <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
-          <span class="p-hud-countdown-resin mono" title="Natural Resin regenerating before ${esc(patchCal.nextLabel)}">~${patchCal.naturalResinToNext.toLocaleString()} Resin</span>
+          <span class="p-hud-countdown-resin mono" title="Natural Resin regenerating before ${esc(patchCal.nextLabel)}">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2.5C7.6 5.8 5 9.6 5 13.5 5 17.6 8.1 21 12 21s7-3.4 7-7.5c0-3.9-2.6-7.7-7-11zm0 15.8c-2.5 0-4.5-2-4.5-4.6 0-1.9 1-4.1 2.7-6.1-.4 1.4-.1 3 .9 4.1 1.2 1.2 3.1 1.4 4.5.5.5.5.9 1.1.9 1.5 0 2.6-2 4.6-4.5 4.6z"/></svg>
+            <span>~${patchCal.naturalResinToNext.toLocaleString()}</span>
+          </span>
         </div>
-        <span class="p-badge mono" title="Remaining domain days before ${esc(patchCal.nextLabel)} (All-Open includes Sundays + first 7 days of the banner)">${patchCal.monThuSlots} M/Th · ${patchCal.wedSatSlots} W/Sa · ${patchCal.tueFriSlots} Tu/F · ${patchCal.sunSlots} All-Open</span>
+        <span class="p-badge p-hero-pill-slots mono" title="Remaining domain days before ${esc(patchCal.nextLabel)} (All-Open includes Sundays + first 7 days of the banner)">${patchCal.monThuSlots} M/Th · ${patchCal.wedSatSlots} W/Sa · ${patchCal.tueFriSlots} Tu/F · <strong class="text-mint">${patchCal.sunSlots} All-Open</strong></span>
       </div>
     </section>
 

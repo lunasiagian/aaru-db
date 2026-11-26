@@ -1,5 +1,5 @@
 import { getCharacterMeta, getKqmEntry, getStaticKitProfile } from '../catalog.js?v=20261121p64';
-import { calcTalentUpgradeCost } from '../calculations.js?v=20261125p68';
+import { calcTalentUpgradeCost } from '../calculations.js?v=20261126p73';
 
 const STAT_BOUNDS = {
   em: [200, 2000],

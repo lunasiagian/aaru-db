@@ -2356,10 +2356,10 @@ html, body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px 24px;
+  gap: 14px 24px;
   padding: 20px 22px;
   background:
-    radial-gradient(520px 220px at 85% 50%, var(--el-wash, rgba(212, 175, 55, 0.14)), transparent 72%),
+    radial-gradient(560px 260px at 80% 50%, var(--el-wash, rgba(212, 175, 55, 0.16)), transparent 72%),
     linear-gradient(125deg, var(--p-surface) 0%, var(--p-surface-2) 100%);
   border: 1px solid var(--p-border-strong);
   border-radius: var(--p-radius);
@@ -2367,14 +2367,14 @@ html, body {
 
 .p-hud-hero-art {
   position: absolute;
-  right: 12%;
-  top: -36%;
-  width: 340px;
-  height: 220%;
-  opacity: 0.18;
+  right: 16%;
+  top: -32%;
+  width: 360px;
+  height: 210%;
+  opacity: 0.34;
   pointer-events: none;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 32%, #000 72%, transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 32%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 72%, transparent 100%);
 }
 .p-hud-hero-art .ed-gacha-splash-wrap,
 .p-hud-hero-art .ed-gacha-splash-img {
@@ -2393,28 +2393,94 @@ html, body {
 .p-patch-primary {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
-.p-hud-hero-title {
-  margin: 2px 0 0;
-  font-family: var(--p-font-display);
-  font-size: 22px;
+.p-hero-pill-date {
+  background: rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.52);
+  color: #F7E8B2;
+  font-weight: 500;
+}
+
+.p-hero-pill-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(52, 211, 153, 0.22);
+  border: 1px solid rgba(52, 211, 153, 0.72);
+  color: #A7F3D0;
   font-weight: 600;
-  line-height: 1.2;
+}
+
+.p-hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--p-mint);
+}
+
+.p-hud-hero-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.p-hud-hero-title {
+  margin: 0;
+  font-family: var(--p-font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--p-text);
+}
+
+.p-hero-featured {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.p-hero-featured-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 5px;
+  border-radius: 999px;
+  background: rgba(12, 17, 32, 0.86);
+  border: 1px solid var(--el-ink, var(--p-border-strong));
+  color: var(--p-text);
+  font-family: var(--p-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 140ms ease;
+}
+.p-hero-featured-chip:hover {
+  transform: translateY(-1px);
+  background: var(--p-hover);
+}
+.p-hero-featured-chip.is-active {
+  background: var(--el-wash, rgba(94, 234, 212, 0.16));
+}
+
+.p-hero-local-time {
+  font-size: 12px;
+  color: var(--p-text-secondary);
 }
 
 .p-hud-countdown {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
 }
 
 .p-hud-countdown-val {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -2422,9 +2488,19 @@ html, body {
 }
 
 .p-hud-countdown-resin {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--p-accent);
+}
+
+.p-hero-pill-slots {
+  background: rgba(12, 17, 32, 0.88);
+  border: 1px solid rgba(94, 234, 212, 0.42);
+  color: var(--p-text);
+  font-weight: 500;
 }
 
 .p-patch-now {

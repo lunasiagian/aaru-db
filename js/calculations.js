@@ -1371,10 +1371,10 @@ const PATCH_CYCLE_MS = 42 * 86400_000;
 const BANNER_HALF_MS = 21 * 86400_000;
 
 const KNOWN_BANNER_HALVES = {
-  '7.2-1': { label: '7.2 Phase 1', bannerNote: 'Phase 1 Banner' },
-  '7.2-2': { label: '7.2 Phase 2', bannerNote: 'Pre-7.3 Prefarm Window' },
-  '7.3-1': { label: '7.3 Phase 1', bannerNote: 'Anastasya + Danica (assumed 21d)', featuredKeys: ['Anastasya', 'Danica'] },
-  '7.3-2': { label: '7.3 Phase 2', bannerNote: '2nd Half Lineup TBA (21d)', featuredKeys: [] }
+  '7.2-1': { label: '7.2 Phase 1', bannerNote: 'Phase 1', featuredKeys: [] },
+  '7.2-2': { label: '7.2 Phase 2', bannerNote: 'Phase 2', featuredKeys: [] },
+  '7.3-1': { label: '7.3 Phase 1', bannerNote: 'Anastasya + Danica', featuredKeys: ['Anastasya', 'Danica'] },
+  '7.3-2': { label: '7.3 Phase 2', bannerNote: 'Lineup TBA', featuredKeys: [] }
 };
 
 function formatVersionFrom73Offset(patchOffset) {
@@ -1411,6 +1411,7 @@ export function getPatchCalendarInfo(serverId = 'NA', nowMs = Date.now()) {
   const daysToNextPhase = Number((msToNextPhase / 86400_000).toFixed(2));
   const wholeDaysToNext = Math.floor(msToNextPhase / 86400_000);
   const remHoursToNext = Math.floor((msToNextPhase % 86400_000) / 3600_000);
+  const remMinutesToNext = Math.floor((msToNextPhase % 3600_000) / 60_000);
   const naturalResinToNext = Math.floor((msToNextPhase / 3600_000) * 7.5); // 1 Resin / 8m = 7.5/hr = 180/day
 
   const weekdayCounts = { Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
@@ -1433,10 +1434,19 @@ export function getPatchCalendarInfo(serverId = 'NA', nowMs = Date.now()) {
 
   const nextLocalDate = new Date(nextPhaseStartMs + resetInfo.server.offsetHours * 3600_000);
   const nextPhaseDateShort = `${MONTH_SHORT[nextLocalDate.getUTCMonth()]} ${nextLocalDate.getUTCDate()}`;
-  const nextDualTzText =
-    nextKey === '7.3-1'
-      ? 'Dec 15, 9:00 PM Toronto · Dec 16, 9:00 AM Jakarta'
-      : `${nextPhaseDateShort} (${resetInfo.server.short})`;
+  let nextLocalTimeText = `${nextPhaseDateShort} (${resetInfo.server.short})`;
+  try {
+    nextLocalTimeText = new Intl.DateTimeFormat(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(new Date(nextPhaseStartMs));
+  } catch {
+    // Fallback to server short date
+  }
 
   return {
     ...resetInfo,
@@ -1456,9 +1466,10 @@ export function getPatchCalendarInfo(serverId = 'NA', nowMs = Date.now()) {
     nextFeaturedKeys: nextMeta.featuredKeys || [],
     nextPhaseStartMs,
     nextPhaseDateShort,
-    nextDualTzText,
+    nextLocalTimeText,
+    nextDualTzText: nextLocalTimeText,
     daysToNextPhase,
-    countdownToNextText: `${wholeDaysToNext}d ${String(remHoursToNext).padStart(2, '0')}h`,
+    countdownToNextText: `${wholeDaysToNext}d ${String(remHoursToNext).padStart(2, '0')}h ${String(remMinutesToNext).padStart(2, '0')}m`,
     naturalResinToNext,
     weekdayCounts,
     allOpenDaysBeforeNext,
