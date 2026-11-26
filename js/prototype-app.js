@@ -843,7 +843,8 @@ function updateChrome() {
   const serverBtn = document.getElementById('proto-server-btn');
   if (serverBtn) {
     const info = getServerResetInfo(state.serverId);
-    serverBtn.textContent = `${state.serverId} · ${info.shortDate || info.inGameDay || ''} · ${info.countdownText || '--h --m'}`;
+    serverBtn.textContent = `${state.serverId} · ${info.countdownText || '--h --m'}`;
+    serverBtn.title = `${info.server.label} · ${info.shortDate || info.inGameDay} · Daily reset in ${info.countdownText || '--h --m'}`;
   }
 }
 
