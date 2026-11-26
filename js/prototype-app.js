@@ -1,3 +1,10 @@
+import {
+  animateDossierHero,
+  animatePrefarmEntrance,
+  animateTodayEntrance,
+  pulseReminderChip,
+  pulseStepperValue
+} from './motion.js?v=20261126p77';
 import { renderAssetIcon, renderGachaSplash } from './assets.js?v=20261121p64';
 import {
   ensureCharacterKitAndStats,
@@ -1014,7 +1021,7 @@ function renderTodayView(container, account) {
           <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
           <span class="p-hud-countdown-resin mono" title="Natural Original Resin regenerating before ${esc(patchCal.nextLabel)}">
             ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
-            <span>~${patchCal.naturalResinToNext.toLocaleString()}</span>
+            <span data-count-to="${patchCal.naturalResinToNext}" data-count-prefix="~">~${patchCal.naturalResinToNext.toLocaleString()}</span>
           </span>
         </div>
         <span class="p-badge p-hero-pill-slots mono" title="Remaining domain days before ${esc(patchCal.nextLabel)} (All-Open includes Sundays + first 7 days of the banner)">${patchCal.monThuSlots} M/Th · ${patchCal.wedSatSlots} W/Sa · ${patchCal.tueFriSlots} Tu/F · <strong class="text-mint">${patchCal.sunSlots} All-Open</strong></span>
@@ -1049,7 +1056,7 @@ function renderTodayView(container, account) {
           <div class="p-res-head-inline">
             <span class="p-res-label">Wish Stash</span>
           </div>
-          <span class="p-res-value mono text-gold">${purse.limitedPulls.toLocaleString()} Pulls</span>
+          <span class="p-res-value mono text-gold" data-count-to="${purse.limitedPulls}" data-count-suffix=" Pulls">${purse.limitedPulls.toLocaleString()} Pulls</span>
           <span class="p-res-sub mono">${wishProj.projectedTotalPulls} projected by ${esc(patchCal.nextPhaseDateShort)} (${wishProj.daysRemaining}d)</span>
         </div>
       </div>
@@ -1273,6 +1280,7 @@ function renderTodayView(container, account) {
       const item = list.find((x) => x.id === id);
       if (item) item.done = !item.done;
       renderTodayView(container, account);
+      pulseReminderChip(container, group, id);
       try {
         if (!state.isPreviewDemo) {
           await saveAccountSection(state.sessionUser, 'checklist', account.checklist);
@@ -1678,7 +1686,10 @@ function renderPrefarmView(container, account) {
   container.querySelectorAll('[data-pf-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.prefarmSubTab = btn.dataset.pfTab;
-      runPrefarmTransition(() => renderPrefarmView(container, account));
+      runPrefarmTransition(() => {
+        renderPrefarmView(container, account);
+        animatePrefarmEntrance(container);
+      });
     });
   });
 
@@ -1727,6 +1738,7 @@ function renderPrefarmView(container, account) {
       const id = btn.dataset.pfId;
       const field = btn.dataset.pfStep;
       const dir = Number(btn.dataset.pfDir) || 0;
+      let hitCrown = false;
       const next = (account.prefarmQueue || []).map((item) => {
         if (item.id !== id) return item;
         if (field === 'level') {
@@ -1740,9 +1752,11 @@ function renderPrefarmView(container, account) {
           burst: item.targetTalents?.[2] ?? 9
         };
         const nextVal = Math.max(1, Math.min(10, (Number(curT[field]) || 1) + dir));
+        if (nextVal === 10) hitCrown = true;
         return { ...item, targetTalent: { ...curT, [field]: nextVal } };
       });
       commitQueue(next, { animate: false, debounceMs: 450 });
+      pulseStepperValue(container, id, field, hitCrown);
     });
   });
 
@@ -3719,9 +3733,16 @@ function renderActiveView() {
   if (!container || !account) return;
 
   try {
-    if (state.activeTab === 'hud') renderTodayView(container, account);
-    else if (state.activeTab === 'prefarm') renderPrefarmView(container, account);
-    else if (state.activeTab === 'roster') renderRosterView(container, account);
+    if (state.activeTab === 'hud') {
+      renderTodayView(container, account);
+      animateTodayEntrance(container);
+    } else if (state.activeTab === 'prefarm') {
+      renderPrefarmView(container, account);
+      animatePrefarmEntrance(container);
+    } else if (state.activeTab === 'roster') {
+      renderRosterView(container, account);
+      if (state.inspectedCharKey) animateDossierHero(container);
+    }
     else if (state.activeTab === 'armory') renderArmoryView(container, account);
     else if (state.activeTab === 'teams') renderTeamsView(container, account);
     else if (state.activeTab === 'vault') renderVaultView(container, account);
