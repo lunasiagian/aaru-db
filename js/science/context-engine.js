@@ -384,9 +384,17 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   const factions = new Set(context.factions || []);
   const primaryScaler = context.primaryScaler || 'atk_';
   const fullText = [...(kitData?.talents || []), ...(kitData?.passives || [])].map((x) => x?.description || '').join(' ');
+  // Strip standard Hoyoverse 3-attack infusion boilerplate ("Normal, Charged, and Plunging Attacks") so non-plunge carries
+  // like Arlecchino, Alhaitham, Navia, and Mavuika never falsely trigger Plunging Attack sets (Long Night's Oath).
+  const strippedPlungeText = fullText.replace(/normal,?\s*charged,?\s*(?:and\s*)?plunging\s+attacks?/gi, '');
+  const charKeyNorm = String(charMeta?.key || '').toLowerCase();
+  const isKnownPlungeCarry = /^(varesa|xiao|gaming)$/.test(charKeyNorm);
+  const isKnownNonPlunge = /^(alhaitham|kaveh|navia|mavuika|vesna|arlecchino|clorinde|hutao|ayaka|keqing|raiden|cyno|wriothesley|skirk)$/.test(charKeyNorm);
+  const hasExclusivePlungeKit =
+    /jumping\s+ability|plunging\s+attack[^.]{0,50}(?:dmg|bonus|increas|crit)|plunge\s+dmg/i.test(strippedPlungeText);
   const isPlunge =
-    Number(context.features?.plunge_focus_score ?? 0) >= 0.45 ||
-    /plunging\s+attack[^.]{0,60}(?:dmg|bonus|increas)|plunge\s+dmg/i.test(fullText);
+    isKnownPlungeCarry ||
+    (!isKnownNonPlunge && (hasExclusivePlungeKit || (Number(context.features?.plunge_focus_score ?? 0) >= 0.45 && !Boolean(context.features?.has_bond_of_life))));
   const isHeal = Boolean(context.features?.has_heal);
   const isShield = Boolean(context.features?.has_shield);
   const hasBondOfLife = Boolean(context.features?.has_bond_of_life) || /\bbond\s+of\s+life\b/i.test(fullText);
@@ -525,7 +533,7 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
     score += (netEr === 'high' ? 8.5 : 5.0) + burstShare * 3.5;
   }
   if (setObj.lookupKey === 'longnightsoath' && isPlunge) {
-    score += 11.5;
+    score += isKnownPlungeCarry ? 20.0 : 11.5;
   }
 
   if (primaryScaler === 'hp_') score += p.hpScaler * 3.5;

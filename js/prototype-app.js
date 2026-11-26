@@ -75,7 +75,7 @@ import {
   rankArtifactSetsByVector,
   rankPartnersAndSubstitutes,
   rankWeaponsByVector
-} from './science/context-engine.js?v=20261126p79';
+} from './science/context-engine.js?v=20261126p80';
 import { commitGoodImport, computeGoodImportDiff, validateGoodV3 } from './good-importer.js';
 import { cloneMockAccount, MOCK_ACCOUNTS } from './mock-data.js';
 
