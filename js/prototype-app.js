@@ -1008,8 +1008,8 @@ function renderTodayView(container, account) {
       <div class="p-patch-metrics">
         <div class="p-hud-countdown">
           <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
-          <span class="p-hud-countdown-resin mono" title="Natural Resin regenerating before ${esc(patchCal.nextLabel)}">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2.5C7.6 5.8 5 9.6 5 13.5 5 17.6 8.1 21 12 21s7-3.4 7-7.5c0-3.9-2.6-7.7-7-11zm0 15.8c-2.5 0-4.5-2-4.5-4.6 0-1.9 1-4.1 2.7-6.1-.4 1.4-.1 3 .9 4.1 1.2 1.2 3.1 1.4 4.5.5.5.5.9 1.1.9 1.5 0 2.6-2 4.6-4.5 4.6z"/></svg>
+          <span class="p-hud-countdown-resin mono" title="Natural Original Resin regenerating before ${esc(patchCal.nextLabel)}">
+            ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
             <span>~${patchCal.naturalResinToNext.toLocaleString()}</span>
           </span>
         </div>
