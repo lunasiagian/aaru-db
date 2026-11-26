@@ -8,7 +8,12 @@ web
 
 ## Users
 
-The primary user, Sunny, and friends managing individual Genshin Impact accounts (with read-only partner/friend account switching) to plan character builds, prefarm ascension/talent materials across patch cycles, track wish reserves, and benchmark endgame team compositions.
+The primary user (admin), Sunny, and friends managing individual Genshin Impact accounts (with read-only partner/friend account switching). Core user archetypes AaruDB serves:
+
+1. **Endgame Purist (*Sipaling Endgame*):** Prioritizes clearing Abyss/Stygian/Theater, prefers generalist sets (`EoSF`, `Noblesse`) over niche domains, hates fishing weapon grinds, invests supports `1-8-8` to `1-10-10`, and constantly shuffles loadouts.
+2. **Favorite-Character Minmaxer (*Sipaling Minmaxing Karakter Favorit*):** Hyper-invests favorite carries (e.g. `300% CDMG` / `C0R1`–`C3R1`) while under-building supports or overlooking stat tradeoffs (`117% ER`), dislikes unassigned orphan artifacts in bag, pulls impulsively, and needs visual "Why is my damage 100k vs 300k?" team diagnostics.
+3. **Data-Analyst Veteran (*Paham Tapi Ga Paham*):** Solid account clearing endgame; wants quantitative diminishing-returns / stopping-point metrics ("when to stop farming a character") and multi-variant team tinkering around favorite anchors (e.g. `Childe`).
+4. **Clueless Casual (*Sipaling Planga-Plongo*):** Overwhelmed by multi-paragraph guides; needs 1-glance visual "just equip this" recommendations, blunt dead-mainstat guardrails (e.g. `ER Sands on Mavuika`), owned-only team substitutes, and zero-Excel daily domain guidance.
 
 ## Product Purpose
 

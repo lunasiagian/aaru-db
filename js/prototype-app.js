@@ -1927,10 +1927,10 @@ function renderRosterView(container, account) {
     const buildLenses = (staticProfile?.playstyleLenses?.length ? staticProfile.playstyleLenses : combat?.kitAnalysis?.roleInfo?.buildLenses) || [];
     const capabilities = combat?.kitAnalysis?.roleInfo?.capabilities || combat?.kitAnalysis?.roleInfo?.functionTags || [];
     const elemStat = combat?.dmgBonus || 0;
-    const elemLabel = `${char.meta.element || 'Elemental'} DMG%`;
+    const elemLabel = combat?.dmgBonusKey ? formatStatKey(combat.dmgBonusKey) : `${char.meta.element || 'Elemental'} DMG%`;
     const elAttr = String(char.meta.element || '').toLowerCase();
     const talArr = char.talent ? [char.talent.auto || 1, char.talent.skill || 1, char.talent.burst || 1] : (char.talents || [1, 1, 1]);
-    const erReport = evaluateErComfort(char, combat, account.teams || [], account.weapons || [], kitData, combat?.kitAnalysis);
+    const erReport = evaluateErComfort(char, combat, account.teams || [], account.weapons || [], kitData, combat?.kitAnalysis, char.equippedArtifacts || []);
     const kitScaling = extractKitScaling(char.key, kitData, combat?.kitAnalysis);
     const statCapVal = staticProfile?.statThresholdCurve?.ceiling || staticProfile?.features?.threshold_cap_value || null;
     const modulatedCtx = sandboxCtx ? modulateContextWithEquippedTotals(sandboxCtx, staticProfile, combat, statCapVal) : null;

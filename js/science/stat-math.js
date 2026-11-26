@@ -1,4 +1,4 @@
-import { getCharacterMeta, getKqmEntry } from '../catalog.js?v=20261121p64';
+import { getCharacterMeta, getKqmEntry, getStaticSetVectors, getWeaponsIndex } from '../catalog.js?v=20261121p64';
 import {
   analyzeCharacterKit,
   classifyBurstCadence,
@@ -99,14 +99,100 @@ function pickCharBaseStats(char, kitData) {
   return s90;
 }
 
+const ASCENSION_STAT_SCALE = [0, 0, 0.25, 0.5, 0.5, 0.75, 1.0];
+
+function parseTwoPcStatBonus(twoPcText) {
+  const txt = String(twoPcText || '');
+  if (!txt) return null;
+  const rules = [
+    [/Energy Recharge\s*\+(\d+(?:\.\d+)?)%/i, 'enerRech_'],
+    [/Elemental Mastery\s*\+(\d+(?:\.\d+)?)/i, 'eleMas'],
+    [/CRIT Rate\s*\+(\d+(?:\.\d+)?)%/i, 'critRate_'],
+    [/CRIT DMG\s*\+(\d+(?:\.\d+)?)%/i, 'critDMG_'],
+    [/Healing Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'heal_'],
+    [/Max HP\s*\+(\d+(?:\.\d+)?)%|HP\s*\+(\d+(?:\.\d+)?)%/i, 'hp_'],
+    [/ATK\s*\+(\d+(?:\.\d+)?)%/i, 'atk_'],
+    [/DEF\s*\+(\d+(?:\.\d+)?)%/i, 'def_'],
+    [/Pyro DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'pyro_dmg_'],
+    [/Hydro DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'hydro_dmg_'],
+    [/Electro DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'electro_dmg_'],
+    [/Cryo DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'cryo_dmg_'],
+    [/Anemo DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'anemo_dmg_'],
+    [/Geo DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'geo_dmg_'],
+    [/Dendro DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'dendro_dmg_'],
+    [/Physical DMG Bonus\s*\+(\d+(?:\.\d+)?)%/i, 'physical_dmg_']
+  ];
+  for (const [rx, statKey] of rules) {
+    const m = txt.match(rx);
+    if (m) {
+      const val = Number(m[1] ?? m[2]);
+      if (Number.isFinite(val) && val > 0) return { key: statKey, val };
+    }
+  }
+  return null;
+}
+
+const FALLBACK_2PC_STATS = {
+  emblemofseveredfate: { key: 'enerRech_', val: 20 },
+  tenacityofthemillelith: { key: 'hp_', val: 20 },
+  vourukashasglow: { key: 'hp_', val: 20 },
+  gladiatorsfinale: { key: 'atk_', val: 18 },
+  shimenawasreminiscence: { key: 'atk_', val: 18 },
+  vermillionhereafter: { key: 'atk_', val: 18 },
+  echoesofanoffering: { key: 'atk_', val: 18 },
+  fragmentofharmonicwhimsy: { key: 'atk_', val: 18 },
+  unfinishedreverie: { key: 'atk_', val: 18 },
+  wandererstroupe: { key: 'eleMas', val: 80 },
+  gildeddreams: { key: 'eleMas', val: 80 },
+  flowerofparadiselost: { key: 'eleMas', val: 80 },
+  huskofopulentdreams: { key: 'def_', val: 30 },
+  viridescentvenerer: { key: 'anemo_dmg_', val: 15 },
+  crimsonwitchofflames: { key: 'pyro_dmg_', val: 15 },
+  heartofdepth: { key: 'hydro_dmg_', val: 15 },
+  nymphsdream: { key: 'hydro_dmg_', val: 15 },
+  blizzardstrayer: { key: 'cryo_dmg_', val: 15 },
+  thunderingfury: { key: 'electro_dmg_', val: 15 },
+  archaicpetra: { key: 'geo_dmg_', val: 15 },
+  deepwoodmemories: { key: 'dendro_dmg_', val: 15 },
+  bloodstainedchivalry: { key: 'physical_dmg_', val: 25 },
+  paleflame: { key: 'physical_dmg_', val: 25 },
+  maidenbeloved: { key: 'heal_', val: 15 },
+  oceanhuedclam: { key: 'heal_', val: 15 },
+  songofdayspast: { key: 'heal_', val: 15 }
+};
+
+function getTwoPcStatBonus(normSetKey) {
+  const vectors = getStaticSetVectors?.() || [];
+  for (const s of vectors) {
+    const k = String(s?.key || s?.name || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+    if (k === normSetKey && s?.twoPc) {
+      return parseTwoPcStatBonus(s.twoPc);
+    }
+  }
+  return FALLBACK_2PC_STATS[normSetKey] || null;
+}
+
 function pickWeaponStats(weapon, weaponStats) {
   if (!weapon) return { atk: 0, subKey: '', subVal: 0 };
   const lv = Number(weapon.level) || 90;
-  if (!weaponStats) {
-    return { atk: lv >= 90 ? 542 : 475, subKey: '', subVal: 0 };
+  if (weaponStats) {
+    if (lv <= 80 && weaponStats.lv80) return weaponStats.lv80;
+    return weaponStats.lv90 || weaponStats.lv80;
   }
-  if (lv <= 80 && weaponStats.lv80) return weaponStats.lv80;
-  return weaponStats.lv90 || weaponStats.lv80;
+  // Offline fallback via Dimbreath weapons_index.json so weapon substats are never 0 on first paint
+  const normKey = String(weapon.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const idxEntry = (getWeaponsIndex?.() || []).find(
+    (w) => String(w?.key || w?.name || '').replace(/[^a-z0-9]/gi, '').toLowerCase() === normKey
+  );
+  if (idxEntry && Number(idxEntry.baseAtk90) > 0) {
+    const scale = lv >= 90 ? 1 : lv >= 80 ? 0.89 : lv >= 70 ? 0.78 : lv >= 60 ? 0.67 : Math.max(0.2, lv / 90);
+    return {
+      atk: Math.round(Number(idxEntry.baseAtk90) * scale),
+      subKey: idxEntry.substatKey || '',
+      subVal: Number(idxEntry.substatVal90) ? Math.round(Number(idxEntry.substatVal90) * scale * 10) / 10 : 0
+    };
+  }
+  return { atk: lv >= 90 ? 542 : 475, subKey: '', subVal: 0 };
 }
 
 
@@ -345,7 +431,12 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
   };
 
   if (kitData?.ascensionStat) {
-    applyStat(kitData.ascensionStat.key, Number(kitData.ascensionStat.value) || 0);
+    const lv = Number(char?.level) || 90;
+    const asc = char?.ascension !== undefined && char?.ascension !== null
+      ? Math.max(0, Math.min(6, Number(char.ascension) || 0))
+      : lv >= 80 ? 6 : lv >= 70 ? 5 : lv >= 60 ? 4 : lv >= 50 ? 3 : lv >= 40 ? 2 : 0;
+    const ascScale = ASCENSION_STAT_SCALE[asc] ?? 1.0;
+    applyStat(kitData.ascensionStat.key, (Number(kitData.ascensionStat.value) || 0) * ascScale);
   }
   if (wepBase.subKey) {
     applyStat(wepBase.subKey, Number(wepBase.subVal) || 0);
@@ -355,6 +446,12 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
   for (const a of artifacts) {
     const sk = String(a?.setKey || a?.setName || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
     if (sk) setCounts.set(sk, (setCounts.get(sk) || 0) + 1);
+  }
+  for (const [normSetKey, count] of setCounts.entries()) {
+    if (count >= 2) {
+      const bonus2pc = getTwoPcStatBonus(normSetKey);
+      if (bonus2pc) applyStat(bonus2pc.key, bonus2pc.val);
+    }
   }
   const sortedSets = [...setCounts.entries()].sort((a, b) => b[1] - a[1]);
   let offPieceSlot = null;
@@ -411,8 +508,9 @@ export function computeCharacterCombatStats(char, weapon, artifacts = [], kitDat
   const totalAtk = Math.round(baseAtk * (1 + pct.atk_ / 100) + flat.atk);
   const totalDef = Math.round(baseDef * (1 + pct.def_ / 100) + flat.def);
 
-  let topDmgKey = '';
-  let topDmgVal = 0;
+  const charElemKey = `${String(char?.meta?.element || getCharacterMeta(char?.key)?.element || '').toLowerCase()}_dmg_`;
+  let topDmgKey = charElemKey && dmgBonuses[charElemKey] ? charElemKey : '';
+  let topDmgVal = topDmgKey ? dmgBonuses[topDmgKey] : 0;
   for (const [k, v] of Object.entries(dmgBonuses)) {
     if (v > topDmgVal) {
       topDmgKey = k;
