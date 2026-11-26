@@ -33,9 +33,9 @@
   --el-geo: #FBBF24;
   --el-dendro: #84CC16;
 
-  --p-font-display: 'Fraunces', Georgia, serif;
-  --p-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --p-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --p-font-display: 'Nanum Myeongjo', Georgia, serif;
+  --p-font-sans: 'Albert Sans', system-ui, -apple-system, sans-serif;
+  --p-font-mono: 'Syne', system-ui, sans-serif;
   --p-radius: 12px;
   --p-radius-sm: 8px;
 }
@@ -89,6 +89,7 @@ html, body {
 
 .mono {
   font-family: var(--p-font-mono);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
