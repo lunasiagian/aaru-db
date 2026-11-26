@@ -1,4 +1,4 @@
-import { renderAssetIcon } from './assets.js';
+import { renderAssetIcon } from './assets.js?v=20261121p64';
 import {
   ensureCharacterMaterials,
   ensureWeaponMaterials,
@@ -8,8 +8,8 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261120aj';
-import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261120x';
+} from './catalog.js?v=20261121p64';
+import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261125p68';
 
 const uiState = {
   openTargets: new Set(),

@@ -1,4 +1,4 @@
-import { renderAssetIcon, renderGachaSplash } from './assets.js?v=20261119v1';
+import { renderAssetIcon, renderGachaSplash } from './assets.js?v=20261121p64';
 import {
   ensureCharacterKitAndStats,
   ensureWeaponStats,
@@ -8,7 +8,7 @@ import {
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261120aj';
+} from './catalog.js?v=20261121p64';
 import {
   analyzeCharacterKit,
   buildKitProfile,
@@ -20,7 +20,7 @@ import {
   evaluateTeamCapabilities,
   generateKitInsights,
   rankWeaponsByArchetype
-} from './build-science.js?v=20261115ah';
+} from './build-science.js?v=20261125p67';
 
 const ELEMENT_PILLS = ['All', 'Pyro', 'Hydro', 'Anemo', 'Electro', 'Dendro', 'Cryo', 'Geo'];
 const CHARACTER_ALIASES = {

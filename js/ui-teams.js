@@ -1,7 +1,7 @@
-import { renderAssetIcon } from './assets.js';
-import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261120aj';
-import { analyzeCharacterKit, classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261115ah';
-import { detectTeamWeaponConflicts } from './calculations.js?v=20261120x';
+import { renderAssetIcon } from './assets.js?v=20261121p64';
+import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261121p64';
+import { analyzeCharacterKit, classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261125p67';
+import { detectTeamWeaponConflicts } from './calculations.js?v=20261125p68';
 
 const ARCHETYPES = ['Hypercarry', 'Dual Carry', 'Chip Damage'];
 const CORE_FIELD_ROLES = ['On-Field Carry', 'On-Field Driver', 'Off-Field Sub-DPS', 'Quickswap Support'];

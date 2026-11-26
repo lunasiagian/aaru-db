@@ -1,11 +1,11 @@
-import { renderAssetIcon } from './assets.js';
+import { renderAssetIcon } from './assets.js?v=20261121p64';
 import {
   ensureWeaponStats,
   getAllWeaponKeys,
   getCharacterMeta,
   getWeaponMeta,
   getWeaponStats
-} from './catalog.js?v=20261120aj';
+} from './catalog.js?v=20261121p64';
 
 const STAT_LABELS = {
   atk_: 'ATK%',
