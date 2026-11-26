@@ -33,8 +33,8 @@
   --el-geo: #FBBF24;
   --el-dendro: #84CC16;
 
-  --p-font-display: 'Fraunces', Georgia, serif;
-  --p-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --p-font-display: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --p-font-sans: 'Karla', system-ui, -apple-system, sans-serif;
   --p-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   --p-radius: 12px;
   --p-radius-sm: 8px;
