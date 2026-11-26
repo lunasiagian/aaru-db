@@ -18,23 +18,6 @@
   <link rel="stylesheet" href="./styles.css?v=20261119v15" />
 </head>
 <body>
-  <!-- Maintenance Gate (auto-bypassed on localhost or ?preview=1) -->
-  <main id="maintenance-screen" class="gate-screen" style="position:fixed;inset:0;z-index:9999;">
-    <section class="gate-plate">
-      <div class="gate-astrolabe" aria-hidden="true"></div>
-      <div class="eyebrow">AaruDB · Archive Maintenance</div>
-      <h1 class="gate-title">Under Maintenance</h1>
-      <p class="gate-copy">
-        Under Maintenance for upkeep! Admin is cleaning house and will let you know once the website's finished maintenance. Thank you for your patience!
-      </p>
-    </section>
-  </main>
-  <script>
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.search.includes('preview=1')) {
-      document.getElementById('maintenance-screen')?.setAttribute('hidden', '');
-    }
-  </script>
-
   <!-- Sign-In Gate -->
   <main id="login-screen" class="gate-screen">
     <section class="gate-plate">

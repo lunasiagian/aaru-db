@@ -959,29 +959,37 @@ function renderTodayView(container, account) {
   const weeklyList = account.checklist?.weekly || [];
   const dailyOpen = dailyList.filter((c) => !c.done).length;
   const weeklyOpen = weeklyList.filter((c) => !c.done).length;
+  const totalRem = dailyList.length + weeklyList.length;
+  const doneRem = totalRem - (dailyOpen + weeklyOpen);
+  const remPct = totalRem > 0 ? Math.round((doneRem / totalRem) * 100) : 100;
   const topDomain = enrichedDomains.find((d) => d.matches.length > 0);
   const moraBadgeCls =
     moraStrategy.statusTone === 'coral' ? 'p-badge-coral' : moraStrategy.statusTone === 'gold' ? 'p-badge-amber' : 'p-badge-mint';
   const pivotBadgeCls = twoPass.pivotTone === 'mint' ? 'p-badge-mint' : 'p-badge-amber';
+  const leadTarget = targetsWithTel[0] || null;
+  const leadMeta = leadTarget ? getCharacterMeta(leadTarget.characterKey) : null;
+  const leadEl = leadMeta ? String(leadMeta.element || '').toLowerCase() : '';
 
   container.innerHTML = `
-    <section class="p-patch-bar" aria-label="Genshin Patch &amp; Domain Calendar">
+    <section class="p-patch-bar p-hud-hero" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
+      ${leadTarget ? `<div class="p-hud-hero-art" aria-hidden="true">${renderGachaSplash(leadTarget.characterKey, '')}</div>` : ''}
       <div class="p-patch-primary">
         <div class="p-patch-now">
-          <strong class="p-patch-date">${esc(patchCal.shortDate)}</strong>
-          <span class="p-badge mono">${esc(patchCal.currentLabel)} · Day ${patchCal.dayInPatch}/42</span>
+          <span class="p-badge mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} (Day ${patchCal.dayInPatch}/42)</span>
           ${
             patchCal.isAllDomainsOpenSurge
-              ? `<span class="p-badge p-badge-mint mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily">All Domains Open (${patchCal.surgeDaysRemaining}d left)</span>`
-              : `<span class="p-row-sub mono">Reset in ${esc(patchCal.countdownText)}</span>`
+              ? `<span class="p-badge p-badge-mint mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily">All Domains Open · ${patchCal.surgeDaysRemaining}d left</span>`
+              : `<span class="p-badge mono">Daily Reset · ${esc(patchCal.countdownText)}</span>`
           }
         </div>
-        <div class="p-row-sub">
-          Next: <strong>${esc(patchCal.nextLabel)} — ${esc(patchCal.nextBannerNote)}</strong> · <span class="mono">${esc(patchCal.nextDualTzText)}</span>
-        </div>
+        <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)} — ${esc(patchCal.nextBannerNote)}</h2>
+        <div class="p-row-sub mono">${esc(patchCal.nextDualTzText)}</div>
       </div>
       <div class="p-patch-metrics">
-        <span class="p-badge p-badge-amber mono" title="Natural Resin regenerating before ${esc(patchCal.nextLabel)}">${esc(patchCal.countdownToNextText)} · ~${patchCal.naturalResinToNext.toLocaleString()} Resin</span>
+        <div class="p-hud-countdown">
+          <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
+          <span class="p-hud-countdown-resin mono" title="Natural Resin regenerating before ${esc(patchCal.nextLabel)}">~${patchCal.naturalResinToNext.toLocaleString()} Resin</span>
+        </div>
         <span class="p-badge mono" title="Remaining domain days before ${esc(patchCal.nextLabel)} (All-Open includes Sundays + first 7 days of the banner)">${patchCal.monThuSlots} M/Th · ${patchCal.wedSatSlots} W/Sa · ${patchCal.tueFriSlots} Tu/F · ${patchCal.sunSlots} All-Open</span>
       </div>
     </section>
@@ -1001,7 +1009,9 @@ function renderTodayView(container, account) {
       <div class="p-res-cell">
         ${renderAssetIcon('materials', 'HerosWit', "Hero's Wit", 'icon-sm')}
         <div class="p-res-meta">
-          <span class="p-res-label">Spare Hero's Wit</span>
+          <div class="p-res-head-inline">
+            <span class="p-res-label">Spare Hero's Wit</span>
+          </div>
           <span class="p-res-value mono ${spares.isWitsBroke ? 'text-coral' : 'text-mint'}">${spares.spareWits >= 0 ? `+${Math.round(spares.spareWits)}` : Math.round(spares.spareWits)} Eq.</span>
           <span class="p-res-sub mono">${wits.effectiveTotal.toLocaleString()} total (${wits.wits4} 4★)</span>
         </div>
@@ -1009,7 +1019,9 @@ function renderTodayView(container, account) {
       <div class="p-res-cell">
         ${renderAssetIcon('materials', 'Primogem', 'Primogem', 'icon-sm')}
         <div class="p-res-meta">
-          <span class="p-res-label">Wish Stash</span>
+          <div class="p-res-head-inline">
+            <span class="p-res-label">Wish Stash</span>
+          </div>
           <span class="p-res-value mono text-gold">${purse.limitedPulls.toLocaleString()} Pulls</span>
           <span class="p-res-sub mono">${wishProj.projectedTotalPulls} projected by ${esc(patchCal.nextPhaseDateShort)} (${wishProj.daysRemaining}d)</span>
         </div>
@@ -1034,7 +1046,12 @@ function renderTodayView(container, account) {
                         <strong class="p-spotlight-title">Best Domain Today: ${esc(topDomain.name)}</strong>
                         <div class="p-tag-inline">${topDomain.matches.map((m) => `<span class="p-badge p-badge-mint">${esc(m.badge)} ${esc(m.name)}</span>`).join('')}</div>
                       </div>
-                      <div class="p-row-sub">${(topDomain.rewards || []).map((r) => esc(r.name)).join(' · ')}</div>`
+                      <div class="p-dom-rewards">${(topDomain.rewards || [])
+                        .map(
+                          (r) =>
+                            `<span class="p-dom-reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}<span>${esc(r.name)}</span></span>`
+                        )
+                        .join('')}</div>`
                    : `<div class="p-strategy-head">
                         <strong class="p-spotlight-title">Off-Day for Queued Books (${esc(todayName)})</strong>
                         <span class="p-badge mono">Boss / Ley Line / Artifacts</span>
@@ -1066,26 +1083,28 @@ function renderTodayView(container, account) {
                   : t.telemetry.etaLabel;
                 return `
                   <button type="button" class="p-target-card ${active}" data-el="${esc(el)}" data-p-focus="${esc(t.characterKey)}" aria-pressed="${Boolean(active)}">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;">
-                      <div class="p-row-left">
-                        ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-xs')}
-                        <strong style="font-size:13px;">${esc(cm.name)}</strong>
+                    <div class="p-target-shell">
+                      <div class="p-target-portrait">${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-hud-char')}</div>
+                      <div class="p-target-body">
+                        <div class="p-target-head">
+                          <strong class="p-target-name">${esc(cm.name)}</strong>
+                          <span class="mono p-target-pct ${funcPct >= 100 ? 'text-mint' : 'text-gold'}">${
+                            t.readiness >= 100 ? 'Max Ready' : funcPct >= 100 ? `Lv.80 ✓ · ${t.readiness}%` : `Lv.80 ${funcPct}% · Max ${t.readiness}%`
+                          }</span>
+                        </div>
+                        <div class="p-bar p-bar-dual" title="Lv.80 Ready (${esc(t.ms?.funcLabel || 'Lv.80')}): ${funcPct}% · Full Max: ${t.readiness}%">
+                          <span class="p-bar-func" style="width:${funcPct}%;"></span>
+                          <span class="p-bar-max" style="width:${t.readiness}%;"></span>
+                        </div>
+                        <div class="p-row-sub mono p-target-meta">${esc(t.tierLabel)} · ${esc(bookSlotHint)}${t.ms?.bossUnreleased ? ' · 7.3 Boss' : ''}</div>
                       </div>
-                      <span class="mono ${funcPct >= 100 ? 'text-mint' : 'text-gold'}" style="font-size:11.5px;">${
-                        t.readiness >= 100 ? 'Max Ready' : funcPct >= 100 ? `Lv.80 ✓ · ${t.readiness}%` : `Lv.80 ${funcPct}% · Max ${t.readiness}%`
-                      }</span>
                     </div>
-                    <div class="p-bar p-bar-dual" style="width:100%;" title="Lv.80 Ready (${esc(t.ms?.funcLabel || 'Lv.80')}): ${funcPct}% · Full Max: ${t.readiness}%">
-                      <span class="p-bar-max" style="width:${t.readiness}%;"></span>
-                      <span class="p-bar-func" style="width:${funcPct}%;"></span>
-                    </div>
-                    <div class="p-row-sub mono" style="font-size:11.5px;">${esc(t.tierLabel)} · ${esc(bookSlotHint)}${t.ms?.bossUnreleased ? ' · 7.3 Boss' : ''}</div>
                   </button>`;
               })
               .join('') || '<span class="muted">No active targets in Prefarm Queue.</span>'}
           </div>
 
-          <div class="p-list">
+          <div class="p-mat-list">
             ${
               topBottlenecks.length
                 ? topBottlenecks
@@ -1118,10 +1137,11 @@ function renderTodayView(container, account) {
         <section class="p-panel">
           <div class="p-panel-head">
             <h2 class="p-panel-title">Active Reminders</h2>
-            <span class="p-badge ${dailyOpen + weeklyOpen === 0 ? 'p-badge-mint' : 'p-badge-amber'}">${
-              dailyOpen + weeklyOpen === 0 ? 'All Caught Up' : `${dailyOpen} Daily · ${weeklyOpen} Weekly Open`
+            <span class="p-badge mono ${dailyOpen + weeklyOpen === 0 ? 'p-badge-mint' : 'p-badge-amber'}">${
+              dailyOpen + weeklyOpen === 0 ? 'All Caught Up' : `${doneRem}/${totalRem} Done · ${dailyOpen} Daily · ${weeklyOpen} Weekly`
             }</span>
           </div>
+          <div class="p-bar p-rem-progress" aria-hidden="true"><span style="width:${remPct}%"></span></div>
           <div class="p-list" style="gap:14px;">
             <div class="p-reminder-group">
               <div class="p-row-sub">Daily</div>
@@ -1164,20 +1184,25 @@ function renderTodayView(container, account) {
               : `${enrichedDomains.filter((d) => d.matches.length).length} Priority`
           }</span>
         </div>
-        <div class="p-list">
+        <div class="p-mat-list">
           ${
             enrichedDomains.length
               ? enrichedDomains
                   .slice(0, 8)
                   .map(
                     (dom) => `
-              <div class="p-row">
-                <div>
+              <div class="p-row p-dom-row ${dom.matches.length ? 'is-priority-dom' : ''}">
+                <div class="p-dom-main">
                   <div class="p-row-title">${esc(dom.name)}</div>
-                  <div class="p-row-sub">${(dom.rewards || []).map((r) => esc(r.name)).join(' · ')}</div>
+                  <div class="p-dom-rewards">${(dom.rewards || [])
+                    .map(
+                      (r) =>
+                        `<span class="p-dom-reward-chip">${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}<span>${esc(r.name)}</span></span>`
+                    )
+                    .join('')}</div>
                   ${
                     dom.matches.length
-                      ? `<div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">${dom.matches
+                      ? `<div class="p-dom-matches">${dom.matches
                           .map((m) => `<span class="p-badge p-badge-mint">${esc(m.badge)} ${esc(m.name)}</span>`)
                           .join('')}</div>`
                       : ''
@@ -1187,7 +1212,7 @@ function renderTodayView(container, account) {
               </div>`
                   )
                   .join('')
-              : '<div class="muted" style="font-size:13px;">No open domains match the focused target today.</div>'
+              : '<div class="muted" style="font-size:13px;padding:10px 0;">No open domains match the focused target today.</div>'
           }
         </div>
       </section>
