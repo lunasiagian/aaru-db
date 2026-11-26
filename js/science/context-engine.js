@@ -414,7 +414,8 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   if (p.caOnly && (!isOnField || caFocus < 0.55 || hasSkillStanceNa)) {
     return -10;
   }
-  if (p.naOnly && (!isOnField || naFocus < 0.45)) {
+  const ncpShare = Number(context.features?.normal_charged_plunge_share ?? 0);
+  if (p.naOnly && (!isOnField || (naFocus < 0.45 && !(ncpShare >= 0.45 && caFocus < 0.5 && !isPlunge)))) {
     return -10;
   }
 
@@ -603,6 +604,9 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   }
   if (p.caOnly && isOnField && caFocus >= 0.65) {
     score += caFocus * 4.5;
+  }
+  if (setObj.lookupKey === 'gladiatorsfinale' && isOnField && (wepType === 'Sword' || wepType === 'Claymore' || wepType === 'Polearm')) {
+    if (naFocus >= 0.55 || (ncpShare >= 0.48 && caFocus < 0.5 && !isPlunge)) score += 6.0;
   }
   if (p.naOnly && isOnField && naFocus >= 0.6) {
     score += naFocus * 3.0;
