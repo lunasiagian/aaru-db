@@ -840,19 +840,8 @@ function setupServerModal() {
     modal.hidden = true;
   };
   document.getElementById('btn-server-trigger')?.addEventListener('click', openServerModal);
-  const themeBtn = document.getElementById('btn-theme-toggle');
-  if (themeBtn) {
-    const syncThemeLabel = (theme) => {
-      themeBtn.textContent = theme === 'light' ? 'Theme: Papyrus' : 'Theme: Obsidian';
-    };
-    syncThemeLabel(document.documentElement.dataset.theme || localStorage.getItem('aaru_theme') || 'dark');
-    themeBtn.addEventListener('click', () => {
-      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-      document.documentElement.dataset.theme = next;
-      localStorage.setItem('aaru_theme', next);
-      syncThemeLabel(next);
-    });
-  }
+  document.documentElement.dataset.theme = 'dark';
+  localStorage.removeItem('aaru_theme');
   closeBtn?.addEventListener('click', close);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) close();

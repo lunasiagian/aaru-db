@@ -13,7 +13,7 @@
     rel="stylesheet"
   />
   <script>
-    document.documentElement.dataset.theme = localStorage.getItem('aaru_theme') || 'dark';
+    document.documentElement.dataset.theme = 'dark';
   </script>
   <link rel="stylesheet" href="./styles.css?v=20261119v15" />
 </head>
@@ -77,7 +77,6 @@
           <span id="changelog-dot" class="changelog-dot" hidden></span>
         </button>
         <select id="account-switcher" class="account-switcher mono" aria-label="Switch Account View" title="Switch Account View"></select>
-        <button type="button" id="btn-theme-toggle" class="btn btn-ghost btn-sm mono" aria-label="Toggle archive theme" title="Toggle Obsidian / Papyrus theme">Theme: Obsidian</button>
         <button type="button" id="btn-open-import" class="btn btn-gold btn-sm">+ Import GOOD</button>
         <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Logout</button>
       </div>

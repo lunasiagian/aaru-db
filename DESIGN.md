@@ -99,7 +99,7 @@ components:
 
 AaruDB's active workspace (`prototype.html` / `prototype.css`) is an Operate-mode Genshin Impact command deck built for daily resin decisions, patch-calendar prefarming, and high-density build inspection. Deep nocturnal obsidian surfaces (`#060812` → `#0C1120` → `#121A2F`) carry whisper-thin `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`) and high-contrast Ley-Line cyan (`#5EEAD4`) primary actions, keeping attention on live numbers and character/material icons rather than ornamental chrome.
 
-The layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`. *(Legacy production `index.html` / `styles.css` retains the dual Nocturnal Lapis & Sunlit Papyrus `Roboto Flex` + `Recursive` system until `prototype.html` graduates.)*
+The layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`. *(Archived `legacy.html` / `styles.css` is locked to dark Nocturnal Lapis.)*
 
 **Key Characteristics:**
 - Deep Obsidian Slate tonal stack (`#060812` / `#0C1120` / `#121A2F` / `#1A2440`) framed by `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`)
