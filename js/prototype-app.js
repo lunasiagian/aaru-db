@@ -3906,9 +3906,11 @@ function setupModals() {
     const body = document.getElementById('proto-system-body');
     if (!body) return;
     const acctOpts = document.getElementById('proto-account-select')?.innerHTML || '';
+    const appVer = window.GENSHIN_SHEET_CONFIG?.APP_VERSION || 'v3.1.0';
     body.innerHTML = `
+      <div class="p-row"><span>App Version</span><strong class="mono">${esc(appVer)}</strong></div>
       <div class="p-row"><span>Catalog Source</span><strong class="mono">${esc(st.source || 'snapshot')}</strong></div>
-      <div class="p-row"><span>Version</span><strong class="mono">${esc(st.lunarisVer || '—')}</strong></div>
+      <div class="p-row"><span>Game Data</span><strong class="mono">${esc(st.lunarisVer || '—')}</strong></div>
       <button type="button" id="p-refresh-cat" class="p-btn p-btn-outline">Refresh Live Catalog</button>
       <div style="border-top:1px solid var(--p-border);padding-top:12px;display:flex;flex-direction:column;gap:8px;">
         <label class="proto-field">
@@ -3917,7 +3919,7 @@ function setupModals() {
         </label>
         <button type="button" id="p-modal-import-btn" class="p-btn p-btn-primary">+ Import GOOD</button>
         <div style="display:flex;gap:8px;">
-          <a href="./index.html?preview=1" class="p-btn p-btn-outline" style="flex:1;">Classic UI</a>
+          <a href="./legacy.html" class="p-btn p-btn-outline" style="flex:1;">Classic UI</a>
           <button type="button" id="p-modal-logout-btn" class="p-btn p-btn-outline" style="flex:1;">Sign out</button>
         </div>
       </div>
