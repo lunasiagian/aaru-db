@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>AaruDB — Tactical Genshin Planner (Prototype)</title>
+  <title>AaruDB — Tactical Genshin Planner</title>
   <link rel="icon" type="image/png" href="./favicon.png?v=20261113ad" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="./prototype.css?v=20261125p71" />
+  <link rel="stylesheet" href="./prototype.css?v=20261126p72" />
 </head>
 <body>
   <!-- Auth Gate -->
@@ -134,13 +134,18 @@
         <button type="button" id="proto-close-import" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
       </div>
       <div class="p-modal-body">
-        <div id="proto-dropzone" class="p-dropzone" role="button" tabindex="0" aria-label="Drop GOOD JSON file here or click to browse">
-          Drop GOOD JSON file here or click to browse
+        <div id="proto-dropzone" class="p-dropzone" role="button" tabindex="0" aria-label="Drop Irminsul GOOD JSON file here or click to browse">
+          <div class="p-dropzone-title">Drop Irminsul .json file here</div>
+          <div class="p-dropzone-sub">or click to browse · supports GOOD v3</div>
           <input id="proto-file-input" type="file" accept=".json,application/json" hidden />
         </div>
-        <textarea id="proto-good-paste" rows="4" class="p-textarea mono" placeholder='Or paste GOOD v3 JSON payload...'></textarea>
+        <label class="proto-field">
+          <span>Or paste raw GOOD v3 JSON</span>
+          <textarea id="proto-good-paste" rows="3" class="p-textarea mono" placeholder='{"format":"GOOD","version":3,"source":"Irminsul",...}'></textarea>
+        </label>
         <div id="proto-import-preview" class="p-import-preview"></div>
-        <div class="p-modal-foot">
+        <div class="p-modal-foot p-import-foot">
+          <p class="p-import-note">Note: Irminsul exports omit Mora, Primogems, Acquaint Fates, and Resin — update those in Today.</p>
           <button type="button" id="proto-commit-import" class="p-btn p-btn-primary" disabled>Confirm &amp; Sync</button>
         </div>
       </div>
@@ -183,6 +188,6 @@
   <div id="proto-toast" class="p-toast" role="status" aria-live="polite" hidden></div>
 
   <script src="./config.js"></script>
-  <script type="module" src="./js/prototype-app.js?v=20261125p71"></script>
+  <script type="module" src="./js/prototype-app.js?v=20261126p72"></script>
 </body>
 </html>

@@ -2100,14 +2100,85 @@ html, body {
   gap: 8px;
 }
 .p-dropzone {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px 20px;
   text-align: center;
   border: 1px dashed var(--p-border-strong);
   border-radius: var(--p-radius-sm);
+  background: var(--p-surface-2);
   color: var(--p-text-secondary);
   cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
-.p-dropzone:hover { border-color: var(--p-accent); color: var(--p-text); }
+.p-dropzone:hover { border-color: var(--p-accent); background: var(--p-hover); color: var(--p-text); }
+.p-dropzone-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-gold);
+}
+.p-dropzone-sub {
+  font-size: 12.5px;
+  color: var(--p-text-secondary);
+}
+.p-import-preview:empty { display: none; }
+.p-diff-summary {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--p-border);
+  border-bottom: 1px solid var(--p-border);
+}
+.p-diff-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--p-border);
+}
+.p-diff-row:last-child { border-bottom: none; }
+.p-diff-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--p-text-secondary);
+}
+.p-diff-val {
+  font-size: 13px;
+  color: var(--p-text);
+  text-align: right;
+  white-space: nowrap;
+}
+.text-accent { color: var(--p-accent); }
+.p-diff-samples {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--p-radius-sm);
+  background: var(--p-bg);
+  border: 1px solid var(--p-border);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--p-text-secondary);
+  max-height: 120px;
+  overflow-y: auto;
+}
+.p-import-foot {
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--p-border);
+}
+.p-import-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--p-text-muted);
+  max-width: 48ch;
+  text-wrap: pretty;
+}
 
 .p-toast {
   position: fixed;

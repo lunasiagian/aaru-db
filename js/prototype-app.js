@@ -3827,7 +3827,39 @@ function setupModals() {
       validateGoodV3(parsed);
       const diff = computeGoodImportDiff(state.ownAccount, parsed);
       state.pendingGoodImport = { raw: parsed, diff };
-      previewBox.innerHTML = `<div class="p-badge p-badge-mint">${diff.charChanges.length} character updates · ${diff.matChanges.length} material updates</div>`;
+      const sampleLines = [
+        ...diff.charChanges.slice(0, 6).map((c) => `CHAR [${c.type.toUpperCase()}]: ${c.key} ${c.fromLevel ? `Lv.${c.fromLevel} → ` : ''}Lv.${c.toLevel}`),
+        ...diff.matChanges.slice(0, 4).map((m) => `MAT: ${m.key} ${m.from ?? 0} → ${m.to}`)
+      ];
+      previewBox.innerHTML = `
+        <div class="p-diff-summary">
+          <div class="p-diff-row">
+            <span class="p-diff-label">Source</span>
+            <span class="p-diff-val mono"><strong>${esc(diff.source || 'GOOD')}</strong> <span class="muted">(v${esc(diff.version)})</span></span>
+          </div>
+          <div class="p-diff-row">
+            <span class="p-diff-label">Characters</span>
+            <span class="p-diff-val mono"><strong class="${diff.charChanges.length ? 'text-gold' : ''}">${diff.charChanges.length} changes</strong> <span class="muted">/ ${diff.charactersTotal} total</span></span>
+          </div>
+          <div class="p-diff-row">
+            <span class="p-diff-label">Weapons</span>
+            <span class="p-diff-val mono"><strong class="${diff.weaponChanges.length ? 'text-mint' : ''}">${diff.weaponChanges.length} changes</strong> <span class="muted">/ ${diff.weaponsTotal} total</span></span>
+          </div>
+          <div class="p-diff-row">
+            <span class="p-diff-label">Artifacts</span>
+            <span class="p-diff-val mono"><strong class="text-accent">${diff.equippedArtifactsCount || 0} equipped</strong> <span class="muted">/ ${diff.artifactsTotal || 0} total</span></span>
+          </div>
+          <div class="p-diff-row">
+            <span class="p-diff-label">Materials</span>
+            <span class="p-diff-val mono"><strong class="${diff.matChanges.length ? 'text-mint' : ''}">${diff.matChanges.length} synced</strong> <span class="muted">/ ${diff.materialsTotal} total</span></span>
+          </div>
+        </div>
+        ${
+          sampleLines.length
+            ? `<div class="p-diff-samples mono">${sampleLines.map((line) => `<div>${esc(line)}</div>`).join('')}</div>`
+            : ''
+        }
+      `;
       commitBtn.disabled = false;
     } catch (err) {
       state.pendingGoodImport = null;

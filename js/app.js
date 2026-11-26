@@ -573,16 +573,20 @@ function setupGoodImportModal() {
 
       previewBox.innerHTML = `
         <div class="diff-summary">
-          <div class="diff-stat"><span class="mono">SOURCE</span><strong>${diff.source} (v${diff.version})</strong></div>
-          <div class="diff-stat"><span class="mono">CHARACTERS</span><strong class="text-gold">${diff.charChanges.length} changes</strong> / ${diff.charactersTotal} total</div>
-          <div class="diff-stat"><span class="mono">WEAPONS</span><strong class="text-mint">${diff.weaponChanges.length} changes</strong> / ${diff.weaponsTotal} total</div>
-          <div class="diff-stat"><span class="mono">ARTIFACTS</span><strong class="text-cyan">${diff.equippedArtifactsCount || 0} equipped</strong> / ${diff.artifactsTotal || 0} total</div>
-          <div class="diff-stat"><span class="mono">MATERIALS</span><strong>${diff.matChanges.length} synced</strong> / ${diff.materialsTotal} total</div>
+          <div class="diff-stat"><span class="diff-label">Source</span><span class="diff-val mono"><strong>${diff.source}</strong> <span class="muted">(v${diff.version})</span></span></div>
+          <div class="diff-stat"><span class="diff-label">Characters</span><span class="diff-val mono"><strong class="text-gold">${diff.charChanges.length} changes</strong> <span class="muted">/ ${diff.charactersTotal} total</span></span></div>
+          <div class="diff-stat"><span class="diff-label">Weapons</span><span class="diff-val mono"><strong class="text-mint">${diff.weaponChanges.length} changes</strong> <span class="muted">/ ${diff.weaponsTotal} total</span></span></div>
+          <div class="diff-stat"><span class="diff-label">Artifacts</span><span class="diff-val mono"><strong class="text-cyan">${diff.equippedArtifactsCount || 0} equipped</strong> <span class="muted">/ ${diff.artifactsTotal || 0} total</span></span></div>
+          <div class="diff-stat"><span class="diff-label">Materials</span><span class="diff-val mono"><strong>${diff.matChanges.length} synced</strong> <span class="muted">/ ${diff.materialsTotal} total</span></span></div>
         </div>
-        <div class="diff-samples mono">
-          ${diff.charChanges.slice(0, 6).map((c) => `<div>CHAR [${c.type.toUpperCase()}]: ${c.key} ${c.fromLevel ? `Lv.${c.fromLevel} → ` : ''}Lv.${c.toLevel}</div>`).join('')}
-          ${diff.matChanges.slice(0, 4).map((m) => `<div>MAT: ${m.key} ${m.from ?? 0} → ${m.to}</div>`).join('')}
-        </div>
+        ${
+          diff.charChanges.length || diff.matChanges.length
+            ? `<div class="diff-samples mono">
+                 ${diff.charChanges.slice(0, 6).map((c) => `<div>CHAR [${c.type.toUpperCase()}]: ${c.key} ${c.fromLevel ? `Lv.${c.fromLevel} → ` : ''}Lv.${c.toLevel}</div>`).join('')}
+                 ${diff.matChanges.slice(0, 4).map((m) => `<div>MAT: ${m.key} ${m.from ?? 0} → ${m.to}</div>`).join('')}
+               </div>`
+            : ''
+        }
       `;
       commitBtn.disabled = false;
     } catch (err) {
