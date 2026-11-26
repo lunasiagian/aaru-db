@@ -417,6 +417,7 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   if (p.lunar && !factions.has('Moonsign') && ch.lunar_crit < 0.2) return -10;
   if (p.hexerei && !factions.has('Hexerei')) return -10;
   if (p.stellar && !factions.has('Stellar') && ch.stellar_crit < 0.2) return -10;
+  if (EXCLUDED_LOW_RARITY_SETS.has(setObj.lookupKey)) return -10;
   if (p.stellarSwirl && elem !== 'anemo') return -10;
   if (p.stellarConduct && elem !== 'cryo' && elem !== 'electro') return -10;
   if (p.zeroEnergy && (!zeroEnergy || elem !== 'cryo')) return -10;
@@ -445,7 +446,7 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
 
   if (setObj.lookupKey === 'emblemofseveredfate') {
     const erEligible = netEr === 'high' || netEr === 'moderate' || deployId === 'stygian' || deployId === 'theater';
-    if (zeroEnergy || ch.transformative >= 0.6 || !erEligible || burstShare < 0.22) return -10;
+    if (zeroEnergy || ch.transformative >= 0.6 || (isHeal && isSupport) || !erEligible || burstShare < 0.22) return -10;
   }
   if (setObj.lookupKey === 'goldentroupe' && !isOffField && deployId !== 'overworld') return -5;
   if (setObj.lookupKey === 'nightoftheskysunveiling' && !isOnField) return -10;
@@ -456,7 +457,7 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   if (setObj.lookupKey === 'thunderingfury' && elem !== 'electro') return -10;
   if ((setObj.lookupKey === 'heartofdepth' || setObj.lookupKey === 'nymphsdream') && elem !== 'hydro') return -10;
   if (setObj.lookupKey === 'huskofopulentdreams' && elem !== 'geo' && primaryScaler !== 'def_') return -10;
-  if (p.plunge && !isPlunge) return -10;
+  if (p.plunge && !isPlunge && setObj.lookupKey !== 'songofdayspast') return -10;
 
   // 3. Weighted Primitive Dot Product
   let score = 0;
@@ -492,9 +493,40 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   if (p.hexerei && factions.has('Hexerei')) {
     score += isSupport ? (p.teamBuff * 6 + 6.5) : 12.0;
   }
-  if (p.nightsoul && factions.has('Nightsoul')) score += isSupport ? (p.teamBuff * 5 + 5) : 8.5;
-  else if (setObj.lookupKey === 'scrolloftheheroofcindercity' && isSupport) score += 4.8;
-  if (setObj.lookupKey === 'tenacityofthemillelith' && !context.features?.has_off_field && !isShield) score -= 3.5;
+  if (p.nightsoul && factions.has('Nightsoul')) score += isSupport ? (p.teamBuff * 5 + 6.5) : 9.5;
+  else if (setObj.lookupKey === 'scrolloftheheroofcindercity' && isSupport) score += 1.8;
+
+  const hasOffFieldSkillTicks =
+    (Boolean(context.features?.has_off_field) && skillShare >= 0.25) ||
+    /kokomi|yaoyao|kuki|sigewinne|zhongli|layla|furina|fischl|yaemiko|chiori|albedo|dehya|emilie|escoffier/i.test(String(charMeta?.key || ''));
+  const isBaseAtkBuffer = Boolean(context.baseAtkOnlyBuffer || /bennett|kujousara/i.test(String(charMeta?.key || '')));
+  if (setObj.lookupKey === 'tenacityofthemillelith') {
+    if (!hasOffFieldSkillTicks && !isShield) score -= 5.0;
+    else if (isSupport && (primaryScaler === 'hp_' || isShield) && hasOffFieldSkillTicks) score += 9.5;
+    else if (isSupport && isShield) score += 6.0;
+  }
+  if (setObj.lookupKey === 'maidenbeloved') score -= 6.0;
+
+  // Tier 1 Hyperspecific Specialists: DEF% Geo (Husk), Healer-Buffers (Song of Days Past / Clam), Off-Field Skill (Golden Troupe), Burst-ER (Emblem)
+  if (setObj.lookupKey === 'huskofopulentdreams' && elem === 'geo' && primaryScaler === 'def_') {
+    score += isOnField ? 12.0 : 9.5;
+  }
+  if (setObj.lookupKey === 'songofdayspast' && isHeal && isSupport && !isBaseAtkBuffer) {
+    score += !hasOffFieldSkillTicks ? 10.5 : 6.0;
+  }
+  if (setObj.lookupKey === 'oceanhuedclam' && isHeal) {
+    if (isBaseAtkBuffer) score -= 5.0;
+    else score += isOnField ? 9.5 : primaryScaler === 'hp_' && hasOffFieldSkillTicks ? 7.5 : 5.0;
+  }
+  if (setObj.lookupKey === 'goldentroupe' && isOffField && skillShare >= 0.4) {
+    score += 7.5 + skillShare * 3.5;
+  }
+  if (setObj.lookupKey === 'emblemofseveredfate' && !zeroEnergy && !isHeal && (burstShare >= 0.25 && netEr === 'high' || burstShare >= 0.4)) {
+    score += (netEr === 'high' ? 8.5 : 5.0) + burstShare * 3.5;
+  }
+  if (setObj.lookupKey === 'longnightsoath' && isPlunge) {
+    score += 11.5;
+  }
 
   if (primaryScaler === 'hp_') score += p.hpScaler * 3.5;
   if (primaryScaler === 'atk_') score += p.atkScaler * 2.5;
@@ -515,19 +547,15 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
   // Matching 2pc Elemental DMG% bonus (unless reaction/utility dominates)
   if (!context.dmgGobletDeprioritized && p[elem]) score += 3.0;
 
-  // Explicitly promote 4pc Noblesse Oblige when support/team buff or low-ER burst utility applies (scoring both 2pc Burst DMG + 4pc team ATK%)
+  // Tier 3 Generalist Fallback: 4pc Noblesse Oblige wins #1 for pure Burst ATK buffers without a dedicated mechanic/healer set
   if (setObj.lookupKey === 'noblesseoblige') {
-    const personalBurstBonus = burstShare >= 0.35 ? 2.2 : burstShare >= 0.25 ? 1.0 : 0;
-    if (isSupport) score += 6.5 + personalBurstBonus;
-    else if (isOffField && netEr !== 'high') score += 6.0 + personalBurstBonus;
-  }
-  if (
-    setObj.lookupKey === 'tenacityofthemillelith' &&
-    isSupport &&
-    (primaryScaler === 'hp_' || isShield) &&
-    (context.features?.has_off_field || isShield)
-  ) {
-    score += 5.0;
+    const personalBurstBonus = burstShare >= 0.35 ? 1.8 : burstShare >= 0.25 ? 0.8 : 0;
+    const isPureBurstBuffer =
+      isBaseAtkBuffer ||
+      (isSupport && !isHeal && !hasOffFieldSkillTicks && !factions.has('Nightsoul') && !factions.has('Moonsign') && !factions.has('Stellar'));
+    if (isPureBurstBuffer) score += 7.5 + personalBurstBonus;
+    else if (isSupport) score += 4.2 + personalBurstBonus;
+    else if (isOffField && netEr !== 'high' && skillShare < 0.45) score += 2.0 + personalBurstBonus;
   }
   if (setObj.lookupKey === 'archaicpetra' && elem === 'geo' && (isSupport || isOffField)) {
     score += isOffField ? 5.0 : 3.5;
@@ -577,6 +605,23 @@ function scoreSetPrimitivesForRole(charMeta, context, setObj, roleName, kitData 
 
   return Number(score.toFixed(2));
 }
+
+const EXCLUDED_LOW_RARITY_SETS = new Set([
+  'resolutionofsojourner',
+  'braveheart',
+  'defenderswill',
+  'tinymiracle',
+  'berserker',
+  'martialartist',
+  'instructor',
+  'gambler',
+  'theexile',
+  'adventurer',
+  'luckydog',
+  'scholar',
+  'travelingdoctor',
+  'glacierandsnowfield'
+]);
 
 const NON_STACKING_TEAM_SETS = new Set([
   'noblesseoblige',

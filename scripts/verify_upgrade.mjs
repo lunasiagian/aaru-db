@@ -186,7 +186,7 @@ console.log(`Loaded: ${Object.keys(profiles).length} kit profiles, ${setVectors.
   console.log(`[PASS 5] Columbina: CR=${p.baselineCritRate}%, Sub=${setsSub[0].set}, Sup=${setsSup[0].set}, Carry=${setsCarry[0].set} | SacJade warn="${sacJadeCarry.overcapWarning}"`);
 }
 
-// 6. Chevreuse: divergenceScore >= 1.15, support_buffer (40k HP cap), Noblesse / Cinder City / 2pc HP% + 2pc HP%
+// 6. Chevreuse: divergenceScore >= 1.15, support_buffer (40k HP cap), Song of Days Past / Noblesse / 2pc HP% + 2pc HP%
 {
   const p = profiles.Chevreuse;
   const meta = metaFor('Chevreuse');
@@ -203,8 +203,8 @@ console.log(`Loaded: ${Object.keys(profiles).length} kit profiles, ${setVectors.
   });
   const recSets = rankArtifactSetsByVector(meta, p, ctx, setVectors, null);
   const recNames = recSets.map((s) => s.set);
+  assert.ok(recNames.some((n) => /Song of Days Past/i.test(n)), `Missing Song of Days Past in ${recNames}`);
   assert.ok(recNames.some((n) => /Noblesse Oblige/i.test(n)), `Missing Noblesse Oblige in ${recNames}`);
-  assert.ok(recNames.some((n) => /Scroll of the Hero of Cinder City/i.test(n)), `Missing Cinder City in ${recNames}`);
   assert.ok(recNames.some((n) => n === '2pc HP% + 2pc HP%'), `Missing 2pc HP% + 2pc HP% in ${recNames}`);
   console.log(`[PASS 6] Chevreuse: div=${p.divergenceScore}, roles=${p.roles.join(',')}, cap=${p.statThresholdCurve?.ceiling}, sets=${recNames.join(' | ')}`);
 }
