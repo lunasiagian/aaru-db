@@ -117,6 +117,8 @@ async function main() {
       const norm = normalizeAssetKey(item.name);
       if (!norm || !item.items) continue;
       const upg = {};
+      const monsterDrops = [];
+      const gemDrops = [];
       for (const matId of Object.keys(item.items)) {
         const mat = matNormById.get(String(matId));
         if (!mat) continue;
@@ -127,7 +129,19 @@ async function main() {
           const pascalMat = toPascal(mat.name);
           if (mat.rank === 4 && !upg.bossMat) upg.bossMat = pascalMat;
           else if (mat.rank === 5 && !upg.weeklyMat) upg.weeklyMat = pascalMat;
+        } else if (/^112\d+$/.test(String(matId))) {
+          monsterDrops.push({ id: Number(matId), rank: mat.rank, pascal: toPascal(mat.name) });
+        } else if (/^1041\d\d$/.test(String(matId))) {
+          gemDrops.push({ id: Number(matId), rank: mat.rank, pascal: toPascal(mat.name) });
         }
+      }
+      if (monsterDrops.length >= 3) {
+        monsterDrops.sort((a, b) => a.id - b.id);
+        upg.commonMatTiers = monsterDrops.slice(0, 3).map((m) => m.pascal);
+      }
+      if (gemDrops.length >= 4) {
+        gemDrops.sort((a, b) => a.id - b.id);
+        upg.gemTiers = gemDrops.slice(0, 4).map((g) => g.pascal);
       }
       if (Object.keys(upg).length) avatarUpgradeByNorm.set(norm, upg);
     }
@@ -135,16 +149,31 @@ async function main() {
     for (const item of Object.values(upgradeRes.value.data.weapon || {})) {
       const norm = normalizeAssetKey(item.name);
       if (!norm || !item.items) continue;
+      const wUpg = {};
+      let commonT1Id = null;
+      let eliteT4Id = null;
       for (const matId of Object.keys(item.items)) {
         const mat = matNormById.get(String(matId));
-        if (mat && domainRewardNormSet.has(mat.norm)) {
-          weaponUpgradeByNorm.set(norm, {
-            domainMatKey: mat.norm,
-            domainMatExactKey: toPascal(mat.name)
-          });
-          break;
+        if (!mat) continue;
+        if (!wUpg.domainMatExactKey && domainRewardNormSet.has(mat.norm)) {
+          wUpg.domainMatKey = mat.norm;
+          wUpg.domainMatExactKey = toPascal(mat.name);
+        } else if (/^112\d+$/.test(String(matId))) {
+          if (mat.rank === 1) commonT1Id = Number(matId);
+          else if (mat.rank === 4) eliteT4Id = Number(matId);
         }
       }
+      const resolveTiers = (ids) =>
+        ids.map((id) => matNormById.get(String(id))?.name).filter(Boolean).map((n) => toPascal(n));
+      if (commonT1Id !== null) {
+        const tiers = resolveTiers([commonT1Id, commonT1Id + 1, commonT1Id + 2]);
+        if (tiers.length === 3) wUpg.commonMatTiers = tiers;
+      }
+      if (eliteT4Id !== null) {
+        const tiers = resolveTiers([eliteT4Id - 2, eliteT4Id - 1, eliteT4Id]);
+        if (tiers.length === 3) wUpg.eliteMatTiers = tiers;
+      }
+      if (Object.keys(wUpg).length) weaponUpgradeByNorm.set(norm, wUpg);
     }
   }
 
@@ -280,6 +309,27 @@ async function main() {
         if (specId && slim._matIdLookup[specId]) entry.localSpecialty = toPascal(slim._matIdLookup[specId]);
         const weeklyId = Object.keys(detail?.skills?.leveling?.weekly || {})[0];
         if (weeklyId && slim._matIdLookup[weeklyId]) entry.weeklyMat = toPascal(slim._matIdLookup[weeklyId]);
+        const skillMonsterIds = Object.keys(detail?.skills?.leveling?.worldmonster || detail?.skills?.leveling?.monster || {})
+          .filter((id) => /^112\d+$/.test(id))
+          .map(Number)
+          .sort((a, b) => a - b);
+        const ascMonsterIds = Object.keys(asc?.worldmonster || asc?.monster || {})
+          .filter((id) => /^112\d+$/.test(id))
+          .map(Number)
+          .sort((a, b) => a - b);
+        const monIds = skillMonsterIds.length >= 3 ? skillMonsterIds : ascMonsterIds;
+        if (monIds.length >= 3) {
+          const tiers = monIds.slice(0, 3).map((id) => toPascal(slim._matIdLookup[String(id)])).filter(Boolean);
+          if (tiers.length === 3) entry.commonMatTiers = tiers;
+        }
+        const gemIds = Object.keys(asc?.elemental || {})
+          .filter((id) => /^1041\d\d$/.test(id))
+          .map(Number)
+          .sort((a, b) => a - b);
+        if (gemIds.length >= 4) {
+          const gTiers = gemIds.slice(0, 4).map((id) => toPascal(slim._matIdLookup[String(id)])).filter(Boolean);
+          if (gTiers.length === 4) entry.gemTiers = gTiers;
+        }
         entry._hydrated = true;
       } catch {
         // Ignore individual character hydration failures
@@ -312,6 +362,27 @@ async function main() {
         if (goldId && slim._matIdLookup[goldId]) {
           entry.domainMatExactKey = toPascal(slim._matIdLookup[goldId]);
           entry.domainMatKey = normalizeAssetKey(slim._matIdLookup[goldId]);
+        }
+        const monsterMats = asc
+          .map((a) => String(a?.icon || '').replace(/^UI_ItemIcon_/, ''))
+          .filter((id) => /^112\d+$/.test(id));
+        const findRarityId = (r) =>
+          monsterMats.find((id) => {
+            const mName = slim._matIdLookup[id];
+            return mName && slim.materials[normalizeAssetKey(mName)]?.rarity === r;
+          });
+        const resolveDropTiers = (ids) => ids.map((id) => toPascal(slim._matIdLookup[String(id)])).filter(Boolean);
+        const commonT1Id = findRarityId(1);
+        if (commonT1Id) {
+          const baseId = Number(commonT1Id);
+          const tiers = resolveDropTiers([baseId, baseId + 1, baseId + 2]);
+          if (tiers.length === 3) entry.commonMatTiers = tiers;
+        }
+        const eliteT4Id = findRarityId(4);
+        if (eliteT4Id) {
+          const baseId = Number(eliteT4Id);
+          const tiers = resolveDropTiers([baseId - 2, baseId - 1, baseId]);
+          if (tiers.length === 3) entry.eliteMatTiers = tiers;
         }
         entry._hydrated = true;
       } catch {
