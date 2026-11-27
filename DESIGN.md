@@ -193,6 +193,27 @@ Crisp archival print geometry: `2px` (`--p-radius-plate`) on specimen plates, ar
 - **Ticket Stub Hover Flex:** Hovering the HUD hero subtly pivots the tear-off stub along the zigzag seam (`translateX(3px) rotate(0.45deg)`).
 - **Accessibility:** Every animation and foil shimmer cleanly respects `prefers-reduced-motion: reduce`.
 
+## Archival Ephemera Canon (16 Approved Physical References)
+
+Every future component, wireframe, or visual pass draws from this shared physical-world taxonomy—adapted cleanly into dark Obsidian Slate with procedural SVG/CSS (zero AI-generated raster art):
+
+1. **Stamped Passports** — procedural SVG ink-bleed freshness stamps (`SYNCED · TODAY`, `STALE`, `OVERDUE`).
+2. **Library Checkout Cards** — ruled due-date ledgers, accession slips (`ACCESSION №`), and bottom catalog rod punch-holes (`○`).
+3. **Archival Reels** — patch timecodes, 42-frame patch cadence, and saved rotation reels.
+4. **Ticket Stubs** — hairline SVG zigzag tear seams, `2px` foil security threads, rotated double-ring cancel stamps, barcodes, and vertical `№` serials.
+5. **Newspaper Clippings** — stark high-contrast typographic hierarchy and tight hairline column rules.
+6. **Torn Pages** — crisp serrated/dashed horizontal tear-off strips separating summary manifests from item grids.
+7. **Note Cards** — compact 2-second scannable bulleted guidance with zero prose walls.
+8. **Taped Papers** — subtle translucent archival bookmarks / pinned priority markers.
+9. **Binders & Punch Holes** — circular rod punch-holes on inspector modals and vertical ledger index tabs.
+10. **Film Posters** — left-anchored ALL-CAPS `Nanum Myeongjo` lockups, monumental cropped watermarks, and full-bleed right-anchored character stills with micro-halftone screens.
+11. **35mm Contact Sheets & Grease-Pencil Marks** — sprocket-edged 4-frame strips (`01A–04A`) with a circled bottleneck frame (core motif for **Teams Lab**).
+12. **Herbarium & Museum Specimen Labels** — ruled collection tags (`LOCALE · RARITY · №`) for **Vault** Local Specialties and **Equipped Artifacts**.
+13. **Cassette J-Cards & Reel-to-Reel Boxes** — ruled `SIDE A / SIDE B` tracklists with rotation timings for Abyss / Imaginarium Theater teams.
+14. **Baggage Claim Tags & Customs Seals** — bold 3-letter nation routing codes (`MND`, `LYE`, `INZ`, `SMR`, `FNT`, `NTL`, `NDK`, `SNZ`) and barcode bands.
+15. **Drafting Blueprints & Calibrated Rulers** — `+` registration crop marks, `1px` callout leaders, and tick-mark gauges (3-Instrument Build Strip, Resin Dispatch Ruler).
+16. **Telegrams, Receipts & Microfiche Cards** — dot-leader ledgers, notched index tabs, and compact requisition manifests (`REQ № 01`).
+
 ## Do's and Don'ts
 
 ### Do:
