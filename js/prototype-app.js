@@ -239,6 +239,111 @@ function classifySubstatRelevance(sub, weights) {
   return { tier, weight: w, isStandout };
 }
 
+const SUBSTAT_ROLL_AVG = {
+  critRate_: 3.3,
+  critDMG_: 6.6,
+  hp_: 4.95,
+  atk_: 4.95,
+  def_: 6.2,
+  enerRech_: 5.5,
+  eleMas: 19.8,
+  hp: 254,
+  atk: 16.5,
+  def: 19.7
+};
+
+const SUBSTAT_ROLL_MAX = {
+  critRate_: 3.89,
+  critDMG_: 7.77,
+  hp_: 5.83,
+  atk_: 5.83,
+  def_: 7.29,
+  enerRech_: 6.48,
+  eleMas: 23.31,
+  hp: 298.75,
+  atk: 19.45,
+  def: 23.15
+};
+
+function estimateSubstatRolls(key, val) {
+  const v = Number(val || 0);
+  const avg = SUBSTAT_ROLL_AVG[key] || 5;
+  const max = SUBSTAT_ROLL_MAX[key] || avg * 1.18;
+  return {
+    rolls: Math.max(1, Math.min(6, Math.round(v / avg))),
+    maxEq: v / max
+  };
+}
+
+function scoreEquippedArtifactPiece(art, weights, charMeta, zeroEnergy) {
+  let cv = 0;
+  let rvSum = 0;
+  for (const s of art?.substats || []) {
+    const v = Number(s.value || 0);
+    if (s.key === 'critRate_') cv += v * 2;
+    else if (s.key === 'critDMG_') cv += v;
+    const w = Number(weights?.[s.key] ?? 0);
+    if (w >= 0.45) {
+      const { maxEq } = estimateSubstatRolls(s.key, v);
+      rvSum += maxEq * (w >= 0.9 ? 1 : 0.65);
+    }
+  }
+  const rvPct = Math.round(rvSum * 100);
+  let deadMainLabel = '';
+  const slot = art?.slotKey;
+  const mk = art?.mainStatKey || '';
+  if (slot === 'sands' || slot === 'goblet' || slot === 'circlet') {
+    const elKey = `${String(charMeta?.element || '').toLowerCase()}_dmg_`;
+    if (mk === 'enerRech_' && zeroEnergy) {
+      deadMainLabel = '0-Energy ER';
+    } else if (/_dmg_$/.test(mk) && mk !== 'physical_dmg_' && elKey && mk !== elKey) {
+      deadMainLabel = 'Wrong Element';
+    } else if ((mk === 'def_' || mk === 'hp_' || mk === 'atk_') && Number(weights?.[mk] ?? 0) < 0.2) {
+      deadMainLabel = 'Off-Kit Main';
+    }
+  }
+  return { cv, rvPct, deadMainLabel };
+}
+
+function renderErRulerHtml(currentEr, reqEr, zeroEnergy, modeLabel) {
+  if (zeroEnergy || !reqEr) {
+    return `
+      <div class="p-er-ruler is-zero">
+        <div class="p-er-ruler-head">
+          <span class="p-er-ruler-label">ENERGY CALIBRATION</span>
+          <span class="p-stamp p-stamp-mint mono">0-ENERGY KIT · NO ER NEEDED</span>
+        </div>
+      </div>`;
+  }
+  const cur = Number(currentEr || 100);
+  const maxScale = Math.max(240, Math.ceil((Math.max(cur, reqEr) + 20) / 20) * 20);
+  const span = maxScale - 100;
+  const pct = (v) => Math.max(0, Math.min(100, ((v - 100) / span) * 100));
+  const curPct = pct(cur);
+  const reqPct = pct(reqEr);
+  const isOk = cur >= reqEr;
+  const delta = Math.round(cur - reqEr);
+  const ticks = [];
+  for (let v = 100; v <= maxScale; v += 20) {
+    ticks.push(`<span class="p-er-tick" style="left:${pct(v).toFixed(1)}%"><i></i><em class="mono">${v}</em></span>`);
+  }
+  return `
+    <div class="p-er-ruler ${isOk ? 'is-ok' : 'is-short'}">
+      <div class="p-er-ruler-head">
+        <span class="p-er-ruler-label">ER% CALIBRATION · ${esc(modeLabel || 'Solo').toUpperCase()}</span>
+        <span class="mono p-er-ruler-readout ${isOk ? 'text-mint' : 'text-amber'}">
+          ${cur.toFixed(1)}% / ~${reqEr}% TARGET (${delta >= 0 ? `+${delta}%` : `${delta}%`})
+        </span>
+      </div>
+      <div class="p-er-track" aria-label="Energy Recharge ${cur.toFixed(1)}% vs ${reqEr}% target">
+        <div class="p-er-fill" style="width:${curPct.toFixed(1)}%"></div>
+        <div class="p-er-target-needle" style="left:${reqPct.toFixed(1)}%" title="Target ~${reqEr}% ER"></div>
+        <div class="p-er-cur-marker" style="left:${curPct.toFixed(1)}%" title="Equipped ${cur.toFixed(1)}% ER"></div>
+        ${ticks.join('')}
+      </div>
+    </div>`;
+}
+
 function resolvePrimaryStat(kitAnalysis, kitScaling, staticProfile = null) {
   if (staticProfile?.primaryScaler === 'hp_') return 'HP';
   if (staticProfile?.primaryScaler === 'def_') return 'DEF';
@@ -1994,14 +2099,19 @@ function renderRosterView(container, account) {
         <span class="muted">${esc(char.meta.name)} · ${esc(char.meta.element)} · ${esc(char.meta.weaponType)} · ${char.meta.rarity}★</span>
       </div>
 
-      <section class="p-dossier-hero" data-el="${esc(elAttr)}" data-rarity="${char.meta.rarity || 5}">
-        <svg class="p-dossier-astrolabe" viewBox="0 0 200 200" aria-hidden="true">
-          <circle cx="100" cy="100" r="92" fill="none" stroke="var(--p-gold)" stroke-width="0.8" stroke-dasharray="4 6" />
-          <circle cx="100" cy="100" r="72" fill="none" stroke="var(--el-ink, var(--p-accent))" stroke-width="0.9" opacity="0.65" />
-          <polygon points="100,14 186,100 100,186 14,100" fill="none" stroke="var(--p-gold)" stroke-width="0.6" opacity="0.5" />
-        </svg>
+      <section class="p-dossier-hero p-specimen-plate" data-el="${esc(elAttr)}" data-rarity="${char.meta.rarity || 5}">
+        <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-br" aria-hidden="true">+</span>
         <div class="p-portrait-box" style="view-transition-name:hero-portrait;">
-          ${renderGachaSplash(char.key, char.meta.name)}
+          <div class="p-specimen-frame">
+            ${renderGachaSplash(char.key, char.meta.name)}
+            <div class="p-specimen-plate-cap">
+              <span class="mono">${esc(char.meta.element || '').toUpperCase()} · ${esc(char.meta.weaponType || '').toUpperCase()}</span>
+              <span class="mono text-gold">${'★'.repeat(char.meta.rarity || 5)}</span>
+            </div>
+          </div>
           <div class="p-const-strip">
             ${[1, 2, 3, 4, 5, 6]
               .map((i) => `<div class="p-const-pip mono ${(char.constellation || 0) >= i ? 'is-on' : ''}">C${i}</div>`)
@@ -2010,9 +2120,20 @@ function renderRosterView(container, account) {
         </div>
 
         <div style="position:relative;z-index:1;">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div class="p-dossier-head-plate">
             <h2 class="proto-dossier-name" style="view-transition-name:hero-name;">${esc(char.meta.name)}</h2>
-            <span class="mono muted">Lv.${char.level || 1} · A/E/Q ${talArr.join('/')} · <abbr title="Artifact-only Crit Value = (CRIT Rate × 2) + CRIT DMG">${(combat?.subCv || 0).toFixed(1)} CV</abbr></span>
+            <span class="mono muted p-dossier-meta-line">LV.${char.level || 1} · A/E/Q ${talArr.join('/')} · <abbr title="Artifact-only Crit Value = (CRIT Rate × 2) + CRIT DMG">${(combat?.subCv || 0).toFixed(1)} CV</abbr></span>
+          </div>
+
+          <div class="p-xref-strip" aria-label="Cross-references">
+            <button type="button" class="p-xref-link" data-p-jump-view="teams">→ Teams Lab</button>
+            <button type="button" class="p-xref-link" data-p-jump-view="prefarm">→ Prefarm Queue</button>
+            <button type="button" class="p-xref-link" data-p-open-weapon-rank="true">→ Weapon Rankings</button>
+            ${
+              activeSets.length
+                ? `<span class="p-xref-set mono">${activeSets.map((s) => `${esc(splitPascalSet(s.setKey))} (${s.count}pc)`).join(' · ')}</span>`
+                : ''
+            }
           </div>
 
           <div class="p-stats-radar-wrap">
@@ -2024,13 +2145,15 @@ function renderRosterView(container, account) {
               <div class="p-stat-row"><span class="muted">CRIT Rate</span><strong class="mono">${(combat?.critRate || 5).toFixed(1)}%</strong></div>
               <div class="p-stat-row"><span class="muted">CRIT DMG</span><strong class="mono">${(combat?.critDmg || 50).toFixed(1)}%</strong></div>
               <div class="p-stat-row">
-                <span class="muted">ER% ${effectiveErReq > 0 ? `<span style="font-size:11.5px;opacity:0.78;">(${esc(sandboxCtx?.deploymentMode?.shortLabel || 'Solo')} ~${effectiveErReq}%)</span>` : '<span style="font-size:11.5px;opacity:0.78;">(0-Energy Kit)</span>'}</span>
+                <span class="muted">ER% ${effectiveErReq > 0 ? `<span style="font-size:11.5px;opacity:0.78;">(${esc(sandboxCtx?.deploymentMode?.shortLabel || 'Solo')} ~${effectiveErReq}%)</span>` : '<span style="font-size:11.5px;opacity:0.78;">(0-Energy)</span>'}</span>
                 <strong class="mono ${erChanged ? 'is-changed ' : ''}${effectiveErReq > 0 && (combat?.er || 100) < effectiveErReq ? 'text-amber' : 'text-mint'}">${(combat?.er || 100).toFixed(1)}%</strong>
               </div>
               <div class="p-stat-row"><span class="muted">${esc(elemLabel)}</span><strong class="mono">${elemStat.toFixed(1)}%</strong></div>
             </div>
             <div style="display:flex;justify-content:center;">${renderStatRadarSvg(combat, primaryStat, statCapVal, substatWeights)}</div>
           </div>
+
+          ${renderErRulerHtml(combat?.er || 100, effectiveErReq, Boolean(staticProfile?.features?.zero_energy), sandboxCtx?.deploymentMode?.shortLabel || 'Solo')}
 
           ${
             weaponMeta
@@ -2293,26 +2416,79 @@ function renderRosterView(container, account) {
                           }
                         </div>
                       </div>
-                      <div class="p-list">
-                        ${sortedArts
-                          .map((a) => {
-                            const subs = (a.substats || [])
-                              .map((s) => {
-                                const rel = classifySubstatRelevance(s, substatWeights);
-                                const tierChanged = Boolean(prevSnap && prevSnap.subTiers?.[s.key] && prevSnap.subTiers[s.key] !== rel.tier);
-                                return `<span data-stat-relevance="${rel.tier}"${rel.isStandout ? ' data-stat-standout="true"' : ''}${tierChanged ? ' class="is-changed"' : ''}>${esc(formatStatKey(s.key))} +${s.value}</span>`;
-                              })
-                              .join(' <span class="muted">·</span> ');
-                            return `
-                              <div class="p-row">
-                                <div>
-                                  <div class="p-row-title">${esc(splitPascalSet(a.setKey))} · ${esc(formatStatKey(a.mainStatKey))}</div>
-                                  <div class="p-row-sub mono">${subs || '<span class="muted">No substats</span>'}</div>
-                                </div>
-                                <span class="p-badge mono text-gold">+${a.level ?? 20}</span>
-                              </div>`;
-                          })
-                          .join('')}
+                      <div class="p-art-specimen-grid">
+                        ${(() => {
+                          const zeroEn = Boolean(staticProfile?.features?.zero_energy);
+                          const scored = sortedArts.map((a, idx) => ({
+                            art: a,
+                            idx,
+                            ...scoreEquippedArtifactPiece(a, substatWeights, char.meta, zeroEn)
+                          }));
+                          let weakestIdx = -1;
+                          if (scored.length >= 3) {
+                            let minRv = Infinity;
+                            scored.forEach((sc, i) => {
+                              if (sc.rvPct < minRv) {
+                                minRv = sc.rvPct;
+                                weakestIdx = i;
+                              }
+                            });
+                          }
+                          return scored
+                            .map(({ art: a, idx, cv, rvPct, deadMainLabel }) => {
+                              const icon = getArtifactIcon(a.setKey, a.slotKey);
+                              const isOffPiece = activeSets.length > 0 && (setCounts[a.setKey] || 0) === 1;
+                              const isWeakest = idx === weakestIdx;
+                              const rar = Number(a.rarity || 5);
+                              const slotCode = String(idx + 1).padStart(2, '0');
+                              const slotName = String(a.slotKey || '').toUpperCase();
+                              const setLabel = splitPascalSet(a.setKey);
+                              const subsHtml = (a.substats || [])
+                                .map((s) => {
+                                  const rel = classifySubstatRelevance(s, substatWeights);
+                                  const tierChanged = Boolean(prevSnap && prevSnap.subTiers?.[s.key] && prevSnap.subTiers[s.key] !== rel.tier);
+                                  const { rolls } = estimateSubstatRolls(s.key, s.value);
+                                  const pips = '•'.repeat(rolls);
+                                  const isPct = String(s.key || '').endsWith('_');
+                                  return `
+                                    <div class="p-art-sub-row ${tierChanged ? 'is-changed' : ''}" data-stat-relevance="${rel.tier}"${rel.isStandout ? ' data-stat-standout="true"' : ''}>
+                                      <span class="p-art-sub-name">${esc(formatStatKey(s.key))}</span>
+                                      <span class="p-art-sub-pips" title="Est. ${rolls} roll${rolls > 1 ? 's' : ''}">${pips}</span>
+                                      <span class="p-art-sub-val mono">+${s.value}${isPct ? '%' : ''}</span>
+                                    </div>`;
+                                })
+                                .join('');
+                              return `
+                                <article class="p-art-specimen ${isWeakest ? 'is-weakest' : ''} ${deadMainLabel ? 'is-dead-main' : ''}" data-rarity="${rar}">
+                                  <div class="p-art-spec-head">
+                                    <span class="mono p-art-spec-idx">${slotCode} · ${esc(slotName)}</span>
+                                    <span class="mono text-gold">+${a.level ?? 20}</span>
+                                  </div>
+                                  <div class="p-art-spec-main">
+                                    ${icon ? `<img src="${esc(icon)}" alt="${esc(slotName)}" class="p-art-spec-icon" loading="lazy" />` : ''}
+                                    <div style="min-width:0;flex:1;">
+                                      <div class="p-art-spec-mainstat">${esc(formatStatKey(a.mainStatKey))}</div>
+                                      <button type="button" class="p-art-spec-setlink" data-p-artset="${esc(setLabel)}" title="Inspect ${esc(setLabel)}">${esc(setLabel)} →</button>
+                                    </div>
+                                  </div>
+                                  ${
+                                    deadMainLabel || isOffPiece || isWeakest
+                                      ? `<div class="p-art-spec-stamps">
+                                           ${deadMainLabel ? `<span class="p-stamp p-stamp-coral mono">${esc(deadMainLabel)}</span>` : ''}
+                                           ${isOffPiece ? `<span class="p-stamp mono">OFF-PIECE</span>` : ''}
+                                           ${isWeakest ? `<span class="p-stamp p-stamp-amber mono">UPGRADE TARGET</span>` : ''}
+                                         </div>`
+                                      : ''
+                                  }
+                                  <div class="p-art-spec-subs">${subsHtml || '<div class="muted" style="font-size:12px;">No substats</div>'}</div>
+                                  <div class="p-art-spec-foot mono">
+                                    <span>${cv.toFixed(1)} CV</span>
+                                    <span class="${rvPct >= 450 ? 'text-mint' : rvPct >= 260 ? 'text-gold' : 'muted'}">${rvPct}% RV</span>
+                                  </div>
+                                </article>`;
+                            })
+                            .join('');
+                        })()}
                       </div>
                     </section>`
                  : ''
@@ -2334,6 +2510,7 @@ function renderRosterView(container, account) {
                      const setChanged = Boolean(prevSnap && prevSnap.sets?.[rIdx] !== rec.set);
                      return `
                      <button type="button" class="p-rec-set-card ${setChanged ? 'is-changed' : ''}" data-p-artset="${esc(rec.set)}">
+                       <span class="p-rec-idx mono">${String(rIdx + 1).padStart(2, '0')}</span>
                        ${setIcon ? `<img src="${esc(setIcon)}" alt="" class="p-rec-set-icon" loading="lazy" />` : ''}
                        <div style="min-width:0;flex:1;">
                          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
@@ -2467,6 +2644,13 @@ function renderRosterView(container, account) {
       btn.addEventListener('click', () =>
         openCharacterWeaponRankingModal({ char, staticProfile, sandboxCtx, kitData, account, recSets }, btn)
       );
+    });
+    container.querySelectorAll('[data-p-jump-view]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.pJumpView;
+        const navBtn = document.querySelector(`[data-pview="${target}"]`);
+        if (navBtn) navBtn.click();
+      });
     });
 
     document.getElementById('p-back-roster')?.addEventListener('click', () => {

@@ -2852,6 +2852,380 @@ html, body {
   letter-spacing: 0.06em;
 }
 
+/* ==========================================================================
+   Archival Specimen Pass — Character Dossier & Equipped Artifact Rolls
+   Inspired by hairline ledgers, framed specimen plates, and calibrated rulers
+   ========================================================================== */
+.p-specimen-plate {
+  border-radius: 3px;
+  background: var(--p-surface);
+  border: 1px solid var(--p-border-strong);
+  border-top: 2px solid var(--el-ink, var(--p-gold));
+  box-shadow: none;
+  padding: 24px 26px;
+}
+.p-crop {
+  position: absolute;
+  font-family: var(--p-font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--p-border-strong);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+.p-crop-tl { top: 6px; left: 8px; }
+.p-crop-tr { top: 6px; right: 8px; }
+.p-crop-bl { bottom: 6px; left: 8px; }
+.p-crop-br { bottom: 6px; right: 8px; }
+
+.p-specimen-frame {
+  border: 1px solid var(--p-border-strong);
+  border-radius: 2px;
+  background: var(--p-bg);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.p-specimen-frame .ed-gacha-splash-wrap {
+  border-radius: 1px;
+  border: 1px solid var(--p-border);
+}
+.p-specimen-plate-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 4px 2px;
+  margin-top: 4px;
+  border-top: 1px solid var(--p-border);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--p-text-secondary);
+}
+.p-specimen-plate .p-const-pip {
+  border-radius: 2px;
+  font-size: 11px;
+}
+.p-dossier-head-plate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--p-border);
+}
+.p-dossier-meta-line {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+.p-xref-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--p-border);
+  font-size: 12px;
+}
+.p-xref-link {
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  color: var(--p-text-secondary);
+  font-family: var(--p-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+.p-xref-link:hover {
+  color: var(--p-accent);
+}
+.p-xref-set {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--p-mint);
+  letter-spacing: 0.04em;
+}
+
+/* Calibrated ER% Ruler Gauge */
+.p-er-ruler {
+  margin: 4px 0 12px;
+  padding: 10px 12px 18px;
+  border: 1px solid var(--p-border);
+  border-radius: 2px;
+  background: rgba(6, 8, 18, 0.45);
+}
+.p-er-ruler.is-zero {
+  padding: 8px 12px;
+}
+.p-er-ruler-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.p-er-ruler.is-zero .p-er-ruler-head {
+  margin-bottom: 0;
+}
+.p-er-ruler-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--p-text-muted);
+}
+.p-er-ruler-readout {
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+}
+.p-er-track {
+  position: relative;
+  height: 12px;
+  border-top: 1px solid var(--p-border-strong);
+  border-bottom: 1px solid var(--p-border);
+  background: repeating-linear-gradient(
+    to right,
+    transparent,
+    transparent calc(10% - 1px),
+    rgba(212, 175, 55, 0.14) calc(10% - 1px),
+    rgba(212, 175, 55, 0.14) 10%
+  );
+}
+.p-er-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(52, 211, 153, 0.22);
+}
+.p-er-ruler.is-short .p-er-fill {
+  background: rgba(251, 191, 36, 0.22);
+}
+.p-er-target-needle {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1.5px dashed var(--p-gold);
+  z-index: 2;
+}
+.p-er-cur-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2.5px;
+  transform: translateX(-50%);
+  background: var(--p-mint);
+  z-index: 3;
+}
+.p-er-ruler.is-short .p-er-cur-marker {
+  background: var(--p-amber);
+}
+.p-er-tick {
+  position: absolute;
+  top: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.p-er-tick i {
+  display: block;
+  width: 1px;
+  height: 4px;
+  background: var(--p-border-strong);
+}
+.p-er-tick em {
+  font-style: normal;
+  font-size: 9.5px;
+  line-height: 1.2;
+  color: var(--p-text-muted);
+  margin-top: 1px;
+}
+
+/* Archival Ink Stamps */
+.p-stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--p-border-strong);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--p-text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+}
+.p-stamp-mint {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: var(--p-mint);
+  background: rgba(52, 211, 153, 0.08);
+}
+.p-stamp-amber {
+  border-color: rgba(251, 191, 36, 0.48);
+  color: var(--p-amber);
+  background: rgba(251, 191, 36, 0.08);
+}
+.p-stamp-coral {
+  border-color: rgba(248, 113, 113, 0.52);
+  color: var(--p-coral);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* Equipped Artifact Rolls — 5-Slot Archival Specimen Grid */
+.p-art-specimen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+.p-art-specimen {
+  display: flex;
+  flex-direction: column;
+  background: var(--p-bg);
+  border: 1px solid var(--p-border);
+  border-top: 2px solid var(--p-gold);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.p-art-specimen[data-rarity="4"] {
+  border-top-color: var(--p-purple);
+}
+.p-art-specimen.is-weakest {
+  border-color: rgba(251, 191, 36, 0.34);
+}
+.p-art-specimen.is-dead-main {
+  border-color: rgba(248, 113, 113, 0.42);
+}
+.p-art-spec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--p-border);
+  background: rgba(255, 255, 255, 0.015);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+.p-art-spec-idx {
+  color: var(--p-text-muted);
+}
+.p-art-spec-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--p-border);
+}
+.p-art-spec-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border: 1px solid var(--p-border);
+  border-radius: 2px;
+  background: var(--p-surface-2);
+  padding: 2px;
+}
+.p-art-spec-mainstat {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--p-text);
+  line-height: 1.2;
+}
+.p-art-spec-setlink {
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--p-text-muted);
+  font-family: var(--p-font-sans);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+}
+.p-art-spec-setlink:hover {
+  color: var(--p-accent);
+}
+.p-art-spec-stamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--p-border);
+  background: rgba(255, 255, 255, 0.012);
+}
+.p-art-spec-subs {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  gap: 3px;
+  flex: 1;
+}
+.p-art-sub-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 2px 0;
+  border-bottom: 1px dashed rgba(212, 175, 55, 0.08);
+}
+.p-art-sub-row:last-child {
+  border-bottom: none;
+}
+.p-art-sub-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.p-art-sub-pips {
+  font-size: 11px;
+  letter-spacing: 1px;
+  opacity: 0.85;
+}
+.p-art-sub-val {
+  font-size: 11.5px;
+  text-align: right;
+  min-width: 44px;
+}
+.p-art-spec-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-top: 1px solid var(--p-border);
+  background: rgba(255, 255, 255, 0.018);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--p-text-secondary);
+}
+
+/* Crisp Archival Corners for Dossier Sub-Panels & Recommendations */
+.p-dossier-hero .p-art-slot,
+.p-dossier-hero .p-wep-trigger,
+.p-rec-set-card {
+  border-radius: 2px;
+}
+.p-rec-idx {
+  font-size: 11px;
+  color: var(--p-text-muted);
+  letter-spacing: 0.06em;
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
 .p-patch-metrics {
   display: flex;
   flex-direction: column;
