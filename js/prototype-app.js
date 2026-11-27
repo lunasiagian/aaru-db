@@ -4214,6 +4214,44 @@ const VAULT_NATION_CODES = {
   'Teyvat-Wide': 'TYV'
 };
 
+const VAULT_TCG_PLATES = {
+  All: {
+    plate: 'PLATE 01',
+    title: 'Knights of Favonius Library',
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_Location_MdLibrary.png'
+  },
+  Ascension: {
+    plate: 'PLATE 02',
+    title: 'Timaeus · Alchemy Bench',
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_Timaeus.png'
+  },
+  'Enemy Drops': {
+    plate: 'PLATE 03',
+    title: "Katheryne · Adventurers' Guild",
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_Katheryne.png'
+  },
+  'Local Specialties': {
+    plate: 'PLATE 04',
+    title: 'Liyue Harbor Wharf',
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_Location_LiyueHarbor.png'
+  },
+  Ingestibles: {
+    plate: 'PLATE 05',
+    title: "Adeptus' Temptation",
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Event_Food_XTQ.png'
+  },
+  Cooking: {
+    plate: 'PLATE 06',
+    title: 'Lotus Flower Crisp',
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Event_Food_Lianhuasu.png'
+  },
+  'Quest & Key': {
+    plate: 'PLATE 07',
+    title: 'Liben · Rare Curios',
+    url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_LiBen.png'
+  }
+};
+
 function renderDeterministicBarcodeSvg(seedStr = 'AARU', width = 132, height = 22) {
   let h = 2166136261;
   const s = String(seedStr || 'AARU');
@@ -4366,7 +4404,18 @@ function renderVaultView(container, account) {
           </div>
         </div>
       </div>
-      <div class="p-vault-contact-plate" id="p-vault-contact-plate" aria-label="Featured Teyvat Specimens"></div>
+      <figure class="p-vault-tcg-plate" id="p-vault-tcg-plate" aria-label="Teyvat Archival Illustration">
+        <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+        <div class="p-vault-tcg-img-wrap">
+          <img src="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).url)}" alt="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).title)}" loading="lazy" />
+          <div class="p-hud-halftone" aria-hidden="true"></div>
+        </div>
+        <figcaption class="mono">
+          <strong class="text-gold">${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).plate)}</strong>
+          <span>${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).title).toUpperCase()}</span>
+        </figcaption>
+      </figure>
     </section>
 
     <div class="p-vault-meta-bar">
@@ -4527,40 +4576,6 @@ function renderVaultView(container, account) {
           .join('')
       : '<div class="p-panel muted" style="grid-column:1/-1;">No materials match your filter.</div>';
 
-    const contactEl = document.getElementById('p-vault-contact-plate');
-    if (contactEl) {
-      const top4 = filtered.slice(0, 4);
-      const hasDeficits = top4.some((x) => x.needed > 0 && x.net < 0);
-      contactEl.innerHTML = `
-        <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
-        <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
-        <div class="p-vault-contact-head mono">
-          <span>${hasDeficits ? 'PRIORITY DEFICITS' : esc(state.vaultCategory).toUpperCase()}</span>
-          <span class="text-gold">01–0${top4.length || 4}</span>
-        </div>
-        <div class="p-vault-contact-grid">
-          ${top4
-            .map((r, i) => {
-              const natCode = r.nation ? VAULT_NATION_CODES[r.nation] || '' : '';
-              return `
-                <button type="button" class="p-vault-contact-cell" data-p-vopen="${esc(r.key)}" title="Inspect ${esc(r.name)}">
-                  <span class="p-vault-contact-num mono">0${i + 1}${natCode ? `·${natCode}` : ''}</span>
-                  ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
-                  <span class="mono ${r.needed && r.net < 0 ? 'text-coral' : 'muted'}" style="font-size:10.5px;">${
-                    r.needed && r.net < 0 ? r.net.toLocaleString() : r.owned.toLocaleString()
-                  }</span>
-                </button>`;
-            })
-            .join('')}
-        </div>`;
-      contactEl.querySelectorAll('[data-p-vopen]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const rowObj = rows.find((x) => x.key === btn.dataset.pVopen);
-          if (rowObj) openVaultInspector(rowObj, btn);
-        });
-      });
-    }
-
     grid.querySelectorAll('[data-p-vopen]').forEach((tile) => {
       tile.addEventListener('click', () => {
         const rowObj = rows.find((x) => x.key === tile.dataset.pVopen);
@@ -4578,6 +4593,19 @@ function renderVaultView(container, account) {
     btn.addEventListener('click', () => {
       state.vaultCategory = btn.dataset.pVcat;
       syncCatPills();
+      const plate = VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All;
+      const plateEl = document.getElementById('p-vault-tcg-plate');
+      if (plateEl) {
+        const img = plateEl.querySelector('img');
+        const cap = plateEl.querySelector('figcaption');
+        if (img) {
+          img.src = plate.url;
+          img.alt = plate.title;
+        }
+        if (cap) {
+          cap.innerHTML = `<strong class="text-gold">${esc(plate.plate)}</strong><span>${esc(plate.title).toUpperCase()}</span>`;
+        }
+      }
       renderVaultGrid();
     });
   });
