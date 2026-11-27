@@ -1782,15 +1782,19 @@ function renderPrefarmView(container, account) {
   };
   const activeTab = state.prefarmSubTab === 'domains' ? 'domains' : 'queue';
   const resinDelta = patchCal.naturalResinToNext - resinSummary.totalResin;
-  const resinDeltaText =
+  const fragileNeeded = resinDelta < 0 ? Math.ceil(Math.abs(resinDelta) / 60) : 0;
+  const resinStampText =
     resinSummary.totalResin <= 0
-      ? 'All Mats Ready'
+      ? 'ALL MATS READY'
       : resinDelta >= 0
-        ? `+${resinDelta.toLocaleString()} Spare before ${patchCal.nextLabel}`
-        : `${resinDelta.toLocaleString()} Short before ${patchCal.nextLabel}`;
+        ? `+${resinDelta.toLocaleString()} SURPLUS`
+        : `${resinDelta.toLocaleString()} SHORT · ${fragileNeeded} FRAGILE`;
+  const resinMaxScale = Math.max(patchCal.naturalResinToNext || 180, resinSummary.totalResin || 180, 180) * 1.1;
+  const resinNeedPct = Math.min(100, (resinSummary.totalResin / resinMaxScale) * 100);
+  const resinBudgetPct = Math.min(100, (patchCal.naturalResinToNext / resinMaxScale) * 100);
 
   container.innerHTML = `
-    <section class="p-panel p-pf-command">
+    <section class="p-panel p-pf-command p-pf-dispatch">
       <div class="p-pf-topbar">
         <div class="p-pf-subtabs" role="tablist" aria-label="Prefarm Sections">
           <button type="button" role="tab" aria-selected="${activeTab === 'queue'}" class="p-pf-subtab ${activeTab === 'queue' ? 'is-active' : ''}" data-pf-tab="queue">
@@ -1803,12 +1807,7 @@ function renderPrefarmView(container, account) {
           </button>
         </div>
         <div class="p-pf-top-right">
-          <span class="p-pf-resin-pill mono ${resinSummary.totalResin <= 0 || resinDelta >= 0 ? 'is-ok' : 'is-short'}" title="Guaranteed upgrade Resin needed vs natural Resin before ${esc(patchCal.nextLabel)}">
-            ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
-            <strong>${resinSummary.totalResin.toLocaleString()}</strong>
-            <span class="muted">/ ~${patchCal.naturalResinToNext.toLocaleString()}</span>
-            <span class="p-pf-delta">${esc(resinDeltaText)}</span>
-          </span>
+          <span class="p-stamp mono ${resinSummary.totalResin <= 0 || resinDelta >= 0 ? 'p-stamp-mint' : 'p-stamp-coral'}">${esc(resinStampText)}</span>
           ${
             !readOnly && activeTab === 'queue'
               ? `<button type="button" class="p-btn p-btn-primary p-btn-sm" data-pf-toggle-add aria-expanded="${Boolean(state.prefarmAddOpen)}">${
@@ -1819,17 +1818,25 @@ function renderPrefarmView(container, account) {
         </div>
       </div>
 
+      <div class="p-pf-dispatch-ruler ${resinSummary.totalResin <= 0 || resinDelta >= 0 ? 'is-ok' : 'is-short'}">
+        <div class="p-er-ruler-head">
+          <span class="p-er-ruler-label">RESIN DISPATCH · BEFORE ${esc(patchCal.nextLabel).toUpperCase()}</span>
+          <span class="mono p-er-ruler-readout">
+            ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
+            <strong>${resinSummary.totalResin.toLocaleString()}</strong>
+            <span class="muted">NEEDED / ~${patchCal.naturalResinToNext.toLocaleString()} NATURAL BUDGET</span>
+          </span>
+        </div>
+        <div class="p-er-track" title="Queue Resin (${resinSummary.totalResin.toLocaleString()}) vs Natural Budget before ${esc(patchCal.nextLabel)} (~${patchCal.naturalResinToNext.toLocaleString()})">
+          <div class="p-er-fill" style="width:${resinNeedPct.toFixed(1)}%"></div>
+          <div class="p-er-target-needle" style="left:${resinBudgetPct.toFixed(1)}%" title="Natural Resin Budget: ~${patchCal.naturalResinToNext.toLocaleString()}"></div>
+          <div class="p-er-cur-marker" style="left:${resinNeedPct.toFixed(1)}%"></div>
+        </div>
+      </div>
+
       ${
         resinSummary.buckets.length
-          ? `<div class="p-resin-bar" role="img" aria-label="Resin breakdown">
-               ${resinSummary.buckets
-                 .map(
-                   (b) =>
-                     `<span class="p-resin-seg" style="width:${b.pct}%;background:${bucketColorMap[b.id] || 'var(--p-accent)'};" title="${esc(b.label)}: ${b.resin.toLocaleString()} Resin (${b.pct}%)"></span>`
-                 )
-                 .join('')}
-             </div>
-             <div class="p-pf-legend-row">
+          ? `<div class="p-pf-legend-row">
                <div class="p-resin-legend">
                  ${resinSummary.buckets
                    .map(
@@ -1853,7 +1860,8 @@ function renderPrefarmView(container, account) {
 
       ${
         !readOnly && activeTab === 'queue' && state.prefarmAddOpen
-          ? `<form id="p-pf-add-form" class="p-pf-add-drawer">
+          ? `<form id="p-pf-add-form" class="p-pf-add-drawer p-pf-accession">
+               <span class="p-pf-acc-tag mono">ACCESSION № ${String(targetsWithTel.length + 1).padStart(2, '0')}</span>
                <label class="proto-field p-pf-field-char">
                  <span>Character</span>
                  <select name="characterKey" class="proto-select" required>
@@ -1880,7 +1888,7 @@ function renderPrefarmView(container, account) {
                  <span>Q</span>
                  <input type="number" name="tBurst" min="1" max="10" value="9" class="p-input mono" />
                </label>
-               <button type="submit" class="p-btn p-btn-primary">Add</button>
+               <button type="submit" class="p-btn p-btn-primary">Stamp to Queue</button>
              </form>`
           : ''
       }
@@ -1905,26 +1913,40 @@ function renderPrefarmView(container, account) {
                        const visibleRows = isExpanded ? missingRows : missingRows.slice(0, 8);
                        const extraCount = Math.max(0, missingRows.length - visibleRows.length);
                        const safeVt = String(t.id || idx).replace(/[^a-zA-Z0-9_-]/g, '');
+                       const reqNum = String(idx + 1).padStart(2, '0');
+                       const slipStamp =
+                         t.pct >= 100
+                           ? { cls: 'is-fresh', text: 'ALL MATS READY' }
+                           : funcPct >= 100
+                             ? { cls: 'is-fresh', text: 'PLAYABLE DAY 1' }
+                             : t.ms?.bossUnreleased
+                               ? { cls: 'is-aging', text: 'WEEK-1 BOSS LOCK' }
+                               : { cls: 'is-aging', text: String(t.tel.etaLabel || 'IN QUEUE').toUpperCase() };
                        return `
-                         <article class="p-pf-card" data-el="${esc(el)}" style="view-transition-name:pf-${safeVt};">
+                         <article class="p-pf-card p-pf-slip" data-el="${esc(el)}" style="view-transition-name:pf-${safeVt};">
+                           <div class="p-pf-slip-head mono">
+                             <div class="p-pf-slip-head-left">
+                               <span class="p-pf-rank">REQ № ${reqNum}</span>
+                               ${
+                                 t.ms?.bookName
+                                   ? `<span class="p-pf-book-chip">${renderAssetIcon('materials', `PhilosophiesOf${t.ms.bookName}`, t.ms.bookName, 'icon-xs')}<span>${esc(t.ms.bookName)} · ${esc(t.ms.bookDays.join('/') || 'Sun')}</span></span>`
+                                   : ''
+                               }
+                             </div>
+                             <span class="p-ink-stamp-sm ${slipStamp.cls}">${esc(slipStamp.text)}</span>
+                           </div>
                            <div class="p-pf-card-main">
                              <div class="p-pf-id">
-                               <span class="p-pf-rank mono">${esc(t.tierLabel)}</span>
                                <button type="button" class="p-target-portrait p-pf-portrait-btn" data-p-open-char="${esc(t.characterKey)}" title="Open ${esc(cm.name)} Sheet">
                                  ${renderAssetIcon('characters', t.characterKey, cm.name, 'icon-hud-char')}
                                </button>
                                <div class="p-pf-title-col">
                                  <div class="p-pf-name-row">
                                    <button type="button" class="p-pf-name-btn" data-p-open-char="${esc(t.characterKey)}">${esc(cm.name)}</button>
-                                   ${t.ms?.bossUnreleased ? `<span class="p-badge p-badge-amber mono">7.3 Boss</span>` : ''}
                                  </div>
                                  <div class="p-pf-sub-pills">
-                                   ${
-                                     t.ms?.bookName
-                                       ? `<span class="p-pf-book-chip mono">${renderAssetIcon('materials', `PhilosophiesOf${t.ms.bookName}`, t.ms.bookName, 'icon-xs')}<span>${esc(t.ms.bookName)} · ${esc(t.ms.bookDays.join('/') || 'Sun')}</span></span>`
-                                       : ''
-                                   }
                                    <span class="p-pf-eta mono">${esc(t.tel.etaLabel)}</span>
+                                   <button type="button" class="p-xref-link" data-p-open-char="${esc(t.characterKey)}">→ Dossier</button>
                                  </div>
                                </div>
                              </div>
@@ -2040,7 +2062,7 @@ function renderPrefarmView(container, account) {
                  ? `<div class="p-dom-eff-grid">
                       ${domainReport.domains
                         .slice(0, 10)
-                        .map((d) => {
+                        .map((d, dIdx) => {
                           const badgeCls =
                             d.verdictTone === 'mint'
                               ? 'p-badge-mint'
@@ -2049,10 +2071,12 @@ function renderPrefarmView(container, account) {
                                 : d.verdictTone === 'warn'
                                   ? 'p-cond-warn'
                                   : '';
+                          const dSerial = String(dIdx + 1).padStart(2, '0');
                           return `
-                            <article class="p-dom-eff-card">
+                            <article class="p-dom-eff-card p-dom-index-card ${dIdx === 0 ? 'is-top-domain' : ''}">
                               <div class="p-dom-eff-head">
                                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">
+                                  <span class="p-dom-idx mono">${dSerial}</span>
                                   <strong style="font-size:14px;">${esc(d.domain)}</strong>
                                   <span class="p-badge mono">${esc(d.region)}</span>
                                 </div>
