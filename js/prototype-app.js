@@ -3972,19 +3972,21 @@ function renderTeamsView(container, account) {
 
     ${
       activeTab === 'synergy'
-        ? `<section class="p-panel p-lens-bar" style="margin-bottom:16px;">
-             <div class="p-mode-bar">
-               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                 <span class="p-row-sub mono" style="font-size:11.5px;">SCENARIO</span>
-                 ${Object.values(SCENARIO_MODES)
-                   .map(
-                     (sc) =>
-                       `<button type="button" class="p-pill-btn ${state.scenarioMode === sc.id ? 'active' : ''}" data-p-tscen="${sc.id}">${esc(sc.label)}</button>`
-                   )
-                   .join('')}
+        ? `<section class="p-panel p-syn-bench" style="margin-bottom:16px;">
+             <div class="p-syn-bench-top">
+               <div class="p-filter-cluster">
+                 <span class="p-filter-lbl mono">SCENARIO</span>
+                 <div class="p-filter-pills" role="group" aria-label="Scenario">
+                   ${Object.values(SCENARIO_MODES)
+                     .map(
+                       (sc) =>
+                         `<button type="button" class="p-pill-btn ${state.scenarioMode === sc.id ? 'active' : ''}" data-p-tscen="${sc.id}">${esc(sc.label)}</button>`
+                     )
+                     .join('')}
+                 </div>
                </div>
-               <label class="proto-field" style="min-width:210px;margin-left:auto;">
-                 <span>Enemy Target (RES Baseline)</span>
+               <label class="proto-field p-syn-enemy-field">
+                 <span class="p-filter-lbl mono">ENEMY TARGET · RES BASELINE</span>
                  <select id="p-enemy-target" class="proto-select">
                    <option value="">Standard Target (10% All RES)</option>
                    ${notableEnemies
@@ -3996,130 +3998,207 @@ function renderTeamsView(container, account) {
                  </select>
                </label>
              </div>
-             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;">
-               <span class="p-row-sub mono" style="font-size:11px;">${selectedEnemy ? `${esc(selectedEnemy.name)} RES:` : 'Target RES:'}</span>
+             <div class="p-syn-res-strip mono">
+               <span class="muted">${selectedEnemy ? `${esc(selectedEnemy.name).toUpperCase()} RES` : 'TARGET RES'}</span>
                ${RES_LABELS.map(([rk, lbl]) => {
                  const pctVal = Math.round((Number(activeResMap[rk] ?? 0.1) || 0) * 100);
-                 return `<span class="p-badge mono ${pctVal >= 50 ? 'p-badge-amber' : ''}" style="font-size:10.5px;">${lbl} ${pctVal}%</span>`;
+                 return `<span class="p-stamp ${pctVal >= 50 ? 'p-stamp-amber' : ''}">${lbl.toUpperCase()} ${pctVal}%</span>`;
                }).join('')}
              </div>
-             ${synergy?.modeNote ? `<div class="p-row-sub" style="font-size:12px;">${esc(synergy.modeNote)}</div>` : ''}
            </section>
 
            ${
              profileKeys.length
-               ? `<section class="p-panel" style="margin-bottom:16px;">
-                    <div class="p-panel-head" style="flex-wrap:wrap;gap:8px;">
+               ? `<section class="p-panel p-syn-deck">
+                    <div class="p-syn-deck-head">
                       <div>
-                        <h2 class="p-panel-title">Pairwise Synergy &amp; Owned Substitutes</h2>
-                        <div class="p-row-sub">Ideal partners vs. what your owned roster covers (and what breaks if you go off-script).</div>
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                          <span class="p-reel-slab mono">TEST STRIP · 4P</span>
+                          <h2 class="p-reel-title">Synergy &amp; Substitutes Audition</h2>
+                        </div>
+                        ${synergy?.modeNote ? `<div class="p-row-sub" style="font-size:12px;margin-top:4px;">${esc(synergy.modeNote)}</div>` : ''}
                       </div>
+                      ${
+                        !readOnly && anchorKey && activeSlots.length >= 1
+                          ? `<button type="button" class="p-btn p-btn-primary p-btn-sm" id="p-syn-save-reel">+ Save as Reel</button>`
+                          : ''
+                      }
                     </div>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
-                      <label class="proto-field" style="min-width:170px;">
-                        <span>01A · Anchor Carry</span>
-                        <select id="p-syn-anchor" class="proto-select">
-                          ${profileKeys
-                            .map(
-                              (k) =>
-                                `<option value="${esc(k)}" ${k === anchorKey ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
-                            )
-                            .join('')}
-                        </select>
-                      </label>
-                      ${[0, 1, 2]
-                        .map(
-                          (idx) => `
-                          <label class="proto-field" style="min-width:140px;">
-                            <span>0${idx + 2}A · Teammate</span>
-                            <select class="proto-select" data-p-syn-slot="${idx}">
-                              <option value="">— Open Slot —</option>
-                              ${profileKeys
-                                .filter((k) => k !== anchorKey)
-                                .map(
-                                  (k) =>
-                                    `<option value="${esc(k)}" ${state.synergyTeamSlots[idx] === k ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
-                                )
-                                .join('')}
-                            </select>
-                          </label>`
-                        )
-                        .join('')}
-                    </div>
-                    ${
-                      synergy?.anchorConditionStatuses?.length
-                        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-                             ${synergy.anchorConditionStatuses
-                               .map((cs) => `<span class="p-badge mono ${cs.active ? 'p-cond-ok' : 'p-cond-warn'}" title="${esc(cs.note)}">${esc(cs.label)}${cs.active ? '' : ' · Inactive'}</span>`)
-                               .join('')}
-                           </div>`
-                        : ''
-                    }
-                    ${
-                      squadTradeoffs.length
-                        ? `<div class="p-panel" style="padding:10px 14px;margin-bottom:12px;">
-                             <div class="p-row-title text-gold" style="font-size:12.5px;margin-bottom:6px;">Squad Tradeoffs &amp; Aura Stability</div>
-                             <div style="display:flex;flex-direction:column;gap:5px;">
-                               ${squadTradeoffs
-                                 .map(
-                                   (tf) =>
-                                     `<div style="font-size:12px;line-height:1.45;">
-                                        <span class="p-badge mono ${tf.tone === 'ok' ? 'p-cond-ok' : 'p-cond-warn'}" style="margin-right:6px;">${esc(tf.title)}</span>
-                                        <span class="p-row-sub">${esc(tf.detail)}</span>
-                                      </div>`
-                                 )
-                                 .join('')}
-                             </div>
-                           </div>`
-                        : ''
-                    }
-                    <div class="p-synergy-grid">
-                      <div class="p-panel" style="padding:12px 14px;">
-                        <div class="p-row-title text-gold" style="margin-bottom:8px;">Ideal Baseline Partners</div>
-                        <div class="p-list" style="gap:8px;">
-                          ${(synergy?.idealPartners || [])
-                            .map(
-                              (p) => `
-                              <div class="p-sub-card">
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                                  <div class="p-row-left">
-                                    ${renderAssetIcon('characters', p.key, p.name, 'icon-xs')}
-                                    <strong style="font-size:13px;">${esc(p.name)}</strong>
-                                  </div>
-                                  <span class="p-badge mono ${p.owned ? 'p-badge-mint' : ''}">${p.owned ? 'Owned' : 'Unowned'}</span>
+
+                    <div class="p-filmstrip p-syn-filmstrip">
+                      <div class="p-film-sprockets" aria-hidden="true"><span class="p-film-edge-code mono">AARU 400 · SYNERGY TEST STRIP · 35MM</span></div>
+                      <div class="p-syn-cast-grid">
+                        ${(() => {
+                          const anchorMeta = getCharacterMeta(anchorKey);
+                          const anchorEl = String(anchorMeta.element || '').toLowerCase();
+                          const anchorCard = `
+                            <div class="p-syn-slot-card is-anchor" data-el="${esc(anchorEl)}">
+                              <div class="p-film-frame-top mono">
+                                <span>01A · ANCHOR</span>
+                                <span class="text-gold">${ownedKeysSet.has(anchorKey) ? 'OWNED ★' : 'THEORY'}</span>
+                              </div>
+                              <div class="p-syn-slot-visual">
+                                ${renderAssetIcon('characters', anchorKey, anchorMeta.name, 'icon-md')}
+                                <div style="min-width:0;flex:1;">
+                                  <div class="p-film-char-name">${esc(anchorMeta.name)}</div>
+                                  <div class="p-film-char-meta mono">${esc(anchorMeta.element)} · ${esc(anchorMeta.weaponType)}</div>
                                 </div>
-                                <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">${esc(p.reasons.join(' · ') || p.element)}</div>
-                                ${p.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:3px;">⚠ ${esc(p.tradeoffWarning)}</div>` : ''}
-                              </div>`
-                            )
+                              </div>
+                              <div class="p-syn-slot-sel">
+                                <select id="p-syn-anchor" class="proto-select" aria-label="Anchor Character">
+                                  ${profileKeys
+                                    .map(
+                                      (k) =>
+                                        `<option value="${esc(k)}" ${k === anchorKey ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
+                                    )
+                                    .join('')}
+                                </select>
+                              </div>
+                            </div>`;
+
+                          const mateCards = [0, 1, 2]
+                            .map((idx) => {
+                              const mk = state.synergyTeamSlots[idx] || '';
+                              const mm = mk ? getCharacterMeta(mk) : null;
+                              const mel = mm ? String(mm.element || '').toLowerCase() : '';
+                              return `
+                                <div class="p-syn-slot-card ${mk ? '' : 'is-open'}" ${mel ? `data-el="${esc(mel)}"` : ''}>
+                                  <div class="p-film-frame-top mono">
+                                    <span>0${idx + 2}A · TEAMMATE</span>
+                                    <span class="${mk ? (ownedKeysSet.has(mk) ? 'text-mint' : 'muted') : 'muted'}">${mk ? (ownedKeysSet.has(mk) ? 'OWNED ★' : 'THEORY') : 'OPEN'}</span>
+                                  </div>
+                                  <div class="p-syn-slot-visual">
+                                    ${
+                                      mm
+                                        ? `${renderAssetIcon('characters', mk, mm.name, 'icon-md')}
+                                           <div style="min-width:0;flex:1;">
+                                             <div class="p-film-char-name">${esc(mm.name)}</div>
+                                             <div class="p-film-char-meta mono">${esc(mm.element)} · ${esc(mm.weaponType)}</div>
+                                           </div>`
+                                        : `<div class="p-syn-empty-avatar mono">+</div>
+                                           <div style="min-width:0;flex:1;">
+                                             <div class="p-film-char-name muted">Open Slot</div>
+                                             <div class="p-film-char-meta mono">Pick below or click + Slot</div>
+                                           </div>`
+                                    }
+                                  </div>
+                                  <div class="p-syn-slot-sel">
+                                    <select class="proto-select" data-p-syn-slot="${idx}" aria-label="Teammate ${idx + 1}">
+                                      <option value="">— Open Slot —</option>
+                                      ${profileKeys
+                                        .filter((k) => k !== anchorKey)
+                                        .map(
+                                          (k) =>
+                                            `<option value="${esc(k)}" ${mk === k ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
+                                        )
+                                        .join('')}
+                                    </select>
+                                  </div>
+                                </div>`;
+                            })
+                            .join('');
+                          return anchorCard + mateCards;
+                        })()}
+                      </div>
+                      <div class="p-film-sprockets" aria-hidden="true"></div>
+                    </div>
+
+                    ${
+                      synergy?.anchorConditionStatuses?.length || squadTradeoffs.length
+                        ? `<div class="p-syn-diagnostics">
+                             ${
+                               synergy?.anchorConditionStatuses?.length
+                                 ? `<div class="p-syn-cond-row">
+                                      <span class="p-filter-lbl mono">KIT CONDITIONS</span>
+                                      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                        ${synergy.anchorConditionStatuses
+                                          .map((cs) => `<span class="p-stamp ${cs.active ? 'p-stamp-mint' : 'p-stamp-amber'} mono" title="${esc(cs.note)}">${esc(cs.label)}${cs.active ? ' ✓' : ' · INACTIVE'}</span>`)
+                                          .join('')}
+                                      </div>
+                                    </div>`
+                                 : ''
+                             }
+                             ${
+                               squadTradeoffs.length
+                                 ? `<div class="p-syn-tradeoffs">
+                                      <span class="p-filter-lbl mono">SQUAD TRADEOFFS &amp; AURA STABILITY</span>
+                                      <ul class="p-strategy-bullets">
+                                        ${squadTradeoffs
+                                          .map(
+                                            (tf) =>
+                                              `<li class="${tf.tone === 'ok' ? '' : 'is-warn'}"><strong class="mono">${esc(tf.title)}:</strong> ${esc(tf.detail)}</li>`
+                                          )
+                                          .join('')}
+                                      </ul>
+                                    </div>`
+                                 : ''
+                             }
+                           </div>`
+                        : ''
+                    }
+
+                    <div class="p-syn-columns">
+                      <div class="p-syn-col">
+                        <div class="p-syn-col-head">
+                          <span class="p-dom-idx mono">01</span>
+                          <strong class="text-gold">IDEAL BASELINE PARTNERS</strong>
+                        </div>
+                        <div class="p-syn-list">
+                          ${(synergy?.idealPartners || [])
+                            .map((p, pIdx) => {
+                              const inSquad = activeSlots.includes(p.key);
+                              return `
+                              <div class="p-sub-card p-syn-card" data-el="${esc(String(p.element || '').toLowerCase())}">
+                                <div class="p-syn-card-top">
+                                  <div class="p-row-left" style="min-width:0;">
+                                    <span class="mono muted" style="font-size:10.5px;">0${pIdx + 1}</span>
+                                    ${renderAssetIcon('characters', p.key, p.name, 'icon-xs')}
+                                    <strong style="font-size:13.5px;">${esc(p.name)}</strong>
+                                  </div>
+                                  <div style="display:flex;align-items:center;gap:6px;">
+                                    <span class="p-stamp ${p.owned ? 'p-stamp-mint' : ''} mono">${p.owned ? 'OWNED' : 'UNOWNED'}</span>
+                                    <button type="button" class="p-film-pf-btn" data-p-syn-pick="${esc(p.key)}" ${inSquad ? 'disabled' : ''}>${inSquad ? 'IN SLOT' : '+ Slot'}</button>
+                                  </div>
+                                </div>
+                                <div class="p-row-sub" style="font-size:12px;">${esc(p.reasons.join(' · ') || p.element)}</div>
+                                ${p.tradeoffWarning ? `<div class="text-coral" style="font-size:11.5px;">⚠ ${esc(p.tradeoffWarning)}</div>` : ''}
+                              </div>`;
+                            })
                             .join('')}
                         </div>
                       </div>
-                      <div class="p-panel" style="padding:12px 14px;">
-                        <div class="p-row-title text-mint" style="margin-bottom:8px;">
-                          Work With What You Got ${synergy?.missingTargetPartner ? `(Owned Substitutes for ${esc(synergy.missingTargetPartner.name)})` : '(Owned Roster Fit)'}
+
+                      <div class="p-syn-col">
+                        <div class="p-syn-col-head">
+                          <span class="p-dom-idx mono">02</span>
+                          <strong class="text-mint">WORK WITH WHAT YOU GOT ${synergy?.missingTargetPartner ? `· FOR ${esc(synergy.missingTargetPartner.name).toUpperCase()}` : '· OWNED FIT'}</strong>
                         </div>
-                        <div class="p-list" style="gap:8px;">
+                        <div class="p-syn-list">
                           ${
                             synergy?.ownedSubstitutes?.length
                               ? synergy.ownedSubstitutes
-                                  .map(
-                                    (sub) => `
-                                    <div class="p-sub-card">
-                                      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                                        <div class="p-row-left">
+                                  .map((sub, sIdx) => {
+                                    const inSquad = activeSlots.includes(sub.key);
+                                    return `
+                                    <div class="p-sub-card p-syn-card" data-el="${esc(String(sub.element || '').toLowerCase())}">
+                                      <div class="p-syn-card-top">
+                                        <div class="p-row-left" style="min-width:0;">
+                                          <span class="mono muted" style="font-size:10.5px;">0${sIdx + 1}</span>
                                           ${renderAssetIcon('characters', sub.key, sub.name, 'icon-xs')}
-                                          <strong style="font-size:13px;">${esc(sub.name)}</strong>
+                                          <strong style="font-size:13.5px;">${esc(sub.name)}</strong>
                                         </div>
-                                        <span class="p-badge mono">${esc(sub.element)}</span>
+                                        <div style="display:flex;align-items:center;gap:6px;">
+                                          <span class="p-stamp mono">${esc(sub.element)}</span>
+                                          <button type="button" class="p-film-pf-btn" data-p-syn-pick="${esc(sub.key)}" ${inSquad ? 'disabled' : ''}>${inSquad ? 'IN SLOT' : '+ Slot'}</button>
+                                        </div>
                                       </div>
-                                      <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">Covers: <strong>${esc(sub.covers.join(' · '))}</strong></div>
-                                      ${sub.missing.length ? `<div class="muted" style="font-size:11px;margin-top:2px;">Missing: ${esc(sub.missing.join(' · '))}</div>` : ''}
-                                      ${sub.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:2px;">⚠ Tradeoff: ${esc(sub.tradeoffWarning)}</div>` : ''}
-                                    </div>`
-                                  )
+                                      <div class="p-row-sub" style="font-size:12px;">Covers: <strong>${esc(sub.covers.join(' · '))}</strong></div>
+                                      ${sub.missing.length ? `<div class="muted" style="font-size:11.5px;">Missing: ${esc(sub.missing.join(' · '))}</div>` : ''}
+                                      ${sub.tradeoffWarning ? `<div class="text-coral" style="font-size:11.5px;">⚠ ${esc(sub.tradeoffWarning)}</div>` : ''}
+                                    </div>`;
+                                  })
                                   .join('')
-                              : '<div class="muted" style="font-size:12.5px;">Add characters in your owned roster to evaluate substitutes.</div>'
+                              : '<div class="muted" style="font-size:12.5px;padding:10px 0;">Add characters in your owned roster to evaluate owned substitutes.</div>'
                           }
                         </div>
                       </div>
@@ -4409,6 +4488,46 @@ function renderTeamsView(container, account) {
     state.synergyAnchorKey = e.target.value;
     state.synergyTeamSlots = ['', '', ''];
     renderTeamsView(container, account);
+  });
+
+  container.querySelectorAll('[data-p-syn-pick]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const ck = btn.dataset.pSynPick;
+      if (!ck || ck === anchorKey) return;
+      const next = [...(state.synergyTeamSlots || ['', '', ''])];
+      if (next.includes(ck)) return;
+      const openIdx = next.findIndex((x) => !x);
+      if (openIdx >= 0) next[openIdx] = ck;
+      else next[2] = ck;
+      state.synergyTeamSlots = next;
+      renderTeamsView(container, account);
+      animateTeamsEntrance(container);
+    });
+  });
+
+  document.getElementById('p-syn-save-reel')?.addEventListener('click', async () => {
+    if (readOnly || !anchorKey) return;
+    const keys = [anchorKey, ...activeSlots].slice(0, 4);
+    const anchorName = getCharacterMeta(anchorKey).name;
+    const members = keys.map((ck, idx) => {
+      const owned = charMap.get(ck);
+      return {
+        characterKey: ck,
+        role: idx === 0 ? 'On-Field Carry' : 'Support',
+        weaponKey: owned?.equippedWeapon?.key || ''
+      };
+    });
+    const nextTeam = {
+      id: `team_${Date.now()}`,
+      name: `${anchorName} Squad`,
+      archetype: 'Synergy Reel',
+      members,
+      testLab: { rotationFeel: '' }
+    };
+    state.teamsSubTab = 'reels';
+    await saveTeams([...teams, nextTeam]);
+    animateTeamsEntrance(container);
+    showToast(`Saved ${nextTeam.name} to Saved Reels`);
   });
 
   container.querySelectorAll('[data-p-syn-slot]').forEach((sel) => {
