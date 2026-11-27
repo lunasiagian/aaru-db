@@ -4747,6 +4747,191 @@ html, body {
   opacity: 0.45;
   cursor: default;
 }
+
+/* ==========================================================================
+   DE-DASHBOARD PASS (exp/de-dashboard)
+   1. Kill bubbly 999px SaaS pills -> Letterpress Index Strips & Folder Tabs
+   2. Dissolve redundant .p-panel wrappers -> Page-as-Archival-Table
+   3. Physical dark surfaces reserved ONLY for true archival artifacts
+   ========================================================================== */
+
+:root {
+  --p-radius: 2px;
+  --p-radius-sm: 2px;
+}
+
+/* 1. Top Command Bar — Archival Binder Header & Sharp Folder Nav */
+.proto-command-bar {
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--p-border-strong) !important;
+  background: rgba(6, 8, 18, 0.92) !important;
+}
+.proto-nav {
+  gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+.proto-nav-btn {
+  border-radius: 0 !important;
+  border: none !important;
+  border-top: 2px solid transparent !important;
+  border-bottom: 2px solid transparent !important;
+  padding: 10px 14px !important;
+  font-family: var(--p-font-mono) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  background: transparent !important;
+  color: var(--p-text-muted) !important;
+}
+.proto-nav-btn:hover {
+  color: var(--p-text) !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+.proto-nav-btn.active {
+  color: var(--p-gold) !important;
+  background: rgba(212, 175, 55, 0.07) !important;
+  border-top-color: var(--p-gold) !important;
+  border-bottom-color: transparent !important;
+}
+
+/* 2. De-Pill All Filter Controls -> Joined Letterpress Index Strips */
+.p-filter-pills,
+.p-lens-pills {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  gap: 0 !important;
+  border: 1px solid var(--p-border-strong) !important;
+  border-radius: 2px !important;
+  background: rgba(6, 8, 18, 0.55) !important;
+  overflow: hidden;
+}
+.p-pill-btn {
+  border-radius: 0 !important;
+  border: none !important;
+  border-right: 1px solid var(--p-border) !important;
+  background: transparent !important;
+  padding: 5px 11px !important;
+  font-family: var(--p-font-mono) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--p-text-secondary) !important;
+  transition: background-color 120ms ease, color 120ms ease !important;
+}
+.p-pill-btn:last-child {
+  border-right: none !important;
+}
+.p-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--p-text) !important;
+}
+.p-pill-btn.active {
+  background: var(--p-gold) !important;
+  color: #060812 !important;
+  font-weight: 700 !important;
+}
+
+/* 3. De-Pill Sub-Tabs -> Archival Folder Tabs on Ruled Baseline */
+.p-pf-subtabs,
+.p-subtabs {
+  gap: 4px !important;
+  border-bottom: 1px solid var(--p-border-strong) !important;
+  padding-bottom: 0 !important;
+}
+.p-pf-subtab {
+  border-radius: 2px 2px 0 0 !important;
+  border: 1px solid transparent !important;
+  border-bottom: none !important;
+  margin-bottom: -1px !important;
+  padding: 7px 14px !important;
+  font-family: var(--p-font-mono) !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+}
+.p-pf-subtab.is-active {
+  background: var(--p-surface) !important;
+  border-color: var(--p-border-strong) !important;
+  border-top: 2px solid var(--p-gold) !important;
+  color: var(--p-gold) !important;
+}
+
+/* 4. De-Pill Badges & Buttons -> Cut-Paper Specimen Tags (0-2px) */
+.p-badge {
+  border-radius: 1px !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.p-btn,
+.proto-search,
+.proto-select,
+.p-input,
+.p-target-card,
+.p-char-tile,
+.p-kit-card,
+.p-holder-chip,
+.p-rem-chip {
+  border-radius: 2px !important;
+}
+
+/* 5. Page-as-Archival-Table: Dissolve Generic .p-panel Boxes Into Bare Ruled Folios */
+.p-panel:not(.p-pf-command):not(.p-reel-card):not(.p-syn-deck):not(.p-syn-bench):not(.p-vault-warehouse-hero):not(.p-tactical-deck) {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid var(--p-border-strong) !important;
+  border-radius: 0 !important;
+  padding: 18px 0 6px !important;
+  box-shadow: none !important;
+}
+.p-panel:not(.p-pf-command):not(.p-reel-card):not(.p-syn-deck):not(.p-syn-bench):not(.p-vault-warehouse-hero):not(.p-tactical-deck) > .p-panel-head {
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px dashed var(--p-border);
+}
+.p-panel-title {
+  font-family: var(--p-font-display) !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--p-text) !important;
+}
+
+/* Keep Tactical Deck & Command Strips Sharp & Ledger-Like */
+.p-tactical-deck {
+  border-radius: 2px !important;
+  border: 1px solid var(--p-border-strong) !important;
+  border-top: 2px solid var(--p-border-strong) !important;
+  background: rgba(12, 17, 32, 0.65) !important;
+}
+.p-resource-strip,
+.p-strategy-strip {
+  border-radius: 2px !important;
+  background: rgba(12, 17, 32, 0.58) !important;
+}
+
+/* Bare Archival Table Rows on Today Missing Materials & Open Domains */
+.p-mat-list .p-row,
+.p-list .p-row {
+  border-radius: 1px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--p-border) !important;
+  padding: 9px 4px !important;
+}
+.p-mat-list .p-row:hover,
+.p-list .p-row:hover {
+  background: rgba(212, 175, 55, 0.05) !important;
+}
+
+/* Keep Character Roster Tiles Sharp Archival Slides */
+.p-char-tile {
+  background: var(--p-surface) !important;
+  border-top: 2px solid var(--el-ink, var(--p-border-strong)) !important;
+}
 .p-vault-modal-barcode-row {
   margin-top: 14px;
   padding-top: 10px;
