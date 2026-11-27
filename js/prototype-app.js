@@ -2199,11 +2199,24 @@ function renderRosterView(container, account) {
         <span class="muted">${esc(char.meta.name)} · ${esc(char.meta.element)} · ${esc(char.meta.weaponType)} · ${char.meta.rarity}★</span>
       </div>
 
-      <section class="p-dossier-hero p-specimen-plate" data-el="${esc(elAttr)}" data-rarity="${char.meta.rarity || 5}">
+      <section class="p-dossier-hero p-specimen-plate p-zine-dossier" data-el="${esc(elAttr)}" data-rarity="${char.meta.rarity || 5}">
         <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
         <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
         <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
         <span class="p-crop p-crop-br" aria-hidden="true">+</span>
+        <div class="p-dossier-poster-bg" aria-hidden="true">${esc(char.meta.element || '')}</div>
+
+        <div class="p-zine-strip">
+          <div class="p-zine-strip-left mono">
+            <span class="p-zine-issue-circle">${char.meta.rarity || 5}★</span>
+            <span>ARCHIVE DOSSIER · ${esc(char.meta.element || '').toUpperCase()} / ${esc(char.meta.weaponType || '').toUpperCase()}</span>
+          </div>
+          <div class="p-zine-strip-right">
+            <span class="p-zine-stamp mono">${esc(char.constellation ? `C${char.constellation}` : 'C0')}${weapon ? `·R${weapon.refinement || 1}` : ''}</span>
+            <span class="p-zine-barcode" aria-hidden="true"></span>
+          </div>
+        </div>
+
         <div class="p-portrait-box" style="view-transition-name:hero-portrait;">
           <div class="p-specimen-frame">
             ${renderGachaSplash(char.key, char.meta.name)}
@@ -2212,9 +2225,10 @@ function renderRosterView(container, account) {
               <span class="mono text-gold">${'★'.repeat(char.meta.rarity || 5)}</span>
             </div>
           </div>
-          <div class="p-const-strip">
+          <div class="p-const-metro" aria-label="Constellation ${char.constellation || 0} of 6">
+            <div class="p-const-metro-rail" aria-hidden="true"></div>
             ${[1, 2, 3, 4, 5, 6]
-              .map((i) => `<div class="p-const-pip mono ${(char.constellation || 0) >= i ? 'is-on' : ''}">C${i}</div>`)
+              .map((i) => `<div class="p-const-stop ${(char.constellation || 0) >= i ? 'is-on' : ''}"><span class="p-const-node"></span><span class="mono">C${i}</span></div>`)
               .join('')}
           </div>
         </div>
@@ -2617,7 +2631,7 @@ function renderRosterView(container, account) {
                      const setIcon = getArtifactIcon(lookupName, 'flower');
                      const setChanged = Boolean(prevSnap && prevSnap.sets?.[rIdx] !== rec.set);
                      return `
-                     <button type="button" class="p-rec-set-card ${setChanged ? 'is-changed' : ''}" data-p-artset="${esc(rec.set)}">
+                     <button type="button" class="p-rec-set-card ${rIdx === 0 ? 'is-bis-slab' : ''} ${setChanged ? 'is-changed' : ''}" data-p-artset="${esc(rec.set)}">
                        <span class="p-rec-idx mono">${String(rIdx + 1).padStart(2, '0')}</span>
                        ${setIcon ? `<img src="${esc(setIcon)}" alt="" class="p-rec-set-icon" loading="lazy" />` : ''}
                        <div style="min-width:0;flex:1;">

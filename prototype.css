@@ -3243,6 +3243,272 @@ html, body {
   padding-top: 2px;
 }
 
+/* ==========================================================================
+   Archival Zine × Tokyo Transit Ephemera Injections
+   Issue strips, optical linework, poster scale, solid ink slabs, ticket stubs
+   ========================================================================== */
+
+/* 1. Zine Issue Strip & Poster Scale Watermark on Character Dossier */
+.p-zine-dossier {
+  grid-template-columns: 248px minmax(0, 1fr);
+  padding-top: 0;
+}
+.p-zine-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -26px 4px;
+  padding: 8px 26px;
+  border-bottom: 1px solid var(--p-border-strong);
+  background: rgba(6, 8, 18, 0.55);
+  position: relative;
+  z-index: 2;
+}
+.p-zine-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--p-text-secondary);
+}
+.p-zine-issue-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--p-gold);
+  border-radius: 999px;
+  font-size: 10px;
+  color: var(--p-gold);
+  letter-spacing: 0.04em;
+}
+.p-zine-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Unapologetic Solid Ink Focal Stamp */
+.p-zine-stamp {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--el-ink, var(--p-gold));
+  color: #060812;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.p-zine-barcode {
+  display: inline-block;
+  width: 44px;
+  height: 16px;
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    to right,
+    var(--p-text) 0 2px,
+    transparent 2px 4px,
+    var(--p-text) 4px 5px,
+    transparent 5px 8px,
+    var(--p-text) 8px 11px,
+    transparent 11px 13px,
+    var(--p-text) 13px 14px,
+    transparent 14px 16px
+  );
+}
+/* Bold Minimalism Poster-Scale Watermark */
+.p-dossier-poster-bg {
+  position: absolute;
+  right: 16px;
+  bottom: -14px;
+  font-family: var(--p-font-display);
+  font-size: clamp(86px, 11vw, 148px);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--el-ink, var(--p-gold));
+  opacity: 0.045;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+/* Optical Risograph Interference Rings inside Splash Specimen */
+.p-specimen-frame .ed-gacha-splash-wrap {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 42%,
+      transparent 0 7px,
+      rgba(212, 175, 55, 0.07) 7px 8px
+    ),
+    var(--p-surface-2);
+}
+
+/* 2. Metro Route Constellation Track (Japanese Transit Ticket Dot-Line) */
+.p-const-metro {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  padding: 6px 4px 2px;
+  border: 1px solid var(--p-border);
+  border-radius: 2px;
+  background: rgba(6, 8, 18, 0.45);
+}
+.p-const-metro-rail {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 12px;
+  height: 1px;
+  background: var(--p-border-strong);
+  z-index: 0;
+}
+.p-const-stop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--p-text-muted);
+}
+.p-const-node {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 1.5px solid var(--p-border-strong);
+  background: var(--p-bg);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.p-const-stop.is-on .p-const-node {
+  border-color: var(--el-ink, var(--p-gold));
+  background: var(--el-ink, var(--p-gold));
+  box-shadow: 0 0 0 2px rgba(6, 8, 18, 0.9);
+}
+.p-const-stop.is-on {
+  color: var(--el-ink, var(--p-gold));
+}
+
+/* 3. Solid Ink Slab on #1 Recommended Artifact Set */
+.p-rec-set-card.is-bis-slab {
+  border-color: var(--p-border-strong);
+}
+.p-rec-set-card.is-bis-slab .p-rec-idx {
+  background: var(--p-gold);
+  color: #060812;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+/* 4. Today Banner Hero — Commemorative Transit Ticket with Perforated Stub */
+.p-hud-hero {
+  border-radius: 3px !important;
+  border: 1px solid var(--p-border-strong) !important;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 11px,
+      rgba(212, 175, 55, 0.03) 11px 12px
+    ),
+    var(--p-surface) !important;
+  overflow: visible !important;
+}
+.p-hud-hero .p-hud-hero-art {
+  overflow: hidden;
+  border-radius: 3px;
+}
+.p-hud-hero .p-patch-metrics {
+  position: relative;
+  padding-left: 24px;
+  border-left: 1px dashed var(--p-border-strong);
+}
+.p-hud-hero .p-patch-metrics::before,
+.p-hud-hero .p-patch-metrics::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-border-strong);
+  z-index: 3;
+}
+.p-hud-hero .p-patch-metrics::before {
+  top: -28px;
+}
+.p-hud-hero .p-patch-metrics::after {
+  bottom: -28px;
+}
+.p-hud-hero .p-hero-pill-open {
+  background: var(--p-mint) !important;
+  color: #060812 !important;
+  border-color: var(--p-mint) !important;
+  font-weight: 600;
+  border-radius: 2px !important;
+}
+.p-hud-hero .p-hero-pill-open .p-hero-dot {
+  background: #060812 !important;
+}
+.p-hud-hero .p-hero-pill-date,
+.p-hud-hero .p-hero-pill-slots,
+.p-hud-hero .p-hero-featured-chip {
+  border-radius: 2px !important;
+}
+
+/* 5. Prefarm Queue Cards — Transit Queue Tickets with Solid-Ink #1 Slab & Dashed Stub */
+.p-pf-card {
+  border-radius: 3px !important;
+  border: 1px solid var(--p-border) !important;
+  border-top: 2px solid var(--el-ink, var(--p-gold)) !important;
+}
+.p-pf-card .p-pf-rank {
+  border-radius: 2px !important;
+  min-width: 30px;
+  text-align: center;
+}
+.p-pf-card:first-child .p-pf-rank {
+  background: var(--el-ink, var(--p-gold)) !important;
+  color: #060812 !important;
+  border-color: transparent !important;
+  font-weight: 600;
+}
+.p-pf-card .p-pf-actions {
+  padding-left: 12px;
+  border-left: 1px dashed var(--p-border-strong);
+}
+.p-pf-card .p-bar {
+  border-radius: 1px !important;
+}
+
+@media (max-width: 820px) {
+  .p-zine-strip {
+    margin: 0 -16px 4px;
+    padding: 8px 16px;
+  }
+  .p-hud-hero .p-patch-metrics {
+    padding-left: 0;
+    padding-top: 14px;
+    border-left: none;
+    border-top: 1px dashed var(--p-border-strong);
+  }
+  .p-hud-hero .p-patch-metrics::before,
+  .p-hud-hero .p-patch-metrics::after {
+    display: none;
+  }
+  .p-pf-card .p-pf-actions {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
 .p-patch-metrics {
   display: flex;
   flex-direction: column;
