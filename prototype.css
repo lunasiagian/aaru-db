@@ -3801,13 +3801,12 @@ html, body {
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  padding: 16px 34px 16px 20px;
+  padding: 16px 34px 16px 26px;
   background:
-    radial-gradient(circle at 0 0, var(--p-bg) 8px, transparent 8.5px),
-    radial-gradient(circle at 0 100%, var(--p-bg) 8px, transparent 8.5px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12'%3E%3Cpath d='M1 0 L7 6 L1 12' fill='none' stroke='%23D4AF37' stroke-opacity='0.55' stroke-width='1.1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") left top / 8px 12px repeat-y,
     repeating-linear-gradient(0deg, rgba(212, 175, 55, 0.025) 0 1px, transparent 1px 6px),
     rgba(6, 8, 18, 0.94);
-  border-left: 1.5px dashed var(--p-border-strong);
+  border-left: none;
 }
 .p-hud-poster .p-patch-metrics::before,
 .p-hud-poster .p-patch-metrics::after {
@@ -3926,10 +3925,10 @@ html, body {
 /* Collector Ticket Stub — Foil Security Strip, Rotated Transit Stamp & Tear Flex */
 .p-ticket-foil {
   position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
+  left: 11px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
   background: linear-gradient(
     180deg,
     var(--p-gold) 0%,
@@ -3939,7 +3938,7 @@ html, body {
     var(--el-ink, var(--p-accent)) 100%
   );
   background-size: 100% 220%;
-  opacity: 0.78;
+  opacity: 0.65;
   animation: p-foil-shift 6s ease-in-out infinite alternate;
   pointer-events: none;
 }
