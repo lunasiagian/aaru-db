@@ -4845,8 +4845,14 @@ function renderVaultView(container, account) {
 
     titleEl.textContent = rowObj.name;
     const renderBody = (details, loading = false) => {
-      const desc = details?.description || (loading ? 'Loading archive entry...' : 'No archive description available.');
-      const sources = Array.isArray(details?.sources) ? details.sources : [];
+      const rawDesc = details?.description || (loading ? 'Loading archive entry...' : 'No archive description available.');
+      const desc = String(rawDesc)
+        .replace(/\\n/g, '\n')
+        .replace(/<\/?(?:color|i|b)[^>]*>/gi, '')
+        .trim();
+      const sources = (Array.isArray(details?.sources) ? details.sources : [])
+        .map((s) => (/^Placeholder\s*[-–]\s*Craftable/i.test(String(s)) ? 'Crafted at Alchemy Bench' : String(s).replace(/\\n/g, ' ').trim()))
+        .filter(Boolean);
       bodyEl.innerHTML = `
         <div class="p-vault-modal-hero" data-rarity="${rowObj.rarity}">
           <div class="p-vault-modal-icon">${renderAssetIcon('materials', rowObj.key, rowObj.name, 'icon-md')}</div>

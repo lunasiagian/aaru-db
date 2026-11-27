@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -9,16 +10,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Albert+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap"
-    rel="stylesheet"
-  />
+    rel="stylesheet" />
   <link rel="stylesheet" href="./prototype.css?v=20261127p107" />
 </head>
+
 <body>
   <!-- Auth Gate -->
   <main id="proto-login" class="proto-gate" hidden>
     <section class="proto-gate-card">
       <div class="proto-brand-row">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75"
+          aria-hidden="true">
           <polygon points="12 2 21 12 12 22 3 12" />
           <circle cx="12" cy="12" r="2.5" fill="currentColor" />
         </svg>
@@ -47,7 +49,8 @@
     <header class="proto-command-bar" aria-label="Workspace Navigation">
       <div class="proto-cmd-left">
         <div class="proto-brand-row">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--p-gold)" stroke-width="1.6" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--p-gold)" stroke-width="1.6"
+            aria-hidden="true">
             <circle cx="12" cy="12" r="9.5" opacity="0.5" />
             <polygon points="12 3 20 12 12 21 4 12" />
             <circle cx="12" cy="12" r="2" fill="var(--p-gold)" />
@@ -61,48 +64,83 @@
 
       <nav class="proto-nav" aria-label="Primary Views">
         <button type="button" class="proto-nav-item active" data-ptab="hud" aria-current="page">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <rect x="3" y="3" width="7" height="9" rx="1.5" />
+            <rect x="14" y="3" width="7" height="5" rx="1.5" />
+            <rect x="14" y="12" width="7" height="9" rx="1.5" />
+            <rect x="3" y="16" width="7" height="5" rx="1.5" />
+          </svg>
           <span>Today</span>
         </button>
         <button type="button" class="proto-nav-item" data-ptab="prefarm">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
           <span>Prefarm</span>
         </button>
         <button type="button" class="proto-nav-item" data-ptab="roster">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
           <span>Characters</span>
         </button>
         <button type="button" class="proto-nav-item" data-ptab="armory">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <path d="M14.5 17.5L3 6V3h3l11.5 11.5" />
+            <path d="M13 19l6-6" />
+            <path d="M16 16l4 4" />
+            <path d="M19 21l2-2" />
+          </svg>
           <span>Armory</span>
         </button>
         <button type="button" class="proto-nav-item" data-ptab="teams">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
           <span>Teams Lab</span>
         </button>
         <button type="button" class="proto-nav-item" data-ptab="vault">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"
+            aria-hidden="true">
+            <path
+              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          </svg>
           <span>Vault</span>
         </button>
       </nav>
 
       <div class="proto-cmd-right">
         <div class="proto-search-wrap">
-          <input id="proto-quick-jump" type="search" class="proto-search" placeholder="Jump ( / )" aria-label="Quick jump to character or material" aria-expanded="false" aria-controls="proto-jump-results" />
+          <input id="proto-quick-jump" type="search" class="proto-search" placeholder="Jump ( / )"
+            aria-label="Quick jump to character or material" aria-expanded="false" aria-controls="proto-jump-results" />
           <div id="proto-jump-results" class="proto-jump-menu" role="listbox" hidden></div>
         </div>
         <button type="button" id="proto-server-btn" class="p-btn p-btn-outline p-btn-sm mono">NA · --h --m</button>
-        <button type="button" id="proto-open-import" class="p-btn p-btn-primary p-btn-sm proto-hide-mobile">+ Import</button>
-        <button type="button" id="proto-open-system" class="p-btn p-btn-ghost p-btn-sm proto-hide-mobile" aria-label="System and Account">System</button>
+        <button type="button" id="proto-open-import" class="p-btn p-btn-primary p-btn-sm proto-hide-mobile">+
+          Import</button>
+        <button type="button" id="proto-open-system" class="p-btn p-btn-ghost p-btn-sm proto-hide-mobile"
+          aria-label="System and Account">System</button>
         <button type="button" id="proto-logout" class="p-btn p-btn-ghost p-btn-sm proto-hide-mobile">Sign out</button>
-        <button type="button" id="proto-mobile-menu-btn" class="p-btn p-btn-outline p-btn-sm p-mobile-menu-btn" aria-label="Account and Tools">Menu</button>
+        <button type="button" id="proto-mobile-menu-btn" class="p-btn p-btn-outline p-btn-sm p-mobile-menu-btn"
+          aria-label="Account and Tools">Menu</button>
       </div>
     </header>
 
     <div class="proto-workspace">
       <div class="proto-stage-head">
         <h1 id="proto-view-title" class="proto-view-title">Today</h1>
-        <button type="button" id="proto-readonly-pill" class="p-badge p-badge-amber" style="cursor:pointer;" hidden title="Click to return to your account">Read-Only Partner View · Return</button>
+        <button type="button" id="proto-readonly-pill" class="p-badge p-badge-amber" style="cursor:pointer;" hidden
+          title="Click to return to your account">Read-Only Partner View · Return</button>
       </div>
 
       <!-- Active View Container -->
@@ -115,7 +153,8 @@
     <div class="p-modal" role="dialog" aria-modal="true" aria-labelledby="proto-server-title">
       <div class="p-modal-head">
         <h2 id="proto-server-title">Server Region</h2>
-        <button type="button" id="proto-close-server" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+        <button type="button" id="proto-close-server" class="p-btn p-btn-ghost p-btn-sm"
+          aria-label="Close">Close</button>
       </div>
       <div class="proto-server-grid">
         <button type="button" class="p-btn p-btn-outline" data-pserver="NA">North America (UTC-5)</button>
@@ -131,22 +170,27 @@
     <div class="p-modal p-modal-lg" role="dialog" aria-modal="true" aria-labelledby="proto-import-title">
       <div class="p-modal-head">
         <h2 id="proto-import-title">Import GOOD v3 Scan</h2>
-        <button type="button" id="proto-close-import" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+        <button type="button" id="proto-close-import" class="p-btn p-btn-ghost p-btn-sm"
+          aria-label="Close">Close</button>
       </div>
       <div class="p-modal-body">
-        <div id="proto-dropzone" class="p-dropzone" role="button" tabindex="0" aria-label="Drop Irminsul GOOD JSON file here or click to browse">
+        <div id="proto-dropzone" class="p-dropzone" role="button" tabindex="0"
+          aria-label="Drop Irminsul GOOD JSON file here or click to browse">
           <div class="p-dropzone-title">Drop Irminsul .json file here</div>
           <div class="p-dropzone-sub">or click to browse · supports GOOD v3</div>
           <input id="proto-file-input" type="file" accept=".json,application/json" hidden />
         </div>
         <label class="proto-field">
           <span>Or paste raw GOOD v3 JSON</span>
-          <textarea id="proto-good-paste" rows="3" class="p-textarea mono" placeholder='{"format":"GOOD","version":3,"source":"Irminsul",...}'></textarea>
+          <textarea id="proto-good-paste" rows="3" class="p-textarea mono"
+            placeholder='{"format":"GOOD","version":3,"source":"Irminsul",...}'></textarea>
         </label>
         <div id="proto-import-preview" class="p-import-preview"></div>
         <div class="p-modal-foot p-import-foot">
-          <p class="p-import-note">Note: Irminsul exports omit Mora, Primogems, Acquaint Fates, and Resin — update those in Today.</p>
-          <button type="button" id="proto-commit-import" class="p-btn p-btn-primary" disabled>Confirm &amp; Sync</button>
+          <p class="p-import-note">Note: Irminsul exports omit Mora, Primogems, Acquaint Fates, and Resin — update those
+            in Today.</p>
+          <button type="button" id="proto-commit-import" class="p-btn p-btn-primary" disabled>Confirm &amp;
+            Sync</button>
         </div>
       </div>
     </div>
@@ -157,7 +201,8 @@
     <div class="p-modal" role="dialog" aria-modal="true" aria-labelledby="proto-system-title">
       <div class="p-modal-head">
         <h2 id="proto-system-title">System &amp; Catalog</h2>
-        <button type="button" id="proto-close-system" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+        <button type="button" id="proto-close-system" class="p-btn p-btn-ghost p-btn-sm"
+          aria-label="Close">Close</button>
       </div>
       <div id="proto-system-body" class="p-modal-body"></div>
     </div>
@@ -168,7 +213,8 @@
     <div class="p-modal p-modal-lg" role="dialog" aria-modal="true" aria-labelledby="proto-weapon-title">
       <div class="p-modal-head">
         <h2 id="proto-weapon-title">Weapon Inspector</h2>
-        <button type="button" id="proto-close-weapon" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+        <button type="button" id="proto-close-weapon" class="p-btn p-btn-ghost p-btn-sm"
+          aria-label="Close">Close</button>
       </div>
       <div id="proto-weapon-body" class="p-modal-body"></div>
     </div>
@@ -179,7 +225,8 @@
     <div class="p-modal p-modal-lg" role="dialog" aria-modal="true" aria-labelledby="proto-artifact-title">
       <div class="p-modal-head">
         <h2 id="proto-artifact-title">Artifact Set</h2>
-        <button type="button" id="proto-close-artifact" class="p-btn p-btn-ghost p-btn-sm" aria-label="Close">Close</button>
+        <button type="button" id="proto-close-artifact" class="p-btn p-btn-ghost p-btn-sm"
+          aria-label="Close">Close</button>
       </div>
       <div id="proto-artifact-body" class="p-modal-body"></div>
     </div>
@@ -198,6 +245,7 @@
   </svg>
 
   <script src="./config.js?v=20261127p99"></script>
-  <script type="module" src="./js/prototype-app.js?v=20261127p108"></script>
+  <script type="module" src="./js/prototype-app.js?v=20261127p109"></script>
 </body>
+
 </html>
