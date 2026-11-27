@@ -4202,6 +4202,69 @@ function classifyVaultCategory(meta, key = '') {
   return 'Quest & Key';
 }
 
+const VAULT_NATION_CODES = {
+  Mondstadt: 'MND',
+  Liyue: 'LYE',
+  Inazuma: 'INZ',
+  Sumeru: 'SMR',
+  Fontaine: 'FNT',
+  Natlan: 'NTL',
+  'Nod-Krai': 'NDK',
+  Snezhnaya: 'SNZ',
+  'Teyvat-Wide': 'TYV'
+};
+
+const VAULT_CC0_PLATES = {
+  'Local Specialties': {
+    fig: 'FIG. 01',
+    caption: 'Two Plant Specimens · W. H. Fox Talbot, 1839 · AIC (CC0)',
+    url: 'https://www.artic.edu/iiif/2/f4b72c7b-83e4-3008-d66f-46d87c30ca96/full/600,/0/default.jpg'
+  },
+  Ingestibles: {
+    fig: 'FIG. 02',
+    caption: 'Still Life with Flower Garland · A. van der Spelt, 1658 · AIC (CC0)',
+    url: 'https://www.artic.edu/iiif/2/4a04138f-43d8-cd9f-5ac4-478cd8828210/full/600,/0/default.jpg'
+  },
+  Cooking: {
+    fig: 'FIG. 02',
+    caption: 'Still Life with Flower Garland · A. van der Spelt, 1658 · AIC (CC0)',
+    url: 'https://www.artic.edu/iiif/2/4a04138f-43d8-cd9f-5ac4-478cd8828210/full/600,/0/default.jpg'
+  },
+  default: {
+    fig: 'FIG. 03',
+    caption: 'Botanical Engraving of Celtis · W. H. Fox Talbot, 1840 · AIC (CC0)',
+    url: 'https://www.artic.edu/iiif/2/03d9dfc4-2f39-1d58-4516-025954e9737b/full/600,/0/default.jpg'
+  }
+};
+
+function renderDeterministicBarcodeSvg(seedStr = 'AARU', width = 132, height = 22) {
+  let h = 2166136261;
+  const s = String(seedStr || 'AARU');
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const bars = [];
+  let x = 2;
+  // Guard bars
+  bars.push(`<rect x="${x}" y="0" width="1.5" height="${height}" />`);
+  x += 3;
+  bars.push(`<rect x="${x}" y="0" width="1.5" height="${height}" />`);
+  x += 4;
+  while (x < width - 8) {
+    h = Math.imul(h ^ (h >>> 15), 2246822519);
+    const w = (Math.abs(h) % 3) + 1;
+    const gap = (Math.abs(h >>> 4) % 2) + 1.5;
+    if (x + w < width - 7) {
+      bars.push(`<rect x="${x.toFixed(1)}" y="0" width="${w}" height="${height - 2}" />`);
+    }
+    x += w + gap;
+  }
+  bars.push(`<rect x="${width - 5}" y="0" width="1.5" height="${height}" />`);
+  bars.push(`<rect x="${width - 2}" y="0" width="1.5" height="${height}" />`);
+  return `<svg class="p-det-barcode" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" fill="currentColor" aria-hidden="true">${bars.join('')}</svg>`;
+}
+
 const VAULT_NATION_ORDER = {
   Mondstadt: 1,
   Liyue: 2,
@@ -4292,30 +4355,51 @@ function renderVaultView(container, account) {
     .sort((a, b) => b.needed - a.needed || b.rarity - a.rarity || a.name.localeCompare(b.name));
 
   if (!VAULT_CATEGORIES.includes(state.vaultCategory)) state.vaultCategory = 'All';
+  const deficitCount = rows.filter((r) => r.needed > 0 && r.net < 0).length;
+  const specialtyCount = rows.filter((r) => r.category === 'Local Specialties').length;
+  const activePlate = VAULT_CC0_PLATES[state.vaultCategory] || VAULT_CC0_PLATES.default;
 
   container.innerHTML = `
-    <div class="p-toolbar p-vault-toolbar">
-      <div class="p-filter-pills" role="group" aria-label="Material categories">
-        ${VAULT_CATEGORIES.map(
-          (cat) =>
-            `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}" aria-pressed="${state.vaultCategory === cat}">${esc(cat)}</button>`
-        ).join('')}
+    <section class="p-panel p-vault-warehouse-hero" aria-label="Archive Warehouse Overview">
+      <div class="p-vault-wh-left">
+        <div class="p-vault-wh-head">
+          <h2 class="proto-view-title p-vault-wh-title">Archive Warehouse</h2>
+          ${renderArchiveFreshnessStampHtml(account, readOnly)}
+        </div>
+        <div class="p-vault-wh-ledger mono">
+          <span><strong>${rows.length}</strong> CATALOGED</span>
+          <span class="${deficitCount ? 'text-coral' : 'text-mint'}"><strong>${deficitCount}</strong> QUEUE DEFICITS</span>
+          <span><strong>${specialtyCount}</strong> SPECIALTIES</span>
+        </div>
+        <div class="p-vault-wh-controls">
+          <div class="p-filter-pills" role="group" aria-label="Material categories">
+            ${VAULT_CATEGORIES.map(
+              (cat) =>
+                `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}" aria-pressed="${state.vaultCategory === cat}">${esc(cat)}</button>`
+            ).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <select id="p-vault-sort" class="proto-select" style="width:auto;min-width:130px;" aria-label="Sort vault items">
+              <option value="needed" ${state.vaultSortKey === 'needed' ? 'selected' : ''}>Sort: Needed</option>
+              <option value="region" ${state.vaultSortKey === 'region' ? 'selected' : ''}>Sort: Region</option>
+              <option value="owned" ${state.vaultSortKey === 'owned' ? 'selected' : ''}>Sort: In Bag</option>
+              <option value="rarity" ${state.vaultSortKey === 'rarity' ? 'selected' : ''}>Sort: Rarity</option>
+              <option value="name" ${state.vaultSortKey === 'name' ? 'selected' : ''}>Sort: Name</option>
+            </select>
+            <input type="search" id="p-vault-search" class="proto-search" style="max-width:220px;" placeholder="Filter materials or nation..." aria-label="Filter materials" value="${esc(state.vaultSearch)}" />
+          </div>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <select id="p-vault-sort" class="proto-select" style="width:auto;min-width:130px;" aria-label="Sort vault items">
-          <option value="needed" ${state.vaultSortKey === 'needed' ? 'selected' : ''}>Sort: Needed</option>
-          <option value="region" ${state.vaultSortKey === 'region' ? 'selected' : ''}>Sort: Region</option>
-          <option value="owned" ${state.vaultSortKey === 'owned' ? 'selected' : ''}>Sort: In Bag</option>
-          <option value="rarity" ${state.vaultSortKey === 'rarity' ? 'selected' : ''}>Sort: Rarity</option>
-          <option value="name" ${state.vaultSortKey === 'name' ? 'selected' : ''}>Sort: Name</option>
-        </select>
-        <input type="search" id="p-vault-search" class="proto-search" style="max-width:220px;" placeholder="Filter materials..." aria-label="Filter materials" value="${esc(state.vaultSearch)}" />
-      </div>
-    </div>
+      <figure class="p-vault-cc0-plate" id="p-vault-cc0-plate">
+        <div class="p-vault-cc0-img-wrap">
+          <img src="${esc(activePlate.url)}" alt="${esc(activePlate.caption)}" loading="lazy" />
+        </div>
+        <figcaption class="mono"><strong class="text-gold">${esc(activePlate.fig)}</strong> · ${esc(activePlate.caption)}</figcaption>
+      </figure>
+    </section>
 
     <div class="p-vault-meta-bar">
       <div id="p-vault-count" class="muted mono" style="font-size:12px;"></div>
-      ${renderArchiveFreshnessStampHtml(account, readOnly)}
     </div>
     <div id="p-vault-grid" class="p-vault-grid"></div>
   `;
@@ -4382,6 +4466,10 @@ function renderVaultView(container, account) {
               ? ''
               : `<div class="p-vault-modal-sec"><div class="p-vault-modal-lbl mono">SOURCES</div><div class="muted" style="font-size:12.5px;">No location data listed for this item.</div></div>`
         }
+        <div class="p-vault-modal-barcode-row mono">
+          <span>CAT № ${esc((VAULT_NATION_CODES[rowObj.nation] || 'ARC'))}-${esc(String(rowObj.key).slice(0, 6).toUpperCase())}</span>
+          ${renderDeterministicBarcodeSvg(rowObj.key, 124, 20)}
+        </div>
       `;
       const inp = document.getElementById('p-vm-count');
       inp?.addEventListener('change', async () => {
@@ -4443,7 +4531,8 @@ function renderVaultView(container, account) {
       ? filtered
           .map((r) => {
             const nationSlug = r.nation ? r.nation.toLowerCase().replace(/[^a-z]/g, '') : '';
-            const headLabel = r.nation || r.category;
+            const natCode = r.nation ? VAULT_NATION_CODES[r.nation] || '' : '';
+            const headLabel = natCode ? `${natCode} · ${r.nation}` : r.category;
             return `
             <button type="button" class="p-vault-tile ${r.needed && r.net < 0 ? 'is-deficit' : ''}" data-rarity="${r.rarity}" ${nationSlug ? `data-nation="${nationSlug}"` : ''} data-p-vopen="${esc(r.key)}">
               <div class="p-vault-tile-head">
@@ -4484,6 +4573,17 @@ function renderVaultView(container, account) {
     btn.addEventListener('click', () => {
       state.vaultCategory = btn.dataset.pVcat;
       syncCatPills();
+      const plate = VAULT_CC0_PLATES[state.vaultCategory] || VAULT_CC0_PLATES.default;
+      const plateEl = document.getElementById('p-vault-cc0-plate');
+      if (plateEl) {
+        const img = plateEl.querySelector('img');
+        const cap = plateEl.querySelector('figcaption');
+        if (img) {
+          img.src = plate.url;
+          img.alt = plate.caption;
+        }
+        if (cap) cap.innerHTML = `<strong class="text-gold">${esc(plate.fig)}</strong> · ${esc(plate.caption)}`;
+      }
       renderVaultGrid();
     });
   });

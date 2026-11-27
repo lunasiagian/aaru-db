@@ -4205,6 +4205,113 @@ html, body {
 .p-dom-index-card .p-dom-set-slot {
   border-radius: 2px !important;
 }
+
+/* ==========================================================================
+   Vault Archive Warehouse Hero — CC0 Museum Plates & Deterministic Barcodes
+   ========================================================================== */
+.p-vault-warehouse-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 20px;
+  align-items: stretch;
+  border-radius: 3px !important;
+  border-top: 2px solid var(--p-gold) !important;
+  padding: 18px 20px !important;
+  margin-bottom: 12px;
+}
+.p-vault-wh-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.p-vault-wh-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.p-vault-wh-title {
+  font-size: 24px !important;
+}
+.p-vault-wh-ledger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 7px 0;
+  border-top: 1px solid var(--p-border);
+  border-bottom: 1px solid var(--p-border);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--p-text-secondary);
+}
+.p-vault-wh-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.p-vault-cc0-plate {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--p-border-strong);
+  border-radius: 2px;
+  background: var(--p-bg);
+}
+.p-vault-cc0-img-wrap {
+  flex: 1;
+  min-height: 118px;
+  max-height: 148px;
+  overflow: hidden;
+  border: 1px solid var(--p-border);
+  background: #0a1020;
+}
+.p-vault-cc0-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.22) sepia(0.28) hue-rotate(165deg) brightness(0.86);
+  opacity: 0.88;
+  transition: opacity 220ms ease, transform 320ms ease;
+}
+.p-vault-cc0-plate:hover img {
+  opacity: 1;
+  transform: scale(1.03);
+}
+.p-vault-cc0-plate figcaption {
+  font-size: 9.5px;
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted);
+}
+.p-vault-modal-barcode-row {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--p-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--p-text-muted);
+}
+.p-det-barcode {
+  color: var(--p-text-secondary);
+  opacity: 0.72;
+}
+@media (max-width: 820px) {
+  .p-vault-warehouse-hero {
+    grid-template-columns: 1fr;
+  }
+  .p-vault-cc0-img-wrap {
+    max-height: 130px;
+  }
+}
 @media (max-width: 820px) {
   .p-hud-poster {
     grid-template-columns: 1fr !important;
