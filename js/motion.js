@@ -135,3 +135,56 @@ export function animateDossierHero(container) {
     });
   }
 }
+
+/**
+ * Teams Lab 35mm projector choreography: reels glide in, 4 frames advance left-to-right,
+ * and the procedural verdict rubber stamp lands with a spring slam.
+ */
+export function animateTeamsEntrance(container) {
+  if (!container || prefersReduced()) return;
+
+  const reels = container.querySelectorAll('.p-reel-card');
+  if (reels.length) {
+    animate(reels, {
+      opacity: [0, 1],
+      translateY: [12, 0],
+      duration: 380,
+      delay: stagger(65),
+      ease: 'outExpo'
+    });
+  }
+
+  const frames = container.querySelectorAll('.p-film-frame');
+  if (frames.length) {
+    animate(frames, {
+      opacity: [0, 1],
+      translateX: [-14, 0],
+      duration: 340,
+      delay: stagger(42, { start: 80 }),
+      ease: 'outExpo'
+    });
+  }
+
+  const stamps = container.querySelectorAll('.p-reel-jcard-right .p-ink-stamp-sm');
+  if (stamps.length) {
+    animate(stamps, {
+      opacity: [0, 1],
+      scale: [1.38, 1],
+      rotate: [-7, -2],
+      duration: 420,
+      delay: stagger(70, { start: 220 }),
+      ease: spring({ bounce: 0.36, duration: 420 })
+    });
+  }
+
+  const subCards = container.querySelectorAll('.p-sub-card');
+  if (subCards.length) {
+    animate(subCards, {
+      opacity: [0, 1],
+      translateY: [8, 0],
+      duration: 300,
+      delay: stagger(28),
+      ease: 'outExpo'
+    });
+  }
+}

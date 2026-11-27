@@ -1,10 +1,11 @@
 import {
   animateDossierHero,
   animatePrefarmEntrance,
+  animateTeamsEntrance,
   animateTodayEntrance,
   pulseReminderChip,
   pulseStepperValue
-} from './motion.js?v=20261126p77';
+} from './motion.js?v=20261127p105';
 import { renderAssetIcon, renderGachaSplash } from './assets.js?v=20261121p64';
 import {
   ensureCharacterKitAndStats,
@@ -4174,8 +4175,9 @@ function renderTeamsView(container, account) {
                       const sideLabel = tIdx % 2 === 0 ? 'SIDE A' : 'SIDE B';
                       const reelNum = String(tIdx + 1).padStart(2, '0');
                       return `
-                        <article class="p-panel p-reel-card">
+                        <article class="p-panel p-reel-card p-reel-overdrive">
                           <div class="p-reel-jcard-head">
+                            <span class="p-reel-watermark" aria-hidden="true">${reelNum}</span>
                             <div class="p-reel-jcard-left">
                               <span class="p-reel-slab mono">REEL ${reelNum} · ${sideLabel}</span>
                               <h2 class="p-reel-title">${esc(t.name)}</h2>
@@ -4183,6 +4185,7 @@ function renderTeamsView(container, account) {
                               ${resonances.map((r) => `<span class="p-stamp p-stamp-mint mono">${esc(r)}</span>`).join('')}
                             </div>
                             <div class="p-reel-jcard-right">
+                              ${renderDeterministicBarcodeSvg(t.id || t.name, 84, 18)}
                               <span class="p-ink-stamp-sm ${audit.stamp.cls} mono">${esc(audit.stamp.text)}</span>
                               <button type="button" class="p-xref-link" data-p-load-synergy="${esc(t.id)}" title="Open this squad in Synergy Lab">→ Synergy Lab</button>
                               ${!readOnly ? `<button type="button" class="p-btn p-btn-ghost p-btn-xs text-coral" data-p-team-del="${esc(t.id)}">×</button>` : ''}
@@ -4190,7 +4193,7 @@ function renderTeamsView(container, account) {
                           </div>
 
                           <div class="p-filmstrip" aria-label="${esc(t.name)} 4-Frame Contact Sheet">
-                            <div class="p-film-sprockets" aria-hidden="true"></div>
+                            <div class="p-film-sprockets" aria-hidden="true"><span class="p-film-edge-code mono">AARU 400 · REEL ${reelNum} · ${sideLabel} · 35MM</span></div>
                             <div class="p-film-frames">
                               ${audit.frames
                                 .map((f) => {
@@ -4901,7 +4904,10 @@ function renderActiveView() {
       if (state.inspectedCharKey) animateDossierHero(container);
     }
     else if (state.activeTab === 'armory') renderArmoryView(container, account);
-    else if (state.activeTab === 'teams') renderTeamsView(container, account);
+    else if (state.activeTab === 'teams') {
+      renderTeamsView(container, account);
+      animateTeamsEntrance(container);
+    }
     else if (state.activeTab === 'vault') renderVaultView(container, account);
   } catch (err) {
     console.error('Prototype view render failed:', err);

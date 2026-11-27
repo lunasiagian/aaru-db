@@ -4516,6 +4516,83 @@ html, body {
   font-size: 12.5px !important;
   border-radius: 2px !important;
 }
+
+/* Teams Lab Overdrive & Bolden Polish */
+.p-reel-overdrive {
+  box-shadow: 0 18px 36px -26px rgba(0, 0, 0, 0.9);
+}
+.p-reel-overdrive .p-reel-jcard-head {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 18px;
+}
+.p-reel-watermark {
+  position: absolute;
+  left: -4px;
+  top: -18px;
+  font-family: var(--p-font-display);
+  font-size: 88px;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--p-gold);
+  opacity: 0.055;
+  pointer-events: none;
+  user-select: none;
+}
+.p-reel-overdrive .p-reel-jcard-left,
+.p-reel-overdrive .p-reel-jcard-right {
+  position: relative;
+  z-index: 1;
+}
+.p-reel-overdrive .p-reel-title {
+  font-size: 21px;
+}
+.p-film-sprockets {
+  position: relative;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+}
+.p-film-edge-code {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(212, 175, 55, 0.62);
+  background: #050710;
+  padding: 0 8px;
+}
+.p-reel-overdrive .p-film-frame {
+  background:
+    radial-gradient(140px 70px at 18% 0%, var(--el-wash, transparent), transparent 72%),
+    var(--p-surface);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms ease, box-shadow 200ms ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .p-reel-overdrive .p-film-frame:hover {
+    transform: translateY(-3px);
+    border-color: var(--el-ink, var(--p-gold));
+    box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.85);
+  }
+}
+.p-reel-overdrive .p-film-frame.is-bottleneck.is-coral .p-film-frame-top::before,
+.p-reel-overdrive .p-film-frame.is-bottleneck.is-amber .p-film-frame-top::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  margin-right: 5px;
+  background: var(--p-amber);
+  box-shadow: 0 0 8px var(--p-amber);
+}
+.p-reel-overdrive .p-film-frame.is-bottleneck.is-coral .p-film-frame-top::before {
+  background: var(--p-coral);
+  box-shadow: 0 0 8px var(--p-coral);
+}
+.p-reel-overdrive .p-reel-audit-cell strong {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
 .p-vault-modal-barcode-row {
   margin-top: 14px;
   padding-top: 10px;
