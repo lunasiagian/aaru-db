@@ -5057,15 +5057,25 @@ html, body {
   background:
     repeating-linear-gradient(-45deg, transparent 0 6px, rgba(212, 175, 55, 0.045) 6px 7px),
     var(--p-bg);
-  padding: 16px;
+  padding: 10px;
+  overflow: hidden;
 }
 .p-rom-specimen-plate[data-rarity="4"] { border-top-color: var(--p-purple); }
 .p-rom-specimen-plate[data-rarity="3"] { border-top-color: #38BDF8; }
-.p-rom-specimen-plate .icon-lg,
+.p-rom-specimen-plate .p-rom-specimen-splash,
+.p-rom-specimen-plate .icon-lg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .p-rom-specimen-plate img {
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  height: 100%;
+  max-height: 196px;
   object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
 }
 .p-rom-ref-strip {
   width: 100%;

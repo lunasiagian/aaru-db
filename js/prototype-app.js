@@ -6,7 +6,7 @@ import {
   pulseReminderChip,
   pulseStepperValue
 } from './motion.js?v=20261127p105';
-import { renderAssetIcon, renderGachaSplash } from './assets.js?v=20261127p114';
+import { renderAssetIcon, renderGachaSplash, renderWeaponSplash } from './assets.js?v=20261127p115';
 import {
   ensureCharacterKitAndStats,
   ensureCharacterMaterials,
@@ -3520,7 +3520,7 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
             <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
             <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
             <span class="p-crop p-crop-br" aria-hidden="true">+</span>
-            ${renderAssetIcon('weapons', w.key, meta.name, 'icon-lg')}
+            ${renderWeaponSplash(w.key, meta.name, 'p-rom-specimen-splash')}
             ${FISHING_WEAPON_KEYS.has(w.key) ? '<span class="p-fish-stamp mono">FISHING</span>' : ''}
           </div>
           ${

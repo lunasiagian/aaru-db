@@ -3,7 +3,7 @@ import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261127p113';
 function toEnkaUrlIfReleased(url, live) {
   if (!url || live?.unreleased) return url || '';
   if (url.startsWith('https://enka.network/ui/')) return url;
-  const m = url.match(/(UI_(?:AvatarIcon|Gacha_AvatarImg|EquipIcon|RelicIcon|MonsterIcon|ItemIcon)_[A-Za-z0-9_]+)\.(?:png|webp)$/i);
+  const m = url.match(/(UI_(?:AvatarIcon|Gacha_AvatarImg|Gacha_EquipIcon|EquipIcon|RelicIcon|MonsterIcon|ItemIcon)_[A-Za-z0-9_]+)\.(?:png|webp)$/i);
   return m ? `https://enka.network/ui/${m[1]}.png` : url;
 }
 
@@ -106,6 +106,38 @@ export function renderGachaSplash(pascalKey, alt = '') {
       decoding="async"
       referrerpolicy="no-referrer"
       onerror="if(this.dataset.fb!=='1'&&'${safeFallback}'){this.dataset.fb='1';this.src='${safeFallback}';}else if(this.dataset.fb!=='2'&&'${safeAvatar}'){this.dataset.fb='2';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+    />
+    <span class="asset-monogram" style="display:none;">${initials}</span>
+  </span>`;
+}
+
+/**
+ * Renders full-length Weapon Gacha Art (UI_Gacha_EquipIcon_*) with automatic
+ * fallback to Yatta full art, standard cropped weapon icon, or monogram.
+ */
+export function renderWeaponSplash(pascalKey, alt = '', className = 'p-weapon-splash') {
+  const rawIcon = getFallbackAssetUrl('weapons', pascalKey) || getAssetUrl('weapons', pascalKey);
+  const live = getLiveAssetEntry('weapons', pascalKey);
+  const stdIconUrl = toEnkaUrlIfReleased(rawIcon, live) || rawIcon;
+  const gachaMatch = rawIcon.match(/UI_EquipIcon_([A-Za-z0-9_]+)\.(?:png|webp)$/i);
+  const gachaFilename = gachaMatch ? `UI_Gacha_EquipIcon_${gachaMatch[1]}.png` : '';
+  const yattaGachaUrl = gachaFilename ? `https://gi.yatta.moe/assets/UI/${gachaFilename}` : '';
+  const enkaGachaUrl = gachaFilename && !live?.unreleased ? `https://enka.network/ui/${gachaFilename}` : '';
+  const primarySrc = enkaGachaUrl || yattaGachaUrl || stdIconUrl;
+  const secondarySrc = (primarySrc === enkaGachaUrl ? yattaGachaUrl : '').replace(/"/g, '&quot;');
+  const tertiarySrc = (stdIconUrl && stdIconUrl !== primarySrc ? stdIconUrl : '').replace(/"/g, '&quot;');
+  const safeAlt = String(alt || pascalKey || '').replace(/"/g, '&quot;');
+  const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
+
+  return `<span class="asset-wrap ${className}" data-key="${safeAlt}">
+    <img
+      src="${primarySrc}"
+      alt="${safeAlt}"
+      class="asset-img p-weapon-splash-img"
+      loading="eager"
+      decoding="async"
+      referrerpolicy="no-referrer"
+      onerror="if(this.dataset.fb!=='1'&&'${secondarySrc}'){this.dataset.fb='1';this.src='${secondarySrc}';}else if(this.dataset.fb!=='2'&&'${tertiarySrc}'){this.dataset.fb='2';this.src='${tertiarySrc}';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;
