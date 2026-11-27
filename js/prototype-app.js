@@ -332,15 +332,46 @@ function getArchiveFreshnessInfo(account) {
   };
   const goodLocal = readStamp('good');
   const editLocal = readStamp('edit');
-  const acctTs = account?.lastGoodImportAt || account?.updatedAt || account?.meta?.updatedAt || null;
-  const parsedAcctTs = acctTs ? new Date(acctTs).getTime() : 0;
-  const goodTs = Math.max(Number(goodLocal?.ts || 0), Number.isFinite(parsedAcctTs) ? parsedAcctTs : 0);
+
+  const parseTs = (v) => {
+    if (!v) return 0;
+    if (typeof v === 'number' && Number.isFinite(v)) return v > 1e12 ? v : v * 1000;
+    const s = String(v).trim();
+    if (!s) return 0;
+    // Handle Apps Script M/D/YY short dates (e.g. "11/25/26")
+    const shortM = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if (shortM) {
+      const d = new Date(2000 + Number(shortM[3]), Number(shortM[1]) - 1, Number(shortM[2]));
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+    const ms = new Date(s).getTime();
+    return Number.isNaN(ms) ? 0 : ms;
+  };
+
+  let invMaxTs = 0;
+  for (const val of Object.values(account?.inventory || {})) {
+    if (val && typeof val === 'object') {
+      const t = parseTs(val.last_updated || val.lastUpdated || val.updatedAt);
+      if (t > invMaxTs) invMaxTs = t;
+    }
+  }
+  const backendTs = Math.max(
+    parseTs(account?.lastGoodImportAt),
+    parseTs(account?.lastSync),
+    parseTs(account?.last_sync),
+    parseTs(account?.updatedAt),
+    parseTs(account?.updated_at),
+    parseTs(account?.meta?.updatedAt),
+    parseTs(account?.meta?.lastSync),
+    invMaxTs
+  );
+  const goodTs = Math.max(Number(goodLocal?.ts || 0), backendTs);
   const editTs = Number(editLocal?.ts || 0);
   const latestTs = Math.max(goodTs, editTs);
   const isManualNewer = editTs > goodTs;
 
   const fmtDate = (ms) => {
-    if (!ms) return 'NEVER';
+    if (!ms) return '— — —';
     const d = new Date(ms);
     const mon = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][d.getMonth()];
     return `${mon} ${String(d.getDate()).padStart(2, '0')} ${d.getFullYear()}`;
@@ -349,17 +380,17 @@ function getArchiveFreshnessInfo(account) {
   if (!latestTs) {
     return {
       tier: 'overdue',
-      topLine: 'NO SCAN LOGGED',
-      dateLine: 'IMPORT GOOD v3',
-      tooltip: 'No GOOD v3 scan recorded yet — click to import your latest scan'
+      topLine: 'UNSTAMPED',
+      dateLine: '— — —',
+      tooltip: 'No scan date recorded yet — click to import your latest GOOD v3 JSON'
     };
   }
-  const ageDays = Math.floor((Date.now() - latestTs) / 86400000);
+  const ageDays = Math.max(0, Math.floor((Date.now() - latestTs) / 86400000));
   const tier = ageDays <= 7 ? 'fresh' : ageDays <= 21 ? 'aging' : 'overdue';
-  const kindLabel = isManualNewer ? 'MANUAL EDIT' : goodLocal?.meta || 'GOOD v3';
+  const kindLabel = isManualNewer ? 'EDITED' : goodLocal?.meta || 'SYNCED';
   const topLine =
     tier === 'fresh'
-      ? `${kindLabel.toUpperCase()} · SYNCED`
+      ? `${kindLabel.toUpperCase()} · ${ageDays === 0 ? 'TODAY' : `${ageDays}D AGO`}`
       : tier === 'aging'
         ? `STALE · ${ageDays}D AGO`
         : `OVERDUE · ${ageDays}D AGO`;
@@ -368,7 +399,7 @@ function getArchiveFreshnessInfo(account) {
     tier,
     topLine,
     dateLine: fmtDate(latestTs),
-    tooltip: `Last data update: ${fmtDate(latestTs)} (${ageDays}d ago)${editHint}. Click to import a fresh GOOD v3 JSON.`
+    tooltip: `Last data update: ${fmtDate(latestTs)} (${ageDays === 0 ? 'today' : `${ageDays}d ago`})${editHint}. Click to import a fresh GOOD v3 JSON.`
   };
 }
 
