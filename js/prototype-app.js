@@ -305,43 +305,143 @@ function scoreEquippedArtifactPiece(art, weights, charMeta, zeroEnergy) {
   return { cv, rvPct, deadMainLabel };
 }
 
-function renderErRulerHtml(currentEr, reqEr, zeroEnergy, modeLabel) {
-  if (zeroEnergy || !reqEr) {
+function renderMiniRuler({ index, label, valueText, curPct, targetPct, isOk, ticks, zeroStamp }) {
+  if (zeroStamp) {
     return `
-      <div class="p-er-ruler is-zero">
+      <div class="p-cal-cell is-zero">
         <div class="p-er-ruler-head">
-          <span class="p-er-ruler-label">ENERGY CALIBRATION</span>
-          <span class="p-stamp p-stamp-mint mono">0-ENERGY KIT · NO ER NEEDED</span>
+          <span class="p-er-ruler-label"><b class="mono">${index}</b> ${esc(label)}</span>
+          <span class="p-stamp p-stamp-mint mono">${esc(zeroStamp)}</span>
         </div>
       </div>`;
   }
-  const cur = Number(currentEr || 100);
-  const maxScale = Math.max(240, Math.ceil((Math.max(cur, reqEr) + 20) / 20) * 20);
-  const span = maxScale - 100;
-  const pct = (v) => Math.max(0, Math.min(100, ((v - 100) / span) * 100));
-  const curPct = pct(cur);
-  const reqPct = pct(reqEr);
-  const isOk = cur >= reqEr;
-  const delta = Math.round(cur - reqEr);
-  const ticks = [];
-  for (let v = 100; v <= maxScale; v += 20) {
-    ticks.push(`<span class="p-er-tick" style="left:${pct(v).toFixed(1)}%"><i></i><em class="mono">${v}</em></span>`);
-  }
   return `
-    <div class="p-er-ruler ${isOk ? 'is-ok' : 'is-short'}">
+    <div class="p-cal-cell ${isOk ? 'is-ok' : 'is-short'}">
       <div class="p-er-ruler-head">
-        <span class="p-er-ruler-label">ER% CALIBRATION · ${esc(modeLabel || 'Solo').toUpperCase()}</span>
-        <span class="mono p-er-ruler-readout ${isOk ? 'text-mint' : 'text-amber'}">
-          ${cur.toFixed(1)}% / ~${reqEr}% TARGET (${delta >= 0 ? `+${delta}%` : `${delta}%`})
-        </span>
+        <span class="p-er-ruler-label"><b class="mono">${index}</b> ${esc(label)}</span>
+        <span class="mono p-er-ruler-readout ${isOk ? 'text-mint' : 'text-amber'}">${esc(valueText)}</span>
       </div>
-      <div class="p-er-track" aria-label="Energy Recharge ${cur.toFixed(1)}% vs ${reqEr}% target">
+      <div class="p-er-track">
         <div class="p-er-fill" style="width:${curPct.toFixed(1)}%"></div>
-        <div class="p-er-target-needle" style="left:${reqPct.toFixed(1)}%" title="Target ~${reqEr}% ER"></div>
-        <div class="p-er-cur-marker" style="left:${curPct.toFixed(1)}%" title="Equipped ${cur.toFixed(1)}% ER"></div>
-        ${ticks.join('')}
+        ${targetPct != null ? `<div class="p-er-target-needle" style="left:${targetPct.toFixed(1)}%"></div>` : ''}
+        <div class="p-er-cur-marker" style="left:${curPct.toFixed(1)}%"></div>
+        ${ticks.map((t) => `<span class="p-er-tick" style="left:${t.pct.toFixed(1)}%"><i></i><em class="mono">${esc(t.label)}</em></span>`).join('')}
       </div>
     </div>`;
+}
+
+function renderBuildCalibrationStripHtml({ combat, primaryStat, statCapVal, substatWeights, effectiveErReq, zeroEnergy, modeLabel }) {
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+
+  // 01. Primary Benchmark: Cap Stat (HP/DEF/EM) if kit has a real ceiling, else CRIT Rate (for CRIT kits), else Primary Stat
+  const critWeight = Number(substatWeights?.critRate_ ?? 0);
+  let gauge1;
+  if (statCapVal && statCapVal > 0 && ['HP', 'DEF', 'EM'].includes(primaryStat)) {
+    const curVal = primaryStat === 'HP' ? (combat?.maxHp || 0) : primaryStat === 'DEF' ? (combat?.totalDef || 0) : (combat?.em || 0);
+    const maxScale = Math.ceil((Math.max(curVal, statCapVal) * 1.15) / (primaryStat === 'EM' ? 200 : 5000)) * (primaryStat === 'EM' ? 200 : 5000);
+    const fmt = (n) => (primaryStat === 'EM' ? String(Math.round(n)) : `${Math.round(n / 1000)}k`);
+    const mid = maxScale / 2;
+    gauge1 = renderMiniRuler({
+      index: '01',
+      label: `${primaryStat} CAP`,
+      valueText: `${Math.round(curVal).toLocaleString()} / ${Math.round(statCapVal).toLocaleString()}`,
+      curPct: clamp((curVal / maxScale) * 100),
+      targetPct: clamp((statCapVal / maxScale) * 100),
+      isOk: curVal >= statCapVal * 0.95,
+      ticks: [
+        { pct: 0, label: '0' },
+        { pct: 50, label: fmt(mid) },
+        { pct: 100, label: fmt(maxScale) }
+      ]
+    });
+  } else if (critWeight >= 0.7) {
+    const cr = Number(combat?.critRate || 5);
+    const cd = Number(combat?.critDmg || 50);
+    const targetCr = 75;
+    const ratio = cr > 0 ? (cd / cr).toFixed(1) : '—';
+    gauge1 = renderMiniRuler({
+      index: '01',
+      label: `CRIT · 1:${ratio}`,
+      valueText: `${cr.toFixed(1)}% / ${targetCr}% CR`,
+      curPct: clamp(cr),
+      targetPct: targetCr,
+      isOk: cr >= 68,
+      ticks: [
+        { pct: 0, label: '0' },
+        { pct: 50, label: '50' },
+        { pct: 75, label: '75' },
+        { pct: 100, label: '100' }
+      ]
+    });
+  } else {
+    const key = primaryStat === 'HP' ? 'HP' : primaryStat === 'DEF' ? 'DEF' : primaryStat === 'EM' ? 'EM' : 'ATK';
+    const curVal = key === 'HP' ? (combat?.maxHp || 0) : key === 'DEF' ? (combat?.totalDef || 0) : key === 'EM' ? (combat?.em || 0) : (combat?.totalAtk || 0);
+    const targetVal = key === 'HP' ? 32000 : key === 'DEF' ? 2400 : key === 'EM' ? 750 : 2000;
+    const maxScale = key === 'HP' ? 50000 : key === 'DEF' ? 3600 : key === 'EM' ? 1200 : 3000;
+    const fmt = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : String(Math.round(n)));
+    gauge1 = renderMiniRuler({
+      index: '01',
+      label: `${key} TARGET`,
+      valueText: `${Math.round(curVal).toLocaleString()} / ${targetVal.toLocaleString()}`,
+      curPct: clamp((curVal / maxScale) * 100),
+      targetPct: clamp((targetVal / maxScale) * 100),
+      isOk: curVal >= targetVal * 0.9,
+      ticks: [
+        { pct: 0, label: '0' },
+        { pct: 50, label: fmt(maxScale / 2) },
+        { pct: 100, label: fmt(maxScale) }
+      ]
+    });
+  }
+
+  // 02. Artifact Roll Quality (wRV%)
+  const wrv = Math.round(combat?.wrvPct || 0);
+  const wrvTier = wrv >= 85 ? 'ENDGAME' : wrv >= 65 ? 'SOLID' : wrv >= 45 ? 'USABLE' : 'EARLY';
+  const gauge2 = renderMiniRuler({
+    index: '02',
+    label: `ROLL QUALITY`,
+    valueText: `${wrv}% wRV · ${wrvTier}`,
+    curPct: clamp(wrv),
+    targetPct: 75,
+    isOk: wrv >= 65,
+    ticks: [
+      { pct: 0, label: '0' },
+      { pct: 45, label: '45' },
+      { pct: 75, label: '75' },
+      { pct: 100, label: '100' }
+    ]
+  });
+
+  // 03. ER% Comfort
+  let gauge3;
+  if (zeroEnergy || !effectiveErReq) {
+    gauge3 = renderMiniRuler({
+      index: '03',
+      label: 'ENERGY',
+      zeroStamp: '0-ENERGY KIT'
+    });
+  } else {
+    const curEr = Number(combat?.er || 100);
+    const maxEr = Math.max(240, Math.ceil((Math.max(curEr, effectiveErReq) + 20) / 20) * 20);
+    const span = maxEr - 100;
+    const toPct = (v) => clamp(((v - 100) / span) * 100);
+    const delta = Math.round(curEr - effectiveErReq);
+    gauge3 = renderMiniRuler({
+      index: '03',
+      label: `ER% · ${String(modeLabel || 'Solo').toUpperCase()}`,
+      valueText: `${curEr.toFixed(0)}% / ~${effectiveErReq}% (${delta >= 0 ? `+${delta}` : delta})`,
+      curPct: toPct(curEr),
+      targetPct: toPct(effectiveErReq),
+      isOk: curEr >= effectiveErReq,
+      ticks: [
+        { pct: 0, label: '100' },
+        { pct: toPct(100 + span / 2), label: String(Math.round(100 + span / 2)) },
+        { pct: 100, label: String(maxEr) }
+      ]
+    });
+  }
+
+  return `<div class="p-calibration-strip">${gauge1}${gauge2}${gauge3}</div>`;
 }
 
 function resolvePrimaryStat(kitAnalysis, kitScaling, staticProfile = null) {
@@ -2153,7 +2253,15 @@ function renderRosterView(container, account) {
             <div style="display:flex;justify-content:center;">${renderStatRadarSvg(combat, primaryStat, statCapVal, substatWeights)}</div>
           </div>
 
-          ${renderErRulerHtml(combat?.er || 100, effectiveErReq, Boolean(staticProfile?.features?.zero_energy), sandboxCtx?.deploymentMode?.shortLabel || 'Solo')}
+          ${renderBuildCalibrationStripHtml({
+            combat,
+            primaryStat,
+            statCapVal,
+            substatWeights,
+            effectiveErReq,
+            zeroEnergy: Boolean(staticProfile?.features?.zero_energy),
+            modeLabel: sandboxCtx?.deploymentMode?.shortLabel || 'Solo'
+          })}
 
           ${
             weaponMeta
