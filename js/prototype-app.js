@@ -4218,36 +4218,43 @@ const VAULT_TCG_PLATES = {
   All: {
     plate: 'PLATE 01',
     title: 'Knights of Favonius Library',
+    pos: '50% 36%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_Location_MdLibrary.png'
   },
   Ascension: {
     plate: 'PLATE 02',
     title: 'Timaeus · Alchemy Bench',
+    pos: '50% 10%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_Timaeus.png'
   },
   'Enemy Drops': {
     plate: 'PLATE 03',
     title: "Katheryne · Adventurers' Guild",
+    pos: '50% 8%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_Katheryne.png'
   },
   'Local Specialties': {
     plate: 'PLATE 04',
     title: 'Liyue Harbor Wharf',
+    pos: '50% 38%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_Location_LiyueHarbor.png'
   },
   Ingestibles: {
     plate: 'PLATE 05',
     title: "Adeptus' Temptation",
+    pos: '50% 42%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Event_Food_XTQ.png'
   },
   Cooking: {
     plate: 'PLATE 06',
     title: 'Lotus Flower Crisp',
+    pos: '50% 42%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Event_Food_Lianhuasu.png'
   },
   'Quest & Key': {
     plate: 'PLATE 07',
     title: 'Liben · Rare Curios',
+    pos: '50% 10%',
     url: 'https://gi.yatta.moe/assets/UI/gcg/UI_Gcg_CardFace_Assist_NPC_LiBen.png'
   }
 };
@@ -4407,8 +4414,10 @@ function renderVaultView(container, account) {
       <figure class="p-vault-tcg-plate" id="p-vault-tcg-plate" aria-label="Teyvat Archival Illustration">
         <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
         <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-br" aria-hidden="true">+</span>
         <div class="p-vault-tcg-img-wrap">
-          <img src="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).url)}" alt="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).title)}" loading="lazy" />
+          <img src="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).url)}" alt="${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).title)}" style="object-position:${esc((VAULT_TCG_PLATES[state.vaultCategory] || VAULT_TCG_PLATES.All).pos || '50% 18%')};" loading="lazy" />
           <div class="p-hud-halftone" aria-hidden="true"></div>
         </div>
         <figcaption class="mono">
@@ -4601,6 +4610,7 @@ function renderVaultView(container, account) {
         if (img) {
           img.src = plate.url;
           img.alt = plate.title;
+          img.style.objectPosition = plate.pos || '50% 18%';
         }
         if (cap) {
           cap.innerHTML = `<strong class="text-gold">${esc(plate.plate)}</strong><span>${esc(plate.title).toUpperCase()}</span>`;
