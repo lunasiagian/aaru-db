@@ -4214,29 +4214,6 @@ const VAULT_NATION_CODES = {
   'Teyvat-Wide': 'TYV'
 };
 
-const VAULT_CC0_PLATES = {
-  'Local Specialties': {
-    fig: 'FIG. 01',
-    caption: 'Two Plant Specimens · W. H. Fox Talbot, 1839 · AIC (CC0)',
-    url: 'https://www.artic.edu/iiif/2/f4b72c7b-83e4-3008-d66f-46d87c30ca96/full/600,/0/default.jpg'
-  },
-  Ingestibles: {
-    fig: 'FIG. 02',
-    caption: 'Still Life with Flower Garland · A. van der Spelt, 1658 · AIC (CC0)',
-    url: 'https://www.artic.edu/iiif/2/4a04138f-43d8-cd9f-5ac4-478cd8828210/full/600,/0/default.jpg'
-  },
-  Cooking: {
-    fig: 'FIG. 02',
-    caption: 'Still Life with Flower Garland · A. van der Spelt, 1658 · AIC (CC0)',
-    url: 'https://www.artic.edu/iiif/2/4a04138f-43d8-cd9f-5ac4-478cd8828210/full/600,/0/default.jpg'
-  },
-  default: {
-    fig: 'FIG. 03',
-    caption: 'Botanical Engraving of Celtis · W. H. Fox Talbot, 1840 · AIC (CC0)',
-    url: 'https://www.artic.edu/iiif/2/03d9dfc4-2f39-1d58-4516-025954e9737b/full/600,/0/default.jpg'
-  }
-};
-
 function renderDeterministicBarcodeSvg(seedStr = 'AARU', width = 132, height = 22) {
   let h = 2166136261;
   const s = String(seedStr || 'AARU');
@@ -4357,7 +4334,6 @@ function renderVaultView(container, account) {
   if (!VAULT_CATEGORIES.includes(state.vaultCategory)) state.vaultCategory = 'All';
   const deficitCount = rows.filter((r) => r.needed > 0 && r.net < 0).length;
   const specialtyCount = rows.filter((r) => r.category === 'Local Specialties').length;
-  const activePlate = VAULT_CC0_PLATES[state.vaultCategory] || VAULT_CC0_PLATES.default;
 
   container.innerHTML = `
     <section class="p-panel p-vault-warehouse-hero" aria-label="Archive Warehouse Overview">
@@ -4367,7 +4343,7 @@ function renderVaultView(container, account) {
           ${renderArchiveFreshnessStampHtml(account, readOnly)}
         </div>
         <div class="p-vault-wh-ledger mono">
-          <span><strong>${rows.length}</strong> CATALOGED</span>
+          <span><strong>${rows.length}</strong> CATALOGUED</span>
           <span class="${deficitCount ? 'text-coral' : 'text-mint'}"><strong>${deficitCount}</strong> QUEUE DEFICITS</span>
           <span><strong>${specialtyCount}</strong> SPECIALTIES</span>
         </div>
@@ -4390,12 +4366,7 @@ function renderVaultView(container, account) {
           </div>
         </div>
       </div>
-      <figure class="p-vault-cc0-plate" id="p-vault-cc0-plate">
-        <div class="p-vault-cc0-img-wrap">
-          <img src="${esc(activePlate.url)}" alt="${esc(activePlate.caption)}" loading="lazy" />
-        </div>
-        <figcaption class="mono"><strong class="text-gold">${esc(activePlate.fig)}</strong> · ${esc(activePlate.caption)}</figcaption>
-      </figure>
+      <div class="p-vault-contact-plate" id="p-vault-contact-plate" aria-label="Featured Teyvat Specimens"></div>
     </section>
 
     <div class="p-vault-meta-bar">
@@ -4556,6 +4527,40 @@ function renderVaultView(container, account) {
           .join('')
       : '<div class="p-panel muted" style="grid-column:1/-1;">No materials match your filter.</div>';
 
+    const contactEl = document.getElementById('p-vault-contact-plate');
+    if (contactEl) {
+      const top4 = filtered.slice(0, 4);
+      const hasDeficits = top4.some((x) => x.needed > 0 && x.net < 0);
+      contactEl.innerHTML = `
+        <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
+        <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+        <div class="p-vault-contact-head mono">
+          <span>${hasDeficits ? 'PRIORITY DEFICITS' : esc(state.vaultCategory).toUpperCase()}</span>
+          <span class="text-gold">01–0${top4.length || 4}</span>
+        </div>
+        <div class="p-vault-contact-grid">
+          ${top4
+            .map((r, i) => {
+              const natCode = r.nation ? VAULT_NATION_CODES[r.nation] || '' : '';
+              return `
+                <button type="button" class="p-vault-contact-cell" data-p-vopen="${esc(r.key)}" title="Inspect ${esc(r.name)}">
+                  <span class="p-vault-contact-num mono">0${i + 1}${natCode ? `·${natCode}` : ''}</span>
+                  ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
+                  <span class="mono ${r.needed && r.net < 0 ? 'text-coral' : 'muted'}" style="font-size:10.5px;">${
+                    r.needed && r.net < 0 ? r.net.toLocaleString() : r.owned.toLocaleString()
+                  }</span>
+                </button>`;
+            })
+            .join('')}
+        </div>`;
+      contactEl.querySelectorAll('[data-p-vopen]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const rowObj = rows.find((x) => x.key === btn.dataset.pVopen);
+          if (rowObj) openVaultInspector(rowObj, btn);
+        });
+      });
+    }
+
     grid.querySelectorAll('[data-p-vopen]').forEach((tile) => {
       tile.addEventListener('click', () => {
         const rowObj = rows.find((x) => x.key === tile.dataset.pVopen);
@@ -4573,17 +4578,6 @@ function renderVaultView(container, account) {
     btn.addEventListener('click', () => {
       state.vaultCategory = btn.dataset.pVcat;
       syncCatPills();
-      const plate = VAULT_CC0_PLATES[state.vaultCategory] || VAULT_CC0_PLATES.default;
-      const plateEl = document.getElementById('p-vault-cc0-plate');
-      if (plateEl) {
-        const img = plateEl.querySelector('img');
-        const cap = plateEl.querySelector('figcaption');
-        if (img) {
-          img.src = plate.url;
-          img.alt = plate.caption;
-        }
-        if (cap) cap.innerHTML = `<strong class="text-gold">${esc(plate.fig)}</strong> · ${esc(plate.caption)}`;
-      }
       renderVaultGrid();
     });
   });
