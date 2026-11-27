@@ -1603,25 +1603,25 @@ export function calculateTwoPassMilestonePlan(prefarmQueue = [], inventory = {},
     if (!t1.funcReady && !t2.funcReady) {
       pivotTone = 'gold';
       if (!sameBooks && t1.bookName && t2.bookName) {
-        pivotHeadline = `Farm Both Books on Weekdays · Hold ${t1.name}'s Lv.9–10 Talents`;
-        pivotDetail = `Farm ${t1.bookName} (${t1DaysText} · ${t1.dedicatedSlotsBeforeBanner} days left) for ${t1.name} and ${t2.bookName} (${t2DaysText} · ${t2.dedicatedSlotsBeforeBanner} days left) for ${t2.name}. Spend Sundays & Mora on ${t1.name} until Lv.80 Ready (${t1.funcLabel}, ${t1.funcPct}%), then switch Sundays to ${t2.name} (${t2.funcLabel}, ${t2.funcPct}%).`;
+        pivotHeadline = `Farm ${t1.name} & ${t2.name} Books on Separate Weekdays`;
+        pivotDetail = `Farm ${t1.bookName} (${t1DaysText} · ${t1.dedicatedSlotsBeforeBanner}d left) for ${t1.name}, and ${t2.bookName} (${t2DaysText} · ${t2.dedicatedSlotsBeforeBanner}d left) for ${t2.name}. Put Sundays & Mora into ${t1.name} until Lv.80 playable (${t1.funcPct}%), then move Sundays to ${t2.name} (${t2.funcPct}%).`;
       } else {
-        pivotHeadline = `Finish ${t1.name} Lv.80 Ready (${t1.funcLabel}) First`;
-        pivotDetail = `Stop ${t1.name} at Lv.80 Ready (${t1.funcPct}%${t1.funcBookResin ? ` · ~${t1.funcBookResin} Book Resin left` : ''}) and switch to ${t2.name} (${t2.funcLabel}) before spending 56 Philosophies & 2.3M Mora on Crowns.`;
+        pivotHeadline = `Get ${t1.name} to Lv.80 Playable First`;
+        pivotDetail = `Finish ${t1.name}'s ${t1.funcLabel} milestone (${t1.funcPct}%${t1.funcBookResin ? ` · ~${t1.funcBookResin} Book Resin left` : ''}) first. Pause Lv.90 & Crowns (56 Philosophies & 2.3M Mora) until ${t2.name} also reaches ${t2.funcLabel}.`;
       }
     } else if (t1.funcReady && !t2.funcReady) {
       pivotTone = 'mint';
-      pivotHeadline = `Switch to ${t2.name} (${t2.funcLabel})`;
-      pivotDetail = `${t1.name} is playable Day 1 (Lv.80 Ready). Hold ${t1.name}'s Lv.90 & Crowns and spend Sundays, off-days, and Mora on ${t2.name} (${t2.funcPct}% Lv.80 Ready) so both are playable on banner day.`;
+      pivotHeadline = `Focus Resin on ${t2.name} Next`;
+      pivotDetail = `${t1.name} is already Day-1 playable (${t1.funcLabel} covered). Hold ${t1.name}'s Lv.90 & Crowns for now—spend Sundays, off-days, and Mora on ${t2.name} (${t2.funcPct}% to Lv.80) so both are ready on banner day.`;
     } else {
       pivotTone = 'mint';
-      pivotHeadline = `Both ${t1.name} & ${t2.name} Are Playable Day 1`;
-      pivotDetail = `Lv.80 & ≤8 Talents are covered for both characters. Free to spend remaining Resin & Mora on ${t1.name}'s Lv.90 and Crowns (${t1.maxPct}% Max).`;
+      pivotHeadline = `Both ${t1.name} & ${t2.name} Are Day-1 Playable`;
+      pivotDetail = `Lv.80 & Lv.8 Talents are covered for both characters. Spend remaining Resin & Mora freely on ${t1.name}'s Lv.90 and Crowns (${t1.maxPct}% of full goal).`;
     }
   } else if (t1) {
     pivotHeadline = t1.funcReady
-      ? `${t1.name} Playable Day 1 (${t1.maxPct}% Max)`
-      : `Next Goal: ${t1.name} Lv.80 Ready (${t1.funcLabel} · ${t1.funcPct}%)`;
+      ? `${t1.name} Is Day-1 Playable (${t1.maxPct}% of Full Goal)`
+      : `Next Milestone: ${t1.name} Lv.80 Playable (${t1.funcPct}%)`;
     pivotDetail = t1.bookName
       ? `${t1.bookName} opens ${t1.bookDays.join('/')} (${t1.dedicatedSlotsBeforeBanner} weekday + ${patchCal.sunSlots} All-Open days before ${patchCal.nextLabel}).`
       : 'Finish guaranteed Ascension & Talent mats before spending Resin on Artifacts.';

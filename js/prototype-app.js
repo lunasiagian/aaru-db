@@ -1192,24 +1192,47 @@ function renderTodayView(container, account) {
     : targetsWithTel.slice(0, 2).map((t) => t.characterKey);
 
   container.innerHTML = `
-    <section class="p-patch-bar p-hud-hero" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
-      ${leadTarget ? `<div class="p-hud-hero-art" aria-hidden="true">${renderGachaSplash(leadTarget.characterKey, '')}</div>` : ''}
+    <section class="p-patch-bar p-hud-hero p-hud-poster" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
       <div class="p-patch-primary">
         <div class="p-patch-now">
-          <span class="p-badge p-hero-pill-date mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} · Day ${patchCal.dayInPatch}/42</span>
+          <span class="p-badge p-hero-pill-date mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} · DAY ${patchCal.dayInPatch}/42</span>
           ${
             patchCal.isAllDomainsOpenSurge
-              ? `<span class="p-badge p-hero-pill-open mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily"><span class="p-hero-dot" aria-hidden="true"></span>All Domains Open · ${patchCal.surgeDaysRemaining}d left</span>`
-              : `<span class="p-badge p-hero-pill-date mono">Daily Reset · ${esc(patchCal.countdownText)}</span>`
+              ? `<span class="p-badge p-hero-pill-open mono" title="First 7 days of the banner half: all Talent and Weapon domains are unlocked daily"><span class="p-hero-dot" aria-hidden="true"></span>ALL DOMAINS OPEN · ${patchCal.surgeDaysRemaining}D LEFT</span>`
+              : `<span class="p-badge p-hero-pill-date mono">DAILY RESET · ${esc(patchCal.countdownText)}</span>`
           }
         </div>
         <div class="p-hud-hero-banner-row">
           <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)}</h2>
-          ${patchCal.nextBannerNote ? `<span class="p-row-sub">${esc(patchCal.nextBannerNote)}</span>` : ''}
         </div>
-        <div class="p-hero-local-time mono">Drops ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</div>
+        <div class="p-hero-poster-meta">
+          <span class="p-hero-local-time mono">DROPS ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</span>
+          ${patchCal.nextBannerNote ? `<span class="p-hero-poster-note">${esc(patchCal.nextBannerNote)}</span>` : ''}
+        </div>
+        <div class="p-hero-domain-ledger mono" title="Remaining domain days before ${esc(patchCal.nextLabel)}">
+          <span>${patchCal.monThuSlots} M/TH</span>
+          <span>${patchCal.tueFriSlots} TU/F</span>
+          <span>${patchCal.wedSatSlots} W/SA</span>
+          <strong class="text-mint">${patchCal.sunSlots} ALL-OPEN</strong>
+        </div>
       </div>
+
+      ${
+        leadTarget
+          ? `<div class="p-hud-poster-plate">
+               <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
+               <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+               ${renderGachaSplash(leadTarget.characterKey, leadMeta?.name || '')}
+               <div class="p-hud-poster-cap mono">
+                 <span>#1 PRIORITY</span>
+                 <strong>${esc(leadMeta?.name || leadTarget.characterKey).toUpperCase()}</strong>
+               </div>
+             </div>`
+          : ''
+      }
+
       <div class="p-patch-metrics">
+        <span class="p-stub-kicker mono">COUNTDOWN</span>
         <div class="p-hud-countdown">
           <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
           <span class="p-hud-countdown-resin mono" title="Natural Original Resin regenerating before ${esc(patchCal.nextLabel)}">
@@ -1217,7 +1240,7 @@ function renderTodayView(container, account) {
             <span data-count-to="${patchCal.naturalResinToNext}" data-count-prefix="~">~${patchCal.naturalResinToNext.toLocaleString()}</span>
           </span>
         </div>
-        <span class="p-badge p-hero-pill-slots mono" title="Remaining domain days before ${esc(patchCal.nextLabel)} (All-Open includes Sundays + first 7 days of the banner)">${patchCal.monThuSlots} M/Th · ${patchCal.wedSatSlots} W/Sa · ${patchCal.tueFriSlots} Tu/F · <strong class="text-mint">${patchCal.sunSlots} All-Open</strong></span>
+        <span class="p-stub-sub mono">NATURAL RESIN TO DROP</span>
       </div>
     </section>
 
@@ -1278,12 +1301,15 @@ function renderTodayView(container, account) {
                  ${twoPass.surgeWarning ? `<li class="is-warn">${esc(twoPass.surgeWarning)}</li>` : ''}
                </ul>
              </div>
-             <div class="p-strategy-cell">
+             <div class="p-strategy-cell p-strategy-domain-cell">
                ${
                  topDomain
                    ? `<div class="p-strategy-head">
-                        <strong class="p-spotlight-title">Best Domain Today: ${esc(topDomain.name)}</strong>
-                        <div class="p-tag-inline">${topDomain.matches.map((m) => `<span class="p-badge p-badge-mint">${esc(m.badge)} ${esc(m.name)}</span>`).join('')}</div>
+                        <div>
+                          <span class="p-filter-lbl mono">BEST DOMAIN TODAY</span>
+                          <strong class="p-spotlight-title" style="display:block;">${esc(topDomain.name)}</strong>
+                        </div>
+                        <div class="p-tag-inline">${topDomain.matches.map((m) => `<span class="p-badge p-badge-mint mono">${esc(m.badge)} ${esc(m.name)}</span>`).join('')}</div>
                       </div>
                       <div class="p-dom-rewards">${(topDomain.rewards || [])
                         .map(
@@ -1292,11 +1318,17 @@ function renderTodayView(container, account) {
                         )
                         .join('')}</div>`
                    : `<div class="p-strategy-head">
-                        <strong class="p-spotlight-title">Off-Day for Queued Books (${esc(todayName)})</strong>
-                        <span class="p-badge mono">Boss / Ley Line / Artifacts</span>
+                        <div>
+                          <span class="p-filter-lbl mono">DOMAIN SCHEDULE · ${esc(todayName).toUpperCase()}</span>
+                          <strong class="p-spotlight-title" style="display:block;">Off-Day for Queued Books</strong>
+                        </div>
+                        <span class="p-badge mono">Boss · Ley Line · Artifacts</span>
                       </div>`
                }
-               <div class="p-mora-note">${esc(moraStrategy.recommendation)}</div>
+               <div class="p-mora-plan-row">
+                 <span class="p-stamp mono">MORA PLAN</span>
+                 <span class="p-mora-note">${esc(moraStrategy.recommendation)}</span>
+               </div>
              </div>
            </section>`
         : ''
@@ -2874,24 +2906,49 @@ function renderRosterView(container, account) {
     { id: 'unowned', label: 'Unowned' }
   ];
 
+  const rosterOwnershipTabs = [
+    { id: 'all', label: 'All' },
+    { id: 'owned', label: 'Owned' },
+    { id: 'unowned', label: 'Unowned' }
+  ];
+  const rosterRarityTabs = ['All', '5★', '4★'];
+  if (!state.rosterRarity) state.rosterRarity = 'All';
+
   container.innerHTML = `
-    <div class="p-toolbar">
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-        <div class="p-filter-pills" role="group" aria-label="Ownership filter">
-          ${ownershipTabs
-            .map(
-              (o) =>
-                `<button type="button" class="p-pill-btn ${state.rosterOwnership === o.id ? 'active' : ''}" data-p-own="${o.id}" aria-pressed="${state.rosterOwnership === o.id}">${o.label}</button>`
-            )
-            .join('')}
+    <div class="p-toolbar p-armory-toolbar">
+      <div class="p-armory-filter-bar">
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">OWNERSHIP</span>
+          <div class="p-filter-pills" role="group" aria-label="Ownership filter">
+            ${rosterOwnershipTabs
+              .map(
+                (o) =>
+                  `<button type="button" class="p-pill-btn ${state.rosterOwnership === o.id ? 'active' : ''}" data-p-own="${o.id}" aria-pressed="${state.rosterOwnership === o.id}">${o.label}</button>`
+              )
+              .join('')}
+          </div>
         </div>
-        <div class="p-filter-pills" role="group" aria-label="Element filter">
-          ${elements
-            .map(
-              (el) =>
-                `<button type="button" class="p-pill-btn ${state.rosterElement === el ? 'active' : ''}" data-p-el="${el}" aria-pressed="${state.rosterElement === el}">${el}</button>`
-            )
-            .join('')}
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">RARITY</span>
+          <div class="p-filter-pills" role="group" aria-label="Rarity filter">
+            ${rosterRarityTabs
+              .map(
+                (r) =>
+                  `<button type="button" class="p-pill-btn ${state.rosterRarity === r ? 'active' : ''}" data-p-rrar="${r}" aria-pressed="${state.rosterRarity === r}">${r}</button>`
+              )
+              .join('')}
+          </div>
+        </div>
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">ELEMENT</span>
+          <div class="p-filter-pills" role="group" aria-label="Element filter">
+            ${elements
+              .map(
+                (el) =>
+                  `<button type="button" class="p-pill-btn ${state.rosterElement === el ? 'active' : ''}" data-p-el="${el}" aria-pressed="${state.rosterElement === el}">${el}</button>`
+              )
+              .join('')}
+          </div>
         </div>
       </div>
       <input type="search" id="p-roster-search" class="proto-search" style="max-width:240px;" placeholder="Filter characters..." aria-label="Filter characters" value="${esc(state.rosterSearch)}" />
@@ -2907,6 +2964,11 @@ function renderRosterView(container, account) {
       .filter((c) => {
         if (state.rosterOwnership === 'owned') return c.owned;
         if (state.rosterOwnership === 'unowned') return !c.owned;
+        return true;
+      })
+      .filter((c) => {
+        if (state.rosterRarity === '5★') return Number(c.meta.rarity) === 5;
+        if (state.rosterRarity === '4★') return Number(c.meta.rarity) === 4;
         return true;
       })
       .filter((c) => state.rosterElement === 'All' || c.meta.element === state.rosterElement)
@@ -2951,6 +3013,17 @@ function renderRosterView(container, account) {
       state.rosterOwnership = btn.dataset.pOwn;
       container.querySelectorAll('[data-p-own]').forEach((b) => {
         const active = b.dataset.pOwn === state.rosterOwnership;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderRosterCards();
+    });
+  });
+  container.querySelectorAll('[data-p-rrar]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.rosterRarity = btn.dataset.pRrar;
+      container.querySelectorAll('[data-p-rrar]').forEach((b) => {
+        const active = b.dataset.pRrar === state.rosterRarity;
         b.classList.toggle('active', active);
         b.setAttribute('aria-pressed', String(active));
       });
@@ -3363,29 +3436,42 @@ function renderArmoryView(container, account) {
       })
       .sort((a, b) => Number(b.owned) - Number(a.owned) || (b.level || 0) - (a.level || 0) || (getWeaponMeta(b.key).rarity || 0) - (getWeaponMeta(a.key).rarity || 0) || getWeaponMeta(a.key).name.localeCompare(getWeaponMeta(b.key).name));
 
+    const wepIdx = getWeaponsIndex() || {};
     grid.innerHTML = filtered.length
       ? filtered
           .map((w, idx) => {
             const meta = getWeaponMeta(w.key);
             const holderMeta = w.owned && w.location ? getCharacterMeta(w.location) : null;
+            const wStats = wepIdx[w.key] || null;
+            const baseAtk = wStats?.baseAtk90 ? Math.round(wStats.baseAtk90) : null;
+            const subText = wStats?.subStat ? formatWeaponSubstat(wStats.subStat, wStats.subVal90) : '';
+            const serial = String(idx + 1).padStart(2, '0');
             return `
-              <article class="p-weapon-card ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
-                <div class="p-weapon-head">
-                  ${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}
-                  <div style="min-width:0;">
-                    <div class="p-row-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(meta.name)}</div>
-                    <div class="p-row-sub">${esc(meta.weaponType)} · <span class="mono text-gold">${meta.rarity || 4}★</span></div>
+              <article class="p-weapon-card p-wep-specimen ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
+                <div class="p-wep-spec-top mono">
+                  <span class="p-wep-spec-idx">№ ${serial} · ${esc(meta.weaponType || '').toUpperCase()}</span>
+                  <span class="${w.owned && Number(meta.rarity) === 5 ? 'p-wep-star-slab' : 'text-gold'}">${meta.rarity || 4}★</span>
+                </div>
+                <div class="p-weapon-head p-wep-spec-body">
+                  <div class="p-wep-spec-icon">${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}</div>
+                  <div style="min-width:0;flex:1;">
+                    <div class="p-wep-spec-name">${esc(meta.name)}</div>
+                    ${
+                      baseAtk || subText
+                        ? `<div class="p-wep-spec-stats mono">${baseAtk ? `ATK ${baseAtk}` : ''}${baseAtk && subText ? ' · ' : ''}${esc(subText)}</div>`
+                        : `<div class="p-wep-spec-stats mono muted">${esc(meta.weaponType)}</div>`
+                    }
                   </div>
                 </div>
-                <div class="p-weapon-foot">
-                  <span class="mono muted" style="font-size:12px;">${w.owned ? `Lv.${w.level || 1} · R${w.refinement || 1}` : 'Unowned'}</span>
+                <div class="p-weapon-foot p-wep-spec-foot">
+                  <span class="mono ${w.owned ? 'p-wep-lv-pill' : 'muted'}">${w.owned ? `LV.${w.level || 1} · R${w.refinement || 1}` : 'UNOWNED'}</span>
                   ${
                     holderMeta
                       ? `<button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
                            ${renderAssetIcon('characters', w.location, holderMeta.name, 'icon-xs')}
                            <span>${esc(holderMeta.name)}</span>
                          </button>`
-                      : `<span class="muted" style="font-size:12px;">${w.owned ? 'Unassigned' : 'Archive'}</span>`
+                      : `<span class="mono muted" style="font-size:11px;">${w.owned ? 'STASHED' : 'ARCHIVE'}</span>`
                   }
                 </div>
               </article>`;
@@ -3953,6 +4039,60 @@ function classifyVaultCategory(meta, key = '') {
   return 'Quest & Key';
 }
 
+const VAULT_NATION_ORDER = {
+  Mondstadt: 1,
+  Liyue: 2,
+  Inazuma: 3,
+  Sumeru: 4,
+  Fontaine: 5,
+  Natlan: 6,
+  'Nod-Krai': 7,
+  Snezhnaya: 8,
+  'Teyvat-Wide': 9
+};
+
+function classifyVaultNation(meta, key = '', vaultCat = '') {
+  const raw = String(meta?.category || meta?.type || '');
+  const m = raw.match(/localSpecialty([A-Za-z]+)/i);
+  if (m) {
+    const tag = m[1].toLowerCase();
+    if (tag.includes('mondstadt')) return 'Mondstadt';
+    if (tag.includes('liyue')) return 'Liyue';
+    if (tag.includes('inazuma')) return 'Inazuma';
+    if (tag.includes('sumeru')) return 'Sumeru';
+    if (tag.includes('fontaine')) return 'Fontaine';
+    if (tag.includes('natlan')) return 'Natlan';
+    if (tag.includes('nodkrai')) return 'Nod-Krai';
+    if (tag.includes('snezhnaya')) return 'Snezhnaya';
+  }
+  if (vaultCat === 'Enemy Drops') {
+    const n = String(meta?.name || key || '').toLowerCase();
+    if (/hilichurl|mask|arrowhead|scroll|horn|slime|nectar|insignia|fatui|ley line|chaos|bone shard|mist grass|sacrificial knife/.test(n)) {
+      return 'Teyvat-Wide';
+    }
+    if (/handguard|spectral|concealed|polarizing|prism|statuette|storm beads|perpetual heart|smoldering pearl|dew of repudiation|dragonheir|riftborn/.test(n)) {
+      return 'Inazuma';
+    }
+    if (/fungal|spore|pollen|red satin|red silk|red brocade|inactivated|dormant|robust|quelled creeper|majestic hooked|light guiding|pseudo-stamens|evergloom/.test(n)) {
+      return 'Sumeru';
+    }
+    if (/meshing gear|mechanical spur|artificed|transoceanic|xenochromatic|drop of tainted|rift core|operat|fontemer|water that failed|tourbillon|emperor's resolution|fragment of a golden/.test(n)) {
+      return 'Fontaine';
+    }
+    if (/saurian|fang|whistle|secret source|wayob|ignited|refractive|mark of the binding|gold-inscribed|overripe flamegranate|ensnaring gaze|talisman of the enigmatic/.test(n)) {
+      return 'Natlan';
+    }
+    if (/wormwood|frost|cryo|snezh|tsar|fatui warrant|palace|winter|glacial/.test(n)) {
+      return 'Snezhnaya';
+    }
+    if (/moon|lunar|nod-krai|frostmoon|wild hunt/.test(n)) {
+      return 'Nod-Krai';
+    }
+    return 'Teyvat-Wide';
+  }
+  return '';
+}
+
 function renderVaultView(container, account) {
   const readOnly = isReadOnly();
   const disabled = readOnly ? 'disabled' : '';
@@ -3972,12 +4112,15 @@ function renderVaultView(container, account) {
       const meta = getMaterialMeta(key);
       const needed = neededMap.get(key) || 0;
       const owned = getInvCount(val);
+      const category = classifyVaultCategory(meta, key);
+      const nation = classifyVaultNation(meta, key, category);
       return {
         key,
         name: meta?.name || key,
         rarity: Number(meta?.rarity || 3),
         rawCategory: meta?.category || 'Material',
-        category: classifyVaultCategory(meta, key),
+        category,
+        nation,
         owned,
         needed,
         net: owned - needed
@@ -3998,6 +4141,7 @@ function renderVaultView(container, account) {
       <div style="display:flex;align-items:center;gap:8px;">
         <select id="p-vault-sort" class="proto-select" style="width:auto;min-width:130px;" aria-label="Sort vault items">
           <option value="needed" ${state.vaultSortKey === 'needed' ? 'selected' : ''}>Sort: Needed</option>
+          <option value="region" ${state.vaultSortKey === 'region' ? 'selected' : ''}>Sort: Region</option>
           <option value="owned" ${state.vaultSortKey === 'owned' ? 'selected' : ''}>Sort: In Bag</option>
           <option value="rarity" ${state.vaultSortKey === 'rarity' ? 'selected' : ''}>Sort: Rarity</option>
           <option value="name" ${state.vaultSortKey === 'name' ? 'selected' : ''}>Sort: Name</option>
@@ -4110,8 +4254,13 @@ function renderVaultView(container, account) {
     const q = state.vaultSearch.trim().toLowerCase();
     const filtered = rows
       .filter((r) => state.vaultCategory === 'All' || r.category === state.vaultCategory)
-      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q))
+      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q) || (r.nation || '').toLowerCase().includes(q))
       .sort((a, b) => {
+        if (sk === 'region' || (state.vaultCategory === 'Local Specialties' && sk === 'needed' && !a.needed && !b.needed)) {
+          const na = VAULT_NATION_ORDER[a.nation] || 99;
+          const nb = VAULT_NATION_ORDER[b.nation] || 99;
+          return na - nb || b.needed - a.needed || a.name.localeCompare(b.name);
+        }
         if (sk === 'name') return a.name.localeCompare(b.name);
         if (sk === 'rarity') return b.rarity - a.rarity || b.owned - a.owned || a.name.localeCompare(b.name);
         if (sk === 'owned') return b.owned - a.owned || a.name.localeCompare(b.name);
@@ -4125,11 +4274,13 @@ function renderVaultView(container, account) {
 
     grid.innerHTML = filtered.length
       ? filtered
-          .map(
-            (r) => `
-            <button type="button" class="p-vault-tile ${r.needed && r.net < 0 ? 'is-deficit' : ''}" data-rarity="${r.rarity}" data-p-vopen="${esc(r.key)}">
+          .map((r) => {
+            const nationSlug = r.nation ? r.nation.toLowerCase().replace(/[^a-z]/g, '') : '';
+            const headLabel = r.nation || r.category;
+            return `
+            <button type="button" class="p-vault-tile ${r.needed && r.net < 0 ? 'is-deficit' : ''}" data-rarity="${r.rarity}" ${nationSlug ? `data-nation="${nationSlug}"` : ''} data-p-vopen="${esc(r.key)}">
               <div class="p-vault-tile-head">
-                <span class="p-vault-tile-cat mono">${esc(r.category)}</span>
+                <span class="p-vault-tile-cat mono">${esc(headLabel)}</span>
                 ${
                   r.needed
                     ? `<span class="mono ${r.net < 0 ? 'text-coral' : 'text-mint'}">${r.net < 0 ? r.net.toLocaleString() : '✓'}</span>`
@@ -4144,8 +4295,8 @@ function renderVaultView(container, account) {
                 <span class="muted">BAG</span>
                 <span>${r.owned.toLocaleString()}</span>
               </div>
-            </button>`
-          )
+            </button>`;
+          })
           .join('')
       : '<div class="p-panel muted" style="grid-column:1/-1;">No materials match your filter.</div>';
 
