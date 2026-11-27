@@ -1223,16 +1223,17 @@ function renderTodayView(container, account) {
         </div>
       </div>
 
-      <div class="p-patch-metrics">
-        <span class="p-stub-kicker mono">COUNTDOWN</span>
-        <div class="p-hud-countdown">
-          <span class="p-hud-countdown-val mono">${esc(patchCal.countdownToNextText)}</span>
-          <span class="p-hud-countdown-resin mono" title="Natural Original Resin regenerating before ${esc(patchCal.nextLabel)}">
-            ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
-            <span data-count-to="${patchCal.naturalResinToNext}" data-count-prefix="~">~${patchCal.naturalResinToNext.toLocaleString()}</span>
-          </span>
+      <div class="p-patch-metrics p-ticket-stub" title="Countdown &amp; Natural Original Resin before ${esc(patchCal.nextLabel)}">
+        <div class="p-ticket-stub-top">
+          <span class="p-ticket-circle mono">${esc((patchCal.nextLabel || '7.3').split(' ')[0])}</span>
+          <span class="p-zine-barcode" aria-hidden="true"></span>
         </div>
-        <span class="p-stub-sub mono">NATURAL RESIN TO DROP</span>
+        <div class="p-ticket-stub-time mono">${esc(patchCal.countdownToNextText)}</div>
+        <div class="p-ticket-stub-resin mono">
+          ${renderAssetIcon('materials', 'OriginalResin', 'Original Resin', 'icon-xs')}
+          <span data-count-to="${patchCal.naturalResinToNext}" data-count-prefix="~">~${patchCal.naturalResinToNext.toLocaleString()}</span>
+        </div>
+        <span class="p-ticket-serial mono" aria-hidden="true">№ ${String(patchCal.dayInPatch).padStart(2, '0')}/42</span>
       </div>
     </section>
 
