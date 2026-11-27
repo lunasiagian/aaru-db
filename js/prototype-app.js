@@ -3720,10 +3720,139 @@ const RESONANCE_NAMES = {
   Dendro: 'Sprawling Greenery'
 };
 
+const TEAM_BUFF_SET_LABELS = {
+  ViridescentVenerer: { label: '4pc VV Shred', shred: true, nonStack: false },
+  NoblesseOblige: { label: '4pc Noblesse +20% ATK', shred: false, nonStack: true },
+  ScrollOfTheHeroOfCinderCity: { label: '4pc Scroll +40% DMG', shred: false, nonStack: true },
+  TenacityOfTheMillelith: { label: '4pc Tenacity +20% ATK', shred: false, nonStack: true },
+  DeepwoodMemories: { label: '4pc Deepwood Shred', shred: true, nonStack: true },
+  SongOfDaysPast: { label: '4pc Song of Days Past', shred: false, nonStack: true },
+  Instructor: { label: '4pc Instructor +120 EM', shred: false, nonStack: true },
+  ArchaicPetra: { label: '4pc Archaic Petra', shred: false, nonStack: true },
+  SilkenMoonsSerenade: { label: '4pc Silken Moon', shred: false, nonStack: true }
+};
+
+function auditSquadForReel(team, charMap, account, allProfiles) {
+  const weapons = account.weapons || [];
+  const artifacts = account.artifacts || [];
+  const buffSetHolders = {};
+  const buffTags = [];
+  let hasShred = false;
+  let builtCount = 0;
+
+  const frames = (team.members || []).slice(0, 4).map((m, idx) => {
+    const ck = m.characterKey;
+    const cm = getCharacterMeta(ck);
+    const owned = charMap.get(ck) || null;
+    const prof = allProfiles[ck] || null;
+    const eqWep = weapons.find((w) => w.location === ck) || owned?.equippedWeapon || null;
+    const wKey = m.weaponKey || eqWep?.key || '';
+    const wMeta = wKey ? getWeaponMeta(wKey) : null;
+    const eqArts = artifacts.filter((a) => a.location === ck);
+    const setCounts = {};
+    eqArts.forEach((a) => {
+      if (a.setKey) setCounts[a.setKey] = (setCounts[a.setKey] || 0) + 1;
+    });
+    const fourPcKey = Object.entries(setCounts).find(([, n]) => n >= 4)?.[0] || '';
+    const twoPcKeys = Object.entries(setCounts).filter(([, n]) => n >= 2 && n < 4).map(([k]) => k);
+    const setSummary = fourPcKey
+      ? `4pc ${splitPascalSet(fourPcKey)}`
+      : twoPcKeys.length >= 2
+        ? `2pc + 2pc`
+        : twoPcKeys.length === 1
+          ? `2pc ${splitPascalSet(twoPcKeys[0])}`
+          : 'No Set Bonus';
+
+    if (fourPcKey && TEAM_BUFF_SET_LABELS[fourPcKey]) {
+      const info = TEAM_BUFF_SET_LABELS[fourPcKey];
+      if (!buffSetHolders[fourPcKey]) buffSetHolders[fourPcKey] = [];
+      buffSetHolders[fourPcKey].push(cm.name);
+      if (info.shred) hasShred = true;
+    }
+    if (prof?.features?.has_res_shred) hasShred = true;
+
+    const lv = Number(owned?.level || 0);
+    const con = Number(owned?.constellation || 0);
+    const tal = owned?.talent
+      ? [owned.talent.auto || 1, owned.talent.skill || 1, owned.talent.burst || 1]
+      : Array.isArray(owned?.talents)
+        ? owned.talents
+        : [1, 1, 1];
+    const isCarry = idx === 0 || /carry|dps/i.test(m.role || '');
+    const isSupportLike = !isCarry && Boolean(prof?.features?.has_party_buff || prof?.features?.has_heal || prof?.features?.has_shield || /support|healer|shield|buffer/i.test(m.role || ''));
+    const maxKeyTal = isCarry ? Math.max(tal[0], tal[1], tal[2]) : Math.max(tal[1], tal[2]);
+    const wepLv = Number(eqWep?.level || 0);
+
+    let status = 'ok';
+    let issueTag = 'READY ✓';
+    if (!owned) {
+      status = 'unowned';
+      issueTag = 'UNOWNED';
+    } else if (lv < 80) {
+      status = 'coral';
+      issueTag = `LV.${lv} · UNDERLEVELED`;
+    } else if (eqWep && wepLv > 0 && wepLv < 80) {
+      status = 'amber';
+      issueTag = `WEP LV.${wepLv}`;
+    } else if (maxKeyTal < 8) {
+      status = 'amber';
+      issueTag = `TALENTS ${tal.join('/')}`;
+    } else if (isSupportLike && !fourPcKey) {
+      status = 'amber';
+      issueTag = 'NO 4PC BUFF';
+    } else {
+      builtCount += 1;
+    }
+
+    return {
+      idx,
+      ck,
+      cm,
+      elAttr: String(cm.element || '').toLowerCase(),
+      role: m.role || (idx === 0 ? 'On-Field Carry' : 'Support'),
+      owned,
+      lv,
+      con,
+      tal,
+      wKey,
+      wMeta,
+      eqWep,
+      fourPcKey,
+      setSummary,
+      status,
+      issueTag
+    };
+  });
+
+  const duplicateWarnings = [];
+  for (const [setKey, holders] of Object.entries(buffSetHolders)) {
+    const info = TEAM_BUFF_SET_LABELS[setKey];
+    buffTags.push(info.label);
+    if (info.nonStack && holders.length > 1) {
+      duplicateWarnings.push(`Duplicate ${splitPascalSet(setKey)} (${holders.join(' + ')})`);
+    }
+  }
+
+  const bottlenecks = frames.filter((f) => f.status === 'coral' || f.status === 'amber');
+  const lead = frames[0];
+  const leadRef = lead?.eqWep ? `R${lead.eqWep.refinement || 1}` : '';
+  const leadBadge = lead?.owned ? `C${lead.con}${leadRef}` : 'Unowned';
+
+  const stamp =
+    bottlenecks.length === 0 && frames.every((f) => f.owned)
+      ? { cls: 'is-fresh', text: 'SHOWCASE READY' }
+      : bottlenecks.some((b) => b.status === 'coral')
+        ? { cls: 'is-overdue', text: `${bottlenecks.length} BOTTLENECK${bottlenecks.length > 1 ? 'S' : ''}` }
+        : { cls: 'is-aging', text: `${bottlenecks.length} UPGRADE${bottlenecks.length > 1 ? 'S' : ''} NEEDED` };
+
+  return { frames, builtCount, bottlenecks, buffTags, hasShred, duplicateWarnings, leadBadge, stamp };
+}
+
 function renderTeamsView(container, account) {
   const readOnly = isReadOnly();
   const teams = account.teams || [];
   const charMap = new Map((account.characters || []).map((c) => [c.key, c]));
+  const prefarmSet = new Set((account.prefarmQueue || []).map((t) => t.characterKey));
   const conflicts = detectTeamWeaponConflicts(teams);
   const ownedChars = (account.characters || []).filter((c) => c.owned).sort((a, b) => getCharacterMeta(a.key).name.localeCompare(getCharacterMeta(b.key).name));
   const ownedKeysSet = new Set(ownedChars.map((c) => c.key));
@@ -3750,6 +3879,7 @@ function renderTeamsView(container, account) {
   if (!state.synergyAnchorKey || !allProfiles[state.synergyAnchorKey]) {
     state.synergyAnchorKey = ownedChars[0]?.key || (allProfiles.Skirk ? 'Skirk' : profileKeys[0] || '');
   }
+  const activeTab = state.teamsSubTab === 'synergy' ? 'synergy' : 'reels';
   const anchorKey = state.synergyAnchorKey;
   const activeSlots = (state.synergyTeamSlots || []).filter((k) => k && k !== anchorKey);
   const gaugeTable = getGaugeTable();
@@ -3779,192 +3909,46 @@ function renderTeamsView(container, account) {
   };
 
   container.innerHTML = `
-    <section class="p-panel p-lens-bar" style="margin-bottom:16px;">
-      <div class="p-mode-bar">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span class="p-row-sub mono" style="font-size:11.5px;">Deployment Mode:</span>
-          ${Object.values(DEPLOYMENT_MODES)
-            .map(
-              (m) =>
-                `<button type="button" class="p-pill-btn ${state.deploymentMode === m.id ? 'active' : ''}" data-p-tdeploy="${m.id}" title="${esc(m.note)}">${esc(m.shortLabel)}</button>`
-            )
-            .join('')}
+    <section class="p-panel p-pf-command p-pf-dispatch" style="margin-bottom:16px;">
+      <div class="p-pf-topbar">
+        <div class="p-pf-subtabs" role="tablist" aria-label="Teams Lab Sections">
+          <button type="button" role="tab" aria-selected="${activeTab === 'reels'}" class="p-pf-subtab ${activeTab === 'reels' ? 'is-active' : ''}" data-tm-tab="reels">
+            <span>Saved Reels</span>
+            <span class="p-pf-count mono">${teams.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected="${activeTab === 'synergy'}" class="p-pf-subtab ${activeTab === 'synergy' ? 'is-active' : ''}" data-tm-tab="synergy">
+            <span>Synergy Lab</span>
+            <span class="p-pf-count mono">4P</span>
+          </button>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span class="p-row-sub mono" style="font-size:11.5px;">Scenario:</span>
-          ${Object.values(SCENARIO_MODES)
-            .map(
-              (sc) =>
-                `<button type="button" class="p-pill-btn ${state.scenarioMode === sc.id ? 'active' : ''}" data-p-tscen="${sc.id}">${esc(sc.label)}</button>`
-            )
-            .join('')}
-        </div>
-        <label class="proto-field" style="min-width:210px;margin-left:auto;">
-          <span>Enemy Target (RES Baseline)</span>
-          <select id="p-enemy-target" class="proto-select">
-            <option value="">Standard Target (10% All RES)</option>
-            ${notableEnemies
+        <div class="p-pf-top-right">
+          <div class="p-lens-pills" role="group" aria-label="Deployment Mode">
+            ${Object.values(DEPLOYMENT_MODES)
               .map(
-                (e) =>
-                  `<option value="${esc(String(e.id))}" ${String(state.selectedEnemyId) === String(e.id) ? 'selected' : ''}>${esc(e.name)}${e.category === 'weekly_boss' ? ' [Weekly]' : ''}</option>`
+                (m) =>
+                  `<button type="button" class="p-pill-btn ${state.deploymentMode === m.id ? 'active' : ''}" data-p-tdeploy="${m.id}" title="${esc(m.note)}">${esc(m.shortLabel)}</button>`
               )
               .join('')}
-          </select>
-        </label>
+          </div>
+          ${
+            !readOnly && activeTab === 'reels' && ownedChars.length >= 4
+              ? `<button type="button" class="p-btn p-btn-primary p-btn-sm" data-tm-toggle-add aria-expanded="${Boolean(state.teamsAddOpen)}">${
+                  state.teamsAddOpen ? 'Close' : '+ Record Reel'
+                }</button>`
+              : ''
+          }
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        <span class="p-row-sub mono" style="font-size:11px;">${selectedEnemy ? `${esc(selectedEnemy.name)} RES:` : 'Target RES:'}</span>
-        ${RES_LABELS.map(([rk, lbl]) => {
-          const pctVal = Math.round((Number(activeResMap[rk] ?? 0.1) || 0) * 100);
-          return `<span class="p-badge mono ${pctVal >= 50 ? 'p-badge-amber' : ''}" style="font-size:10.5px;">${lbl} ${pctVal}%</span>`;
-        }).join('')}
-      </div>
-      ${synergy?.modeNote ? `<div class="p-row-sub" style="font-size:12px;">${esc(synergy.modeNote)}</div>` : ''}
-    </section>
 
-    ${
-      profileKeys.length
-        ? `<section class="p-panel" style="margin-bottom:16px;">
-             <div class="p-panel-head" style="flex-wrap:wrap;gap:8px;">
-               <div>
-                 <h2 class="p-panel-title">Pairwise Synergy &amp; Owned Substitutes Sandbox</h2>
-                 <div class="p-row-sub">Baseline ideal partners vs. what your owned roster can cover (and what breaks if you go off-script).</div>
-               </div>
-             </div>
-             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
-               <label class="proto-field" style="min-width:170px;">
-                 <span>Anchor Character</span>
-                 <select id="p-syn-anchor" class="proto-select">
-                   ${profileKeys
-                     .map(
-                       (k) =>
-                         `<option value="${esc(k)}" ${k === anchorKey ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
-                     )
-                     .join('')}
-                 </select>
-               </label>
-               ${[0, 1, 2]
-                 .map(
-                   (idx) => `
-                   <label class="proto-field" style="min-width:140px;">
-                     <span>Teammate ${idx + 1}</span>
-                     <select class="proto-select" data-p-syn-slot="${idx}">
-                       <option value="">— Open Slot —</option>
-                       ${profileKeys
-                         .filter((k) => k !== anchorKey)
-                         .map(
-                           (k) =>
-                             `<option value="${esc(k)}" ${state.synergyTeamSlots[idx] === k ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
-                         )
-                         .join('')}
-                     </select>
-                   </label>`
-                 )
-                 .join('')}
-             </div>
-             ${
-               synergy?.anchorConditionStatuses?.length
-                 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-                      ${synergy.anchorConditionStatuses
-                        .map((cs) => `<span class="p-badge mono ${cs.active ? 'p-cond-ok' : 'p-cond-warn'}" title="${esc(cs.note)}">${esc(cs.label)}${cs.active ? '' : ' · Inactive'}</span>`)
-                        .join('')}
-                    </div>`
-                 : ''
-             }
-             ${
-               squadTradeoffs.length
-                 ? `<div class="p-panel" style="padding:10px 14px;margin-bottom:12px;">
-                      <div class="p-row-title text-gold" style="font-size:12.5px;margin-bottom:6px;">Squad Tradeoffs &amp; Aura Stability</div>
-                      <div style="display:flex;flex-direction:column;gap:5px;">
-                        ${squadTradeoffs
-                          .map(
-                            (tf) =>
-                              `<div style="font-size:12px;line-height:1.45;">
-                                 <span class="p-badge mono ${tf.tone === 'ok' ? 'p-cond-ok' : 'p-cond-warn'}" style="margin-right:6px;">${esc(tf.title)}</span>
-                                 <span class="p-row-sub">${esc(tf.detail)}</span>
-                               </div>`
-                          )
-                          .join('')}
-                      </div>
-                    </div>`
-                 : ''
-             }
-             <div class="p-synergy-grid">
-               <div class="p-panel" style="padding:12px 14px;">
-                 <div class="p-row-title text-gold" style="margin-bottom:8px;">Ideal Baseline Partners</div>
-                 <div class="p-list" style="gap:8px;">
-                   ${(synergy?.idealPartners || [])
-                     .map(
-                       (p) => `
-                       <div class="p-sub-card">
-                         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                           <div class="p-row-left">
-                             ${renderAssetIcon('characters', p.key, p.name, 'icon-xs')}
-                             <strong style="font-size:13px;">${esc(p.name)}</strong>
-                           </div>
-                           <span class="p-badge mono ${p.owned ? 'p-badge-mint' : ''}">${p.owned ? 'Owned' : 'Unowned'}</span>
-                         </div>
-                         <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">${esc(p.reasons.join(' · ') || p.element)}</div>
-                         ${p.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:3px;">⚠ ${esc(p.tradeoffWarning)}</div>` : ''}
-                       </div>`
-                     )
-                     .join('')}
-                 </div>
-               </div>
-               <div class="p-panel" style="padding:12px 14px;">
-                 <div class="p-row-title text-mint" style="margin-bottom:8px;">
-                   Work With What You Got ${synergy?.missingTargetPartner ? `(Owned Substitutes for ${esc(synergy.missingTargetPartner.name)})` : '(Owned Roster Fit)'}
-                 </div>
-                 <div class="p-list" style="gap:8px;">
-                   ${
-                     synergy?.ownedSubstitutes?.length
-                       ? synergy.ownedSubstitutes
-                           .map(
-                             (sub) => `
-                             <div class="p-sub-card">
-                               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                                 <div class="p-row-left">
-                                   ${renderAssetIcon('characters', sub.key, sub.name, 'icon-xs')}
-                                   <strong style="font-size:13px;">${esc(sub.name)}</strong>
-                                 </div>
-                                 <span class="p-badge mono">${esc(sub.element)}</span>
-                               </div>
-                               <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">Covers: <strong>${esc(sub.covers.join(' · '))}</strong></div>
-                               ${sub.missing.length ? `<div class="muted" style="font-size:11px;margin-top:2px;">Missing: ${esc(sub.missing.join(' · '))}</div>` : ''}
-                               ${sub.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:2px;">⚠ Tradeoff: ${esc(sub.tradeoffWarning)}</div>` : ''}
-                             </div>`
-                           )
-                           .join('')
-                       : '<div class="muted" style="font-size:12.5px;">Add characters in your owned roster to evaluate substitutes.</div>'
-                   }
-                 </div>
-               </div>
-             </div>
-           </section>`
-        : ''
-    }
-
-    ${
-      conflicts.length
-        ? `<section class="p-panel" style="border-color:rgba(248,113,113,0.45);">
-             <div class="p-panel-head"><h2 class="p-panel-title text-coral">Weapon Sharing Conflicts (${conflicts.length})</h2></div>
-             <div class="p-list">
-               ${conflicts.map((c) => `<div class="p-row"><span>${esc(c.weaponName || c.weaponKey)}</span><span class="muted">${esc((c.teams || []).join(' · '))}</span></div>`).join('')}
-             </div>
-           </section>`
-        : ''
-    }
-
-    ${
-      !readOnly && ownedChars.length >= 4
-        ? `<section class="p-panel">
-             <div class="p-panel-head"><h2 class="p-panel-title">Create Squad</h2></div>
-             <form id="p-team-add-form" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      ${
+        !readOnly && activeTab === 'reels' && state.teamsAddOpen && ownedChars.length >= 4
+          ? `<form id="p-team-add-form" class="p-pf-add-drawer p-pf-accession" style="margin-top:12px;">
+               <span class="p-pf-acc-tag mono">REEL № ${String(teams.length + 1).padStart(2, '0')} · NEW SQUAD RECORDING</span>
                <label class="proto-field" style="min-width:170px;flex:1;">
-                 <span>Squad Name</span>
-                 <input type="text" name="name" placeholder="e.g. Furina Hypercarry" required class="p-input" />
+                 <span>Reel Name</span>
+                 <input type="text" name="name" placeholder="e.g. Mitya Hypercarry" required class="p-input" />
                </label>
-               <label class="proto-field" style="min-width:130px;">
+               <label class="proto-field" style="min-width:120px;">
                  <span>Archetype</span>
                  <input type="text" name="archetype" placeholder="Hypercarry" value="Hypercarry" class="p-input" />
                </label>
@@ -3972,118 +3956,389 @@ function renderTeamsView(container, account) {
                  .map(
                    (slot, idx) => `
                    <label class="proto-field" style="min-width:130px;">
-                     <span>Slot ${slot}</span>
+                     <span>0${slot}A ${slot === 1 ? 'Carry' : 'Support'}</span>
                      <select name="slot${slot}" class="proto-select">
                        ${ownedChars.map((c, ci) => `<option value="${esc(c.key)}" ${ci === idx ? 'selected' : ''}>${esc(getCharacterMeta(c.key).name)}</option>`).join('')}
                      </select>
                    </label>`
                  )
                  .join('')}
-               <button type="submit" class="p-btn p-btn-primary">+ Add Squad</button>
-             </form>
-           </section>`
-        : ''
-    }
+               <button type="submit" class="p-btn p-btn-primary">Stamp Reel</button>
+             </form>`
+          : ''
+      }
+    </section>
 
-    <div class="p-list" style="gap:16px;">
-      ${
-        teams.length
-          ? teams
-              .map((t) => {
-                const counts = {};
-                (t.members || []).forEach((m) => {
-                  const el = getCharacterMeta(m.characterKey).element;
-                  if (el) counts[el] = (counts[el] || 0) + 1;
-                });
-                const resonances = Object.entries(counts)
-                  .filter(([, n]) => n >= 2)
-                  .map(([el]) => RESONANCE_NAMES[el] || `${el} Resonance`);
-                const squadKeys = (t.members || []).map((m) => m.characterKey).filter(Boolean);
-                const teamCondNotes = [];
-                squadKeys.forEach((mk) => {
-                  const prof = allProfiles[mk];
-                  if (!prof) return;
-                  evaluateTeamConditions(mk, prof, squadKeys.filter((x) => x !== mk), 0, allProfiles, getCharacterMeta).forEach((cs) => {
-                    if (!cs.active && (cs.kind === 'elementLock' || cs.kind === 'elementCount')) {
-                      teamCondNotes.push({ ok: false, text: `${prof.name}: ${cs.label} inactive (${cs.note})` });
-                    } else if (cs.active && cs.kind === 'faction') {
-                      teamCondNotes.push({ ok: true, text: cs.label });
-                    }
-                  });
-                });
-                const hasFurina = squadKeys.includes('Furina');
-                if (hasFurina) {
-                  squadKeys.forEach((mk) => {
-                    const ch = allProfiles[mk]?.channelShares || {};
-                    if ((ch.lunar_crit || 0) + (ch.stellar_crit || 0) >= 0.4) {
-                      teamCondNotes.push({ ok: false, text: `${allProfiles[mk]?.name || mk}: Furina DMG% Fanfare does not buff Lunar/Stellar reaction DMG` });
-                    }
-                  });
-                }
+    ${
+      activeTab === 'synergy'
+        ? `<section class="p-panel p-lens-bar" style="margin-bottom:16px;">
+             <div class="p-mode-bar">
+               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                 <span class="p-row-sub mono" style="font-size:11.5px;">SCENARIO</span>
+                 ${Object.values(SCENARIO_MODES)
+                   .map(
+                     (sc) =>
+                       `<button type="button" class="p-pill-btn ${state.scenarioMode === sc.id ? 'active' : ''}" data-p-tscen="${sc.id}">${esc(sc.label)}</button>`
+                   )
+                   .join('')}
+               </div>
+               <label class="proto-field" style="min-width:210px;margin-left:auto;">
+                 <span>Enemy Target (RES Baseline)</span>
+                 <select id="p-enemy-target" class="proto-select">
+                   <option value="">Standard Target (10% All RES)</option>
+                   ${notableEnemies
+                     .map(
+                       (e) =>
+                         `<option value="${esc(String(e.id))}" ${String(state.selectedEnemyId) === String(e.id) ? 'selected' : ''}>${esc(e.name)}${e.category === 'weekly_boss' ? ' [Weekly]' : ''}</option>`
+                     )
+                     .join('')}
+                 </select>
+               </label>
+             </div>
+             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;">
+               <span class="p-row-sub mono" style="font-size:11px;">${selectedEnemy ? `${esc(selectedEnemy.name)} RES:` : 'Target RES:'}</span>
+               ${RES_LABELS.map(([rk, lbl]) => {
+                 const pctVal = Math.round((Number(activeResMap[rk] ?? 0.1) || 0) * 100);
+                 return `<span class="p-badge mono ${pctVal >= 50 ? 'p-badge-amber' : ''}" style="font-size:10.5px;">${lbl} ${pctVal}%</span>`;
+               }).join('')}
+             </div>
+             ${synergy?.modeNote ? `<div class="p-row-sub" style="font-size:12px;">${esc(synergy.modeNote)}</div>` : ''}
+           </section>
 
-                return `
-                  <section class="p-panel">
-                    <div class="p-panel-head">
-                      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <h2 class="p-panel-title">${esc(t.name)}</h2>
-                        <span class="p-badge">${esc(t.archetype || 'Squad')}</span>
-                      </div>
-                      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                        ${resonances.map((r) => `<span class="p-badge p-badge-mint">${esc(r)}</span>`).join('')}
-                        ${!readOnly ? `<button type="button" class="p-btn p-btn-ghost p-btn-xs text-coral" data-p-team-del="${esc(t.id)}">Delete</button>` : ''}
+           ${
+             profileKeys.length
+               ? `<section class="p-panel" style="margin-bottom:16px;">
+                    <div class="p-panel-head" style="flex-wrap:wrap;gap:8px;">
+                      <div>
+                        <h2 class="p-panel-title">Pairwise Synergy &amp; Owned Substitutes</h2>
+                        <div class="p-row-sub">Ideal partners vs. what your owned roster covers (and what breaks if you go off-script).</div>
                       </div>
                     </div>
-                    <div class="p-squad-grid">
-                      ${(t.members || [])
-                        .map((m) => {
-                          const cm = getCharacterMeta(m.characterKey);
-                          const elAttr = String(cm.element || '').toLowerCase();
-                          const owned = charMap.get(m.characterKey);
-                          const wKey = m.weaponKey || owned?.equippedWeapon?.key;
-                          const wMeta = wKey ? getWeaponMeta(wKey) : null;
-                          return `
-                            <button type="button" class="p-squad-slot" data-el="${esc(elAttr)}" data-p-jump-char="${esc(m.characterKey)}">
-                              <div class="p-row-left">
-                                ${renderAssetIcon('characters', m.characterKey, cm.name, 'icon-md')}
-                                <div style="min-width:0;">
-                                  <div class="p-row-title">${esc(cm.name)}</div>
-                                  <div class="p-row-sub">${esc(m.role || cm.element)}</div>
-                                </div>
-                              </div>
-                              ${
-                                wMeta
-                                  ? `<div class="p-row-left" style="padding-top:6px;border-top:1px solid var(--p-border);">
-                                       ${renderAssetIcon('weapons', wKey, wMeta.name, 'icon-xs')}
-                                       <span class="p-row-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(wMeta.name)}</span>
-                                     </div>`
-                                  : ''
-                              }
-                            </button>`;
-                        })
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
+                      <label class="proto-field" style="min-width:170px;">
+                        <span>01A · Anchor Carry</span>
+                        <select id="p-syn-anchor" class="proto-select">
+                          ${profileKeys
+                            .map(
+                              (k) =>
+                                `<option value="${esc(k)}" ${k === anchorKey ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
+                            )
+                            .join('')}
+                        </select>
+                      </label>
+                      ${[0, 1, 2]
+                        .map(
+                          (idx) => `
+                          <label class="proto-field" style="min-width:140px;">
+                            <span>0${idx + 2}A · Teammate</span>
+                            <select class="proto-select" data-p-syn-slot="${idx}">
+                              <option value="">— Open Slot —</option>
+                              ${profileKeys
+                                .filter((k) => k !== anchorKey)
+                                .map(
+                                  (k) =>
+                                    `<option value="${esc(k)}" ${state.synergyTeamSlots[idx] === k ? 'selected' : ''}>${esc(allProfiles[k]?.name || k)}${ownedKeysSet.has(k) ? ' ★' : ''}</option>`
+                                )
+                                .join('')}
+                            </select>
+                          </label>`
+                        )
                         .join('')}
                     </div>
-                      ${
-                        teamCondNotes.length
-                          ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-                               ${teamCondNotes.slice(0, 4).map((n) => `<span class="p-badge mono ${n.ok ? 'p-cond-ok' : 'p-cond-warn'}">${esc(n.text)}</span>`).join('')}
-                             </div>`
-                          : ''
-                      }
                     ${
-                      t.testLab?.rotationFeel || !readOnly
-                        ? `<label class="proto-field" style="margin-top:12px;">
-                             <span>Rotation Notes</span>
-                             <input type="text" class="p-input" placeholder="e.g. EQ -> Kazuha E -> Bennett EQ -> Carry..." value="${esc(t.testLab?.rotationFeel || '')}" data-p-team-note="${esc(t.id)}" ${readOnly ? 'disabled' : ''} />
-                           </label>`
+                      synergy?.anchorConditionStatuses?.length
+                        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                             ${synergy.anchorConditionStatuses
+                               .map((cs) => `<span class="p-badge mono ${cs.active ? 'p-cond-ok' : 'p-cond-warn'}" title="${esc(cs.note)}">${esc(cs.label)}${cs.active ? '' : ' · Inactive'}</span>`)
+                               .join('')}
+                           </div>`
                         : ''
                     }
-                  </section>`;
-              })
-              .join('')
-          : '<div class="p-panel muted">No squads saved yet. Create one above to track Elemental Resonance and weapon conflicts.</div>'
-      }
-    </div>
+                    ${
+                      squadTradeoffs.length
+                        ? `<div class="p-panel" style="padding:10px 14px;margin-bottom:12px;">
+                             <div class="p-row-title text-gold" style="font-size:12.5px;margin-bottom:6px;">Squad Tradeoffs &amp; Aura Stability</div>
+                             <div style="display:flex;flex-direction:column;gap:5px;">
+                               ${squadTradeoffs
+                                 .map(
+                                   (tf) =>
+                                     `<div style="font-size:12px;line-height:1.45;">
+                                        <span class="p-badge mono ${tf.tone === 'ok' ? 'p-cond-ok' : 'p-cond-warn'}" style="margin-right:6px;">${esc(tf.title)}</span>
+                                        <span class="p-row-sub">${esc(tf.detail)}</span>
+                                      </div>`
+                                 )
+                                 .join('')}
+                             </div>
+                           </div>`
+                        : ''
+                    }
+                    <div class="p-synergy-grid">
+                      <div class="p-panel" style="padding:12px 14px;">
+                        <div class="p-row-title text-gold" style="margin-bottom:8px;">Ideal Baseline Partners</div>
+                        <div class="p-list" style="gap:8px;">
+                          ${(synergy?.idealPartners || [])
+                            .map(
+                              (p) => `
+                              <div class="p-sub-card">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                  <div class="p-row-left">
+                                    ${renderAssetIcon('characters', p.key, p.name, 'icon-xs')}
+                                    <strong style="font-size:13px;">${esc(p.name)}</strong>
+                                  </div>
+                                  <span class="p-badge mono ${p.owned ? 'p-badge-mint' : ''}">${p.owned ? 'Owned' : 'Unowned'}</span>
+                                </div>
+                                <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">${esc(p.reasons.join(' · ') || p.element)}</div>
+                                ${p.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:3px;">⚠ ${esc(p.tradeoffWarning)}</div>` : ''}
+                              </div>`
+                            )
+                            .join('')}
+                        </div>
+                      </div>
+                      <div class="p-panel" style="padding:12px 14px;">
+                        <div class="p-row-title text-mint" style="margin-bottom:8px;">
+                          Work With What You Got ${synergy?.missingTargetPartner ? `(Owned Substitutes for ${esc(synergy.missingTargetPartner.name)})` : '(Owned Roster Fit)'}
+                        </div>
+                        <div class="p-list" style="gap:8px;">
+                          ${
+                            synergy?.ownedSubstitutes?.length
+                              ? synergy.ownedSubstitutes
+                                  .map(
+                                    (sub) => `
+                                    <div class="p-sub-card">
+                                      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                        <div class="p-row-left">
+                                          ${renderAssetIcon('characters', sub.key, sub.name, 'icon-xs')}
+                                          <strong style="font-size:13px;">${esc(sub.name)}</strong>
+                                        </div>
+                                        <span class="p-badge mono">${esc(sub.element)}</span>
+                                      </div>
+                                      <div class="p-row-sub" style="font-size:11.5px;margin-top:4px;">Covers: <strong>${esc(sub.covers.join(' · '))}</strong></div>
+                                      ${sub.missing.length ? `<div class="muted" style="font-size:11px;margin-top:2px;">Missing: ${esc(sub.missing.join(' · '))}</div>` : ''}
+                                      ${sub.tradeoffWarning ? `<div class="text-coral" style="font-size:11px;margin-top:2px;">⚠ Tradeoff: ${esc(sub.tradeoffWarning)}</div>` : ''}
+                                    </div>`
+                                  )
+                                  .join('')
+                              : '<div class="muted" style="font-size:12.5px;">Add characters in your owned roster to evaluate substitutes.</div>'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </section>`
+               : ''
+           }`
+        : `${
+            conflicts.length
+              ? `<section class="p-panel" style="border-color:rgba(248,113,113,0.45);margin-bottom:14px;">
+                   <div class="p-panel-head"><h2 class="p-panel-title text-coral">Weapon Sharing Conflicts (${conflicts.length})</h2></div>
+                   <div class="p-list">
+                     ${conflicts.map((c) => `<div class="p-row"><span>${esc(c.weaponName || c.weaponKey)}</span><span class="muted">${esc((c.teams || []).join(' · '))}</span></div>`).join('')}
+                   </div>
+                 </section>`
+              : ''
+          }
+          <div class="p-list" style="gap:18px;">
+            ${
+              teams.length
+                ? teams
+                    .map((t, tIdx) => {
+                      const counts = {};
+                      (t.members || []).forEach((m) => {
+                        const el = getCharacterMeta(m.characterKey).element;
+                        if (el) counts[el] = (counts[el] || 0) + 1;
+                      });
+                      const resonances = Object.entries(counts)
+                        .filter(([, n]) => n >= 2)
+                        .map(([el]) => RESONANCE_NAMES[el] || `${el} Resonance`);
+                      const squadKeys = (t.members || []).map((m) => m.characterKey).filter(Boolean);
+                      const audit = auditSquadForReel(t, charMap, account, allProfiles);
+                      const teamCondNotes = [];
+                      squadKeys.forEach((mk) => {
+                        const prof = allProfiles[mk];
+                        if (!prof) return;
+                        evaluateTeamConditions(mk, prof, squadKeys.filter((x) => x !== mk), 0, allProfiles, getCharacterMeta).forEach((cs) => {
+                          if (!cs.active && (cs.kind === 'elementLock' || cs.kind === 'elementCount')) {
+                            teamCondNotes.push({ ok: false, text: `${prof.name}: ${cs.label} inactive` });
+                          } else if (cs.active && cs.kind === 'faction') {
+                            teamCondNotes.push({ ok: true, text: cs.label });
+                          }
+                        });
+                      });
+                      if (squadKeys.includes('Furina')) {
+                        squadKeys.forEach((mk) => {
+                          const ch = allProfiles[mk]?.channelShares || {};
+                          if ((ch.lunar_crit || 0) + (ch.stellar_crit || 0) >= 0.4) {
+                            teamCondNotes.push({ ok: false, text: `${allProfiles[mk]?.name || mk}: Furina Fanfare doesn't buff Lunar/Stellar CRIT` });
+                          }
+                        });
+                      }
+                      const sideLabel = tIdx % 2 === 0 ? 'SIDE A' : 'SIDE B';
+                      const reelNum = String(tIdx + 1).padStart(2, '0');
+                      return `
+                        <article class="p-panel p-reel-card">
+                          <div class="p-reel-jcard-head">
+                            <div class="p-reel-jcard-left">
+                              <span class="p-reel-slab mono">REEL ${reelNum} · ${sideLabel}</span>
+                              <h2 class="p-reel-title">${esc(t.name)}</h2>
+                              <span class="p-stamp mono">${esc(t.archetype || 'SQUAD')}</span>
+                              ${resonances.map((r) => `<span class="p-stamp p-stamp-mint mono">${esc(r)}</span>`).join('')}
+                            </div>
+                            <div class="p-reel-jcard-right">
+                              <span class="p-ink-stamp-sm ${audit.stamp.cls} mono">${esc(audit.stamp.text)}</span>
+                              <button type="button" class="p-xref-link" data-p-load-synergy="${esc(t.id)}" title="Open this squad in Synergy Lab">→ Synergy Lab</button>
+                              ${!readOnly ? `<button type="button" class="p-btn p-btn-ghost p-btn-xs text-coral" data-p-team-del="${esc(t.id)}">×</button>` : ''}
+                            </div>
+                          </div>
+
+                          <div class="p-filmstrip" aria-label="${esc(t.name)} 4-Frame Contact Sheet">
+                            <div class="p-film-sprockets" aria-hidden="true"></div>
+                            <div class="p-film-frames">
+                              ${audit.frames
+                                .map((f) => {
+                                  const isBottleneck = f.status === 'coral' || f.status === 'amber';
+                                  const inQueue = prefarmSet.has(f.ck);
+                                  return `
+                                    <div class="p-film-frame ${isBottleneck ? `is-bottleneck is-${f.status}` : ''}" data-el="${esc(f.elAttr)}">
+                                      <div class="p-film-frame-top mono">
+                                        <span>0${f.idx + 1}A · ${esc(f.idx === 0 ? 'CARRY' : 'SUPPORT')}</span>
+                                        <span class="${f.owned ? 'text-gold' : 'muted'}">${f.owned ? `LV.${f.lv} · C${f.con}` : 'UNOWNED'}</span>
+                                      </div>
+                                      <button type="button" class="p-film-frame-body" data-p-jump-char="${esc(f.ck)}" title="Open ${esc(f.cm.name)} Sheet">
+                                        ${renderAssetIcon('characters', f.ck, f.cm.name, 'icon-md')}
+                                        <div style="min-width:0;flex:1;">
+                                          <div class="p-film-char-name">${esc(f.cm.name)}</div>
+                                          <div class="p-film-char-meta mono">${
+                                            f.wMeta ? `${esc(f.wMeta.name)} (R${f.eqWep?.refinement || 1})` : 'No Weapon'
+                                          }</div>
+                                          <div class="p-film-char-set mono">${esc(f.setSummary)}</div>
+                                        </div>
+                                      </button>
+                                      <div class="p-film-frame-foot mono">
+                                        <span class="p-film-status is-${f.status}">${esc(f.issueTag)}</span>
+                                        ${
+                                          isBottleneck && f.owned && !readOnly && !inQueue
+                                            ? `<button type="button" class="p-film-pf-btn" data-p-quick-pf="${esc(f.ck)}" title="Add ${esc(f.cm.name)} to Prefarm Queue">+ Prefarm</button>`
+                                            : `<span class="muted">${f.owned ? `A/E/Q ${f.tal.join('/')}` : '—'}</span>`
+                                        }
+                                      </div>
+                                    </div>`;
+                                })
+                                .join('')}
+                            </div>
+                            <div class="p-film-sprockets" aria-hidden="true"></div>
+                          </div>
+
+                          <div class="p-reel-audit-bar">
+                            <div class="p-reel-audit-cell">
+                              <span class="p-filter-lbl mono">TEAM INVESTMENT</span>
+                              <div class="mono" style="font-size:12.5px;">
+                                <strong class="${audit.builtCount === 4 ? 'text-mint' : 'text-amber'}">${audit.builtCount}/4 BUILT</strong>
+                                ${
+                                  audit.bottlenecks.length
+                                    ? `<span class="muted"> · Fix ${esc(audit.bottlenecks.map((b) => `${b.cm.name} (${b.issueTag})`).slice(0, 2).join(', '))}</span>`
+                                    : '<span class="text-mint"> · No build bottlenecks</span>'
+                                }
+                              </div>
+                            </div>
+                            <div class="p-reel-audit-cell">
+                              <span class="p-filter-lbl mono">ACTIVE TEAM BUFFS &amp; SHRED</span>
+                              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;">
+                                ${
+                                  audit.buffTags.length
+                                    ? audit.buffTags.map((bt) => `<span class="p-stamp p-stamp-mint mono">${esc(bt)}</span>`).join('')
+                                    : '<span class="p-stamp p-stamp-amber mono">NO 4PC TEAM BUFF SET</span>'
+                                }
+                                ${!audit.hasShred ? '<span class="p-stamp p-stamp-amber mono">NO RES SHRED</span>' : ''}
+                                ${audit.duplicateWarnings.map((dw) => `<span class="p-stamp p-stamp-coral mono">${esc(dw)}</span>`).join('')}
+                              </div>
+                            </div>
+                            <div class="p-reel-audit-cell">
+                              <span class="p-filter-lbl mono">SHOWCASE REALITY CHECK</span>
+                              <div class="p-row-sub" style="font-size:12px;">
+                                Your Carry: <strong class="mono text-gold">${esc(audit.leadBadge)}</strong> · ${audit.buffTags.length} buff set${audit.buffTags.length === 1 ? '' : 's'}
+                                ${audit.bottlenecks.length ? ' — support levels, buff talents &amp; shred explain most 2–3× showcase gaps.' : ' — full team foundation is ready for endgame clears.'}
+                              </div>
+                            </div>
+                          </div>
+
+                          ${
+                            teamCondNotes.length
+                              ? `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;">
+                                   ${teamCondNotes.slice(0, 4).map((n) => `<span class="p-badge mono ${n.ok ? 'p-cond-ok' : 'p-cond-warn'}">${esc(n.text)}</span>`).join('')}
+                                 </div>`
+                              : ''
+                          }
+
+                          ${
+                            t.testLab?.rotationFeel || !readOnly
+                              ? `<div class="p-reel-rot-row">
+                                   <span class="p-filter-lbl mono">ROTATION</span>
+                                   <input type="text" class="p-input p-reel-rot-input" placeholder="e.g. Support EQ → Shred E → Buffer EQ → Carry Combo..." value="${esc(t.testLab?.rotationFeel || '')}" data-p-team-note="${esc(t.id)}" ${readOnly ? 'disabled' : ''} />
+                                 </div>`
+                              : ''
+                          }
+                        </article>`;
+                    })
+                    .join('')
+                : `<div class="p-panel muted">No rotation reels recorded yet — click <strong>+ Record Reel</strong> above to audit your 4-character squad.</div>`
+            }
+          </div>`
+    }
   `;
+
+  container.querySelectorAll('[data-tm-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.teamsSubTab = btn.dataset.tmTab;
+      renderTeamsView(container, account);
+    });
+  });
+
+  container.querySelector('[data-tm-toggle-add]')?.addEventListener('click', () => {
+    state.teamsAddOpen = !state.teamsAddOpen;
+    renderTeamsView(container, account);
+  });
+
+  container.querySelectorAll('[data-p-load-synergy]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const t = teams.find((x) => x.id === btn.dataset.pLoadSynergy);
+      if (!t || !t.members?.length) return;
+      state.synergyAnchorKey = t.members[0].characterKey;
+      state.synergyTeamSlots = [
+        t.members[1]?.characterKey || '',
+        t.members[2]?.characterKey || '',
+        t.members[3]?.characterKey || ''
+      ];
+      state.teamsSubTab = 'synergy';
+      renderTeamsView(container, account);
+    });
+  });
+
+  container.querySelectorAll('[data-p-quick-pf]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (readOnly) return;
+      const ck = btn.dataset.pQuickPf;
+      if (!ck || prefarmSet.has(ck)) return;
+      const nextQueue = [
+        ...(account.prefarmQueue || []),
+        {
+          id: `pf_${Date.now()}_${ck}`,
+          characterKey: ck,
+          tier: (account.prefarmQueue || []).length + 1,
+          targetLevel: 80,
+          targetTalent: { auto: 1, skill: 8, burst: 8 }
+        }
+      ];
+      account.prefarmQueue = nextQueue;
+      renderTeamsView(container, account);
+      showToast(`Added ${getCharacterMeta(ck).name} to Prefarm Queue`);
+      if (!state.isPreviewDemo) {
+        try {
+          await saveAccountSection(state.sessionUser, 'prefarmQueue', account.prefarmQueue);
+        } catch (err) {
+          showToast(`Prefarm save failed: ${err.message}`);
+        }
+      }
+    });
+  });
 
   document.getElementById('p-team-add-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
