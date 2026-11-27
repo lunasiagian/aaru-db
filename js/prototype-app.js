@@ -4232,14 +4232,20 @@ function renderTeamsView(container, account) {
                       const squadKeys = (t.members || []).map((m) => m.characterKey).filter(Boolean);
                       const audit = auditSquadForReel(t, charMap, account, allProfiles);
                       const teamCondNotes = [];
+                      const seenCondText = new Set();
+                      const pushCond = (ok, text) => {
+                        if (!text || seenCondText.has(text)) return;
+                        seenCondText.add(text);
+                        teamCondNotes.push({ ok, text });
+                      };
                       squadKeys.forEach((mk) => {
                         const prof = allProfiles[mk];
                         if (!prof) return;
                         evaluateTeamConditions(mk, prof, squadKeys.filter((x) => x !== mk), 0, allProfiles, getCharacterMeta).forEach((cs) => {
                           if (!cs.active && (cs.kind === 'elementLock' || cs.kind === 'elementCount')) {
-                            teamCondNotes.push({ ok: false, text: `${prof.name}: ${cs.label} inactive` });
+                            pushCond(false, `${prof.name}: ${cs.label} inactive`);
                           } else if (cs.active && cs.kind === 'faction') {
-                            teamCondNotes.push({ ok: true, text: cs.label });
+                            pushCond(true, cs.label);
                           }
                         });
                       });
@@ -4247,7 +4253,7 @@ function renderTeamsView(container, account) {
                         squadKeys.forEach((mk) => {
                           const ch = allProfiles[mk]?.channelShares || {};
                           if ((ch.lunar_crit || 0) + (ch.stellar_crit || 0) >= 0.4) {
-                            teamCondNotes.push({ ok: false, text: `${allProfiles[mk]?.name || mk}: Furina Fanfare doesn't buff Lunar/Stellar CRIT` });
+                            pushCond(false, `${allProfiles[mk]?.name || mk}: Furina Fanfare doesn't buff Lunar/Stellar CRIT`);
                           }
                         });
                       }
@@ -4344,8 +4350,9 @@ function renderTeamsView(container, account) {
 
                           ${
                             teamCondNotes.length
-                              ? `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;">
-                                   ${teamCondNotes.slice(0, 4).map((n) => `<span class="p-badge mono ${n.ok ? 'p-cond-ok' : 'p-cond-warn'}">${esc(n.text)}</span>`).join('')}
+                              ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--p-border);background:rgba(6,8,18,0.28);">
+                                   <span class="p-filter-lbl mono">FACTION &amp; KIT</span>
+                                   ${teamCondNotes.slice(0, 4).map((n) => `<span class="p-stamp mono ${n.ok ? 'p-stamp-mint' : 'p-stamp-amber'}">${esc(n.text)}</span>`).join('')}
                                  </div>`
                               : ''
                           }
