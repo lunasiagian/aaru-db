@@ -1193,6 +1193,13 @@ function renderTodayView(container, account) {
 
   container.innerHTML = `
     <section class="p-patch-bar p-hud-hero p-hud-poster" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
+      ${
+        leadTarget
+          ? `<div class="p-hud-poster-bg" aria-hidden="true">
+               ${renderGachaSplash(leadTarget.characterKey, '')}
+             </div>`
+          : ''
+      }
       <div class="p-patch-primary">
         <div class="p-patch-now">
           <span class="p-badge p-hero-pill-date mono">${esc(patchCal.shortDate)} · ${esc(patchCal.currentLabel)} · DAY ${patchCal.dayInPatch}/42</span>
@@ -1202,34 +1209,19 @@ function renderTodayView(container, account) {
               : `<span class="p-badge p-hero-pill-date mono">DAILY RESET · ${esc(patchCal.countdownText)}</span>`
           }
         </div>
-        <div class="p-hud-hero-banner-row">
+        <div class="p-hud-poster-lockup">
           <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)}</h2>
-        </div>
-        <div class="p-hero-poster-meta">
-          <span class="p-hero-local-time mono">DROPS ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</span>
-          ${patchCal.nextBannerNote ? `<span class="p-hero-poster-note">${esc(patchCal.nextBannerNote)}</span>` : ''}
+          ${patchCal.nextBannerNote ? `<div class="p-hero-poster-cast mono">${esc(patchCal.nextBannerNote).toUpperCase()}</div>` : ''}
         </div>
         <div class="p-hero-domain-ledger mono" title="Remaining domain days before ${esc(patchCal.nextLabel)}">
+          <span class="p-hero-local-time">DROPS ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</span>
+          <span class="p-ledger-sep">·</span>
           <span>${patchCal.monThuSlots} M/TH</span>
           <span>${patchCal.tueFriSlots} TU/F</span>
           <span>${patchCal.wedSatSlots} W/SA</span>
           <strong class="text-mint">${patchCal.sunSlots} ALL-OPEN</strong>
         </div>
       </div>
-
-      ${
-        leadTarget
-          ? `<div class="p-hud-poster-plate">
-               <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
-               <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
-               ${renderGachaSplash(leadTarget.characterKey, leadMeta?.name || '')}
-               <div class="p-hud-poster-cap mono">
-                 <span>#1 PRIORITY</span>
-                 <strong>${esc(leadMeta?.name || leadTarget.characterKey).toUpperCase()}</strong>
-               </div>
-             </div>`
-          : ''
-      }
 
       <div class="p-patch-metrics">
         <span class="p-stub-kicker mono">COUNTDOWN</span>
