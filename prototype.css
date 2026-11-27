@@ -4932,6 +4932,47 @@ html, body {
   background: var(--p-surface) !important;
   border-top: 2px solid var(--el-ink, var(--p-border-strong)) !important;
 }
+
+/* 6. Archivist's Margin Handwriting (Caveat — Strictly Lore, Notes & Annotations) */
+:root {
+  --p-font-hand: 'Caveat', cursive;
+}
+.p-wep-lore p,
+.p-vault-modal-desc {
+  font-family: var(--p-font-hand) !important;
+  font-style: normal !important;
+  font-size: 17.5px !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.01em;
+  color: #D7DFEF !important;
+}
+.p-reel-rot-input {
+  font-family: var(--p-font-hand) !important;
+  font-size: 17px !important;
+  letter-spacing: 0.02em;
+  color: #E5EBF7 !important;
+}
+.p-reel-rot-input::placeholder {
+  font-family: var(--p-font-hand) !important;
+  font-size: 16px !important;
+  color: var(--p-text-muted);
+}
+.p-callout-note {
+  border-radius: 1px !important;
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px dashed var(--p-border-strong) !important;
+  padding: 10px 4px 2px !important;
+  font-family: var(--p-font-hand) !important;
+  font-size: 17px !important;
+  line-height: 1.45 !important;
+  color: #D7DFEF !important;
+}
+.p-callout-note strong {
+  font-family: var(--p-font-hand) !important;
+  font-weight: 600;
+  color: var(--p-gold);
+}
 .p-vault-modal-barcode-row {
   margin-top: 14px;
   padding-top: 10px;
