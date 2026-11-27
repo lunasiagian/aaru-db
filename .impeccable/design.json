@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-26T11:41:00-05:00",
+  "generatedAt": "2026-11-27T01:05:35-05:00",
   "title": "Design System: AaruDB",
   "extensions": {
     "colorMeta": {
@@ -300,28 +300,34 @@
         "displayName": "Dendro Lime",
         "canonical": "#84CC16",
         "tonalRamp": ["#1a2e05", "#365314", "#4d7c0f", "#65a30d", "#84CC16", "#a3e635", "#bef264", "#ecfccb"]
+      },
+      "nat-nodkrai": {
+        "role": "accent",
+        "displayName": "Nod-Krai Moonlight",
+        "canonical": "#7DD3FC",
+        "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#38bdf8", "#7DD3FC", "#bae6fd", "#e0f2fe"]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Observatory View Title",
-        "purpose": "View titles (Today, Prefarm, Characters, Armory, Teams Lab, Vault) in Fraunces 600."
+        "displayName": "Archival Reel Poster Header",
+        "purpose": "ALL-CAPS Nanum Myeongjo (700, 0.06em tracking) for poster hero lockups, character dossier names, and view titles."
       },
       "headline": {
-        "displayName": "Panel Section Heading",
-        "purpose": "Panel titles (Priority Targets, Open Domains, Milestone Pivot) in Inter 600."
+        "displayName": "Panel Section Subheader",
+        "purpose": "Albert Sans (600) for panel titles, section subheaders, and card titles."
       },
       "body": {
-        "displayName": "Operational UI Prose",
-        "purpose": "Strategy explanations, Surge Trap callouts, and kit/build prose in Inter 400."
+        "displayName": "Operational UI Copy",
+        "purpose": "Albert Sans (400) for scannable bullet lists, kit descriptions, and item lore."
       },
       "label": {
-        "displayName": "Status & Filter Label",
-        "purpose": "Status badges, filter chips, and compact metadata in Inter 500."
+        "displayName": "Filter & Metadata Label",
+        "purpose": "Albert Sans (500) for filter pills, cross-reference links, and compact metadata."
       },
       "mono": {
-        "displayName": "Tabular Resin & Combat Telemetry",
-        "purpose": "Patch countdowns, Resin budgets, Func/Max %, Mora horizons, wRV%, CV, and ER% in JetBrains Mono with tabular-nums."
+        "displayName": "Condensed Ticket & Telemetry Numerals",
+        "purpose": "Barlow Condensed (600, 0.03em tracking, tabular-nums) for countdown stubs, Resin budgets, CV, wRV%, ER%, and № catalog serials."
       }
     },
     "shadows": [
@@ -401,40 +407,45 @@
     }
   ],
   "narrative": {
-    "northStar": "Teyvat Observatory — Obsidian Slate",
-    "overview": "AaruDB's active workspace (`prototype.html` / `prototype.css`) is an Operate-mode Genshin Impact command deck built for daily resin decisions, patch-calendar prefarming, and high-density build inspection. Deep nocturnal obsidian surfaces (`#060812` → `#0C1120` → `#121A2F`) carry whisper-thin `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`) and high-contrast Ley-Line cyan (`#5EEAD4`) primary actions, keeping attention on live numbers and character/material icons rather than ornamental chrome.\n\nThe layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`.",
+    "northStar": "Aaru — The Archival Reel",
+    "overview": "Philosophically, Aaru is memory storage—an archival system. AaruDB interprets that through tactile archival ephemera: typography movie posters with full-bleed cinematic character stills, Japanese commemorative transit tickets with hairline SVG zigzag tear-off stubs, library checkout ledgers, botanical encyclopedia cross-references, calibrated 3-instrument rulers, and risograph print zines—grounded in dark Obsidian Slate.\n\nHeaders command in ALL-CAPS Nanum Myeongjo (0.06em tracking), subheaders and body copy stay crisp in Albert Sans, and every countdown, stat, and № serial locks to Barlow Condensed (600, tabular-nums) instead of trite tech monospace.",
     "keyCharacteristics": [
-      "Deep Obsidian Slate tonal stack (#060812 / #0C1120 / #121A2F / #1A2440) framed by 1px antique gold hairlines (rgba(212, 175, 55, 0.16))",
-      "Single focal CTA accent in Ley-Line cyan (#5EEAD4), paired with antique gold (#D4AF37) for milestones/targets, mint (#34D399) for funded/ready states, and coral (#F87171) for deficits and Surge Trap alerts",
-      "Three-role typography: Fraunces page titles, Inter UI chrome & prose, and JetBrains Mono tabular-nums for all telemetry",
-      "Flat, single-layer Operate workspace: floating top command bar, centered stage, full-width patch calendar strip, 2-column strategy & resin grid, and zero nested cards"
+      "Deep Obsidian Slate tonal stack (#060812 / #0C1120 / #121A2F / #1A2440) framed by 1px antique gold hairlines",
+      "ALL-CAPS Nanum Myeongjo headers, Albert Sans subheaders & body copy, and Barlow Condensed tabular ticket numerals & stamps",
+      "Crisp 2px–3px archival geometry with + corner crop marks, hairline SVG zigzag tear seams, rotated transit stamps, barcodes, and optical risograph halftones",
+      "One unapologetic solid-ink focal slab per view over 90% dead-quiet obsidian ledger, plus 3-instrument calibrated rulers, Metro Milestone tracks, and nation-coded Vault edge glows"
     ],
     "rules": [
       {
         "name": "The One-Layer Surface Rule",
-        "body": "Never nest bordered cards inside bordered cards; inside a panel, separate subsections with 1px horizontal hairlines (--p-border) or whitespace instead of extra boxes.",
+        "body": "Never nest bordered cards inside bordered cards; inside a panel, separate subsections with 1px horizontal hairlines (--p-border) or dashed dividers instead of extra boxes.",
         "section": "colors"
       },
       {
-        "name": "The No-Kicker Rule",
-        "body": "Never stack small uppercase eyebrow/kicker labels directly above section headings; let the heading and its inline right-hand metadata badge carry the context cleanly.",
+        "name": "The One Solid Ink Slab Rule",
+        "body": "Keep 90% of every view dead-quiet obsidian ledger; allow one unapologetic solid-ink focal slab per view with deep obsidian text (#060812).",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Flavor-Text Stub Rule",
+        "body": "Ticket stubs and calibrated gauges rely on pure visual cues (circular stamps, barcodes, icons, tick needles, vertical № serials)—never pad them with redundant explanatory labels.",
         "section": "typography"
       },
       {
         "name": "The Hairline-Only Rule",
-        "body": "Structural borders stay at 1px solid var(--p-border) (or var(--p-border-strong) on focus/hover); never use thick (> 1px) colored left or right accent stripes on cards or alert banners.",
+        "body": "Structural borders stay at 1px solid var(--p-border) (or 2px top-edge rarity/element/nation bar); never use thick (> 1px) colored left or right accent stripes on cards or alert banners.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep every numerical figure (dates, resin, Mora, Func %, Max %, wRV%, CV, ER%) in JetBrains Mono with tabular-nums.",
+      "Do keep every numerical stat, countdown, stamp, and serial in Barlow Condensed (600) with tabular-nums—never default to generic tech monospace.",
       "Do preserve authentic Genshin Impact terminology (Domains, Blossom of Wealth, Fragile Resin, Talents, Ascension).",
-      "Do keep surfaces flat at rest with 1px gold hairlines and single-layer panels."
+      "Do use pure visual print cues (zigzag seams, transit stamps, barcodes, tick-mark rulers, metro dot-lines) instead of explanatory paragraphs."
     ],
     "donts": [
       "Don't nest bordered cards inside bordered cards or add > 1px colored left/right accent stripes.",
-      "Don't place uppercase eyebrow/kicker labels above section headings.",
-      "Don't break live data pipelines (GOOD v3 import, Apps Script sync, Dimbreath/Lunaris catalog hydration, or verify_upgrade.mjs)."
+      "Don't put flavor text inside ticket stubs or dense prose walls inside HUD strategy panels.",
+      "Don't break live data pipelines (GOOD v3 import, Apps Script sync, Dimbreath/Lunaris/Yatta catalog hydration, or verify_upgrade.mjs)."
     ]
   }
 }

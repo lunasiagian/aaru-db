@@ -1,6 +1,6 @@
 ---
 name: AaruDB
-description: Teyvat Observatory — Neutral Obsidian Slate Operate-mode workspace with antique gold hairlines, Ley-Line cyan focus accents, Fraunces display titles, Inter UI copy, and JetBrains Mono tabular telemetry.
+description: Aaru Archival Reel — Obsidian Slate memory-storage workspace fusing typography movie posters, commemorative transit ticket stubs, hairline specimen ledgers, ALL-CAPS Nanum Myeongjo headers, Albert Sans body copy, and Barlow Condensed tabular stamps.
 colors:
   bg-canvas: "#060812"
   bg-surface: "#0C1120"
@@ -26,39 +26,42 @@ colors:
   el-anemo: "#34D399"
   el-geo: "#FBBF24"
   el-dendro: "#84CC16"
+  nat-nodkrai: "#7DD3FC"
 typography:
   display:
-    fontFamily: "'Fraunces', Georgia, serif"
+    fontFamily: "'Nanum Myeongjo', Georgia, serif"
     fontSize: "1.75rem"
-    fontWeight: 600
-    lineHeight: 1.15
-    letterSpacing: "-0.02em"
+    fontWeight: 700
+    lineHeight: 1.08
+    letterSpacing: "0.06em"
   headline:
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+    fontFamily: "'Albert Sans', system-ui, -apple-system, sans-serif"
     fontSize: "0.9375rem"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+    fontFamily: "'Albert Sans', system-ui, -apple-system, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "0em"
   label:
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
+    fontFamily: "'Albert Sans', system-ui, -apple-system, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: "0em"
   mono:
-    fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace"
-    fontSize: "0.8125rem"
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: "0em"
+    fontFamily: "'Barlow Condensed', 'Albert Sans', sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 600
+    lineHeight: 1.35
+    letterSpacing: "0.03em"
     fontFeature: "'tnum' 1"
 rounded:
+  plate: "2px"
+  ticket: "3px"
   sm: "8px"
   md: "12px"
   pill: "999px"
@@ -82,117 +85,122 @@ components:
   panel-surface:
     backgroundColor: "{colors.bg-surface}"
     textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.ticket}"
     padding: "16px 20px"
+  specimen-plate:
+    backgroundColor: "{colors.bg-surface}"
+    textColor: "{colors.text-primary}"
+    rounded: "{rounded.plate}"
+    padding: "12px 14px"
   badge-pill:
     backgroundColor: "{colors.bg-surface-2}"
     textColor: "{colors.text-secondary}"
-    rounded: "{rounded.pill}"
-    padding: "3px 9px"
+    rounded: "{rounded.plate}"
+    padding: "2px 7px"
 ---
 
 # Design System: AaruDB
 
 ## Overview
 
-**Creative North Star: "Teyvat Observatory — Obsidian Slate"**
+**Creative North Star: "Aaru — The Archival Reel"**
 
-AaruDB's active workspace (`prototype.html` / `prototype.css`) is an Operate-mode Genshin Impact command deck built for daily resin decisions, patch-calendar prefarming, and high-density build inspection. Deep nocturnal obsidian surfaces (`#060812` → `#0C1120` → `#121A2F`) carry whisper-thin `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`) and high-contrast Ley-Line cyan (`#5EEAD4`) primary actions, keeping attention on live numbers and character/material icons rather than ornamental chrome.
+Philosophically, **Aaru** is memory storage—an archival system. Rather than literal desert-sandstone fantasy tropes, AaruDB interprets that philosophy through **tactile archival ephemera**: typography movie posters with full-bleed cinematic character stills, Japanese commemorative transit tickets with serrated tear-off stubs, library checkout ledgers, botanical encyclopedia cross-references (`→ Teams Lab`, `→ Prefarm Queue`), calibrated field-guide rulers, and risograph print zines—all grounded in nocturnal Obsidian Slate (`#060812` → `#0C1120` → `#121A2F`).
 
-The layout favors calm, scan-first strips and single-layer panels over nested SaaS card bloat. Headings use warm editorial `Fraunces` at the page title level while UI controls stay crisp in `Inter` and every resin count, countdown, percentage, and combat stat locks to `JetBrains Mono` with `tabular-nums`. *(Archived `legacy.html` / `styles.css` is locked to dark Nocturnal Lapis.)*
+Every view balances **dead-quiet hairline ledger discipline** (90% of the canvas) against **controlled graphic voltage**: one unapologetic solid-ink focal slab per view, poster-scale ALL-CAPS `Nanum Myeongjo` headers colliding with tiny `10px` catalog coordinates, and pure-visual ticket cues (zigzag tear edges, rotated double-ring transit stamps, barcodes, vertical `№` serials) that eliminate flavor text.
 
 **Key Characteristics:**
-- Deep Obsidian Slate tonal stack (`#060812` / `#0C1120` / `#121A2F` / `#1A2440`) framed by `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)`)
-- Single focal CTA accent in Ley-Line cyan (`#5EEAD4`), paired with antique gold (`#D4AF37`) for milestones/targets, mint (`#34D399`) for funded/ready states, and coral (`#F87171`) for deficits and Surge Trap alerts
-- Three-role typography: `Fraunces` page titles, `Inter` UI chrome & prose, and `JetBrains Mono` `tabular-nums` for all telemetry
-- Flat, single-layer Operate workspace: floating top command bar, centered stage, full-width patch calendar strip, 2-column strategy & resin grid, and zero nested cards
+- Deep Obsidian Slate tonal stack (`#060812` / `#0C1120` / `#121A2F` / `#1A2440`) framed by crisp `1px` antique gold hairlines (`rgba(212, 175, 55, 0.16)` / `0.34`)
+- Three-role editorial typography: **ALL-CAPS `Nanum Myeongjo`** (`0.06em` tracking) for headers, **`Albert Sans`** for subheaders & body copy, and **`Barlow Condensed`** (`600`, `tabular-nums`) for ticket numerals, stats, and archival stamps—avoiding trite tech monospace
+- Crisp archival geometry (`2px–3px` corners on specimen plates, ticket stubs, weapon cards, and vault tiles) with `+` corner crop marks, optical risograph linework/halftones, and hairline SVG zigzag tear seams
+- Pure visual telemetry over walls of text: calibrated 3-instrument tick-mark rulers (`Primary/CRIT` · `Roll Quality wRV%` · `ER%`), 3-station Metro Milestone tracks (`Start → LV.80 → MAX`), and nation-coded Vault edge glows
 
 ## Colors
 
-Chromatic midnight slate surfaces eliminate washed-out neutral greys while keeping contrast crisp across dense tables and telemetry strips.
+Chromatic midnight slate surfaces eliminate washed-out neutral greys while keeping contrast razor-sharp across dense ledgers, specimen grids, and full-bleed character splashes.
 
 ### Primary & Semantic Accents
 - **Ley-Line Cyan (`--p-accent`):** `#5EEAD4` (hover `#86F4E2`, dark ink `#071316`) — Primary CTAs (`+ Import`), active focus rings, and interactive progress highlights.
-- **Antique Gold (`--p-gold`):** `#D4AF37` — Brand emblem, active navigation indicators, All Domains Open badges, and `1px` structural border tint (`rgba(212, 175, 55, 0.16)` / `0.34`).
-- **Ready Mint (`--p-mint`):** `#34D399` — `100%` Lv.80 Ready completion, `0 Ley Lines Needed` Mora status, and safe ER/readiness states.
-- **Deficit Coral (`--p-coral`):** `#F87171` — Material shortages, urgent Blossom of Wealth warnings, and **New Boss Week-1 Lock** alerts.
-- **Caution Amber (`--p-amber`):** `#FBBF24` — Partner read-only banner and mid-priority warnings.
-- **7-Element Palette (`--el-*`):** Pyro `#F87171`, Hydro `#38BDF8`, Electro `#C084FC`, Cryo `#67E8F9`, Anemo `#34D399`, Geo `#FBBF24`, Dendro `#84CC16`.
+- **Antique Gold (`--p-gold`):** `#D4AF37` — Brand emblem, active navigation, circular transit stamps, `5★` ink slabs, zigzag tear-edge hairlines, and `1px` structural border tint (`rgba(212, 175, 55, 0.16)` / `0.34`).
+- **Ready Mint (`--p-mint`):** `#34D399` — Solid-ink `ALL DOMAINS OPEN` slab, `PLAYABLE DAY 1 ✓`, `0 Ley Lines Needed`, and safe ER/roll thresholds.
+- **Deficit Coral (`--p-coral`):** `#F87171` — Material shortages, urgent Blossom of Wealth warnings, dead main-stat stamps (`OFF-KIT MAIN`, `0-ENERGY ER`, `WRONG ELEMENT`), and **New Boss Week-1 Lock** alerts.
+- **Caution Amber (`--p-amber`):** `#FBBF24` — Partner read-only banner, `UPGRADE TARGET` artifact stamps, and short ER% indicators.
+- **7-Element & Nation Palette (`--el-*`, `--nat-ink`):**
+  - Pyro / Natlan `#F87171`
+  - Hydro / Fontaine `#38BDF8`
+  - Electro / Inazuma `#C084FC`
+  - Cryo / Snezhnaya `#67E8F9`
+  - Anemo / Mondstadt `#34D399`
+  - Geo / Liyue `#FBBF24`
+  - Dendro / Sumeru `#84CC16`
+  - Nod-Krai `#7DD3FC`
 
 ### Neutral Obsidian Stack
-- **Canvas (`--p-bg`):** `#060812` with subtle overhead gold (`rgba(212, 175, 55, 0.08)`) and cyan (`rgba(94, 234, 212, 0.06)`) radial ambient wash.
-- **Surface (`--p-surface`):** `#0C1120` — Top command bar, primary panels, and modal containers.
-- **Elevated Inset (`--p-surface-2`):** `#121A2F` — Secondary buttons, inputs, and table header bands.
+- **Canvas (`--p-bg`):** `#060812` with subtle overhead gold (`rgba(212, 175, 55, 0.08)`) and cyan (`rgba(94, 234, 212, 0.06)`) ambient wash.
+- **Surface (`--p-surface`):** `#0C1120` — Top command bar, primary panels, specimen plates, and modal containers.
+- **Elevated Inset (`--p-surface-2`):** `#121A2F` — Secondary buttons, inputs, icon specimen frames, and table header bands.
 - **Interactive Hover (`--p-hover`):** `#1A2440` — Row and button hover states.
 - **Ink Ramp:** Primary `#F0F3FA`, Secondary `#B2BED6`, Muted `#7E8BA8`.
 
 ### Named Rules
-**The One-Layer Surface Rule.** Never nest bordered cards inside bordered cards; inside a panel, separate subsections with `1px` horizontal hairlines (`--p-border`) or whitespace instead of extra boxes.
+- **The One-Layer Surface Rule.** Never nest bordered cards inside bordered cards; inside a panel, separate subsections with `1px` horizontal hairlines (`--p-border`) or dashed dividers instead of extra boxes.
+- **The One Solid Ink Slab Rule.** Keep 90% of every view dead-quiet obsidian ledger; allow one unapologetic solid-ink focal slab per view (`ALL DOMAINS OPEN`, `#1` Priority / `#1` BiS, `C0·R1` dossier stamp, `5★` Armory slab) with deep obsidian text (`#060812`).
 
 ## Typography
 
-**Display Font:** `'Fraunces'` (`Georgia, serif` fallback)
-**Body & UI Font:** `'Inter'` (`system-ui, -apple-system, sans-serif` fallback)
-**Telemetry Font:** `'JetBrains Mono'` (`ui-monospace, SFMono-Regular, monospace` fallback)
-
-**Character:** Quiet editorial authority at the top of each view (`Fraunces`), neutral high-legibility controls (`Inter`), and razor-aligned tabular figures (`JetBrains Mono`) for resin math, countdowns, and combat multipliers.
+**Display Font:** `'Nanum Myeongjo'` (`Georgia, serif` fallback) — **ALL CAPS** with `0.06em` tracking on headers (italic sentence-case reserved strictly for weapon lore).
+**Subheaders & Body Font:** `'Albert Sans'` (`system-ui, -apple-system, sans-serif` fallback).
+**Tabular Stats, Pills & Stamps Font:** `'Barlow Condensed'` (`'Albert Sans', sans-serif` fallback) — condensed grotesque numerals (`600`, `0.03em` tracking, `tabular-nums`) inspired by printed transit tickets and poster metadata.
 
 ### Hierarchy
-- **Display** (`Fraunces`, `600`, `28px`, `line-height: 1.15`, `-0.02em`): View titles (`Today`, `Prefarm`, `Characters`, `Armory`, `Teams Lab`, `Vault`).
-- **Headline** (`Inter`, `600`, `15px`, `line-height: 1.3`): Panel titles (`Priority Targets`, `Open Domains`, `Milestone Pivot`).
-- **Body** (`Inter`, `400`, `14px`, `line-height: 1.5`): Strategy explanations, Surge Trap callouts, and kit/build prose.
-- **Label** (`Inter`, `500`, `12px`, `line-height: 1.3`): Status badges, filter chips, and compact metadata.
-- **Mono Telemetry** (`JetBrains Mono`, `500`, `12px–13px`, `tabular-nums`): Patch countdowns, Resin budgets, `Func X% · Max Y%`, Mora horizons, `wRV%`, `CV`, and `ER%`.
+- **Poster Hero Title** (`Nanum Myeongjo`, `700`, `clamp(34px, 4vw, 52px)`, `UPPERCASE`, `0.06em`): Today banner lockup (`7.3 PHASE 1`) and Character Dossier names.
+- **View Display** (`Nanum Myeongjo`, `700`, `24px–28px`, `UPPERCASE`, `0.06em`): View titles, modal titles, and card headlines.
+- **Subheader / Panel Title** (`Albert Sans`, `600`, `15px`, `line-height: 1.3`): Panel titles (`Build Queue & Missing Materials`, `Equipped Artifact Rolls`).
+- **Body** (`Albert Sans`, `400`, `14px`, `line-height: 1.5`): Concise bulleted guidance, kit descriptions, and item lore.
+- **Tabular Telemetry & Stamps** (`Barlow Condensed`, `600`, `11px–32px`, `tabular-nums`, `0.03em–0.08em`): Patch countdowns, Resin budgets, `CV`, `wRV%`, `ER%`, `№` serials, and compact stamps.
 
 ### Named Rules
-**The No-Kicker Rule.** Never stack small uppercase eyebrow/kicker labels directly above section headings; let the heading and its inline right-hand metadata badge carry the context cleanly.
+- **The No-Flavor-Text Stub Rule.** Ticket stubs and calibrated gauges rely on pure visual cues (circular stamps, barcodes, icons, tick needles, vertical `№` serials)—never pad them with redundant explanatory labels.
+- **The 2-Second Intuition Rule.** Every progress bar, chart, and alert must be readable in under 2 seconds (e.g., 3-station `Start → LV.80 → MAX` metro tracks and bulleted action items instead of paragraph walls).
 
 ## Layout
 
-Centered single-column Observatory stage (`max-width: 1280px`) anchored beneath a sticky top command bar (`AaruDB` mark + account switcher on left, 6 primary view tabs centered, Quick Jump `/`, server date/reset button, and `+ Import` on right).
+Centered single-column Observatory stage (`max-width: 1280px`) anchored beneath a sticky top command bar (`AaruDB` mark + account switcher on left, 6 primary view tabs centered, Quick Jump `/`, server reset button, and `+ Import` on right).
 
-On `Today`, information flows top-to-bottom in strict decision order:
-1. **Patch Calendar Strip (`.p-patch-bar`):** In-game date, 42-day patch/phase day, All Domains Open status, dual-timezone next-banner countdown, natural Resin budget, and remaining weekday/All-Open domain days.
-2. **Resource Strip (`.p-resource-strip`):** Live Mora (+ Blossom of Wealth timing badge), Hero's Wit, Fragile Resin, and Primogem/Fate reserves.
-3. **2-Column Strategy Strip (`.p-strategy-strip`):** Build Order (`Lv.80 → Crown`) + New Boss Week-1 Lock alert (left) paired with Best Domain Today + Blossom of Wealth note (right); collapses to `1fr` at `<= 960px`.
-4. **Build Queue & Open Domains:** Character cards with dual-layer `Lv.80 X% · Max Y%` progress bars and domain tiles auto-unlocked during the first 7 days of each banner half.
+- **Today (`HUD`):**
+  1. **Half-Poster / Half-Ticket-Stub Hero (`.p-hud-poster.p-hud-overdrive`):** Left 2/3 typography movie poster (`7.3` monumental cropped watermark, ALL-CAPS headline, full-bleed right-anchored character splash with micro-halftone screen, station-dot domain ledger); right 1/3 pure-visual collector ticket stub separated by a **hairline SVG zigzag tear seam**, `2px` animated foil security thread, rotated double-ring transit stamp, barcode, single-line countdown, Original Resin count, and rotated vertical `№` serial.
+  2. **Compact Resource Ledger (`.p-resource-strip`):** Live Spare Mora (with inline `Edit` input since GOOD v3 cannot scan Mora), Spare Hero's Wit, and Wish Stash.
+  3. **2-Column Strategy Strip (`.p-strategy-strip`):** Scannable bulleted Build Order (`Focus Resin on #2 Next` + Week-1 Boss Lock) paired with balanced `Best Domain Today` + bottom-anchored `Mora Plan` row.
+  4. **Build Queue & Open Domains:** Interactive focus cards + flat hairline Missing Materials ledger.
+- **Prefarm (`Kinetic Queue Deck`):** Transit Queue tickets with solid-ink `#1` priority slab, inline `Lv.`/`A/E/Q` steppers, 2-second **Metro Milestone Track** (`Start → LV.80 → MAX`), and perforated control stub.
+- **Characters & Armory:** Separated 3-cluster filter bars (`OWNERSHIP: All → Owned → Unowned` | `RARITY: All · 5★ · 4★` | `ELEMENT / CLASS`). Character Dossiers feature a Zine Issue Strip, poster watermark, optical risograph splash plate, Metro Constellation route (`C1–C6`), `→` cross-reference strip, **3-Instrument Build Calibration Strip**, and **5-Slot Equipped Artifact Specimen Grid**. Armory renders cataloged weapon specimen cards (`№` serial, `5★` gold slab, Base ATK & substat).
+- **Vault:** 6 simplified categories (`Ascension`, `Enemy Drops`, `Local Specialties`, `Ingestibles`, `Cooking`, `Quest & Key`) in a nation-coded **Specimen Grid** (subtle region top-edge glow & `Sort: Region`) with a click-to-inspect **Item Specimen Modal** (live description, gathering locations, and inline bag count).
 
 ## Elevation & Depth
 
-Surfaces are flat at rest—depth is conveyed through the 3-step Obsidian Slate tonal ladder (`#060812` → `#0C1120` → `#121A2F`) and `1px` antique gold hairlines (`--p-border`), with no ambient resting drop shadows. Elevated shadows are reserved strictly for modal dialogs and floating search popovers.
+Surfaces remain flat at rest—depth comes from the 3-step Obsidian Slate tonal ladder (`#060812` → `#0C1120` → `#121A2F`), `1px` antique gold hairlines (`--p-border`), and tactile print cues (zigzag tear seams, `+` corner crop marks, subtle `2px` top rarity/element hairlines). Ambient drop shadows are reserved strictly for modal dialogs and floating popovers.
 
 ### Named Rules
-**The Hairline-Only Rule.** Structural borders stay at `1px solid var(--p-border)` (or `var(--p-border-strong)` on focus/hover); never use thick (`> 1px`) colored left or right accent stripes on cards or alert banners.
+**The Hairline-Only Rule.** Structural borders stay at `1px solid var(--p-border)` (or `2px` top-edge rarity/element/nation bar); never use thick (`> 1px`) colored left or right accent stripes on cards or alert banners.
 
 ## Shapes
 
-Controlled, modern-archival geometry: `12px` (`--p-radius`) on primary panels and modals, `8px` (`--p-radius-sm`) on buttons, inputs, and compact tiles, and `999px` pill radii strictly on small status badges and progress tracks.
+Crisp archival print geometry: `2px` (`--p-radius-plate`) on specimen plates, artifact cards, weapon cards, vault tiles, and ink stamps; `3px` (`--p-radius-ticket`) on primary panels, hero poster, and transit queue tickets; `8px` (`--p-radius-sm`) on standard buttons/inputs; `999px` strictly on circular transit cancel stamps and station route nodes.
 
-## Components
+## Motion
 
-### Buttons
-- **Shape:** Gently rounded (`8px`).
-- **Primary (`.p-btn-primary`):** Ley-Line cyan (`#5EEAD4`) with deep ink (`#071316`), `8px 14px` padding, shifting to `#86F4E2` on hover.
-- **Outline (`.p-btn-outline`):** Inset slate (`#121A2F`) with `1px` strong gold hairline (`rgba(212, 175, 55, 0.34)`), shifting to `#1A2440` on hover.
-- **Focus / Active:** `2px solid #5EEAD4` focus-visible outline (`2px` offset); `1px` downward press micro-feedback on `:active`.
-
-### Badges & Telemetry Pills
-- **Style:** `999px` pill with `1px` translucent semantic border and `JetBrains Mono` `12px` `tabular-nums` copy (`mint`, `gold`, `coral`, `amber`, `accent`).
-
-### Dual-Layer Progress Bars (`.p-bar-dual`)
-- **Behavior:** Renders Pass-1 Functional readiness (`Lv.80 · ≤8`) in mint/gold over the full Max/Crown readiness track so players can judge Day-1 playability at a glance.
-
-### Navigation
-- **Top Command Bar (`.proto-command-bar`):** Sticky translucent obsidian bar (`#0C1120`) with `1px` bottom gold hairline, 6 view pills with active gold/cyan emphasis, and responsive mobile menu collapse.
+- **Anime.js v4.5.0 (`js/motion.js`):** Staggered entrance Choreography for Today, Prefarm, and Dossier Hero + tactile pulse feedback on stepper changes and reminder toggles.
+- **Ticket Stub Hover Flex:** Hovering the HUD hero subtly pivots the tear-off stub along the zigzag seam (`translateX(3px) rotate(0.45deg)`).
+- **Accessibility:** Every animation and foil shimmer cleanly respects `prefers-reduced-motion: reduce`.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep every numerical figure (dates, resin, Mora, `Func %`, `Max %`, `wRV%`, `CV`, `ER%`) in `JetBrains Mono` with `tabular-nums`.
+- **Do** keep every numerical stat, countdown, stamp, and serial in `Barlow Condensed` (`600`) with `tabular-nums`—never default to generic tech monospace.
 - **Do** preserve authentic Genshin Impact terminology (`Domains`, `Blossom of Wealth`, `Fragile Resin`, `Talents`, `Ascension`).
-- **Do** keep surfaces flat at rest with `1px` gold hairlines and single-layer panels.
+- **Do** use pure visual print cues (zigzag seams, transit stamps, barcodes, tick-mark rulers, metro dot-lines) instead of explanatory paragraphs.
 
 ### Don't:
 - **Don't** nest bordered cards inside bordered cards or add `> 1px` colored left/right accent stripes.
-- **Don't** place uppercase eyebrow/kicker labels above section headings.
-- **Don't** break live data pipelines (`GOOD v3` import, Apps Script sync, Dimbreath/Lunaris catalog hydration, or `verify_upgrade.mjs`).
+- **Don't** put flavor text inside ticket stubs or dense prose walls inside HUD strategy panels.
+- **Don't** break live data pipelines (`GOOD v3` import, Apps Script sync, Dimbreath/Lunaris/Yatta catalog hydration, or `verify_upgrade.mjs`).
