@@ -1191,12 +1191,15 @@ function renderTodayView(container, account) {
     ? patchCal.nextFeaturedKeys
     : targetsWithTel.slice(0, 2).map((t) => t.characterKey);
 
+  const nextVerCode = (patchCal.nextLabel || '7.3').split(' ')[0];
   container.innerHTML = `
-    <section class="p-patch-bar p-hud-hero p-hud-poster" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
+    <section class="p-patch-bar p-hud-hero p-hud-poster p-hud-overdrive" ${leadEl ? `data-el="${esc(leadEl)}"` : ''} aria-label="Genshin Patch &amp; Domain Calendar">
+      <div class="p-hud-poster-watermark" aria-hidden="true">${esc(nextVerCode)}</div>
       ${
         leadTarget
           ? `<div class="p-hud-poster-bg" aria-hidden="true">
                ${renderGachaSplash(leadTarget.characterKey, '')}
+               <div class="p-hud-halftone"></div>
              </div>`
           : ''
       }
@@ -1215,18 +1218,22 @@ function renderTodayView(container, account) {
         </div>
         <div class="p-hero-domain-ledger mono" title="Remaining domain days before ${esc(patchCal.nextLabel)}">
           <span class="p-hero-local-time">DROPS ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</span>
-          <span class="p-ledger-sep">·</span>
-          <span>${patchCal.monThuSlots} M/TH</span>
-          <span>${patchCal.tueFriSlots} TU/F</span>
-          <span>${patchCal.wedSatSlots} W/SA</span>
-          <strong class="text-mint">${patchCal.sunSlots} ALL-OPEN</strong>
+          <span class="p-route-stops">
+            <span class="p-route-dot"><i></i>${patchCal.monThuSlots} M/TH</span>
+            <span class="p-route-dot"><i></i>${patchCal.tueFriSlots} TU/F</span>
+            <span class="p-route-dot"><i></i>${patchCal.wedSatSlots} W/SA</span>
+            <strong class="p-route-dot is-mint"><i></i>${patchCal.sunSlots} ALL-OPEN</strong>
+          </span>
         </div>
       </div>
 
       <div class="p-patch-metrics p-ticket-stub" title="Countdown &amp; Natural Original Resin before ${esc(patchCal.nextLabel)}">
+        <span class="p-ticket-foil" aria-hidden="true"></span>
         <div class="p-ticket-stub-top">
-          <span class="p-ticket-circle mono">${esc((patchCal.nextLabel || '7.3').split(' ')[0])}</span>
-          <span class="p-zine-barcode" aria-hidden="true"></span>
+          <div class="p-transit-stamp mono" aria-hidden="true">
+            <span class="p-transit-stamp-inner">${esc(nextVerCode)}</span>
+          </div>
+          <span class="p-zine-barcode p-stub-barcode" aria-hidden="true"></span>
         </div>
         <div class="p-ticket-stub-time mono">${esc(patchCal.countdownToNextText)}</div>
         <div class="p-ticket-stub-resin mono">
