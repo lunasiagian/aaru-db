@@ -259,6 +259,7 @@ function loadProfileAccount_(ss, targetUser) {
       isPublic: isUserPublic_(profileMeta),
       role: role,
       isAdmin: role === 'admin',
+      lastSync: profileMeta.last_sync || '',
       inventory: stateObj.inventory || {},
       roster: Array.isArray(stateObj.roster) ? stateObj.roster : [],
       weapons: Array.isArray(stateObj.weapons) ? stateObj.weapons : [],

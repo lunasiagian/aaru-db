@@ -356,6 +356,8 @@ function getArchiveFreshnessInfo(account) {
     }
   }
   const backendTs = Math.max(
+    parseTs(account?.wallet?.lastGoodImportAt),
+    parseTs(account?.wallet?.lastManualEditAt),
     parseTs(account?.lastGoodImportAt),
     parseTs(account?.lastSync),
     parseTs(account?.last_sync),
@@ -365,10 +367,20 @@ function getArchiveFreshnessInfo(account) {
     parseTs(account?.meta?.lastSync),
     invMaxTs
   );
+  let swrSyncedTs = 0;
+  if (userKey && (account?.characters?.length || Object.keys(account?.inventory || {}).length)) {
+    try {
+      const swr = JSON.parse(localStorage.getItem(`aaru_swr_account_v1:${userKey}`) || 'null');
+      swrSyncedTs = parseTs(swr?.syncedAt);
+    } catch {
+      // ignore
+    }
+  }
   const goodTs = Math.max(Number(goodLocal?.ts || 0), backendTs);
-  const editTs = Number(editLocal?.ts || 0);
-  const latestTs = Math.max(goodTs, editTs);
+  const editTs = Math.max(Number(editLocal?.ts || 0), parseTs(account?.wallet?.lastManualEditAt));
+  const latestTs = Math.max(goodTs, editTs, swrSyncedTs);
   const isManualNewer = editTs > goodTs;
+  const isSwrFallback = !goodTs && !editTs && swrSyncedTs > 0;
 
   const fmtDate = (ms) => {
     if (!ms) return '— — —';
@@ -387,7 +399,7 @@ function getArchiveFreshnessInfo(account) {
   }
   const ageDays = Math.max(0, Math.floor((Date.now() - latestTs) / 86400000));
   const tier = ageDays <= 7 ? 'fresh' : ageDays <= 21 ? 'aging' : 'overdue';
-  const kindLabel = isManualNewer ? 'EDITED' : goodLocal?.meta || 'SYNCED';
+  const kindLabel = isSwrFallback ? 'SYNCED' : isManualNewer ? 'EDITED' : goodLocal?.meta || 'GOOD v3';
   const topLine =
     tier === 'fresh'
       ? `${kindLabel.toUpperCase()} · ${ageDays === 0 ? 'TODAY' : `${ageDays}D AGO`}`
@@ -399,7 +411,9 @@ function getArchiveFreshnessInfo(account) {
     tier,
     topLine,
     dateLine: fmtDate(latestTs),
-    tooltip: `Last data update: ${fmtDate(latestTs)} (${ageDays === 0 ? 'today' : `${ageDays}d ago`})${editHint}. Click to import a fresh GOOD v3 JSON.`
+    tooltip: isSwrFallback
+      ? `Synced from cloud on ${fmtDate(latestTs)}. Click to import a GOOD v3 JSON and stamp its exact scan date.`
+      : `Last data update: ${fmtDate(latestTs)} (${ageDays === 0 ? 'today' : `${ageDays}d ago`})${editHint}. Click to import a fresh GOOD v3 JSON.`
   };
 }
 
@@ -1634,6 +1648,7 @@ function renderTodayView(container, account) {
       const nextMora = Math.max(0, Math.round(Number(moraInput.value || 0)));
       if (!account.wallet) account.wallet = {};
       account.wallet.mora = nextMora;
+      account.wallet.lastManualEditAt = new Date().toISOString();
       if (!account.inventory) account.inventory = {};
       account.inventory.Mora = { ...(typeof account.inventory.Mora === 'object' ? account.inventory.Mora : {}), count: nextMora };
       recordDataStamp('edit', 'MORA');
@@ -4780,6 +4795,8 @@ function setupModals() {
     commitBtn.disabled = true;
     commitBtn.textContent = 'Syncing...';
     try {
+      if (!diff.mergedAccount.wallet) diff.mergedAccount.wallet = {};
+      diff.mergedAccount.wallet.lastGoodImportAt = new Date().toISOString();
       if (!state.isPreviewDemo) {
         await commitGoodImport(state.sessionUser, raw, diff.mergedAccount);
       }
