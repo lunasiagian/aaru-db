@@ -21,6 +21,7 @@ import {
   getDomainScheduleForDay,
   getEnemiesIndex,
   getGaugeTable,
+  getMaterialDetails,
   getMaterialMeta,
   getStaticKitProfile,
   getStaticSetVectors,
@@ -445,6 +446,7 @@ function renderBuildCalibrationStripHtml({ combat, primaryStat, statCapVal, subs
 }
 
 function resolvePrimaryStat(kitAnalysis, kitScaling, staticProfile = null) {
+  if (staticProfile?.primaryScaler === 'atk_') return 'ATK';
   if (staticProfile?.primaryScaler === 'hp_') return 'HP';
   if (staticProfile?.primaryScaler === 'def_') return 'DEF';
   if (staticProfile?.primaryScaler === 'eleMas') return 'EM';
@@ -1203,21 +1205,7 @@ function renderTodayView(container, account) {
         </div>
         <div class="p-hud-hero-banner-row">
           <h2 class="p-hud-hero-title">${esc(patchCal.nextLabel)}</h2>
-          ${
-            featuredKeys.length
-              ? `<div class="p-hero-featured">${featuredKeys
-                  .map((k) => {
-                    const fm = getCharacterMeta(k);
-                    const fel = String(fm.element || '').toLowerCase();
-                    const active = state.focusedTargetId === k ? 'is-active' : '';
-                    return `<button type="button" class="p-hero-featured-chip ${active}" data-el="${esc(fel)}" data-p-focus="${esc(k)}" title="Filter materials for ${esc(fm.name)}">
-                      ${renderAssetIcon('characters', k, fm.name, 'icon-xs')}
-                      <span>${esc(fm.name)}</span>
-                    </button>`;
-                  })
-                  .join('')}</div>`
-              : `<span class="p-row-sub">${esc(patchCal.nextBannerNote)}</span>`
-          }
+          ${patchCal.nextBannerNote ? `<span class="p-row-sub">${esc(patchCal.nextBannerNote)}</span>` : ''}
         </div>
         <div class="p-hero-local-time mono">Drops ${esc(patchCal.nextLocalTimeText || patchCal.nextDualTzText)}</div>
       </div>
@@ -1240,9 +1228,15 @@ function renderTodayView(container, account) {
           <div class="p-res-head-inline">
             <span class="p-res-label">Spare Mora</span>
             <span class="p-badge mono ${moraBadgeCls}">${esc(moraStrategy.badgeText)}</span>
+            ${!readOnly ? `<button type="button" id="p-hud-edit-mora" class="p-inline-edit-btn" title="GOOD scans can't read Mora — click to update bag Mora">Edit</button>` : ''}
           </div>
           <span class="p-res-value mono ${spares.isMoraBroke ? 'text-coral' : 'text-mint'}">${spares.spareMora >= 0 ? `+${formatCompact(spares.spareMora)}` : formatCompact(spares.spareMora)}</span>
-          <span class="p-res-sub mono">${formatCompact(spares.bagMora)} bag · ${formatCompact(spares.committedMora)} max (${formatCompact(moraStrategy.funcNeededMora)} Lv.80)</span>
+          <div id="p-hud-mora-readout" class="p-res-sub mono">${formatCompact(spares.bagMora)} bag · ${formatCompact(spares.committedMora)} max (${formatCompact(moraStrategy.funcNeededMora)} Lv.80)</div>
+          <form id="p-hud-mora-form" class="p-inline-mora-form" hidden>
+            <input type="number" id="p-hud-mora-input" class="p-input mono" min="0" step="10000" value="${Math.round(spares.bagMora)}" aria-label="Bag Mora" />
+            <button type="submit" class="p-btn p-btn-primary p-btn-xs">Save</button>
+            <button type="button" id="p-hud-mora-cancel" class="p-btn p-btn-ghost p-btn-xs">×</button>
+          </form>
         </div>
       </div>
       <div class="p-res-cell">
@@ -1275,8 +1269,14 @@ function renderTodayView(container, account) {
                  <strong class="p-spotlight-title">${esc(twoPass.pivotHeadline || 'Build Order (Lv.80 Ready → Crowns)')}</strong>
                  <span class="p-badge mono ${pivotBadgeCls}">Lv.80 → Crown</span>
                </div>
-               <div class="p-row-sub">${esc(twoPass.pivotDetail || 'Get Lv.80 & Lv.8 Talents ready for each target before spending Crowns.')}</div>
-               ${twoPass.surgeWarning ? `<div class="p-surge-warn">${esc(twoPass.surgeWarning)}</div>` : ''}
+               <ul class="p-strategy-bullets">
+                 ${(twoPass.pivotDetail || 'Get Lv.80 & Lv.8 Talents ready for each target before spending Crowns.')
+                   .split(/(?<=\.)\s+/)
+                   .filter(Boolean)
+                   .map((line) => `<li>${esc(line)}</li>`)
+                   .join('')}
+                 ${twoPass.surgeWarning ? `<li class="is-warn">${esc(twoPass.surgeWarning)}</li>` : ''}
+               </ul>
              </div>
              <div class="p-strategy-cell">
                ${
@@ -1469,6 +1469,41 @@ function renderTodayView(container, account) {
     state.focusedTargetId = null;
     renderTodayView(container, account);
   });
+  const moraEditBtn = document.getElementById('p-hud-edit-mora');
+  const moraForm = document.getElementById('p-hud-mora-form');
+  const moraReadout = document.getElementById('p-hud-mora-readout');
+  const moraInput = document.getElementById('p-hud-mora-input');
+  const moraCancel = document.getElementById('p-hud-mora-cancel');
+  if (moraEditBtn && moraForm && moraInput) {
+    moraEditBtn.addEventListener('click', () => {
+      moraForm.hidden = false;
+      if (moraReadout) moraReadout.hidden = true;
+      moraInput.focus();
+      moraInput.select();
+    });
+    moraCancel?.addEventListener('click', () => {
+      moraForm.hidden = true;
+      if (moraReadout) moraReadout.hidden = false;
+    });
+    moraForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (readOnly) return;
+      const nextMora = Math.max(0, Math.round(Number(moraInput.value || 0)));
+      if (!account.wallet) account.wallet = {};
+      account.wallet.mora = nextMora;
+      if (!account.inventory) account.inventory = {};
+      account.inventory.Mora = { ...(typeof account.inventory.Mora === 'object' ? account.inventory.Mora : {}), count: nextMora };
+      renderTodayView(container, account);
+      try {
+        if (!state.isPreviewDemo) {
+          await saveAccountSection(state.sessionUser, 'wallet', account.wallet);
+        }
+        showToast(`Bag Mora updated to ${nextMora.toLocaleString()}`);
+      } catch (err) {
+        showToast(`Mora save failed: ${err.message}`);
+      }
+    });
+  }
   container.querySelectorAll('[data-p-jump-mat]').forEach((row) => {
     row.addEventListener('click', () => {
       state.vaultCategory = 'All';
@@ -1773,13 +1808,23 @@ function renderPrefarmView(container, account) {
                              </div>
 
                              <div class="p-pf-progress-col">
-                               <div class="p-pf-pct-row mono">
-                                 <span class="${funcPct >= 100 ? 'text-mint' : 'text-gold'}">${funcPct >= 100 ? 'Lv.80 ✓' : `Lv.80 ${funcPct}%`}</span>
-                                 <span class="muted">Max ${t.pct}%</span>
+                               <div class="p-pf-metro-head mono">
+                                 <span class="${funcPct >= 100 ? 'text-mint' : 'text-gold'}">${
+                                   t.pct >= 100
+                                     ? 'ALL MATS READY ✓'
+                                     : funcPct >= 100
+                                       ? `PLAYABLE DAY 1 ✓`
+                                       : `LV.80 PLAYABLE · ${funcPct}%`
+                                 }</span>
+                                 <span class="muted">${t.pct < 100 ? `FULL GOAL ${t.pct}%` : '100%'}</span>
                                </div>
-                               <div class="p-bar p-bar-dual" title="Lv.80 Ready: ${funcPct}% · Full Max: ${t.pct}%">
-                                 <span class="p-bar-func" style="width:${funcPct}%;"></span>
-                                 <span class="p-bar-max" style="width:${t.pct}%;"></span>
+                               <div class="p-pf-metro" title="Station 1: Lv.80 & Lv.8 Talents (${funcPct}%) · Station 2: Full Lv.${tLv} & ${tA}/${tE}/${tQ} (${t.pct}%)">
+                                 <div class="p-pf-metro-rail">
+                                   <span class="p-pf-metro-fill" style="width:${Math.round(funcPct >= 100 ? 60 + (t.pct / 100) * 40 : (funcPct / 100) * 60)}%;"></span>
+                                 </div>
+                                 <span class="p-pf-station is-start is-done"><i></i></span>
+                                 <span class="p-pf-station is-mid ${funcPct >= 100 ? 'is-done' : ''}"><i></i><em class="mono">LV.80</em></span>
+                                 <span class="p-pf-station is-end ${t.pct >= 100 ? 'is-done' : ''}"><i></i><em class="mono">MAX</em></span>
                                </div>
                              </div>
 
@@ -3243,30 +3288,50 @@ function renderArmoryView(container, account) {
     .map((k) => ({ key: k, owned: false, level: 0, refinement: 1, location: '' }));
   const allWeapons = [...ownedWeapons, ...unownedWeapons];
   const ownershipTabs = [
-    { id: 'owned', label: 'Owned' },
     { id: 'all', label: 'All' },
+    { id: 'owned', label: 'Owned' },
     { id: 'unowned', label: 'Unowned' }
   ];
-  const filters = ['All', '5★', '4★', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
+  const rarityTabs = ['All', '5★', '4★'];
+  const classTabs = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
+  if (!state.armoryRarity) state.armoryRarity = 'All';
+  if (!classTabs.includes(state.armoryFilter)) state.armoryFilter = 'All';
 
   container.innerHTML = `
-    <div class="p-toolbar">
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-        <div class="p-filter-pills" role="group" aria-label="Weapon ownership filter">
-          ${ownershipTabs
-            .map(
-              (o) =>
-                `<button type="button" class="p-pill-btn ${state.armoryOwnership === o.id ? 'active' : ''}" data-p-aown="${o.id}" aria-pressed="${state.armoryOwnership === o.id}">${o.label}</button>`
-            )
-            .join('')}
+    <div class="p-toolbar p-armory-toolbar">
+      <div class="p-armory-filter-bar">
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">OWNERSHIP</span>
+          <div class="p-filter-pills" role="group" aria-label="Weapon ownership filter">
+            ${ownershipTabs
+              .map(
+                (o) =>
+                  `<button type="button" class="p-pill-btn ${state.armoryOwnership === o.id ? 'active' : ''}" data-p-aown="${o.id}" aria-pressed="${state.armoryOwnership === o.id}">${o.label}</button>`
+              )
+              .join('')}
+          </div>
         </div>
-        <div class="p-filter-pills" role="group" aria-label="Weapon filter">
-          ${filters
-            .map(
-              (f) =>
-                `<button type="button" class="p-pill-btn ${state.armoryFilter === f ? 'active' : ''}" data-p-afilt="${f}" aria-pressed="${state.armoryFilter === f}">${f}</button>`
-            )
-            .join('')}
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">RARITY</span>
+          <div class="p-filter-pills" role="group" aria-label="Weapon rarity filter">
+            ${rarityTabs
+              .map(
+                (r) =>
+                  `<button type="button" class="p-pill-btn ${state.armoryRarity === r ? 'active' : ''}" data-p-arar="${r}" aria-pressed="${state.armoryRarity === r}">${r}</button>`
+              )
+              .join('')}
+          </div>
+        </div>
+        <div class="p-filter-cluster">
+          <span class="p-filter-lbl mono">CLASS</span>
+          <div class="p-filter-pills" role="group" aria-label="Weapon class filter">
+            ${classTabs
+              .map(
+                (f) =>
+                  `<button type="button" class="p-pill-btn ${state.armoryFilter === f ? 'active' : ''}" data-p-afilt="${f}" aria-pressed="${state.armoryFilter === f}">${f}</button>`
+              )
+              .join('')}
+          </div>
         </div>
       </div>
       <input type="search" id="p-armory-search" class="proto-search" style="max-width:240px;" placeholder="Filter weapons or holder..." aria-label="Filter weapons or holder" value="${esc(state.armorySearch)}" />
@@ -3287,9 +3352,9 @@ function renderArmoryView(container, account) {
       })
       .filter((w) => {
         const meta = getWeaponMeta(w.key);
-        if (state.armoryFilter === '5★' && Number(meta.rarity) !== 5) return false;
-        if (state.armoryFilter === '4★' && Number(meta.rarity) !== 4) return false;
-        if (['Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'].includes(state.armoryFilter) && meta.weaponType !== state.armoryFilter) return false;
+        if (state.armoryRarity === '5★' && Number(meta.rarity) !== 5) return false;
+        if (state.armoryRarity === '4★' && Number(meta.rarity) !== 4) return false;
+        if (state.armoryFilter !== 'All' && meta.weaponType !== state.armoryFilter) return false;
         if (q) {
           const holder = w.location ? getCharacterMeta(w.location).name.toLowerCase() : '';
           return meta.name.toLowerCase().includes(q) || holder.includes(q);
@@ -3359,6 +3424,18 @@ function renderArmoryView(container, account) {
       state.armoryOwnership = btn.dataset.pAown;
       container.querySelectorAll('[data-p-aown]').forEach((b) => {
         const active = b.dataset.pAown === state.armoryOwnership;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderWeaponCards();
+    });
+  });
+
+  container.querySelectorAll('[data-p-arar]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.armoryRarity = btn.dataset.pArar;
+      container.querySelectorAll('[data-p-arar]').forEach((b) => {
+        const active = b.dataset.pArar === state.armoryRarity;
         b.classList.toggle('active', active);
         b.setAttribute('aria-pressed', String(active));
       });
@@ -3844,6 +3921,38 @@ function renderTeamsView(container, account) {
 }
 
 /* ---------- View 6: Vault ---------- */
+const VAULT_CATEGORIES = [
+  'All',
+  'Ascension',
+  'Enemy Drops',
+  'Local Specialties',
+  'Ingestibles',
+  'Cooking',
+  'Quest & Key'
+];
+
+function classifyVaultCategory(meta, key = '') {
+  const raw = String(meta?.category || meta?.type || '').toLowerCase();
+  const name = String(meta?.name || key || '').toLowerCase();
+  if (/localspecialty|local specialty/.test(raw)) return 'Local Specialties';
+  if (/cookingingredient|home_seed|fish_bait|ingredient/.test(raw)) return 'Cooking';
+  if (/potion|consumable|material_food|spice_food|notice_add_hp|material_consume|food/.test(raw)) return 'Ingestibles';
+  if (/characterandweaponenhancement|characterlevelup|material_common/.test(raw)) {
+    if (/crown of insight|dream solvent|dust of azoth|billet/.test(name)) return 'Ascension';
+    return 'Enemy Drops';
+  }
+  if (/charactertalent|weaponascension|characterascension|characterexp|weaponenhancement|forgingore|material_talent|elem_crystal|reliquary_material/.test(raw)) {
+    return 'Ascension';
+  }
+  if (/quest|gadget|voucher|currency|sigil|glider|namecard|costume|furniture|bgm|gcg|photo|book|album|invite|widget|chest|trace|frame|firework|activity|fish_rod/.test(raw)) {
+    return 'Quest & Key';
+  }
+  if (/teachings of|guide to|philosophies of|sliver|fragment|chunk|gemstone|hero's wit|adventurer's experience|wanderer's advice|enhancement ore/.test(name)) {
+    return 'Ascension';
+  }
+  return 'Quest & Key';
+}
+
 function renderVaultView(container, account) {
   const readOnly = isReadOnly();
   const disabled = readOnly ? 'disabled' : '';
@@ -3866,50 +3975,39 @@ function renderVaultView(container, account) {
       return {
         key,
         name: meta?.name || key,
-        category: meta?.category || 'Material',
+        rarity: Number(meta?.rarity || 3),
+        rawCategory: meta?.category || 'Material',
+        category: classifyVaultCategory(meta, key),
         owned,
         needed,
         net: owned - needed
       };
     })
-    .sort((a, b) => b.needed - a.needed || a.name.localeCompare(b.name));
+    .sort((a, b) => b.needed - a.needed || b.rarity - a.rarity || a.name.localeCompare(b.name));
 
-  const cats = ['All', ...[...new Set(rows.map((r) => r.category))].sort((a, b) => a.localeCompare(b))];
-
-  const sortHeader = (key, label) => {
-    const active = state.vaultSortKey === key;
-    const arrow = active ? (state.vaultSortDir === 'asc' ? ' ↑' : ' ↓') : '';
-    return `<th><button type="button" class="p-btn p-btn-ghost p-btn-xs" style="padding-left:0;font-weight:600;color:${active ? 'var(--p-gold)' : 'var(--p-text-muted)'};" data-p-vsort="${key}">${label}${arrow}</button></th>`;
-  };
+  if (!VAULT_CATEGORIES.includes(state.vaultCategory)) state.vaultCategory = 'All';
 
   container.innerHTML = `
-    <div class="p-toolbar">
+    <div class="p-toolbar p-vault-toolbar">
       <div class="p-filter-pills" role="group" aria-label="Material categories">
-        ${cats
-          .map(
-            (cat) =>
-              `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}" aria-pressed="${state.vaultCategory === cat}">${esc(cat)}</button>`
-          )
-          .join('')}
+        ${VAULT_CATEGORIES.map(
+          (cat) =>
+            `<button type="button" class="p-pill-btn ${state.vaultCategory === cat ? 'active' : ''}" data-p-vcat="${esc(cat)}" aria-pressed="${state.vaultCategory === cat}">${esc(cat)}</button>`
+        ).join('')}
       </div>
-      <input type="search" id="p-vault-search" class="proto-search" style="max-width:240px;" placeholder="Filter materials..." aria-label="Filter materials" value="${esc(state.vaultSearch)}" />
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select id="p-vault-sort" class="proto-select" style="width:auto;min-width:130px;" aria-label="Sort vault items">
+          <option value="needed" ${state.vaultSortKey === 'needed' ? 'selected' : ''}>Sort: Needed</option>
+          <option value="owned" ${state.vaultSortKey === 'owned' ? 'selected' : ''}>Sort: In Bag</option>
+          <option value="rarity" ${state.vaultSortKey === 'rarity' ? 'selected' : ''}>Sort: Rarity</option>
+          <option value="name" ${state.vaultSortKey === 'name' ? 'selected' : ''}>Sort: Name</option>
+        </select>
+        <input type="search" id="p-vault-search" class="proto-search" style="max-width:220px;" placeholder="Filter materials..." aria-label="Filter materials" value="${esc(state.vaultSearch)}" />
+      </div>
     </div>
 
-    <div class="p-table-wrap">
-      <table class="p-table">
-        <thead>
-          <tr>
-            ${sortHeader('name', 'Material')}
-            ${sortHeader('category', 'Category')}
-            ${sortHeader('needed', 'Needed')}
-            ${sortHeader('net', 'Net')}
-            ${sortHeader('owned', 'In Bag')}
-          </tr>
-        </thead>
-        <tbody id="p-vault-tbody"></tbody>
-      </table>
-    </div>
-    <div id="p-vault-count" class="muted mono" style="font-size:12px;"></div>
+    <div id="p-vault-count" class="muted mono" style="font-size:12px;margin-bottom:8px;"></div>
+    <div id="p-vault-grid" class="p-vault-grid"></div>
   `;
 
   const commitMat = async (key, val) => {
@@ -3917,12 +4015,83 @@ function renderVaultView(container, account) {
     const nextCount = Math.max(0, Number(val || 0));
     const prev = account.inventory[key];
     account.inventory[key] = prev && typeof prev === 'object' ? { ...prev, count: nextCount } : { count: nextCount };
+    const rowObj = rows.find((x) => x.key === key);
+    if (rowObj) {
+      rowObj.owned = nextCount;
+      rowObj.net = nextCount - rowObj.needed;
+    }
     try {
       if (!state.isPreviewDemo) {
         await saveAccountSection(state.sessionUser, 'inventory', account.inventory);
       }
     } catch (err) {
       showToast(`Vault save failed: ${err.message}`);
+    }
+  };
+
+  const openVaultInspector = async (rowObj, triggerEl) => {
+    const modal = document.getElementById('proto-artifact-modal');
+    const titleEl = document.getElementById('proto-artifact-title');
+    const bodyEl = document.getElementById('proto-artifact-body');
+    if (!modal || !titleEl || !bodyEl) return;
+
+    titleEl.textContent = rowObj.name;
+    const renderBody = (details, loading = false) => {
+      const desc = details?.description || (loading ? 'Loading archive entry...' : 'No archive description available.');
+      const sources = Array.isArray(details?.sources) ? details.sources : [];
+      bodyEl.innerHTML = `
+        <div class="p-vault-modal-hero" data-rarity="${rowObj.rarity}">
+          <div class="p-vault-modal-icon">${renderAssetIcon('materials', rowObj.key, rowObj.name, 'icon-md')}</div>
+          <div style="min-width:0;flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="p-stamp mono">${esc(rowObj.category)}</span>
+              <span class="mono text-gold">${'★'.repeat(Math.max(1, Math.min(5, rowObj.rarity)))}</span>
+              ${rowObj.needed ? `<span class="p-stamp ${rowObj.net < 0 ? 'p-stamp-coral' : 'p-stamp-mint'} mono">${rowObj.net < 0 ? `NEED ${Math.abs(rowObj.net).toLocaleString()} MORE` : 'QUEUE COVERED ✓'}</span>` : ''}
+            </div>
+            <div class="p-vault-modal-bag">
+              <span class="muted" style="font-size:12px;">In Bag</span>
+              <input type="number" min="0" id="p-vm-count" class="p-vault-input mono" value="${rowObj.owned}" ${disabled} />
+              ${!readOnly ? `<button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-vm-delta="1">+1</button><button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-vm-delta="10">+10</button>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="p-vault-modal-sec">
+          <div class="p-vault-modal-lbl mono">DESCRIPTION</div>
+          <p class="p-vault-modal-desc">${esc(desc)}</p>
+        </div>
+        ${
+          sources.length
+            ? `<div class="p-vault-modal-sec">
+                 <div class="p-vault-modal-lbl mono">${rowObj.category === 'Local Specialties' ? 'WHERE TO GATHER' : 'SOURCES &amp; LOCATIONS'}</div>
+                 <ul class="p-strategy-bullets">
+                   ${sources.map((s) => `<li>${esc(s)}</li>`).join('')}
+                 </ul>
+               </div>`
+            : loading
+              ? ''
+              : `<div class="p-vault-modal-sec"><div class="p-vault-modal-lbl mono">SOURCES</div><div class="muted" style="font-size:12.5px;">No location data listed for this item.</div></div>`
+        }
+      `;
+      const inp = document.getElementById('p-vm-count');
+      inp?.addEventListener('change', async () => {
+        await commitMat(rowObj.key, inp.value);
+        renderVaultGrid();
+      });
+      bodyEl.querySelectorAll('[data-vm-delta]').forEach((b) => {
+        b.addEventListener('click', async () => {
+          const next = Math.max(0, rowObj.owned + Number(b.dataset.vmDelta || 1));
+          if (inp) inp.value = String(next);
+          await commitMat(rowObj.key, next);
+          renderVaultGrid();
+        });
+      });
+    };
+
+    renderBody(null, true);
+    modal._openModal?.(triggerEl);
+    const details = await getMaterialDetails(rowObj.key);
+    if (!modal.hidden && titleEl.textContent === rowObj.name) {
+      renderBody(details, false);
     }
   };
 
@@ -3934,102 +4103,76 @@ function renderVaultView(container, account) {
     });
   };
 
-  const renderVaultRows = () => {
-    const tbody = document.getElementById('p-vault-tbody');
-    if (!tbody) return;
-    const dir = state.vaultSortDir === 'asc' ? 1 : -1;
+  const renderVaultGrid = () => {
+    const grid = document.getElementById('p-vault-grid');
+    if (!grid) return;
     const sk = state.vaultSortKey || 'needed';
+    const q = state.vaultSearch.trim().toLowerCase();
     const filtered = rows
       .filter((r) => state.vaultCategory === 'All' || r.category === state.vaultCategory)
-      .filter((r) => !state.vaultSearch || r.name.toLowerCase().includes(state.vaultSearch.toLowerCase()) || r.category.toLowerCase().includes(state.vaultSearch.toLowerCase()))
+      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q))
       .sort((a, b) => {
-        if (sk === 'name' || sk === 'category') return dir * a[sk].localeCompare(b[sk]);
-        return dir * ((a[sk] || 0) - (b[sk] || 0)) || a.name.localeCompare(b.name);
+        if (sk === 'name') return a.name.localeCompare(b.name);
+        if (sk === 'rarity') return b.rarity - a.rarity || b.owned - a.owned || a.name.localeCompare(b.name);
+        if (sk === 'owned') return b.owned - a.owned || a.name.localeCompare(b.name);
+        return b.needed - a.needed || b.rarity - a.rarity || a.name.localeCompare(b.name);
       });
 
     const countEl = document.getElementById('p-vault-count');
     if (countEl) {
-      countEl.textContent = `${filtered.length} materials`;
+      countEl.textContent = `${filtered.length} ITEMS · ${state.vaultCategory.toUpperCase()} · CLICK ANY ITEM FOR DESCRIPTION & LOCATIONS`;
     }
 
-    tbody.innerHTML = filtered.length
+    grid.innerHTML = filtered.length
       ? filtered
           .map(
             (r) => `
-            <tr>
-              <td>
-                <div class="p-row-left">
-                  ${renderAssetIcon('materials', r.key, r.name, 'icon-xs')}
-                  <strong>${esc(r.name)}</strong>
-                </div>
-              </td>
-              <td><button type="button" class="p-pill-btn" style="padding:2px 9px;font-size:12px;" data-p-row-cat="${esc(r.category)}">${esc(r.category)}</button></td>
-              <td class="mono">${r.needed ? r.needed.toLocaleString() : '—'}</td>
-              <td class="mono ${r.needed ? (r.net < 0 ? 'text-coral' : 'text-mint') : 'muted'}">${
-                r.needed ? (r.net >= 0 ? `+${r.net.toLocaleString()}` : r.net.toLocaleString()) : '—'
-              }</td>
-              <td>
-                <div class="p-vault-ctrl">
-                  <input type="number" min="0" class="p-vault-input mono" aria-label="${esc(r.name)} count" value="${r.owned}" data-p-vinput="${esc(r.key)}" ${disabled} />
-                  ${!readOnly ? `<button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="1">+1</button><button type="button" class="p-btn p-btn-outline p-btn-xs mono" data-p-vadd="${esc(r.key)}" data-p-delta="10">+10</button>` : ''}
-                </div>
-              </td>
-            </tr>`
+            <button type="button" class="p-vault-tile ${r.needed && r.net < 0 ? 'is-deficit' : ''}" data-rarity="${r.rarity}" data-p-vopen="${esc(r.key)}">
+              <div class="p-vault-tile-head">
+                <span class="p-vault-tile-cat mono">${esc(r.category)}</span>
+                ${
+                  r.needed
+                    ? `<span class="mono ${r.net < 0 ? 'text-coral' : 'text-mint'}">${r.net < 0 ? r.net.toLocaleString() : '✓'}</span>`
+                    : `<span class="mono muted">${r.rarity}★</span>`
+                }
+              </div>
+              <div class="p-vault-tile-body">
+                ${renderAssetIcon('materials', r.key, r.name, 'icon-sm')}
+                <strong class="p-vault-tile-name">${esc(r.name)}</strong>
+              </div>
+              <div class="p-vault-tile-foot mono">
+                <span class="muted">BAG</span>
+                <span>${r.owned.toLocaleString()}</span>
+              </div>
+            </button>`
           )
           .join('')
-      : '<tr><td colspan="5" class="muted">No materials match your filter.</td></tr>';
+      : '<div class="p-panel muted" style="grid-column:1/-1;">No materials match your filter.</div>';
 
-    tbody.querySelectorAll('[data-p-row-cat]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const nextCat = btn.dataset.pRowCat;
-        state.vaultCategory = state.vaultCategory === nextCat ? 'All' : nextCat;
-        syncCatPills();
-        renderVaultRows();
-      });
-    });
-    tbody.querySelectorAll('[data-p-vinput]').forEach((input) => {
-      input.addEventListener('change', () => commitMat(input.dataset.pVinput, input.value));
-    });
-    tbody.querySelectorAll('[data-p-vadd]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const k = btn.dataset.pVadd;
-        const delta = Number(btn.dataset.pDelta || 1);
-        const next = Math.max(0, getInvCount(account.inventory[k]) + delta);
-        const rowObj = rows.find((x) => x.key === k);
-        if (rowObj) {
-          rowObj.owned = next;
-          rowObj.net = next - rowObj.needed;
-        }
-        await commitMat(k, next);
-        renderVaultRows();
+    grid.querySelectorAll('[data-p-vopen]').forEach((tile) => {
+      tile.addEventListener('click', () => {
+        const rowObj = rows.find((x) => x.key === tile.dataset.pVopen);
+        if (rowObj) openVaultInspector(rowObj, tile);
       });
     });
   };
 
-  renderVaultRows();
+  renderVaultGrid();
 
   container.querySelectorAll('[data-p-vcat]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.vaultCategory = btn.dataset.pVcat;
       syncCatPills();
-      renderVaultRows();
+      renderVaultGrid();
     });
   });
-  container.querySelectorAll('[data-p-vsort]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.pVsort;
-      if (state.vaultSortKey === key) {
-        state.vaultSortDir = state.vaultSortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.vaultSortKey = key;
-        state.vaultSortDir = key === 'name' || key === 'category' ? 'asc' : 'desc';
-      }
-      renderVaultView(container, account);
-    });
+  document.getElementById('p-vault-sort')?.addEventListener('change', (e) => {
+    state.vaultSortKey = e.target.value;
+    renderVaultGrid();
   });
   document.getElementById('p-vault-search')?.addEventListener('input', (e) => {
     state.vaultSearch = e.target.value;
-    renderVaultRows();
+    renderVaultGrid();
   });
 }
 

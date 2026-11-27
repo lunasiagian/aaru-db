@@ -35,7 +35,7 @@
 
   --p-font-display: 'Nanum Myeongjo', Georgia, serif;
   --p-font-sans: 'Albert Sans', system-ui, -apple-system, sans-serif;
-  --p-font-mono: 'Syne', system-ui, sans-serif;
+  --p-font-mono: 'Barlow Condensed', 'Albert Sans', sans-serif;
   --p-radius: 12px;
   --p-radius-sm: 8px;
 }
@@ -89,7 +89,8 @@ html, body {
 
 .mono {
   font-family: var(--p-font-mono);
-  font-weight: 400;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3418,11 +3419,293 @@ html, body {
       rgba(212, 175, 55, 0.03) 11px 12px
     ),
     var(--p-surface) !important;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 .p-hud-hero .p-hud-hero-art {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: 3px;
+  pointer-events: none;
+}
+.p-hud-hero .p-hud-hero-art .ed-gacha-splash-wrap {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.p-hud-hero .p-hud-hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 80% 22%;
+}
+
+/* Inline Mora Editor & Scannable Strategy Bullets */
+.p-inline-edit-btn {
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--p-border-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--p-text-secondary);
+  font-family: var(--p-font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+.p-inline-edit-btn:hover {
+  color: var(--p-gold);
+  border-color: var(--p-gold);
+}
+.p-inline-mora-form {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+.p-inline-mora-form .p-input {
+  width: 112px;
+  padding: 3px 6px;
+  font-size: 12.5px;
+  border-radius: 2px;
+}
+.p-strategy-bullets {
+  margin: 6px 0 0;
+  padding: 0 0 0 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--p-text-secondary);
+}
+.p-strategy-bullets li::marker {
+  color: var(--p-gold);
+}
+.p-strategy-bullets li.is-warn {
+  color: var(--p-amber);
+}
+.p-strategy-bullets li.is-warn::marker {
+  color: var(--p-amber);
+}
+
+/* Prefarm Metro Milestone Track (2-Second Intuitive Progress) */
+.p-pf-metro-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.p-pf-metro {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+.p-pf-metro-rail {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.p-pf-metro-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--p-gold), var(--p-mint));
+}
+.p-pf-station {
+  position: absolute;
+  top: 1px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.p-pf-station.is-start { left: 2%; transform: none; }
+.p-pf-station.is-mid { left: 60%; }
+.p-pf-station.is-end { left: 98%; transform: translateX(-100%); }
+.p-pf-station i {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--p-border-strong);
+  background: var(--p-bg);
+}
+.p-pf-station.is-done i {
+  border-color: var(--p-mint);
+  background: var(--p-mint);
+}
+.p-pf-station.is-end.is-done i {
+  border-color: var(--p-gold);
+  background: var(--p-gold);
+}
+.p-pf-station em {
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted);
+  white-space: nowrap;
+}
+
+/* Armory Separated Filter Clusters */
+.p-armory-toolbar {
+  align-items: flex-end !important;
+  gap: 12px 16px !important;
+}
+.p-armory-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 18px;
+}
+.p-filter-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 16px;
+  border-right: 1px solid var(--p-border);
+}
+.p-filter-cluster:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+.p-filter-lbl {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--p-text-muted);
+}
+
+/* Vault Archival Specimen Grid & Item Inspector Modal */
+.p-vault-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 9px;
+}
+.p-vault-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  color: var(--p-text);
+  background: var(--p-surface);
+  border: 1px solid var(--p-border);
+  border-top: 2px solid var(--p-border-strong);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+.p-vault-tile[data-rarity="5"] { border-top-color: var(--p-gold); }
+.p-vault-tile[data-rarity="4"] { border-top-color: var(--p-purple); }
+.p-vault-tile[data-rarity="3"] { border-top-color: #38BDF8; }
+.p-vault-tile[data-rarity="2"] { border-top-color: var(--p-mint); }
+.p-vault-tile.is-deficit {
+  border-color: rgba(248, 113, 113, 0.38);
+}
+.p-vault-tile:hover {
+  border-color: var(--p-border-strong);
+  transform: translateY(-1px);
+}
+.p-vault-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--p-border);
+  background: rgba(6, 8, 18, 0.35);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.p-vault-tile-cat {
+  color: var(--p-text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.p-vault-tile-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 9px;
+}
+.p-vault-tile-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.p-vault-tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 9px;
+  border-top: 1px solid var(--p-border);
+  background: rgba(255, 255, 255, 0.015);
+  font-size: 12px;
+}
+.p-vault-modal-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--p-border);
+  border-top: 2px solid var(--p-gold);
+  border-radius: 2px;
+  background: rgba(6, 8, 18, 0.45);
+  margin-bottom: 14px;
+}
+.p-vault-modal-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--p-border);
+  border-radius: 2px;
+  background: var(--p-surface-2);
+  flex-shrink: 0;
+}
+.p-vault-modal-bag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.p-vault-modal-sec {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--p-border);
+}
+.p-vault-modal-lbl {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--p-text-muted);
+  margin-bottom: 5px;
+}
+.p-vault-modal-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--p-text-secondary);
+  white-space: pre-line;
 }
 .p-hud-hero .p-patch-metrics {
   position: relative;
