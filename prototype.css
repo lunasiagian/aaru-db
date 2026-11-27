@@ -2837,6 +2837,21 @@ html, body {
   letter-spacing: -0.01em;
 }
 
+/* Editorial all-caps treatment for Nanum Myeongjo headers (excludes italic weapon lore) */
+.proto-gate-title,
+.proto-brand-name,
+.proto-view-title,
+.p-target-name,
+.proto-dossier-name,
+#proto-weapon-title,
+#proto-artifact-title,
+.p-pf-name-btn,
+.p-hud-hero-title,
+.p-patch-date {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .p-patch-metrics {
   display: flex;
   flex-direction: column;
