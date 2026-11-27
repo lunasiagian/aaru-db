@@ -306,6 +306,83 @@ function scoreEquippedArtifactPiece(art, weights, charMeta, zeroEnergy) {
   return { cv, rvPct, deadMainLabel };
 }
 
+function recordDataStamp(kind = 'edit', meta = '') {
+  const userKey = state.viewingPartner ? state.partnerUser : state.sessionUser;
+  if (!userKey) return;
+  try {
+    localStorage.setItem(
+      `aaru_stamp_${kind}_${userKey}`,
+      JSON.stringify({ ts: Date.now(), meta: String(meta || '') })
+    );
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+function getArchiveFreshnessInfo(account) {
+  const userKey = state.viewingPartner ? state.partnerUser : state.sessionUser;
+  const readStamp = (kind) => {
+    if (!userKey) return null;
+    try {
+      const raw = localStorage.getItem(`aaru_stamp_${kind}_${userKey}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const goodLocal = readStamp('good');
+  const editLocal = readStamp('edit');
+  const acctTs = account?.lastGoodImportAt || account?.updatedAt || account?.meta?.updatedAt || null;
+  const parsedAcctTs = acctTs ? new Date(acctTs).getTime() : 0;
+  const goodTs = Math.max(Number(goodLocal?.ts || 0), Number.isFinite(parsedAcctTs) ? parsedAcctTs : 0);
+  const editTs = Number(editLocal?.ts || 0);
+  const latestTs = Math.max(goodTs, editTs);
+  const isManualNewer = editTs > goodTs;
+
+  const fmtDate = (ms) => {
+    if (!ms) return 'NEVER';
+    const d = new Date(ms);
+    const mon = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][d.getMonth()];
+    return `${mon} ${String(d.getDate()).padStart(2, '0')} ${d.getFullYear()}`;
+  };
+
+  if (!latestTs) {
+    return {
+      tier: 'overdue',
+      topLine: 'NO SCAN LOGGED',
+      dateLine: 'IMPORT GOOD v3',
+      tooltip: 'No GOOD v3 scan recorded yet — click to import your latest scan'
+    };
+  }
+  const ageDays = Math.floor((Date.now() - latestTs) / 86400000);
+  const tier = ageDays <= 7 ? 'fresh' : ageDays <= 21 ? 'aging' : 'overdue';
+  const kindLabel = isManualNewer ? 'MANUAL EDIT' : goodLocal?.meta || 'GOOD v3';
+  const topLine =
+    tier === 'fresh'
+      ? `${kindLabel.toUpperCase()} · SYNCED`
+      : tier === 'aging'
+        ? `STALE · ${ageDays}D AGO`
+        : `OVERDUE · ${ageDays}D AGO`;
+  const editHint = editTs && goodTs ? ` · Last manual edit: ${fmtDate(editTs)}` : '';
+  return {
+    tier,
+    topLine,
+    dateLine: fmtDate(latestTs),
+    tooltip: `Last data update: ${fmtDate(latestTs)} (${ageDays}d ago)${editHint}. Click to import a fresh GOOD v3 JSON.`
+  };
+}
+
+function renderArchiveFreshnessStampHtml(account, readOnly = false) {
+  const info = getArchiveFreshnessInfo(account);
+  const tag = readOnly ? 'div' : 'button type="button" data-p-open-import="true"';
+  const closeTag = readOnly ? 'div' : 'button';
+  return `
+    <${tag} class="p-ink-stamp is-${info.tier}" title="${esc(info.tooltip)}">
+      <span class="p-ink-stamp-top mono">${esc(info.topLine)}</span>
+      <span class="p-ink-stamp-date mono">${esc(info.dateLine)}</span>
+    </${closeTag}>`;
+}
+
 function renderMiniRuler({ index, label, valueText, curPct, targetPct, isOk, ticks, zeroStamp }) {
   if (zeroStamp) {
     return `
@@ -1337,9 +1414,12 @@ function renderTodayView(container, account) {
     <div class="p-grid-2">
       <div class="p-list" style="gap:20px;">
         <section class="p-panel">
-          <div class="p-panel-head">
+          <div class="p-panel-head" style="flex-wrap:wrap;gap:10px;">
             <h2 class="p-panel-title">Build Queue &amp; Missing Materials</h2>
-            ${state.focusedTargetId ? '<button type="button" class="p-btn p-btn-ghost p-btn-xs" data-p-clear-focus>All Targets</button>' : ''}
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              ${state.focusedTargetId ? '<button type="button" class="p-btn p-btn-ghost p-btn-xs" data-p-clear-focus>All Targets</button>' : ''}
+              ${renderArchiveFreshnessStampHtml(account, readOnly)}
+            </div>
           </div>
 
           <div class="p-target-grid">
@@ -1525,6 +1605,7 @@ function renderTodayView(container, account) {
       account.wallet.mora = nextMora;
       if (!account.inventory) account.inventory = {};
       account.inventory.Mora = { ...(typeof account.inventory.Mora === 'object' ? account.inventory.Mora : {}), count: nextMora };
+      recordDataStamp('edit', 'MORA');
       renderTodayView(container, account);
       try {
         if (!state.isPreviewDemo) {
@@ -1536,6 +1617,9 @@ function renderTodayView(container, account) {
       }
     });
   }
+  container.querySelectorAll('[data-p-open-import]').forEach((btn) => {
+    btn.addEventListener('click', () => document.getElementById('proto-open-import')?.click());
+  });
   container.querySelectorAll('[data-p-jump-mat]').forEach((row) => {
     row.addEventListener('click', () => {
       state.vaultCategory = 'All';
@@ -4150,7 +4234,10 @@ function renderVaultView(container, account) {
       </div>
     </div>
 
-    <div id="p-vault-count" class="muted mono" style="font-size:12px;margin-bottom:8px;"></div>
+    <div class="p-vault-meta-bar">
+      <div id="p-vault-count" class="muted mono" style="font-size:12px;"></div>
+      ${renderArchiveFreshnessStampHtml(account, readOnly)}
+    </div>
     <div id="p-vault-grid" class="p-vault-grid"></div>
   `;
 
@@ -4168,6 +4255,7 @@ function renderVaultView(container, account) {
       if (!state.isPreviewDemo) {
         await saveAccountSection(state.sessionUser, 'inventory', account.inventory);
       }
+      recordDataStamp('edit', 'VAULT');
     } catch (err) {
       showToast(`Vault save failed: ${err.message}`);
     }
@@ -4310,6 +4398,9 @@ function renderVaultView(container, account) {
 
   renderVaultGrid();
 
+  container.querySelectorAll('[data-p-open-import]').forEach((btn) => {
+    btn.addEventListener('click', () => document.getElementById('proto-open-import')?.click());
+  });
   container.querySelectorAll('[data-p-vcat]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.vaultCategory = btn.dataset.pVcat;
@@ -4652,6 +4743,7 @@ function setupModals() {
       if (!state.isPreviewDemo) {
         await commitGoodImport(state.sessionUser, raw, diff.mergedAccount);
       }
+      recordDataStamp('good', diff.source || 'GOOD v3');
       state.ownAccount = diff.mergedAccount;
       document.getElementById('proto-import-modal')._closeModal?.();
       renderActiveView();
