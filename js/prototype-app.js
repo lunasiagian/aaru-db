@@ -32,7 +32,7 @@ import {
   loadCatalog,
   normalizeAssetKey,
   refreshLiveCatalog
-} from './catalog.js?v=20261121p64';
+} from './catalog.js?v=20261127p113';
 import {
   calcCoinPurse,
   calcEffectiveHerosWit,
@@ -3141,15 +3141,36 @@ function renderRosterView(container, account) {
 
     grid.innerHTML = filtered.length
       ? filtered
-          .map((c) => {
+          .map((c, idx) => {
             const elAttr = String(c.meta.element || '').toLowerCase();
             const isTarget = c.status === 'Active Prefarm' || prefarmSet.has(c.key);
+            const tal = c.talent
+              ? [c.talent.auto || 1, c.talent.skill || 1, c.talent.burst || 1]
+              : Array.isArray(c.talents)
+                ? c.talents
+                : [1, 1, 1];
+            const isCrowned = c.owned && tal.some((v) => Number(v) >= 10);
+            const isBuilt = c.owned && Number(c.level || 0) >= 80 && (c.equippedArtifacts || []).length >= 4 && Boolean(c.equippedWeapon);
+            const isInStorage = c.owned && (Number(c.level || 0) <= 40 || (!c.equippedWeapon && !(c.equippedArtifacts || []).length));
+            const frameCode = `${String(idx + 1).padStart(2, '0')}A`;
+            const wearTag = isTarget
+              ? '<span class="p-char-wear-tag is-mint mono">PREFARM</span>'
+              : isCrowned
+                ? '<span class="p-char-wear-tag is-gold mono">CROWNED</span>'
+                : isBuilt
+                  ? '<span class="p-char-wear-tag is-mint mono">READY</span>'
+                  : isInStorage
+                    ? '<span class="p-char-wear-tag is-storage mono">IN STORAGE</span>'
+                    : '';
             return `
-            <button type="button" class="p-char-tile ${c.owned ? '' : 'is-unowned'}" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
-              ${isTarget ? '<span class="p-badge p-badge-mint" style="position:absolute;top:8px;right:8px;font-size:12px;padding:1px 7px;">Target</span>' : ''}
+            <button type="button" class="p-char-tile p-char-accession ${c.owned ? '' : 'is-unowned'} ${isInStorage ? 'is-in-storage' : ''}" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
+              <div class="p-char-acc-top mono">
+                <span class="p-char-frame-idx">${frameCode}</span>
+                ${wearTag}
+              </div>
               ${renderAssetIcon('characters', c.key, c.meta.name, '')}
               <span class="p-char-name">${esc(c.meta.name)}</span>
-              <span class="p-char-sub mono">${c.owned ? `Lv.${c.level || 1} · C${c.constellation || 0}` : 'Unowned'}</span>
+              <span class="p-char-sub mono">${c.owned ? `LV.${c.level || 1} · C${c.constellation || 0}` : 'UNOWNED'}</span>
             </button>`;
           })
           .join('')
@@ -3380,6 +3401,27 @@ async function openCharacterWeaponRankingModal({ char, staticProfile, sandboxCtx
   renderRankingList();
 }
 
+const FISHING_WEAPON_KEYS = new Set(['TheCatch', 'FleuveCendreFerryman', 'EndOfTheLine']);
+
+function formatAcquisitionLabel(acq, key, rarity) {
+  if (FISHING_WEAPON_KEYS.has(key)) return 'Fishing';
+  if (acq === 'limited_5' || acq === 'limited_4') return 'Event Wish';
+  if (acq === 'gacha_4') return 'Standard';
+  if (acq === 'bp') return 'Battle Pass';
+  if (acq === 'event_limited') return 'Event';
+  if (acq === 'starglitter') return 'Starglitter';
+  if (acq === 'platform_exclusive') return 'Platform Exclusive';
+  if (acq === 'f2p_craft_fish') return Number(rarity) === 3 ? 'Standard' : 'Craftable';
+  return '';
+}
+
+function renderRefinementPips(refinement = 1) {
+  const r = Math.max(1, Math.min(5, Number(refinement) || 1));
+  return `<span class="p-ref-pips" aria-label="Refinement ${r} of 5" title="Refinement R${r}">${[1, 2, 3, 4, 5]
+    .map((i) => `<i class="p-ref-pip ${i <= r ? 'is-on' : ''}"></i>`)
+    .join('')}</span>`;
+}
+
 async function openWeaponInspector(w, triggerEl = null, onBack = null) {
   const modal = document.getElementById('proto-weapon-modal');
   const titleEl = document.getElementById('proto-weapon-title');
@@ -3387,15 +3429,22 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
   if (!modal || !bodyEl) return;
 
   const meta = getWeaponMeta(w.key);
+  const wepIdx = getWeaponsIndex();
+  const normKey = normalizeAssetKey(w.key);
+  const idxList = Array.isArray(wepIdx) ? wepIdx : Array.isArray(wepIdx?.weapons) ? wepIdx.weapons : [];
+  const idxEntry =
+    idxList.find((x) => x.key === w.key || normalizeAssetKey(x.key) === normKey) ||
+    (!Array.isArray(wepIdx) ? wepIdx?.[w.key] : null) ||
+    null;
   if (titleEl) titleEl.textContent = meta.name || w.key;
-  modal.querySelector('.p-modal')?.classList.add('is-compact');
+  modal.querySelector('.p-modal')?.classList.remove('is-compact');
   const isOwned = w.owned !== false;
   const ownedRef = Math.max(1, Math.min(5, Number(w.refinement) || 1));
   let activeRef = ownedRef;
 
   const renderWeaponModalBody = (stats, loading = false) => {
     if (loading) {
-      bodyEl.innerHTML = '<div class="muted">Loading weapon stats &amp; lore...</div>';
+      bodyEl.innerHTML = '<div class="muted">Loading weapon provenance &amp; stats...</div>';
       return;
     }
     if (!stats) {
@@ -3411,85 +3460,111 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
     const hasReactionBuff = /(?:Vaporize|Melt|Overloaded|Burgeon|Burning|Electro-Charged|Superconduct|Aggravate|Quicken|Hyperbloom|Bloom|Spread|Swirl|Crystallize|Frozen|Shatter|Lunar-|Stellar|Hexerei|Witch's\s*Homework|Moonsign|Nightsoul|Elemental\s+Reaction)/i.test(
       passiveText
     );
-    const lv90Line = lv90?.atk ? `${lv90.atk} ATK · ${formatWeaponSubstat(lv90.subKey, lv90.subVal)}` : '—';
-    const lv80Line = lv80?.atk ? `${lv80.atk} ATK · ${formatWeaponSubstat(lv80.subKey, lv80.subVal)}` : '—';
+    const lv90Line = lv90?.atk ? `${lv90.atk} ATK · ${formatWeaponSubstat(lv90.subKey, lv90.subVal)}` : '';
+    const lv80Line = lv80?.atk ? `${lv80.atk} ATK · ${formatWeaponSubstat(lv80.subKey, lv80.subVal)}` : '';
+    const statsVal = lv90Line
+      ? `${isOwned ? `Lv.${ownedLv || 1} · R${ownedRef} · ` : 'Lv.90 · '}${lv90Line}`
+      : '';
+
+    const custodyVal = isOwned
+      ? w.location
+        ? `Held by ${getCharacterMeta(w.location).name}`
+        : 'In Vault'
+      : '';
+    const originParts = [idxEntry?.originRegion, idxEntry?.originDomain].filter(Boolean);
+    const originVal = originParts.join(' · ');
+    const acqVal = formatAcquisitionLabel(idxEntry?.acquisition, w.key, meta.rarity || idxEntry?.rarity);
+    const classVal = `${meta.weaponType || idxEntry?.weaponType || ''} · ${meta.rarity || idxEntry?.rarity || 4}★`;
+    const catalogId = idxEntry?.id || meta?.id || '';
+
+    const ledgerRows = [
+      custodyVal ? ['Custody', esc(custodyVal), false] : null,
+      originVal ? ['Origin', esc(originVal), false] : null,
+      acqVal ? ['Acquisition', esc(acqVal), false] : null,
+      classVal ? ['Class', esc(classVal), true] : null,
+      statsVal ? ['Stats', esc(statsVal), true] : null,
+      showUpgradeSplit && lv80Line ? ['Lv.80 Cap', esc(lv80Line), true] : null,
+      catalogId ? ['Catalog №', esc(String(catalogId)), true] : null
+    ].filter(Boolean);
+
+    const marginNote = w.note
+      ? String(w.note)
+      : showUpgradeSplit
+        ? `Currently Lv.${ownedLv} — ascending to Lv.90 guarantees full Base ATK & substat.`
+        : '';
 
     bodyEl.innerHTML = `
       ${
         onBack
-          ? `<div>
+          ? `<div style="margin-bottom:10px;">
                <button type="button" class="p-btn p-btn-ghost p-btn-sm" id="p-wep-back-rank">← Back to Weapon Rankings</button>
              </div>`
           : ''
       }
-      <div class="p-wep-hero">
-        <div class="p-row-left">
-          ${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}
-          <div>
-            <div class="p-row-title">${esc(meta.weaponType)} · <span class="mono text-gold">${meta.rarity || 4}★</span> · ${
-              isOwned
-                ? `<span class="mono">Lv.${ownedLv || 1} R${ownedRef}</span>`
-                : '<span class="muted">Catalog Preview</span>'
-            }</div>
-            <div class="p-row-sub">${
-              isOwned
-                ? w.location
-                  ? `Held by ${esc(getCharacterMeta(w.location).name)}`
-                  : 'Unassigned in Armory'
-                : 'Unowned · Lv.90 Max Projection'
-            }</div>
+      <div class="p-rom-split">
+        <dl class="p-rom-ledger">
+          ${ledgerRows
+            .map(
+              ([lbl, val, isMono]) => `
+              <div class="p-rom-row">
+                <dt>${lbl}</dt>
+                <dd class="${isMono ? 'mono' : ''}">${val}</dd>
+              </div>`
+            )
+            .join('')}
+        </dl>
+
+        <div class="p-rom-specimen-col">
+          <div class="p-rom-specimen-plate" data-rarity="${meta.rarity || 4}">
+            <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
+            <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
+            <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
+            <span class="p-crop p-crop-br" aria-hidden="true">+</span>
+            ${renderAssetIcon('weapons', w.key, meta.name, 'icon-lg')}
+            ${FISHING_WEAPON_KEYS.has(w.key) ? '<span class="p-fish-stamp mono">FISHING</span>' : ''}
           </div>
-        </div>
-        <div class="p-wep-hero-stat">
-          <span class="p-control-label">Lv.90 Max</span>
-          <strong class="mono text-gold">${esc(lv90Line)}</strong>
+          ${
+            upgrades.length > 1
+              ? `<div class="p-filter-pills p-rom-ref-strip" role="group" aria-label="Refinement Rank">
+                   ${upgrades
+                     .map((_, idx) => {
+                       const r = idx + 1;
+                       const isActive = activeRef === r;
+                       const isOwnedRank = isOwned && ownedRef === r;
+                       return `<button type="button" class="p-pill-btn mono ${isActive ? 'active' : ''}" data-p-wref="${r}" aria-pressed="${isActive}" title="${isOwnedRank ? 'Equipped Refinement' : `Preview R${r}`}">R${r}</button>`;
+                     })
+                     .join('')}
+                 </div>`
+              : ''
+          }
         </div>
       </div>
 
       ${
-        showUpgradeSplit
-          ? `<div class="p-wep-scale-grid">
-               <div class="p-wep-scale-box">
-                 <span class="p-row-sub">Lv.80 Milestone</span>
-                 <strong class="mono">${esc(lv80Line)}</strong>
-               </div>
-               <div class="p-wep-scale-box is-max">
-                 <span class="p-row-sub">Lv.90 Max</span>
-                 <strong class="mono text-gold">${esc(lv90Line)}</strong>
-               </div>
-             </div>`
-          : ''
-      }
-
-      ${
         stats.passiveName || passiveText
-          ? `<section class="p-wep-passive">
-               <div class="p-wep-passive-head">
-                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ? `<section class="p-rom-passive-band">
+               <div class="p-rom-band-lbl mono">PASSIVE</div>
+               <div class="p-rom-band-body">
+                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
                    <strong class="text-gold" style="font-size:14.5px;">${esc(stats.passiveName || 'Weapon Passive')}</strong>
-                   ${hasReactionBuff ? '<span class="p-badge mono p-badge-rxn">Reaction Buff</span>' : ''}
+                   ${hasReactionBuff ? '<span class="p-stamp p-stamp-mint mono">REACTION BUFF</span>' : ''}
                  </div>
-                 ${
-                   upgrades.length > 1
-                     ? `<div class="p-filter-pills" role="group" aria-label="Refinement Rank">
-                          ${upgrades
-                            .map((_, idx) => {
-                              const r = idx + 1;
-                              const isActive = activeRef === r;
-                              const showActiveTag = isOwned && ownedRef === r;
-                              return `<button type="button" class="p-pill-btn mono ${isActive ? 'active' : ''}" data-p-wref="${r}" aria-pressed="${isActive}">R${r}${showActiveTag ? ' · Active' : ''}</button>`;
-                            })
-                            .join('')}
-                        </div>`
-                     : ''
-                 }
+                 <p class="p-kit-desc">${formatGenshinRichText(passiveText)}</p>
                </div>
-               <p class="p-kit-desc">${formatGenshinRichText(passiveText)}</p>
              </section>`
           : ''
       }
 
-      ${stats.description ? `<div class="p-wep-lore"><p>${formatGenshinRichText(stats.description)}</p></div>` : ''}
+      ${
+        stats.description
+          ? `<div class="p-wep-lore p-rom-lore-band"><p>${formatGenshinRichText(stats.description)}</p></div>`
+          : ''
+      }
+      ${
+        marginNote
+          ? `<div class="p-rom-marginalia">${esc(marginNote)}</div>`
+          : ''
+      }
     `;
 
     bodyEl.querySelectorAll('[data-p-wref]').forEach((btn) => {
@@ -3600,21 +3675,31 @@ function renderArmoryView(container, account) {
       })
       .sort((a, b) => Number(b.owned) - Number(a.owned) || (b.level || 0) - (a.level || 0) || (getWeaponMeta(b.key).rarity || 0) - (getWeaponMeta(a.key).rarity || 0) || getWeaponMeta(a.key).name.localeCompare(getWeaponMeta(b.key).name));
 
-    const wepIdx = getWeaponsIndex() || {};
+    const wepIdxRaw = getWeaponsIndex();
+    const wepIdxList = Array.isArray(wepIdxRaw) ? wepIdxRaw : Array.isArray(wepIdxRaw?.weapons) ? wepIdxRaw.weapons : [];
+    const wepIdxMap = new Map(wepIdxList.map((entry) => [normalizeAssetKey(entry.key), entry]));
     grid.innerHTML = filtered.length
       ? filtered
           .map((w, idx) => {
             const meta = getWeaponMeta(w.key);
             const holderMeta = w.owned && w.location ? getCharacterMeta(w.location) : null;
-            const wStats = wepIdx[w.key] || null;
+            const wStats = wepIdxMap.get(normalizeAssetKey(w.key)) || null;
             const baseAtk = wStats?.baseAtk90 ? Math.round(wStats.baseAtk90) : null;
-            const subText = wStats?.subStat ? formatWeaponSubstat(wStats.subStat, wStats.subVal90) : '';
+            const subText = wStats?.substatKey
+              ? formatWeaponSubstat(wStats.substatKey, wStats.substatVal90)
+              : wStats?.subStat
+                ? formatWeaponSubstat(wStats.subStat, wStats.subVal90)
+                : '';
             const serial = String(idx + 1).padStart(2, '0');
+            const isFishing = FISHING_WEAPON_KEYS.has(w.key);
             return `
-              <article class="p-weapon-card p-wep-specimen ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
+              <article class="p-weapon-card p-wep-specimen p-wep-slip ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
                 <div class="p-wep-spec-top mono">
                   <span class="p-wep-spec-idx">№ ${serial} · ${esc(meta.weaponType || '').toUpperCase()}</span>
-                  <span class="${w.owned && Number(meta.rarity) === 5 ? 'p-wep-star-slab' : 'text-gold'}">${meta.rarity || 4}★</span>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    ${isFishing ? '<span class="p-fish-stamp-sm mono">FISHING</span>' : ''}
+                    <span class="${Number(meta.rarity) === 5 ? 'p-wep-star-slab' : 'text-gold'}">${meta.rarity || 4}★</span>
+                  </div>
                 </div>
                 <div class="p-weapon-head p-wep-spec-body">
                   <div class="p-wep-spec-icon">${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}</div>
@@ -3625,17 +3710,26 @@ function renderArmoryView(container, account) {
                         ? `<div class="p-wep-spec-stats mono">${baseAtk ? `ATK ${baseAtk}` : ''}${baseAtk && subText ? ' · ' : ''}${esc(subText)}</div>`
                         : `<div class="p-wep-spec-stats mono muted">${esc(meta.weaponType)}</div>`
                     }
+                    ${
+                      w.owned
+                        ? `<div class="p-wep-ref-row mono">
+                             <span>LV.${w.level || 1}</span>
+                             ${renderRefinementPips(w.refinement || 1)}
+                           </div>`
+                        : ''
+                    }
                   </div>
                 </div>
                 <div class="p-weapon-foot p-wep-spec-foot">
-                  <span class="mono ${w.owned ? 'p-wep-lv-pill' : 'muted'}">${w.owned ? `LV.${w.level || 1} · R${w.refinement || 1}` : 'UNOWNED'}</span>
                   ${
                     holderMeta
-                      ? `<button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
+                      ? `<span class="mono muted" style="font-size:10px;letter-spacing:0.08em;">ISSUED TO</span>
+                         <button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
                            ${renderAssetIcon('characters', w.location, holderMeta.name, 'icon-xs')}
                            <span>${esc(holderMeta.name)}</span>
                          </button>`
-                      : `<span class="mono muted" style="font-size:11px;">${w.owned ? 'STASHED' : 'ARCHIVE'}</span>`
+                      : `<span class="mono muted" style="font-size:10.5px;letter-spacing:0.08em;">${w.owned ? 'IN VAULT' : 'ARCHIVE'}</span>
+                         <span class="mono muted" style="font-size:10.5px;">${esc(wStats?.originRegion || '')}</span>`
                   }
                 </div>
               </article>`;

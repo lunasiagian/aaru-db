@@ -93,6 +93,27 @@ LIMITED_4_KEYS = {
 
 SPECIALIST_3_STAR_SUBSTATS = {"CRIT Rate", "CRIT DMG", "Elemental Mastery", "HP%", "DEF%", "Energy Recharge"}
 
+# Deterministic weapon ascension material ID (114xxx) -> (originRegion, originDomain)
+# Each region owns 12 consecutive IDs (3 material series x 4 rarity tiers).
+WEAPON_ORIGIN_RANGES: list[tuple[int, int, str, str]] = [
+    (114001, 114012, "Mondstadt", "Cecilia Garden"),
+    (114013, 114024, "Liyue", "Hidden Palace of Lianshan Formula"),
+    (114025, 114036, "Inazuma", "Court of Flowing Sand"),
+    (114037, 114048, "Sumeru", "Tower of Abject Pride"),
+    (114049, 114060, "Fontaine", "Echoes of the Deep Tides"),
+    (114061, 114072, "Natlan", "Ancient Watchtower"),
+    (114073, 114084, "Nod-Krai", "Lost Mooncourt"),
+    (114085, 114096, "Snezhnaya", ""),
+]
+
+
+def resolve_weapon_origin(mat_ids: list[int]) -> tuple[str, str]:
+    for mid in mat_ids:
+        for lo, hi, region, domain in WEAPON_ORIGIN_RANGES:
+            if lo <= mid <= hi:
+                return region, domain
+    return "", ""
+
 
 def to_pascal_key(name: str) -> str:
     cleaned = re.sub(r"['’`\"]", "", str(name or ""))
@@ -312,11 +333,19 @@ def main() -> None:
         if not pascal_key:
             continue
         weapon_type = WEAPON_TYPE_MAP.get(w.get("weaponType") or "", "Sword")
+        promote_rows = promotes_by_id.get(int(w.get("weaponPromoteId") or 0), [])
         base_atk, substat, substat_key, substat_val_str, substat_val_num = compute_dimbreath_lv90(
             w.get("weaponProp") or [],
-            promotes_by_id.get(int(w.get("weaponPromoteId") or 0), []),
+            promote_rows,
             curve_lv90,
         )
+        dim_mat_ids = [
+            int(c.get("id") or 0)
+            for pr in promote_rows
+            for c in (pr.get("costItems") or [])
+            if 114000 <= int(c.get("id") or 0) < 115000
+        ]
+        origin_region, origin_domain = resolve_weapon_origin(dim_mat_ids)
 
         passive_parts: list[str] = []
         for aid in (w.get("skillAffix") or []):
@@ -348,6 +377,8 @@ def main() -> None:
             "substatValue": substat_val_str,
             "substatVal90": substat_val_num,
             "acquisition": classify_acquisition(pascal_key, rarity, passive_text),
+            "originRegion": origin_region,
+            "originDomain": origin_domain,
             "mechanicTags": mechanic_tags,
             "requiresMechanics": requires_mechanics,
             "requiresFullEnergy": req_full_e,
@@ -395,6 +426,12 @@ def main() -> None:
             mechanic_tags = extract_mechanic_tags(name, substat, passive_text)
             requires_mechanics = extract_required_mechanics(passive_text)
             req_full_e, req_onfield, is_spec_3 = build_passive_flags(passive_text, rarity, substat, mechanic_tags)
+            lun_mat_ids = [
+                int(m.group(1))
+                for x in (detail.get("ascension") or [])
+                if (m := re.search(r"(114\d{3})", str(x.get("icon") or "")))
+            ]
+            origin_region, origin_domain = resolve_weapon_origin(lun_mat_ids)
             wicon = item.get("weaponIcon") or ""
             weapons_by_key[pascal_key] = {
                 "id": wid,
@@ -409,6 +446,8 @@ def main() -> None:
                 "substatValue": substat_val_str,
                 "substatVal90": substat_val_num,
                 "acquisition": classify_acquisition(pascal_key, rarity, passive_text),
+                "originRegion": origin_region,
+                "originDomain": origin_domain,
                 "mechanicTags": mechanic_tags,
                 "requiresMechanics": requires_mechanics,
                 "requiresFullEnergy": req_full_e,

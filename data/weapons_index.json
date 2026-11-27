@@ -19,6 +19,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg"
@@ -43,6 +45,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -66,6 +70,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -89,6 +95,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery",
         "party_buff",
@@ -114,6 +122,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -135,6 +145,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "ca_dmg",
         "em_scale",
@@ -160,6 +172,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -181,6 +195,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -202,6 +218,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "skill_dmg",
         "burst_dmg",
@@ -227,6 +245,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -248,6 +268,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -269,6 +291,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "burst_dmg",
         "hp_scale"
@@ -295,6 +319,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -316,6 +342,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -341,6 +369,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -362,6 +392,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "na_dmg",
         "atk_buff"
@@ -386,6 +418,8 @@
       "substatValue": "265",
       "substatVal90": 265.0,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "party_buff",
         "em_scale"
@@ -410,6 +444,8 @@
       "substatValue": "16.5%",
       "substatVal90": 16.5,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -435,6 +471,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg",
@@ -462,6 +500,8 @@
       "substatValue": "16.5%",
       "substatVal90": 16.5,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery",
         "party_buff"
@@ -486,6 +526,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "na_dmg",
@@ -512,6 +554,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -535,6 +579,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery",
         "hp_scale",
@@ -560,6 +606,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "skill_dmg",
         "elem_dmg"
@@ -584,6 +632,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -605,6 +655,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "elem_dmg"
       ],
@@ -628,6 +680,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -651,6 +705,8 @@
       "substatValue": "265",
       "substatVal90": 265.0,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "party_buff",
         "em_scale"
@@ -677,6 +733,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [],
       "requiresMechanics": [
         "lunar"
@@ -700,6 +758,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "em_scale"
       ],
@@ -725,6 +785,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "elem_dmg"
       ],
@@ -748,6 +810,8 @@
       "substatValue": "265",
       "substatVal90": 265.0,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "em_scale"
       ],
@@ -771,6 +835,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -792,6 +858,8 @@
       "substatValue": "265",
       "substatVal90": 265.0,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "em_scale"
       ],
@@ -815,6 +883,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "na_dmg",
         "hp_scale"
@@ -839,6 +909,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "ca_dmg",
         "hp_scale"
@@ -865,6 +937,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "na_dmg"
       ],
@@ -888,6 +962,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -911,6 +987,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -932,6 +1010,8 @@
       "substatValue": "11.0%",
       "substatVal90": 11.0,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -957,6 +1037,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -978,6 +1060,8 @@
       "substatValue": "11.0%",
       "substatVal90": 11.0,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -999,6 +1083,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [
         "hexerei"
@@ -1022,6 +1108,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1043,6 +1131,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg",
@@ -1068,6 +1158,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -1091,6 +1183,8 @@
       "substatValue": "20.7%",
       "substatVal90": 20.7,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "party_buff",
         "atk_buff"
@@ -1115,6 +1209,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1136,6 +1232,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1159,6 +1257,8 @@
       "substatValue": "16.5%",
       "substatVal90": 16.5,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1180,6 +1280,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "skill_dmg",
         "atk_buff"
@@ -1204,6 +1306,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "party_buff",
         "atk_buff"
@@ -1228,6 +1332,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [],
       "requiresMechanics": [
         "lunar"
@@ -1251,6 +1357,8 @@
       "substatValue": "16.5%",
       "substatVal90": 16.5,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "elem_dmg"
       ],
@@ -1274,6 +1382,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -1300,6 +1410,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1321,6 +1433,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_dmg",
         "burst_dmg",
@@ -1348,6 +1462,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -1372,6 +1488,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "party_buff",
         "atk_buff"
@@ -1398,6 +1516,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -1422,6 +1542,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1445,6 +1567,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -1468,6 +1592,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -1491,6 +1617,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1512,6 +1640,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1535,6 +1665,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1558,6 +1690,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [],
       "requiresMechanics": [
         "bond_of_life"
@@ -1581,6 +1715,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1604,6 +1740,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1629,6 +1767,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1652,6 +1792,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1673,6 +1815,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1694,6 +1838,8 @@
       "substatValue": "198",
       "substatVal90": 198.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "party_buff",
         "atk_buff",
@@ -1719,6 +1865,8 @@
       "substatValue": "33.1%",
       "substatVal90": 33.1,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "na_dmg",
         "elem_dmg"
@@ -1743,6 +1891,8 @@
       "substatValue": "66.2%",
       "substatVal90": 66.2,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "party_buff",
         "hp_scale"
@@ -1767,6 +1917,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "skill_dmg",
         "na_dmg",
@@ -1792,6 +1944,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1813,6 +1967,8 @@
       "substatValue": "44.1%",
       "substatVal90": 44.1,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "elem_dmg"
       ],
@@ -1836,6 +1992,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1857,6 +2015,8 @@
       "substatValue": "82.7%",
       "substatVal90": 82.7,
       "acquisition": "limited_5",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "party_buff",
         "def_scale",
@@ -1882,6 +2042,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -1903,6 +2065,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "limited_5",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -1926,6 +2090,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "party_buff",
         "skill_dmg"
@@ -1952,6 +2118,8 @@
       "substatValue": "49.6%",
       "substatVal90": 49.6,
       "acquisition": "limited_5",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -1975,6 +2143,8 @@
       "substatValue": "88.2%",
       "substatVal90": 88.2,
       "acquisition": "limited_5",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "party_buff",
         "skill_dmg",
@@ -2001,6 +2171,8 @@
       "substatValue": "22.1%",
       "substatVal90": 22.1,
       "acquisition": "limited_5",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2022,6 +2194,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2043,6 +2217,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "on_kill"
@@ -2067,6 +2243,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2088,6 +2266,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2109,6 +2289,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "event_limited",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "em_scale"
       ],
@@ -2132,6 +2314,8 @@
       "substatValue": "69.0%",
       "substatVal90": 69.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -2155,6 +2339,8 @@
       "substatValue": "51.7%",
       "substatVal90": 51.7,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [
         "def_scale"
       ],
@@ -2178,6 +2364,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "er_battery"
       ],
@@ -2201,6 +2389,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "event_limited",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery"
       ],
@@ -2224,6 +2414,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -2247,6 +2439,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2268,6 +2462,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg"
@@ -2292,6 +2488,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "event_limited",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2313,6 +2511,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2334,6 +2534,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2355,6 +2557,8 @@
       "substatValue": "51.7%",
       "substatVal90": 51.7,
       "acquisition": "limited_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_dmg",
         "na_dmg"
@@ -2379,6 +2583,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -2402,6 +2608,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "platform_exclusive",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg",
@@ -2427,6 +2635,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2448,6 +2658,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -2472,6 +2684,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "atk_buff",
         "elem_dmg"
@@ -2496,6 +2710,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "starglitter",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2517,6 +2733,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "na_dmg",
         "ca_penalty"
@@ -2541,6 +2759,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_reset",
         "er_battery"
@@ -2565,6 +2785,8 @@
       "substatValue": "18.4%",
       "substatVal90": 18.4,
       "acquisition": "bp",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "ca_dmg"
       ],
@@ -2588,6 +2810,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "event_limited",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -2611,6 +2835,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "er_battery"
       ],
@@ -2636,6 +2862,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "healer_trigger"
       ],
@@ -2659,6 +2887,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_dmg",
         "burst_dmg",
@@ -2684,6 +2914,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2705,6 +2937,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -2728,6 +2962,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "event_limited",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -2751,6 +2987,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery",
         "na_dmg",
@@ -2776,6 +3014,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "on_kill"
@@ -2800,6 +3040,8 @@
       "substatValue": "221",
       "substatVal90": 221.0,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "em_scale"
       ],
@@ -2825,6 +3067,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2846,6 +3090,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "limited_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "em_scale"
       ],
@@ -2869,6 +3115,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "ca_dmg",
         "atk_buff"
@@ -2893,6 +3141,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2914,6 +3164,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "er_battery",
         "em_scale"
@@ -2938,6 +3190,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -2959,6 +3213,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -2982,6 +3238,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale",
         "elem_dmg"
@@ -3008,6 +3266,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3029,6 +3289,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "er_battery"
       ],
@@ -3052,6 +3314,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "elem_dmg"
@@ -3076,6 +3340,8 @@
       "substatValue": "110",
       "substatVal90": 110.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "em_scale",
         "elem_dmg"
@@ -3100,6 +3366,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "event_limited",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3121,6 +3389,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery",
         "party_buff",
@@ -3146,6 +3416,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "na_dmg",
         "hp_scale"
@@ -3170,6 +3442,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "starglitter",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3191,6 +3465,8 @@
       "substatValue": "221",
       "substatVal90": 221.0,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_reset",
         "em_scale"
@@ -3215,6 +3491,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "bp",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "skill_reset"
       ],
@@ -3238,6 +3516,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "skill_dmg",
         "burst_dmg",
@@ -3263,6 +3543,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff",
         "em_scale",
@@ -3288,6 +3570,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "limited_4",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "em_scale"
       ],
@@ -3311,6 +3595,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "er_battery",
         "hp_scale"
@@ -3335,6 +3621,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "limited_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -3359,6 +3647,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3380,6 +3670,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "event_limited",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -3404,6 +3696,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "limited_4",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -3427,6 +3721,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "on_kill"
@@ -3451,6 +3747,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3472,6 +3770,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "gacha_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "er_battery"
       ],
@@ -3495,6 +3795,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "skill_dmg"
       ],
@@ -3518,6 +3820,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -3541,6 +3845,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "gacha_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "em_scale"
       ],
@@ -3564,6 +3870,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "er_battery"
       ],
@@ -3587,6 +3895,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3608,6 +3918,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3629,6 +3941,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "skill_dmg"
@@ -3653,6 +3967,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "limited_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3674,6 +3990,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "event_limited",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -3697,6 +4015,8 @@
       "substatValue": "110",
       "substatVal90": 110.0,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -3720,6 +4040,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "limited_4",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "em_scale"
       ],
@@ -3743,6 +4065,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "er_battery"
       ],
@@ -3768,6 +4092,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "limited_4",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -3791,6 +4117,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3812,6 +4140,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "em_scale"
       ],
@@ -3835,6 +4165,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "starglitter",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3856,6 +4188,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_reset",
         "er_battery"
@@ -3880,6 +4214,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3901,6 +4237,8 @@
       "substatValue": "34.5%",
       "substatVal90": 34.5,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -3922,6 +4260,8 @@
       "substatValue": "18.4%",
       "substatVal90": 18.4,
       "acquisition": "bp",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "elem_dmg"
       ],
@@ -3947,6 +4287,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -3970,6 +4312,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "healer_trigger"
       ],
@@ -3993,6 +4337,8 @@
       "substatValue": "51.7%",
       "substatVal90": 51.7,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "def_scale"
       ],
@@ -4016,6 +4362,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "burst_dmg"
@@ -4040,6 +4388,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4061,6 +4411,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "on_kill"
@@ -4085,6 +4437,8 @@
       "substatValue": "34.5%",
       "substatVal90": 34.5,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4106,6 +4460,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "bp",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff",
         "def_scale"
@@ -4130,6 +4486,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "event_limited",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "er_battery",
         "hp_scale",
@@ -4157,6 +4515,8 @@
       "substatValue": "221",
       "substatVal90": 221.0,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "em_scale"
       ],
@@ -4180,6 +4540,8 @@
       "substatValue": "69.0%",
       "substatVal90": 69.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4201,6 +4563,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -4224,6 +4588,8 @@
       "substatValue": "51.7%",
       "substatVal90": 51.7,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "def_scale"
       ],
@@ -4247,6 +4613,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "bp",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [
         "er_battery"
       ],
@@ -4270,6 +4638,8 @@
       "substatValue": "110",
       "substatVal90": 110.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "skill_dmg",
@@ -4295,6 +4665,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4316,6 +4688,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff",
         "em_scale"
@@ -4340,6 +4714,8 @@
       "substatValue": "110",
       "substatVal90": 110.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "em_scale"
       ],
@@ -4363,6 +4739,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "er_battery",
         "skill_dmg"
@@ -4387,6 +4765,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "atk_buff",
         "elem_dmg"
@@ -4411,6 +4791,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [],
       "requiresMechanics": [
         "lunar"
@@ -4434,6 +4816,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery",
         "na_dmg",
@@ -4459,6 +4843,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "er_battery",
         "hp_scale"
@@ -4483,6 +4869,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4504,6 +4892,8 @@
       "substatValue": "9.2%",
       "substatVal90": 9.2,
       "acquisition": "limited_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -4528,6 +4918,8 @@
       "substatValue": "110",
       "substatVal90": 110.0,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [
         "em_scale"
       ],
@@ -4551,6 +4943,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "event_limited",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery",
         "atk_buff"
@@ -4575,6 +4969,8 @@
       "substatValue": "13.8%",
       "substatVal90": 13.8,
       "acquisition": "limited_4",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -4598,6 +4994,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "er_battery"
       ],
@@ -4621,6 +5019,8 @@
       "substatValue": "36.8%",
       "substatVal90": 36.8,
       "acquisition": "starglitter",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "on_kill"
@@ -4645,6 +5045,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "event_limited",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "ca_dmg"
       ],
@@ -4668,6 +5070,8 @@
       "substatValue": "69.0%",
       "substatVal90": 69.0,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_dmg",
         "def_scale"
@@ -4692,6 +5096,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [
         "em_scale"
       ],
@@ -4715,6 +5121,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -4738,6 +5146,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "event_limited",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery",
         "skill_dmg"
@@ -4762,6 +5172,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -4787,6 +5199,8 @@
       "substatValue": "45.9%",
       "substatVal90": 45.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "er_battery",
         "skill_dmg"
@@ -4811,6 +5225,8 @@
       "substatValue": "69.0%",
       "substatVal90": 69.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "def_scale"
       ],
@@ -4834,6 +5250,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4855,6 +5273,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "em_scale"
       ],
@@ -4878,6 +5298,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4899,6 +5321,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4920,6 +5344,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "burst_dmg"
       ],
@@ -4943,6 +5369,8 @@
       "substatValue": "55.1%",
       "substatVal90": 55.1,
       "acquisition": "gacha_4",
+      "originRegion": "Snezhnaya",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4964,6 +5392,8 @@
       "substatValue": "20.7%",
       "substatVal90": 20.7,
       "acquisition": "gacha_4",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -4985,6 +5415,8 @@
       "substatValue": "34.5%",
       "substatVal90": 34.5,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5006,6 +5438,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "starglitter",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5027,6 +5461,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_reset",
         "er_battery"
@@ -5051,6 +5487,8 @@
       "substatValue": "30.6%",
       "substatVal90": 30.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "er_battery"
       ],
@@ -5074,6 +5512,8 @@
       "substatValue": "61.3%",
       "substatVal90": 61.3,
       "acquisition": "gacha_4",
+      "originRegion": "Nod-Krai",
+      "originDomain": "Lost Mooncourt",
       "mechanicTags": [
         "er_battery"
       ],
@@ -5099,6 +5539,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5120,6 +5562,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "limited_4",
+      "originRegion": "Natlan",
+      "originDomain": "Ancient Watchtower",
       "mechanicTags": [
         "na_dmg"
       ],
@@ -5143,6 +5587,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "platform_exclusive",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -5166,6 +5612,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5187,6 +5635,8 @@
       "substatValue": "55",
       "substatVal90": 55.0,
       "acquisition": "limited_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5210,6 +5660,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5231,6 +5683,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "limited_4",
+      "originRegion": "Fontaine",
+      "originDomain": "Echoes of the Deep Tides",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -5254,6 +5708,8 @@
       "substatValue": "41.3%",
       "substatVal90": 41.3,
       "acquisition": "gacha_4",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5275,6 +5731,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "event_limited",
+      "originRegion": "Inazuma",
+      "originDomain": "Court of Flowing Sand",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5298,6 +5756,8 @@
       "substatValue": "27.6%",
       "substatVal90": 27.6,
       "acquisition": "bp",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "skill_dmg",
         "burst_dmg"
@@ -5322,6 +5782,8 @@
       "substatValue": "165",
       "substatVal90": 165.0,
       "acquisition": "limited_4",
+      "originRegion": "Sumeru",
+      "originDomain": "Tower of Abject Pride",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5345,6 +5807,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5366,6 +5830,8 @@
       "substatValue": "31.2%",
       "substatVal90": 31.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5387,6 +5853,8 @@
       "substatValue": "94",
       "substatVal90": 94.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5410,6 +5878,8 @@
       "substatValue": "46.9%",
       "substatVal90": 46.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -5433,6 +5903,8 @@
       "substatValue": "46.9%",
       "substatVal90": 46.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5454,6 +5926,8 @@
       "substatValue": "31.2%",
       "substatVal90": 31.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "na_dmg",
         "ca_dmg"
@@ -5478,6 +5952,8 @@
       "substatValue": "141",
       "substatVal90": 141.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [
         "em_scale",
         "elem_dmg"
@@ -5502,6 +5978,8 @@
       "substatValue": "94",
       "substatVal90": 94.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "em_scale"
@@ -5526,6 +6004,8 @@
       "substatValue": "187",
       "substatVal90": 187.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5549,6 +6029,8 @@
       "substatValue": "39.0%",
       "substatVal90": 39.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "er_battery"
       ],
@@ -5572,6 +6054,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "party_buff",
         "atk_buff",
@@ -5597,6 +6081,8 @@
       "substatValue": "15.6%",
       "substatVal90": 15.6,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5618,6 +6104,8 @@
       "substatValue": "187",
       "substatVal90": 187.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "em_scale"
       ],
@@ -5641,6 +6129,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5662,6 +6152,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "ca_dmg",
         "hp_scale"
@@ -5686,6 +6178,8 @@
       "substatValue": "141",
       "substatVal90": 141.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [
         "atk_buff",
         "em_scale"
@@ -5710,6 +6204,8 @@
       "substatValue": "43.9%",
       "substatVal90": 43.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff"
       ],
@@ -5733,6 +6229,8 @@
       "substatValue": "43.9%",
       "substatVal90": 43.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "def_scale"
       ],
@@ -5756,6 +6254,8 @@
       "substatValue": "46.9%",
       "substatVal90": 46.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "hp_scale"
       ],
@@ -5779,6 +6279,8 @@
       "substatValue": "23.5%",
       "substatVal90": 23.5,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5800,6 +6302,8 @@
       "substatValue": "",
       "substatVal90": 0.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "",
+      "originDomain": "",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5821,6 +6325,8 @@
       "substatValue": "23.4%",
       "substatVal90": 23.4,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "na_dmg"
       ],
@@ -5844,6 +6350,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5865,6 +6373,8 @@
       "substatValue": "141",
       "substatVal90": 141.0,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "atk_buff",
         "em_scale"
@@ -5889,6 +6399,8 @@
       "substatValue": "35.2%",
       "substatVal90": 35.2,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5910,6 +6422,8 @@
       "substatValue": "46.9%",
       "substatVal90": 46.9,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [],
       "requiresMechanics": [],
       "requiresFullEnergy": false,
@@ -5931,6 +6445,8 @@
       "substatValue": "52.1%",
       "substatVal90": 52.1,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Liyue",
+      "originDomain": "Hidden Palace of Lianshan Formula",
       "mechanicTags": [
         "er_battery"
       ],
@@ -5954,6 +6470,8 @@
       "substatValue": "29.3%",
       "substatVal90": 29.3,
       "acquisition": "f2p_craft_fish",
+      "originRegion": "Mondstadt",
+      "originDomain": "Cecilia Garden",
       "mechanicTags": [
         "def_scale"
       ],

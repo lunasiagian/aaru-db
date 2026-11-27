@@ -4973,6 +4973,265 @@ html, body {
   font-weight: 600;
   color: var(--p-gold);
 }
+
+/* ==========================================================================
+   ROM Provenance Ledger (Weapon Modal), Cardstock Tooth,
+   Armory Library Checkout Slips & Characters Accession Contact Sheet
+   ========================================================================== */
+
+/* Tactile Cardstock Tooth Overlay on Library Catalog Modals */
+#proto-weapon-modal .p-modal::before,
+#proto-artifact-modal .p-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+#proto-weapon-modal .p-modal > *,
+#proto-artifact-modal .p-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ROM 2-Column Top Provenance Split */
+.p-rom-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 178px;
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+@media (max-width: 680px) {
+  .p-rom-split {
+    grid-template-columns: 1fr;
+  }
+}
+.p-rom-ledger {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--p-border);
+}
+.p-rom-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--p-border);
+}
+.p-rom-row dt {
+  margin: 0;
+  font-family: var(--p-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-text-muted);
+}
+.p-rom-row dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--p-text);
+  line-height: 1.35;
+}
+.p-rom-row dd.mono {
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+}
+.p-rom-specimen-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.p-rom-specimen-plate {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--p-border-strong);
+  border-top: 2px solid var(--p-gold);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 6px, rgba(212, 175, 55, 0.045) 6px 7px),
+    var(--p-bg);
+  padding: 16px;
+}
+.p-rom-specimen-plate[data-rarity="4"] { border-top-color: var(--p-purple); }
+.p-rom-specimen-plate[data-rarity="3"] { border-top-color: #38BDF8; }
+.p-rom-specimen-plate .icon-lg,
+.p-rom-specimen-plate img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+.p-rom-ref-strip {
+  width: 100%;
+  justify-content: stretch;
+}
+.p-rom-ref-strip .p-pill-btn {
+  flex: 1;
+  padding: 5px 4px !important;
+  text-align: center;
+}
+
+/* ROM Middle Band: PASSIVE Anchor */
+.p-rom-passive-band {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--p-border-strong);
+  border-bottom: 1px solid var(--p-border);
+}
+@media (max-width: 620px) {
+  .p-rom-passive-band {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+.p-rom-band-lbl {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--p-text-secondary);
+  line-height: 1.1;
+  padding-top: 1px;
+}
+.p-rom-band-body {
+  min-width: 0;
+}
+
+/* ROM Bottom Band: Official Lore (Italic Nanum Myeongjo) vs Muted Archival Marginalia */
+.p-rom-lore-band {
+  margin-top: 14px;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+.p-rom-lore-band p {
+  font-family: var(--p-font-display) !important;
+  font-style: italic !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: rgba(178, 190, 214, 0.85) !important;
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+  max-width: 66ch;
+}
+.p-rom-marginalia {
+  margin-top: 12px;
+  padding-left: 10px;
+  border-left: 1px dashed rgba(212, 175, 55, 0.35);
+  font-family: var(--p-font-hand);
+  font-size: 16px;
+  line-height: 1.4;
+  color: rgba(212, 175, 55, 0.78);
+  transform: rotate(-0.5deg);
+  transform-origin: left center;
+}
+
+/* Fishing Weapon Anti-Tilt Stamps & Visual Refinement Pips */
+.p-fish-stamp,
+.p-fish-stamp-sm {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(56, 189, 248, 0.65);
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 1px;
+  letter-spacing: 0.1em;
+  transform: rotate(-3deg);
+  filter: url(#aaru-ink-stamp);
+}
+.p-fish-stamp {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+.p-fish-stamp-sm {
+  padding: 0 4px;
+  font-size: 9.5px;
+  line-height: 1.3;
+}
+.p-wep-ref-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--p-text-secondary);
+}
+.p-ref-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.p-ref-pip {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--p-border-strong);
+  border-radius: 1px;
+  background: transparent;
+}
+.p-ref-pip.is-on {
+  border-color: var(--p-gold);
+  background: var(--p-gold);
+}
+
+/* Characters Roster — Accession Contact Sheet & Investment Wear */
+.p-char-accession {
+  padding: 8px 10px 10px !important;
+  gap: 6px !important;
+}
+.p-char-acc-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--p-border);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.p-char-frame-idx {
+  color: var(--p-text-muted);
+}
+.p-char-wear-tag {
+  padding: 0 5px;
+  border-radius: 1px;
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  border: 1px solid var(--p-border-strong);
+}
+.p-char-wear-tag.is-gold {
+  border-color: var(--p-gold);
+  background: rgba(212, 175, 55, 0.14);
+  color: var(--p-gold);
+}
+.p-char-wear-tag.is-mint {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--p-mint);
+}
+.p-char-wear-tag.is-storage {
+  border-style: dashed;
+  border-color: var(--p-border);
+  color: var(--p-text-muted);
+}
+.p-char-accession.is-in-storage {
+  opacity: 0.56;
+  border-style: dashed !important;
+}
+.p-char-accession.is-in-storage:hover {
+  opacity: 0.92;
+}
 .p-vault-modal-barcode-row {
   margin-top: 14px;
   padding-top: 10px;
