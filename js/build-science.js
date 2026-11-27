@@ -1,4 +1,4 @@
-import { getWeaponsIndex } from './catalog.js?v=20261121p64';
+import { getWeaponsIndex } from './catalog.js?v=20261127p113';
 import {
   buildKitProfile,
   deriveTalentPriority,

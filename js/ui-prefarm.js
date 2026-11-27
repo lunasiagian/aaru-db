@@ -8,7 +8,7 @@ import {
   getMaterialDetails,
   getMaterialMeta,
   getWeaponMeta
-} from './catalog.js?v=20261121p64';
+} from './catalog.js?v=20261127p113';
 import { calculateWaterfallPrefarm, sortAndLabelPrefarmQueue } from './calculations.js?v=20261125p68';
 
 const uiState = {

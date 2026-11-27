@@ -1,4 +1,4 @@
-import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261121p64';
+import { getCatalog, getLiveAssetEntry } from './catalog.js?v=20261127p113';
 
 function toEnkaUrlIfReleased(url, live) {
   if (!url || live?.unreleased) return url || '';

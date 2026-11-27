@@ -1,5 +1,5 @@
 import { renderAssetIcon } from './assets.js?v=20261121p64';
-import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261121p64';
+import { getCharacterKit, getCharacterMeta, getWeaponMeta } from './catalog.js?v=20261127p113';
 import { analyzeCharacterKit, classifyCharacterRole, resolveMemberTeamRole } from './build-science.js?v=20261125p67';
 import { detectTeamWeaponConflicts } from './calculations.js?v=20261125p68';
 
