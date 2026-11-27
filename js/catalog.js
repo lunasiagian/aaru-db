@@ -1354,6 +1354,8 @@ function parseYattaAvatarKit(data, curveData) {
     baseStats: { lv80, lv80A6, lv90, lv95 },
     ascensionStat,
     burstCost: burstCost || 60,
+    region: data?.region || data?.fetter?.region || '',
+    affiliation: data?.fetter?.native || data?.affiliation || '',
     talents,
     passives,
     constellations
@@ -1516,6 +1518,8 @@ function parseLunarisCharKit(detail) {
     },
     ascensionStat: null,
     burstCost,
+    region: detail?.region || detail?.info?.region || '',
+    affiliation: detail?.affiliation || detail?.info?.affiliation || detail?.fetter?.native || '',
     talents,
     passives,
     constellations
@@ -1606,7 +1610,7 @@ async function resolveYattaAvatarId(norm) {
 export async function ensureCharacterKitAndStats(pascalKey) {
   const norm = normalizeAssetKey(pascalKey);
   const cache = loadKitCache();
-  if (cache.chars[norm]) return cache.chars[norm];
+  if (cache.chars[norm] && cache.chars[norm].affiliation !== undefined) return cache.chars[norm];
   let entry = yattaMaps.characters.get(norm);
   if (pendingKitFetches.has(norm)) return pendingKitFetches.get(norm);
 

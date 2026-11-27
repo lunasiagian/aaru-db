@@ -2343,9 +2343,9 @@ function renderRosterView(container, account) {
       return Number.isFinite(n) && n > 0 ? n : Math.max(talArr[i] || 1, 9);
     });
 
-    if (!kitData || (weapon && !weaponStats)) {
+    if (!kitData || kitData.affiliation === undefined || (weapon && !weaponStats)) {
       Promise.all([
-        !kitData ? ensureCharacterKitAndStats(char.key) : Promise.resolve(false),
+        !kitData || kitData.affiliation === undefined ? ensureCharacterKitAndStats(char.key) : Promise.resolve(false),
         weapon && !weaponStats ? ensureWeaponStats(weapon.key) : Promise.resolve(false)
       ]).then((res) => {
         if (res.some(Boolean) && state.inspectedCharKey === char.key) {
@@ -2370,7 +2370,16 @@ function renderRosterView(container, account) {
         <div class="p-zine-strip">
           <div class="p-zine-strip-left mono">
             <span class="p-zine-issue-circle">${char.meta.rarity || 5}★</span>
-            <span>ARCHIVE DOSSIER · ${esc(char.meta.element || '').toUpperCase()} / ${esc(char.meta.weaponType || '').toUpperCase()}</span>
+            <span>${esc(
+              (() => {
+                const rawReg = (kitData?.region || char.meta.region || 'Teyvat').replace(/^REGION_/i, '');
+                const nation = rawReg && rawReg.toLowerCase() !== 'unknown' ? rawReg : 'Teyvat';
+                const aff = (kitData?.affiliation || char.meta.affiliation || '').trim();
+                return aff
+                  ? `${nation.toUpperCase()} ARCHIVE · ${aff.toUpperCase()}`
+                  : `${nation.toUpperCase()} ARCHIVE · ${String(char.meta.element || '').toUpperCase()} / ${String(char.meta.weaponType || '').toUpperCase()}`;
+              })()
+            )}</span>
           </div>
           <div class="p-zine-strip-right">
             <span class="p-zine-stamp mono">${esc(char.constellation ? `C${char.constellation}` : 'C0')}${weapon ? `·R${weapon.refinement || 1}` : ''}</span>
