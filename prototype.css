@@ -5893,10 +5893,11 @@ body {
 /* ROM 2-Column Top Provenance Split */
 .p-rom-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 178px;
-  gap: 22px;
-  align-items: start;
-  margin-bottom: 18px;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid var(--p-border);
+  margin-bottom: 0;
 }
 
 @media (max-width: 680px) {
@@ -5907,8 +5908,13 @@ body {
 
 .p-rom-ledger {
   margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--p-border);
+  padding: 0 22px 14px 0;
+}
+
+@media (max-width: 680px) {
+  .p-rom-ledger {
+    padding: 0 0 14px 0;
+  }
 }
 
 .p-rom-row {
@@ -5916,8 +5922,12 @@ body {
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 12px;
   align-items: baseline;
-  padding: 7px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--p-border);
+}
+
+.p-rom-row:last-child {
+  border-bottom: 0;
 }
 
 .p-rom-row dt {
@@ -5943,34 +5953,131 @@ body {
 .p-rom-specimen-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  border-left: 1px solid var(--p-border);
+  padding: 0 0 14px 18px;
+}
+
+@media (max-width: 680px) {
+  .p-rom-specimen-col {
+    border-left: 0;
+    border-top: 1px solid var(--p-border);
+    padding: 14px 0;
+  }
+}
+
+/* Graphic-Voltage Solid-Ink Specimen Header Bar (Cosmos 00:06) */
+.p-rom-specimen-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: var(--p-gold);
+  color: #060812;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  border-radius: 2px 2px 0 0;
+}
+
+.p-rom-specimen-bar[data-rarity="4"] {
+  background: #A78BFA;
+  color: #060812;
+}
+
+.p-rom-specimen-bar[data-rarity="3"] {
+  background: #38BDF8;
+  color: #060812;
 }
 
 .p-rom-specimen-plate {
+  --rx: 0deg;
+  --ry: 0deg;
+  --sx: 0px;
+  --mx: 50%;
+  --my: 42%;
   position: relative;
-  aspect-ratio: 1 / 1;
+  flex: 1 1 auto;
+  min-height: 184px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--p-border-strong);
-  border-top: 2px solid var(--p-gold);
-  border-radius: 2px;
+  border-top: 0;
+  border-radius: 0;
   background-color: var(--p-surface-2);
   background-image:
-    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.06) 0%, transparent 68%),
+    radial-gradient(circle at var(--mx) var(--my), rgba(212, 175, 55, 0.11) 0%, transparent 62%),
     radial-gradient(rgba(212, 175, 55, 0.16) 1px, transparent 1px);
   background-size: 100% 100%, 16px 16px;
   background-position: 0 0, 8px 8px;
-  padding: 10px;
+  padding: 12px 12px 24px 22px;
   overflow: hidden;
+  perspective: 720px;
+  transition: border-color 180ms ease;
 }
 
-.p-rom-specimen-plate[data-rarity="4"] {
-  border-top-color: var(--p-purple);
+/* Inner vitrine optical reticle ring */
+.p-rom-specimen-plate::before {
+  content: "";
+  position: absolute;
+  width: 126px;
+  height: 126px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212, 175, 55, 0.14);
+  pointer-events: none;
+  z-index: 0;
+  transition: border-color 220ms ease, transform 220ms ease;
 }
 
-.p-rom-specimen-plate[data-rarity="3"] {
-  border-top-color: #38BDF8;
+/* Specular museum-glass sheen driven by pointer */
+.p-rom-specimen-plate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.08) 0%, transparent 52%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.p-rom-specimen-plate:hover::after {
+  opacity: 1;
+}
+
+.p-rom-specimen-plate.is-ref-pulse::before {
+  border-color: rgba(212, 175, 55, 0.58);
+  transform: scale(1.06);
+}
+
+/* Passport Vertical Edge Stamp (Cosmos 00:05 "PHOTO ATTACHED") */
+.p-rom-attached-stamp {
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(212, 175, 55, 0.36);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.p-rom-specimen-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
 }
 
 .p-rom-specimen-plate .p-rom-specimen-splash,
@@ -5985,21 +6092,78 @@ body {
 .p-rom-specimen-plate img {
   width: 100%;
   height: 100%;
-  max-height: 168px;
+  max-height: 152px;
   object-fit: contain;
-  transform: scale(1.2);
-  filter: drop-shadow(0 10px 18px rgba(6, 8, 18, 0.72));
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(1.18);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  filter: drop-shadow(0 10px 18px rgba(6, 8, 18, 0.78));
+}
+
+/* Class-aware framing: Catalysts use crisp uncropped UI_EquipIcon */
+.p-rom-specimen-plate[data-weapon-type="Catalyst"] img {
+  max-height: 132px;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(1.06);
+}
+
+/* Grounded Contact Shadow Ellipse */
+.p-rom-contact-shadow {
+  position: absolute;
+  bottom: 2px;
+  width: 62%;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(6, 8, 18, 0.78) 0%, rgba(6, 8, 18, 0.22) 55%, transparent 78%);
+  transform: translateX(var(--sx));
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+/* Bottom Swiss Millimeter Tick Ruler (Cosmos 00:03) */
+.p-rom-ruler {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 8px 2px 22px;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: rgba(178, 190, 214, 0.45);
+  border-top: 1px solid rgba(212, 175, 55, 0.14);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(212, 175, 55, 0.24) 0 1px,
+      transparent 1px 6px
+    ) left top / 100% 4px no-repeat,
+    rgba(6, 8, 18, 0.42);
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-rom-specimen-plate img,
+  .p-rom-contact-shadow {
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 .p-rom-ref-strip {
   width: 100%;
   justify-content: stretch;
+  margin-top: -1px;
 }
 
 .p-rom-ref-strip .p-pill-btn {
   flex: 1;
   padding: 5px 4px !important;
   text-align: center;
+  border-radius: 0 !important;
 }
 
 /* ROM Middle Band: PASSIVE Anchor */

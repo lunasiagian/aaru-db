@@ -115,11 +115,12 @@ export function renderGachaSplash(pascalKey, alt = '') {
  * Renders full-length Weapon Gacha Art (UI_Gacha_EquipIcon_*) with automatic
  * fallback to Yatta full art, standard cropped weapon icon, or monogram.
  */
-export function renderWeaponSplash(pascalKey, alt = '', className = 'p-weapon-splash') {
+export function renderWeaponSplash(pascalKey, alt = '', className = 'p-weapon-splash', weaponType = '') {
   const rawIcon = getFallbackAssetUrl('weapons', pascalKey) || getAssetUrl('weapons', pascalKey);
   const live = getLiveAssetEntry('weapons', pascalKey);
   const stdIconUrl = toEnkaUrlIfReleased(rawIcon, live) || rawIcon;
-  const gachaMatch = rawIcon.match(/UI_EquipIcon_([A-Za-z0-9_]+)\.(?:png|webp)$/i);
+  const isCatalyst = String(weaponType || '').toLowerCase() === 'catalyst' || /_Catalyst_/i.test(rawIcon);
+  const gachaMatch = !isCatalyst ? rawIcon.match(/UI_EquipIcon_([A-Za-z0-9_]+)\.(?:png|webp)$/i) : null;
   const gachaFilename = gachaMatch ? `UI_Gacha_EquipIcon_${gachaMatch[1]}.png` : '';
   const yattaGachaUrl = gachaFilename ? `https://gi.yatta.moe/assets/UI/${gachaFilename}` : '';
   const enkaGachaUrl = gachaFilename && !live?.unreleased ? `https://enka.network/ui/${gachaFilename}` : '';

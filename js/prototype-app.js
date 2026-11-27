@@ -6,7 +6,7 @@ import {
   pulseReminderChip,
   pulseStepperValue
 } from './motion.js?v=20261127p105';
-import { renderAssetIcon, renderGachaSplash, renderWeaponSplash } from './assets.js?v=20261127p115';
+import { renderAssetIcon, renderGachaSplash, renderWeaponSplash } from './assets.js?v=20261127p117';
 import {
   ensureCharacterKitAndStats,
   ensureCharacterMaterials,
@@ -3515,13 +3515,24 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
         </dl>
 
         <div class="p-rom-specimen-col">
-          <div class="p-rom-specimen-plate" data-rarity="${meta.rarity || 4}">
+          <div class="p-rom-specimen-bar mono" data-rarity="${meta.rarity || 4}">
+            <span>${catalogId ? `FIG. ${esc(catalogId)}` : 'SPECIMEN'}</span>
+            <span>${esc((meta.type || 'WEAPON').toUpperCase())}</span>
+          </div>
+          <div class="p-rom-specimen-plate" data-rarity="${meta.rarity || 4}" data-weapon-type="${esc(meta.type || '')}">
+            <span class="p-rom-attached-stamp mono" aria-hidden="true">SPECIMEN ATTACHED</span>
             <span class="p-crop p-crop-tl" aria-hidden="true">+</span>
             <span class="p-crop p-crop-tr" aria-hidden="true">+</span>
             <span class="p-crop p-crop-bl" aria-hidden="true">+</span>
             <span class="p-crop p-crop-br" aria-hidden="true">+</span>
-            ${renderWeaponSplash(w.key, meta.name, 'p-rom-specimen-splash')}
+            <div class="p-rom-specimen-stage">
+              ${renderWeaponSplash(w.key, meta.name, 'p-rom-specimen-splash', meta.type || '')}
+              <span class="p-rom-contact-shadow" aria-hidden="true"></span>
+            </div>
             ${FISHING_WEAPON_KEYS.has(w.key) ? '<span class="p-fish-stamp mono">FISHING</span>' : ''}
+            <div class="p-rom-ruler mono" aria-hidden="true">
+              <span>0</span><span>10</span><span>20</span><span>30mm</span>
+            </div>
           </div>
           ${
             upgrades.length > 1
@@ -3567,10 +3578,43 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
       }
     `;
 
+    // Interactive vitrine specimen tilt & museum-glass specular reflection
+    const plateEl = bodyEl.querySelector('.p-rom-specimen-plate');
+    if (plateEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      let rafId = 0;
+      plateEl.addEventListener('pointermove', (ev) => {
+        if (ev.pointerType === 'touch') return;
+        const rect = plateEl.getBoundingClientRect();
+        const nx = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+        const ny = ((ev.clientY - rect.top) / rect.height) * 2 - 1;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          plateEl.style.setProperty('--rx', `${(-ny * 6.5).toFixed(2)}deg`);
+          plateEl.style.setProperty('--ry', `${(nx * 7.5).toFixed(2)}deg`);
+          plateEl.style.setProperty('--sx', `${(-nx * 6).toFixed(1)}px`);
+          plateEl.style.setProperty('--mx', `${(((nx + 1) / 2) * 100).toFixed(1)}%`);
+          plateEl.style.setProperty('--my', `${(((ny + 1) / 2) * 100).toFixed(1)}%`);
+        });
+      });
+      plateEl.addEventListener('pointerleave', () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        plateEl.style.setProperty('--rx', '0deg');
+        plateEl.style.setProperty('--ry', '0deg');
+        plateEl.style.setProperty('--sx', '0px');
+        plateEl.style.setProperty('--mx', '50%');
+        plateEl.style.setProperty('--my', '42%');
+      });
+    }
+
     bodyEl.querySelectorAll('[data-p-wref]').forEach((btn) => {
       btn.addEventListener('click', () => {
         activeRef = Number(btn.dataset.pWref) || 1;
         renderWeaponModalBody(stats, false);
+        const nextPlate = bodyEl.querySelector('.p-rom-specimen-plate');
+        if (nextPlate) {
+          nextPlate.classList.add('is-ref-pulse');
+          setTimeout(() => nextPlate.classList.remove('is-ref-pulse'), 220);
+        }
       });
     });
     if (onBack) {
