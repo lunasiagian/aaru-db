@@ -3991,11 +3991,11 @@ function renderArmoryView(container, account) {
           if (items.length) groups.push({ title: CLASS_PLURAL[cls] || cls.toUpperCase(), items });
         });
         const leftovers = enriched.filter((it) => !CLASS_ORDER.includes(it.meta.weaponType));
-        if (leftovers.length) groups.push({ title: 'OTHER SPECIMENS', items: leftovers });
+        if (leftovers.length) groups.push({ title: 'OTHER WEAPONS', items: leftovers });
       } else {
         [5, 4, 3].forEach((rar) => {
           const items = enriched.filter((it) => Number(it.meta.rarity || 4) === rar);
-          if (items.length) groups.push({ title: `${rar}★ SPECIMENS`, items });
+          if (items.length) groups.push({ title: `${rar}★ RARITY`, items });
         });
       }
 
