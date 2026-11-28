@@ -123,6 +123,7 @@ const state = {
   armoryOwnership: 'owned',
   armoryFilter: 'All',
   armorySearch: '',
+  armoryView: localStorage.getItem('aaru_armory_view') || 'sheet',
   vaultCategory: 'All',
   vaultSearch: '',
   vaultSortKey: 'needed',
@@ -3251,6 +3252,11 @@ async function openCharacterWeaponRankingModal({ char, staticProfile, sandboxCtx
   const titleEl = document.getElementById('proto-weapon-title');
   const bodyEl = document.getElementById('proto-weapon-body');
   if (!modal || !bodyEl) return;
+  modal.classList.remove('is-file-drawer');
+  if (modal._drawerKeyHandler) {
+    document.removeEventListener('keydown', modal._drawerKeyHandler);
+    modal._drawerKeyHandler = null;
+  }
 
   const weaponsIndex = getWeaponsIndex();
   const ownedWeapons = account?.weapons || [];
@@ -3429,11 +3435,38 @@ function renderRefinementPips(refinement = 1) {
     .join('')}</span>`;
 }
 
-async function openWeaponInspector(w, triggerEl = null, onBack = null) {
+const CLASS_SHORT_CODES = {
+  Sword: 'SWD',
+  Claymore: 'CLY',
+  Polearm: 'POL',
+  Bow: 'BOW',
+  Catalyst: 'CAT'
+};
+const CLASS_ORDER = ['Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
+const CLASS_PLURAL = {
+  Sword: 'SWORDS',
+  Claymore: 'CLAYMORES',
+  Polearm: 'POLEARMS',
+  Bow: 'BOWS',
+  Catalyst: 'CATALYSTS'
+};
+
+async function openWeaponInspector(w, triggerEl = null, onBack = null, opts = null) {
   const modal = document.getElementById('proto-weapon-modal');
   const titleEl = document.getElementById('proto-weapon-title');
   const bodyEl = document.getElementById('proto-weapon-body');
   if (!modal || !bodyEl) return;
+
+  const isDrawer = Boolean(opts?.drawer);
+  modal.classList.toggle('is-file-drawer', isDrawer);
+  modal._onCloseHook = typeof opts?.onClose === 'function' ? opts.onClose : null;
+  if (modal._drawerKeyHandler) {
+    document.removeEventListener('keydown', modal._drawerKeyHandler);
+    modal._drawerKeyHandler = null;
+  }
+
+  const drawerList = isDrawer && Array.isArray(opts?.list) ? opts.list : null;
+  const drawerIdx = drawerList ? Math.max(0, Math.min(drawerList.length - 1, Number(opts?.index) || 0)) : -1;
 
   const meta = getWeaponMeta(w.key);
   const wepIdx = getWeaponsIndex();
@@ -3448,6 +3481,32 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
   const isOwned = w.owned !== false;
   const ownedRef = Math.max(1, Math.min(5, Number(w.refinement) || 1));
   let activeRef = ownedRef;
+
+  const stepDrawerFile = (delta) => {
+    if (!drawerList || drawerList.length <= 1) return;
+    const nextIdx = (drawerIdx + delta + drawerList.length) % drawerList.length;
+    opts?.onSelectIndex?.(nextIdx);
+    openWeaponInspector(drawerList[nextIdx], triggerEl, null, {
+      ...opts,
+      index: nextIdx
+    });
+  };
+
+  if (isDrawer && drawerList && drawerList.length > 1) {
+    modal._drawerKeyHandler = (e) => {
+      if (modal.hidden) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        stepDrawerFile(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        stepDrawerFile(1);
+      }
+    };
+    document.addEventListener('keydown', modal._drawerKeyHandler);
+  }
 
   const renderWeaponModalBody = (stats, loading = false) => {
     if (loading) {
@@ -3473,10 +3532,10 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
       ? `${isOwned ? `Lv.${ownedLv || 1} · R${ownedRef} · ` : 'Lv.90 · '}${lv90Line}`
       : '';
 
-    const custodyVal = isOwned
+    const custodyHtml = isOwned
       ? w.location
-        ? `Held by ${getCharacterMeta(w.location).name}`
-        : 'In Vault'
+        ? `<button type="button" class="p-drawer-holder-link" data-p-drawer-char="${esc(w.location)}">Held by ${esc(getCharacterMeta(w.location).name)} →</button>`
+        : '<span class="p-vault-tag is-vault mono">IN VAULT</span>'
       : '';
     const originParts = [idxEntry?.originRegion, idxEntry?.originDomain].filter(Boolean);
     const originVal = originParts.join(' · ');
@@ -3485,13 +3544,13 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
     const catalogId = idxEntry?.id || meta?.id || '';
 
     const ledgerRows = [
-      custodyVal ? ['Custody', esc(custodyVal), false] : null,
-      originVal ? ['Origin', esc(originVal), false] : null,
-      acqVal ? ['Acquisition', esc(acqVal), false] : null,
-      classVal ? ['Class', esc(classVal), true] : null,
-      statsVal ? ['Stats', esc(statsVal), true] : null,
-      showUpgradeSplit && lv80Line ? ['Lv.80 Cap', esc(lv80Line), true] : null,
-      catalogId ? ['Catalog №', esc(String(catalogId)), true] : null
+      custodyHtml ? ['Custody', custodyHtml, false, true] : null,
+      originVal ? ['Origin', esc(originVal), false, false] : null,
+      acqVal ? ['Acquisition', esc(acqVal), false, false] : null,
+      classVal ? ['Class', esc(classVal), true, false] : null,
+      statsVal ? ['Stats', esc(statsVal), true, false] : null,
+      showUpgradeSplit && lv80Line ? ['Lv.80 Cap', esc(lv80Line), true, false] : null,
+      catalogId ? ['Catalog №', esc(String(catalogId)), true, false] : null
     ].filter(Boolean);
 
     const marginNote = w.note
@@ -3500,7 +3559,19 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
         ? `Currently Lv.${ownedLv} — ascending to Lv.90 guarantees full Base ATK & substat.`
         : '';
 
+    const drawerNavHtml =
+      isDrawer && drawerList && drawerList.length > 1
+        ? `<div class="p-drawer-nav mono">
+             <span class="p-drawer-file-id">FILE ${String(drawerIdx + 1).padStart(2, '0')} / ${String(drawerList.length).padStart(2, '0')}</span>
+             <div class="p-filter-pills" role="group" aria-label="Step through Armory files">
+               <button type="button" class="p-pill-btn mono" id="p-drawer-prev" title="Previous file (Left Arrow)">← PREV</button>
+               <button type="button" class="p-pill-btn mono" id="p-drawer-next" title="Next file (Right Arrow)">NEXT →</button>
+             </div>
+           </div>`
+        : '';
+
     bodyEl.innerHTML = `
+      ${drawerNavHtml}
       ${
         onBack
           ? `<div style="margin-bottom:10px;">
@@ -3627,6 +3698,14 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
     if (onBack) {
       document.getElementById('p-wep-back-rank')?.addEventListener('click', () => onBack());
     }
+    document.getElementById('p-drawer-prev')?.addEventListener('click', () => stepDrawerFile(-1));
+    document.getElementById('p-drawer-next')?.addEventListener('click', () => stepDrawerFile(1));
+    bodyEl.querySelector('[data-p-drawer-char]')?.addEventListener('click', (e) => {
+      const charKey = e.currentTarget.dataset.pDrawerChar;
+      modal._closeModal?.();
+      state.inspectedCharKey = charKey;
+      setActiveTab('roster');
+    });
   };
 
   let stats = getWeaponStats(w.key);
@@ -3659,6 +3738,7 @@ function renderArmoryView(container, account) {
   const classTabs = ['All', 'Sword', 'Claymore', 'Polearm', 'Bow', 'Catalyst'];
   if (!state.armoryRarity) state.armoryRarity = 'All';
   if (!classTabs.includes(state.armoryFilter)) state.armoryFilter = 'All';
+  if (state.armoryView !== 'ledger' && state.armoryView !== 'sheet') state.armoryView = 'sheet';
 
   container.innerHTML = `
     <div class="p-toolbar p-armory-toolbar">
@@ -3697,15 +3777,22 @@ function renderArmoryView(container, account) {
           </div>
         </div>
       </div>
-      <input type="search" id="p-armory-search" class="proto-search" style="max-width:240px;" placeholder="Filter weapons or holder..." aria-label="Filter weapons or holder" value="${esc(state.armorySearch)}" />
+      <div class="p-armory-toolbar-right">
+        <span id="p-armory-count" class="p-armory-count mono"></span>
+        <div class="p-filter-pills" role="group" aria-label="Armory display mode">
+          <button type="button" class="p-pill-btn mono ${state.armoryView === 'sheet' ? 'active' : ''}" data-p-aview="sheet" aria-pressed="${state.armoryView === 'sheet'}" title="Grouped Specimen Sheet">SHEET</button>
+          <button type="button" class="p-pill-btn mono ${state.armoryView === 'ledger' ? 'active' : ''}" data-p-aview="ledger" aria-pressed="${state.armoryView === 'ledger'}" title="Ruled Accession Ledger">LEDGER</button>
+        </div>
+        <input type="search" id="p-armory-search" class="proto-search" style="max-width:220px;" placeholder="Filter weapons or holder..." aria-label="Filter weapons or holder" value="${esc(state.armorySearch)}" />
+      </div>
     </div>
 
-    <div id="p-armory-grid" class="p-armory-grid"></div>
+    <div id="p-armory-stage" class="p-armory-stage"></div>
   `;
 
   const renderWeaponCards = () => {
-    const grid = document.getElementById('p-armory-grid');
-    if (!grid) return;
+    const stage = document.getElementById('p-armory-stage');
+    if (!stage) return;
     const q = state.armorySearch.trim().toLowerCase();
     const filtered = allWeapons
       .filter((w) => {
@@ -3726,83 +3813,238 @@ function renderArmoryView(container, account) {
       })
       .sort((a, b) => Number(b.owned) - Number(a.owned) || (b.level || 0) - (a.level || 0) || (getWeaponMeta(b.key).rarity || 0) - (getWeaponMeta(a.key).rarity || 0) || getWeaponMeta(a.key).name.localeCompare(getWeaponMeta(b.key).name));
 
+    const countEl = document.getElementById('p-armory-count');
+    if (countEl) {
+      countEl.textContent = `${filtered.length} ${filtered.length === 1 ? 'RECORD' : 'RECORDS'}`;
+    }
+
+    if (!filtered.length) {
+      stage.innerHTML = '<div class="p-panel muted">No weapons match your filter.</div>';
+      return;
+    }
+
     const wepIdxRaw = getWeaponsIndex();
     const wepIdxList = Array.isArray(wepIdxRaw) ? wepIdxRaw : Array.isArray(wepIdxRaw?.weapons) ? wepIdxRaw.weapons : [];
     const wepIdxMap = new Map(wepIdxList.map((entry) => [normalizeAssetKey(entry.key), entry]));
-    grid.innerHTML = filtered.length
-      ? filtered
-          .map((w, idx) => {
-            const meta = getWeaponMeta(w.key);
-            const holderMeta = w.owned && w.location ? getCharacterMeta(w.location) : null;
-            const wStats = wepIdxMap.get(normalizeAssetKey(w.key)) || null;
-            const baseAtk = wStats?.baseAtk90 ? Math.round(wStats.baseAtk90) : null;
-            const subText = wStats?.substatKey
-              ? formatWeaponSubstat(wStats.substatKey, wStats.substatVal90)
-              : wStats?.subStat
-                ? formatWeaponSubstat(wStats.subStat, wStats.subVal90)
-                : '';
-            const serial = String(idx + 1).padStart(2, '0');
-            const isFishing = FISHING_WEAPON_KEYS.has(w.key);
-            const isR5 = w.owned && Number(w.refinement) >= 5;
-            return `
-              <article class="p-weapon-card p-wep-specimen p-wep-slip ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
-                <span class="p-wep-scale-ghost mono" aria-hidden="true">${serial}</span>
-                ${
-                  isFishing
-                    ? '<span class="p-overprint-stamp is-fishing mono" aria-hidden="true">FISHING</span>'
-                    : isR5
-                      ? '<span class="p-overprint-stamp is-r5 mono" aria-hidden="true">R5 MAX</span>'
-                      : ''
-                }
-                <div class="p-wep-spec-top mono">
-                  <span class="p-wep-spec-idx">№ ${serial} · ${esc(meta.weaponType || '').toUpperCase()}</span>
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="${Number(meta.rarity) === 5 ? 'p-wep-star-slab' : 'text-gold'}">${meta.rarity || 4}★</span>
-                  </div>
-                </div>
-                <div class="p-weapon-head p-wep-spec-body">
-                  <div class="p-wep-spec-icon">${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}</div>
-                  <div style="min-width:0;flex:1;">
-                    <div class="p-wep-spec-name">${esc(meta.name)}</div>
-                    ${
-                      baseAtk || subText
-                        ? `<div class="p-wep-spec-stats mono">${baseAtk ? `ATK ${baseAtk}` : ''}${baseAtk && subText ? ' · ' : ''}${esc(subText)}</div>`
-                        : `<div class="p-wep-spec-stats mono muted">${esc(meta.weaponType)}</div>`
-                    }
-                    ${
-                      w.owned
-                        ? `<div class="p-wep-ref-row mono">
-                             <span>LV.${w.level || 1}</span>
-                             ${renderRefinementPips(w.refinement || 1)}
-                           </div>`
-                        : ''
-                    }
-                  </div>
-                </div>
-                <div class="p-weapon-foot p-wep-spec-foot">
-                  ${
-                    holderMeta
-                      ? `<span class="mono muted" style="font-size:10px;letter-spacing:0.08em;">ISSUED TO</span>
-                         <button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
-                           ${renderAssetIcon('characters', w.location, holderMeta.name, 'icon-xs')}
-                           <span>${esc(holderMeta.name)}</span>
-                         </button>`
-                      : `<span class="mono muted" style="font-size:10.5px;letter-spacing:0.08em;">${w.owned ? 'IN VAULT' : 'ARCHIVE'}</span>
-                         <span class="mono muted" style="font-size:10.5px;">${esc(wStats?.originRegion || '')}</span>`
-                  }
-                </div>
-              </article>`;
-          })
-          .join('')
-      : '<div class="p-panel muted" style="grid-column:1/-1;">No weapons match your filter.</div>';
 
-    grid.querySelectorAll('[data-p-winspect]').forEach((card) => {
-      const open = () => openWeaponInspector(filtered[Number(card.dataset.pWinspect)], card);
-      card.addEventListener('click', (e) => {
+    const copyTotalMap = new Map();
+    for (const ow of ownedWeapons) {
+      copyTotalMap.set(ow.key, (copyTotalMap.get(ow.key) || 0) + 1);
+    }
+    const copyOrdMap = new Map();
+
+    const enriched = filtered.map((w, idx) => {
+      const meta = getWeaponMeta(w.key);
+      const holderMeta = w.owned && w.location ? getCharacterMeta(w.location) : null;
+      const wStats = wepIdxMap.get(normalizeAssetKey(w.key)) || null;
+      const baseAtk = wStats?.baseAtk90 ? Math.round(wStats.baseAtk90) : null;
+      const subText = wStats?.substatKey
+        ? formatWeaponSubstat(wStats.substatKey, wStats.substatVal90)
+        : wStats?.subStat
+          ? formatWeaponSubstat(wStats.subStat, wStats.subVal90)
+          : '';
+      const serial = String(idx + 1).padStart(2, '0');
+      const isFishing = FISHING_WEAPON_KEYS.has(w.key);
+      const isR5 = w.owned && Number(w.refinement) >= 5;
+      const copyTotal = w.owned ? copyTotalMap.get(w.key) || 1 : 0;
+      const copyOrd = w.owned ? (copyOrdMap.get(w.key) || 0) + 1 : 0;
+      if (w.owned) copyOrdMap.set(w.key, copyOrd);
+      return {
+        w,
+        meta,
+        holderMeta,
+        wStats,
+        baseAtk,
+        subText,
+        serial,
+        isFishing,
+        isR5,
+        copyOrd,
+        copyTotal,
+        flatIdx: idx
+      };
+    });
+
+    const renderSlipCard = (item) => {
+      const { w, meta, holderMeta, wStats, baseAtk, subText, serial, isFishing, isR5, copyOrd, copyTotal, flatIdx } = item;
+      const shortCode = CLASS_SHORT_CODES[meta.weaponType] || 'WEP';
+      const regionShort = (wStats?.originRegion || '').toUpperCase();
+      const rarity = Number(meta.rarity) || 4;
+      return `
+        <article class="p-weapon-card p-wep-specimen p-wep-slip ${w.owned ? '' : 'is-unowned'} ${copyTotal > 1 ? 'is-stacked' : ''}" data-rarity="${rarity}" data-p-winspect="${flatIdx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
+          <span class="p-wep-scale-ghost mono" aria-hidden="true">${serial}</span>
+          ${
+            isFishing
+              ? '<span class="p-overprint-stamp is-fishing mono" aria-hidden="true">FISHING</span>'
+              : isR5
+                ? '<span class="p-overprint-stamp is-r5 mono" aria-hidden="true">R5 MAX</span>'
+                : ''
+          }
+          <div class="p-wep-spec-top mono">
+            <div class="p-wep-spec-head-left">
+              <span class="p-wep-serial-tag">№ ${serial}</span>
+              <span class="p-wep-class-tag">${shortCode}${regionShort ? ` · ${esc(regionShort)}` : ''}</span>
+            </div>
+            <div class="p-wep-spec-head-right">
+              ${copyTotal > 1 ? `<span class="p-dup-pill mono">COPY ${copyOrd}/${copyTotal}</span>` : ''}
+              <span class="p-wep-star-slab" data-rarity="${rarity}">${rarity}★</span>
+            </div>
+          </div>
+          <div class="p-weapon-head p-wep-spec-body">
+            <div class="p-wep-spec-icon">${renderAssetIcon('weapons', w.key, meta.name, 'icon-md')}</div>
+            <div style="min-width:0;flex:1;">
+              <div class="p-wep-spec-name">${esc(meta.name)}</div>
+              ${
+                baseAtk || subText
+                  ? `<div class="p-wep-spec-stats mono">${baseAtk ? `ATK ${baseAtk}` : ''}${baseAtk && subText ? ' · ' : ''}${esc(subText)}</div>`
+                  : `<div class="p-wep-spec-stats mono muted">${esc(meta.weaponType)}</div>`
+              }
+              ${
+                w.owned
+                  ? `<div class="p-wep-ref-row mono">
+                       <span>LV.${w.level || 1}</span>
+                       ${renderRefinementPips(w.refinement || 1)}
+                     </div>`
+                  : ''
+              }
+            </div>
+          </div>
+          <div class="p-weapon-foot p-wep-spec-foot">
+            ${
+              holderMeta
+                ? `<span class="p-foot-lbl mono">ISSUED TO</span>
+                   <button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
+                     ${renderAssetIcon('characters', w.location, holderMeta.name, 'icon-xs')}
+                     <span>${esc(holderMeta.name)}</span>
+                   </button>`
+                : `<span class="p-vault-tag ${w.owned ? 'is-vault' : 'is-archive'} mono">${w.owned ? 'IN VAULT' : 'ARCHIVE'}</span>
+                   <span class="p-foot-origin mono">${esc(wStats?.originRegion || '')}</span>`
+            }
+          </div>
+        </article>`;
+    };
+
+    if (state.armoryView === 'ledger') {
+      stage.innerHTML = `
+        <div class="p-armory-ledger-wrap">
+          <table class="p-armory-ledger">
+            <thead>
+              <tr>
+                <th scope="col">№</th>
+                <th scope="col">SPECIMEN</th>
+                <th scope="col">CLASS</th>
+                <th scope="col">LV.90 STATS</th>
+                <th scope="col">INVESTMENT</th>
+                <th scope="col">CUSTODY</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${enriched
+                .map((item) => {
+                  const { w, meta, holderMeta, wStats, baseAtk, subText, serial, isFishing, isR5, copyOrd, copyTotal, flatIdx } = item;
+                  const rarity = Number(meta.rarity) || 4;
+                  const shortCode = CLASS_SHORT_CODES[meta.weaponType] || 'WEP';
+                  return `
+                    <tr class="p-ledger-row ${w.owned ? '' : 'is-unowned'}" data-rarity="${rarity}" data-p-winspect="${flatIdx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
+                      <td class="mono p-ledger-serial">№ ${serial}${copyTotal > 1 ? ` <span class="p-dup-pill mono">×${copyTotal}</span>` : ''}</td>
+                      <td>
+                        <div class="p-ledger-spec-cell">
+                          ${renderAssetIcon('weapons', w.key, meta.name, 'icon-xs')}
+                          <span class="p-ledger-name">${esc(meta.name)}</span>
+                          ${isFishing ? '<span class="p-fish-stamp-sm mono">FISHING</span>' : isR5 ? '<span class="p-ledger-r5-tag mono">R5 MAX</span>' : ''}
+                          ${copyTotal > 1 ? `<span class="p-dup-pill mono">${copyOrd}/${copyTotal}</span>` : ''}
+                        </div>
+                      </td>
+                      <td class="mono">
+                        <span class="p-class-code">${shortCode}</span>
+                        <span class="p-wep-star-slab" data-rarity="${rarity}">${rarity}★</span>
+                      </td>
+                      <td class="mono p-ledger-stats">${baseAtk ? `ATK ${baseAtk}` : '—'}${subText ? ` · ${esc(subText)}` : ''}</td>
+                      <td class="mono">
+                        ${w.owned ? `<span class="p-ledger-inv"><span>LV.${w.level || 1}</span>${renderRefinementPips(w.refinement || 1)}</span>` : '<span class="muted">—</span>'}
+                      </td>
+                      <td>
+                        <div class="p-ledger-custody">
+                          ${
+                            holderMeta
+                              ? `<button type="button" class="p-holder-chip" data-p-jump-char="${esc(w.location)}">
+                                   ${renderAssetIcon('characters', w.location, holderMeta.name, 'icon-xs')}
+                                   <span>${esc(holderMeta.name)}</span>
+                                 </button>`
+                              : `<span class="p-vault-tag ${w.owned ? 'is-vault' : 'is-archive'} mono">${w.owned ? 'IN VAULT' : 'ARCHIVE'}</span>`
+                          }
+                          ${wStats?.originRegion ? `<span class="p-ledger-region mono">${esc(wStats.originRegion)}</span>` : ''}
+                        </div>
+                      </td>
+                    </tr>`;
+                })
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      const groups = [];
+      if (state.armoryFilter === 'All') {
+        CLASS_ORDER.forEach((cls) => {
+          const items = enriched.filter((it) => it.meta.weaponType === cls);
+          if (items.length) groups.push({ title: CLASS_PLURAL[cls] || cls.toUpperCase(), items });
+        });
+        const leftovers = enriched.filter((it) => !CLASS_ORDER.includes(it.meta.weaponType));
+        if (leftovers.length) groups.push({ title: 'OTHER SPECIMENS', items: leftovers });
+      } else {
+        [5, 4, 3].forEach((rar) => {
+          const items = enriched.filter((it) => Number(it.meta.rarity || 4) === rar);
+          if (items.length) groups.push({ title: `${rar}★ SPECIMENS`, items });
+        });
+      }
+
+      stage.innerHTML = groups
+        .map((grp, gIdx) => {
+          const secNum = String(gIdx + 1).padStart(2, '0');
+          const issuedCnt = grp.items.filter((it) => Boolean(it.holderMeta)).length;
+          return `
+            <section class="p-armory-section">
+              <header class="p-armory-sec-head">
+                <h3 class="p-armory-sec-title"><span class="mono p-sec-idx">${secNum} //</span> ${esc(grp.title)}</h3>
+                <span class="p-armory-sec-rule" aria-hidden="true"></span>
+                <span class="p-armory-sec-meta mono">${grp.items.length} ${grp.items.length === 1 ? 'ITEM' : 'ITEMS'}${issuedCnt ? ` · ${issuedCnt} ISSUED` : ''}</span>
+              </header>
+              <div class="p-armory-grid">
+                ${grp.items.map(renderSlipCard).join('')}
+              </div>
+            </section>`;
+        })
+        .join('');
+    }
+
+    stage.querySelectorAll('[data-p-winspect]').forEach((el) => {
+      const open = () => {
+        const idx = Number(el.dataset.pWinspect);
+        stage.querySelectorAll('.is-active-file').forEach((n) => n.classList.remove('is-active-file'));
+        el.classList.add('is-active-file');
+        openWeaponInspector(filtered[idx], el, null, {
+          drawer: true,
+          list: filtered,
+          index: idx,
+          onSelectIndex: (nextIdx) => {
+            stage.querySelectorAll('.is-active-file').forEach((n) => n.classList.remove('is-active-file'));
+            const nextEl = stage.querySelector(`[data-p-winspect="${nextIdx}"]`);
+            if (nextEl) {
+              nextEl.classList.add('is-active-file');
+              nextEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          },
+          onClose: () => {
+            stage.querySelectorAll('.is-active-file').forEach((n) => n.classList.remove('is-active-file'));
+          }
+        });
+      };
+      el.addEventListener('click', (e) => {
         if (e.target.closest('[data-p-jump-char]')) return;
         open();
       });
-      card.addEventListener('keydown', (e) => {
+      el.addEventListener('keydown', (e) => {
         if (e.target.closest('[data-p-jump-char]')) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -3810,17 +4052,36 @@ function renderArmoryView(container, account) {
         }
       });
     });
-    grid.querySelectorAll('[data-p-jump-char]').forEach((btn) => {
+    stage.querySelectorAll('[data-p-jump-char]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         state.inspectedCharKey = btn.dataset.pJumpChar;
         setActiveTab('roster');
       });
     });
-    attachCardTilt(grid);
+    if (state.armoryView === 'sheet') {
+      attachCardTilt(stage);
+    }
   };
 
   renderWeaponCards();
+
+  container.querySelectorAll('[data-p-aview]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.armoryView = btn.dataset.pAview;
+      try {
+        localStorage.setItem('aaru_armory_view', state.armoryView);
+      } catch {
+        // ignore storage restrictions
+      }
+      container.querySelectorAll('[data-p-aview]').forEach((b) => {
+        const active = b.dataset.pAview === state.armoryView;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+      renderWeaponCards();
+    });
+  });
 
   container.querySelectorAll('[data-p-aown]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -5306,6 +5567,13 @@ function setupModals() {
     };
     const close = () => {
       modal.hidden = true;
+      modal.classList.remove('is-file-drawer');
+      if (modal._drawerKeyHandler) {
+        document.removeEventListener('keydown', modal._drawerKeyHandler);
+        modal._drawerKeyHandler = null;
+      }
+      modal._onCloseHook?.();
+      modal._onCloseHook = null;
       lastTrigger?.focus?.();
     };
     modal._openModal = open;
