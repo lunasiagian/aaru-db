@@ -5820,31 +5820,30 @@ body {
   border-top: 2px solid var(--el-ink, var(--p-border-strong)) !important;
 }
 
-/* 6. Archivist's Margin Handwriting (Caveat — Strictly Lore, Notes & Annotations) */
+/* 6. Archivist's Typewriter Marginalia (Special Elite — Strictly Notes, Verdicts & Annotations) */
 :root {
-  --p-font-hand: 'Caveat', cursive;
+  --p-font-typewriter: 'Special Elite', 'Courier New', monospace;
+  --p-font-hand: var(--p-font-typewriter);
 }
 
-.p-wep-lore p,
+/* Keep official item descriptions crisp in Albert Sans (not typewriter/handwriting) */
 .p-vault-modal-desc {
-  font-family: var(--p-font-hand) !important;
-  font-style: normal !important;
-  font-size: 17.5px !important;
-  line-height: 1.5 !important;
-  letter-spacing: 0.01em;
-  color: #D7DFEF !important;
+  font-family: var(--p-font-sans) !important;
+  font-size: 13.5px !important;
+  line-height: 1.65 !important;
+  color: var(--p-text-secondary) !important;
 }
 
 .p-reel-rot-input {
-  font-family: var(--p-font-hand) !important;
-  font-size: 17px !important;
+  font-family: var(--p-font-typewriter) !important;
+  font-size: 13px !important;
   letter-spacing: 0.02em;
   color: #E5EBF7 !important;
 }
 
 .p-reel-rot-input::placeholder {
-  font-family: var(--p-font-hand) !important;
-  font-size: 16px !important;
+  font-family: var(--p-font-typewriter) !important;
+  font-size: 12.5px !important;
   color: var(--p-text-muted);
 }
 
@@ -5854,38 +5853,97 @@ body {
   border: none !important;
   border-top: 1px dashed var(--p-border-strong) !important;
   padding: 10px 4px 2px !important;
-  font-family: var(--p-font-hand) !important;
-  font-size: 17px !important;
-  line-height: 1.45 !important;
-  color: #D7DFEF !important;
+  font-family: var(--p-font-typewriter) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.015em;
+  color: rgba(215, 223, 239, 0.88) !important;
 }
 
 .p-callout-note strong {
-  font-family: var(--p-font-hand) !important;
-  font-weight: 600;
+  font-family: var(--p-font-typewriter) !important;
+  font-weight: 400;
   color: var(--p-gold);
 }
 
 /* ==========================================================================
-   ROM Provenance Ledger (Weapon Modal), Cardstock Tooth,
-   Armory Library Checkout Slips & Characters Accession Contact Sheet
+   Harmonized Obsidian Slate Physical Material System
+   (Real color-graded WebP scans — zero synthetic SVG noise, zero hue drift)
    ========================================================================== */
 
-/* Tactile Cardstock Tooth Overlay on Library Catalog Modals */
-#proto-weapon-modal .p-modal::before,
-#proto-artifact-modal .p-modal::before {
+/* 1. Global Obsidian Bookcloth Binder Weave */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+  background-image: url('./assets/textures/bookcloth-twill.webp');
+  background-size: 220px 220px;
+  background-repeat: repeat;
+}
+
+/* 2. Today Movie Poster & Character Dossier — 6-Panel Folded Poster Creases */
+.p-hud-poster,
+.p-dossier-hero {
+  position: relative;
+}
+
+.p-hud-poster::after,
+.p-dossier-hero::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.035;
+  z-index: 4;
+  opacity: 0.22;
+  mix-blend-mode: screen;
+  background-image: url('./assets/textures/folded-poster.webp');
+  background-size: cover;
+  background-position: center;
+  border-radius: inherit;
+}
+
+/* 3. Teams Lab 35mm Reels — Subtle Archive Photocopy Dust & Patina */
+.p-reel-card {
+  position: relative;
+}
+
+.p-reel-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.14;
+  mix-blend-mode: screen;
+  background-image: url('./assets/textures/photocopy-edge.webp');
+  background-size: cover;
+  background-position: center;
+  border-radius: inherit;
+}
+
+/* 4. Real Seamless Cardstock Paper Tooth on Catalog Modals */
+#proto-weapon-modal .p-modal::before,
+#proto-artifact-modal .p-modal::before,
+#proto-vault-modal .p-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.24;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url('./assets/textures/paper-tooth.webp');
+  background-size: 120px 120px;
+  background-repeat: repeat;
   z-index: 0;
 }
 
 #proto-weapon-modal .p-modal>*,
-#proto-artifact-modal .p-modal>* {
+#proto-artifact-modal .p-modal>*,
+#proto-vault-modal .p-modal>* {
   position: relative;
   z-index: 1;
 }
@@ -6009,9 +6067,10 @@ body {
   background-color: var(--p-surface-2);
   background-image:
     radial-gradient(circle at var(--mx) var(--my), rgba(212, 175, 55, 0.11) 0%, transparent 62%),
-    radial-gradient(rgba(212, 175, 55, 0.16) 1px, transparent 1px);
-  background-size: 100% 100%, 16px 16px;
-  background-position: 0 0, 8px 8px;
+    radial-gradient(rgba(212, 175, 55, 0.16) 1px, transparent 1px),
+    url('./assets/textures/newsprint-slate.webp');
+  background-size: 100% 100%, 16px 16px, cover;
+  background-position: 0 0, 8px 8px, center;
   padding: 12px 12px 24px 22px;
   overflow: hidden;
   perspective: 720px;
@@ -6154,9 +6213,34 @@ body {
 }
 
 .p-rom-ref-strip {
+  position: relative;
   width: 100%;
   justify-content: stretch;
-  margin-top: -1px;
+  margin-top: 0;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(212, 175, 55, 0.36);
+}
+
+/* Receipt / Ticket Stub Semicircular Perforation Notches */
+.p-rom-ref-strip::before,
+.p-rom-ref-strip::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--p-surface);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  pointer-events: none;
+}
+
+.p-rom-ref-strip::before {
+  left: -5px;
+}
+
+.p-rom-ref-strip::after {
+  right: -5px;
 }
 
 .p-rom-ref-strip .p-pill-btn {
@@ -6217,14 +6301,14 @@ body {
 
 .p-rom-marginalia {
   margin-top: 12px;
-  padding-left: 10px;
-  border-left: 1px dashed rgba(212, 175, 55, 0.35);
-  font-family: var(--p-font-hand);
-  font-size: 16px;
-  line-height: 1.4;
-  color: rgba(212, 175, 55, 0.78);
-  transform: rotate(-0.5deg);
-  transform-origin: left center;
+  padding: 8px 0 2px 12px;
+  border-top: 1px dashed rgba(212, 175, 55, 0.24);
+  border-left: 1px solid rgba(212, 175, 55, 0.36);
+  font-family: var(--p-font-typewriter);
+  font-size: 12.5px;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  color: rgba(212, 175, 55, 0.82);
 }
 
 /* Fishing Weapon Anti-Tilt Stamps & Visual Refinement Pips */
