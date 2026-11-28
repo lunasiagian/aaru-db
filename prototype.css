@@ -4466,7 +4466,7 @@ body {
   mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 46%, #000 100%);
 }
 
-/* Matte Lithograph Paper Tooth + Photocopy Patina Directly Over Cinematic Art */
+/* Unmistakable Vintage Lithograph Fiber + Xerox Wear Over Cinematic Art */
 .p-hud-poster-bg::after {
   content: '';
   position: absolute;
@@ -4474,13 +4474,13 @@ body {
   pointer-events: none;
   z-index: 2;
   background-image:
-    url('./assets/textures/paper-tooth.webp'),
+    url('./assets/textures/chipboard-grain.webp'),
     url('./assets/textures/photocopy-edge.webp');
-  background-size: 120px 120px, cover;
+  background-size: 460px auto, cover;
   background-repeat: repeat, no-repeat;
   background-position: center, center;
   mix-blend-mode: overlay;
-  opacity: 0.45;
+  opacity: 0.88;
 }
 
 .p-hud-poster-bg .ed-gacha-splash-wrap {
@@ -4498,8 +4498,8 @@ body {
   object-fit: cover;
   object-position: 54% 18%;
   transform: scale(1.06);
-  opacity: 0.86;
-  filter: contrast(1.06) saturate(0.92);
+  opacity: 0.88;
+  filter: contrast(1.12) saturate(0.84) brightness(0.94);
 }
 
 .p-hud-poster .p-patch-primary {
@@ -5932,11 +5932,27 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  opacity: 0.38;
+  opacity: 0.78;
   mix-blend-mode: screen;
-  background-image: url('./assets/textures/folded-poster.webp');
-  background-size: cover;
+  background-image:
+    url('./assets/textures/folded-poster.webp'),
+    linear-gradient(90deg, transparent 33.1%, rgba(6, 8, 18, 0.45) 33.35%, transparent 33.6%, transparent 66.4%, rgba(6, 8, 18, 0.45) 66.65%, transparent 66.9%),
+    linear-gradient(180deg, transparent 49.4%, rgba(6, 8, 18, 0.42) 50%, transparent 50.6%);
+  background-size: cover, 100% 100%, 100% 100%;
   background-position: center;
+  border-radius: inherit;
+}
+
+/* Dark valley creases so poster folds read clearly even across bright highlights */
+.p-hud-poster::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background-image:
+    linear-gradient(90deg, transparent 33.15%, rgba(6, 8, 18, 0.52) 33.35%, rgba(255, 255, 255, 0.14) 33.5%, transparent 33.75%, transparent 66.45%, rgba(6, 8, 18, 0.52) 66.65%, rgba(255, 255, 255, 0.14) 66.8%, transparent 67.05%),
+    linear-gradient(180deg, transparent 49.3%, rgba(6, 8, 18, 0.48) 50%, rgba(255, 255, 255, 0.12) 50.45%, transparent 51.1%);
   border-radius: inherit;
 }
 
