@@ -54,9 +54,10 @@ export function renderAssetIcon(type, pascalKey, alt = '', className = 'asset-ic
   const initials = (pascalKey || '?').slice(0, 2).toUpperCase();
   const safeAlt = String(alt || '').replace(/"/g, '&quot;');
   const isDecorative = alt === '';
+  const retryJs = `if(this.dataset.rt!=='1'){this.dataset.rt='1';const u=this.src.split('?')[0];setTimeout(()=>{this.src=u+'?r='+Date.now();},650);return;}`;
   const onerrorJs = secondarySrc
-    ? `if(this.dataset.fb!=='1'){this.dataset.fb='1';this.src='${secondarySrc}';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}`
-    : `this.style.display='none';this.nextElementSibling.style.display='flex';`;
+    ? `if(this.dataset.fb!=='1'){this.dataset.fb='1';this.src='${secondarySrc}';}else{${retryJs}this.style.display='none';this.nextElementSibling.style.display='flex';}`
+    : `${retryJs}this.style.display='none';this.nextElementSibling.style.display='flex';`;
 
   return `<span class="asset-wrap ${className}" data-key="${safeAlt || pascalKey}"${isDecorative ? ' aria-hidden="true"' : ''}>
     <img
@@ -105,7 +106,7 @@ export function renderGachaSplash(pascalKey, alt = '') {
       loading="eager"
       decoding="async"
       referrerpolicy="no-referrer"
-      onerror="if(this.dataset.fb!=='1'&&'${safeFallback}'){this.dataset.fb='1';this.src='${safeFallback}';}else if(this.dataset.fb!=='2'&&'${safeAvatar}'){this.dataset.fb='2';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+      onerror="if(this.dataset.rt!=='1'){this.dataset.rt='1';const u=this.src.split('?')[0];setTimeout(()=>{this.src=u+'?r='+Date.now();},650);}else if(this.dataset.fb!=='1'&&'${safeFallback}'){this.dataset.fb='1';this.src='${safeFallback}';}else if(this.dataset.fb!=='2'&&'${safeAvatar}'){this.dataset.fb='2';this.src='${safeAvatar}';this.parentElement.classList.remove('has-splash');}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
     />
     <span class="asset-monogram" style="display:none;">${initials}</span>
   </span>`;

@@ -6,7 +6,7 @@ import {
   pulseReminderChip,
   pulseStepperValue
 } from './motion.js?v=20261127p105';
-import { renderAssetIcon, renderGachaSplash, renderWeaponSplash } from './assets.js?v=20261127p117';
+import { renderAssetIcon, renderGachaSplash, renderWeaponSplash } from './assets.js?v=20261127p120';
 import {
   ensureCharacterKitAndStats,
   ensureCharacterMaterials,
