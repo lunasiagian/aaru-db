@@ -5848,16 +5848,32 @@ body {
 }
 
 .p-callout-note {
+  position: relative;
   border-radius: 1px !important;
-  background: transparent !important;
+  background: rgba(12, 17, 32, 0.55) !important;
   border: none !important;
   border-top: 1px dashed var(--p-border-strong) !important;
-  padding: 10px 4px 2px !important;
+  padding: 14px 10px 6px !important;
   font-family: var(--p-font-typewriter) !important;
   font-size: 13px !important;
   line-height: 1.55 !important;
   letter-spacing: 0.015em;
-  color: rgba(215, 223, 239, 0.88) !important;
+  color: rgba(235, 228, 206, 0.9) !important;
+}
+
+/* Archival masking-tape strip holding callout note to the ledger */
+.p-callout-note::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 18px;
+  width: 48px;
+  height: 13px;
+  background: rgba(212, 175, 55, 0.22);
+  border-left: 1px dashed rgba(212, 175, 55, 0.42);
+  border-right: 1px dashed rgba(212, 175, 55, 0.42);
+  transform: rotate(-2.2deg);
+  pointer-events: none;
 }
 
 .p-callout-note strong {
@@ -5878,7 +5894,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.22;
+  opacity: 0.26;
   mix-blend-mode: soft-light;
   background-image: url('./assets/textures/bookcloth-twill.webp');
   background-size: 220px 220px;
@@ -5898,7 +5914,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  opacity: 0.22;
+  opacity: 0.34;
   mix-blend-mode: screen;
   background-image: url('./assets/textures/folded-poster.webp');
   background-size: cover;
@@ -5906,7 +5922,7 @@ body::after {
   border-radius: inherit;
 }
 
-/* 3. Teams Lab 35mm Reels — Subtle Archive Photocopy Dust & Patina */
+/* 3. Teams Lab 35mm Reels — Archive Photocopy Dust & Patina */
 .p-reel-card {
   position: relative;
 }
@@ -5917,7 +5933,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: 2;
-  opacity: 0.14;
+  opacity: 0.24;
   mix-blend-mode: screen;
   background-image: url('./assets/textures/photocopy-edge.webp');
   background-size: cover;
@@ -5933,7 +5949,7 @@ body::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.24;
+  opacity: 0.32;
   mix-blend-mode: overlay;
   background-image: url('./assets/textures/paper-tooth.webp');
   background-size: 120px 120px;
@@ -6299,16 +6315,166 @@ body::after {
   max-width: 66ch;
 }
 
+/* Pinned Torn-Paper Archivist Slip (Direction 1 — Unruly Dossier) */
 .p-rom-marginalia {
-  margin-top: 12px;
-  padding: 8px 0 2px 12px;
-  border-top: 1px dashed rgba(212, 175, 55, 0.24);
-  border-left: 1px solid rgba(212, 175, 55, 0.36);
+  position: relative;
+  margin-top: 16px;
+  padding: 16px 20px 14px 22px;
+  background:
+    linear-gradient(135deg, rgba(22, 26, 38, 0.88), rgba(14, 18, 30, 0.92)),
+    url('./assets/textures/torn-scrap.webp') center / cover no-repeat;
+  border: 1px dashed rgba(212, 175, 55, 0.34);
+  border-left: 2px solid rgba(212, 175, 55, 0.65);
+  border-radius: 1px;
   font-family: var(--p-font-typewriter);
   font-size: 12.5px;
   line-height: 1.55;
   letter-spacing: 0.02em;
-  color: rgba(212, 175, 55, 0.82);
+  color: #EDE2C2;
+  transform: rotate(-0.85deg);
+  transform-origin: left center;
+  box-shadow: 0 10px 22px rgba(4, 6, 14, 0.55);
+}
+
+.p-rom-marginalia::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 56px;
+  height: 14px;
+  background: rgba(212, 175, 55, 0.26);
+  border-left: 1px dashed rgba(212, 175, 55, 0.45);
+  border-right: 1px dashed rgba(212, 175, 55, 0.45);
+  transform: rotate(2.4deg);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Direction 1 Overdrive: Unruly Rubber-Ink Overprint Stamps & Scale Collisions
+   ========================================================================== */
+
+@keyframes aaru-stamp-slam {
+  0% {
+    opacity: 0;
+    transform: scale(1.42) rotate(-14deg);
+  }
+  70% {
+    opacity: 0.95;
+    transform: scale(0.96) rotate(-7.5deg);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1) rotate(-8deg);
+  }
+}
+
+.p-char-accession,
+.p-wep-slip {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Monumental Asymmetric Scale Collisions (42px-48px numerals vs 9.5px metadata) */
+.p-char-scale-ghost {
+  position: absolute;
+  right: 6px;
+  bottom: 2px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  color: rgba(240, 243, 250, 0.07);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.p-wep-scale-ghost {
+  position: absolute;
+  right: 10px;
+  bottom: 26px;
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  color: rgba(212, 175, 55, 0.065);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* Unruly Diagonal Rubber-Ink Overprint Stamps (Cosmos 00:05 "CANCELLED") */
+.p-overprint-stamp {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  border: 2px solid currentColor;
+  border-radius: 1px;
+  pointer-events: none;
+  user-select: none;
+  filter: url(#aaru-ink-stamp);
+  box-shadow: inset 0 0 0 1px rgba(6, 8, 18, 0.35);
+}
+
+.p-overprint-stamp.is-crowned {
+  top: -7px;
+  right: -4px;
+  color: #D4AF37;
+  background: rgba(12, 17, 32, 0.88);
+  transform: rotate(7.5deg);
+}
+
+.p-overprint-stamp.is-storage {
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  padding: 3px 9px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: rgba(248, 113, 113, 0.82);
+  background: rgba(6, 8, 18, 0.78);
+  border-color: rgba(248, 113, 113, 0.75);
+}
+
+.p-overprint-stamp.is-fishing {
+  top: -7px;
+  right: 42px;
+  color: #38BDF8;
+  background: rgba(12, 17, 32, 0.92);
+  transform: rotate(-7.5deg);
+}
+
+.p-overprint-stamp.is-r5 {
+  top: -7px;
+  right: 42px;
+  color: #34D399;
+  background: rgba(12, 17, 32, 0.92);
+  transform: rotate(-6.5deg);
+}
+
+.p-overprint-stamp.is-modal-stamp {
+  top: auto;
+  bottom: 24px;
+  right: 10px;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  transform: rotate(-8deg);
+  animation: aaru-stamp-slam 210ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-overprint-stamp.is-modal-stamp {
+    animation: none;
+  }
 }
 
 /* Fishing Weapon Anti-Tilt Stamps & Visual Refinement Pips */

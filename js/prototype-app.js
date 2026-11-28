@@ -3162,11 +3162,18 @@ function renderRosterView(container, account) {
                   : isInStorage
                     ? '<span class="p-char-wear-tag is-storage mono">IN STORAGE</span>'
                     : '';
+            const overprintStamp = isCrowned
+              ? '<span class="p-overprint-stamp is-crowned mono" aria-hidden="true">CROWNED</span>'
+              : isInStorage
+                ? '<span class="p-overprint-stamp is-storage mono" aria-hidden="true">IN STORAGE</span>'
+                : '';
             return `
-            <button type="button" class="p-char-tile p-char-accession ${c.owned ? '' : 'is-unowned'} ${isInStorage ? 'is-in-storage' : ''}" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
+            <button type="button" class="p-char-tile p-char-accession ${c.owned ? '' : 'is-unowned'} ${isInStorage ? 'is-in-storage' : ''} ${isCrowned ? 'is-crowned-plate' : ''}" data-el="${esc(elAttr)}" data-rarity="${c.meta.rarity || 4}" data-p-char="${esc(c.key)}">
+              ${c.owned ? `<span class="p-char-scale-ghost mono" aria-hidden="true">${c.level || 1}</span>` : ''}
+              ${overprintStamp}
               <div class="p-char-acc-top mono">
                 <span class="p-char-frame-idx">${frameCode}</span>
-                ${wearTag}
+                ${!isCrowned && !isInStorage ? wearTag : ''}
               </div>
               ${renderAssetIcon('characters', c.key, c.meta.name, '')}
               <span class="p-char-name">${esc(c.meta.name)}</span>
@@ -3529,7 +3536,7 @@ async function openWeaponInspector(w, triggerEl = null, onBack = null) {
               ${renderWeaponSplash(w.key, meta.name, 'p-rom-specimen-splash', meta.type || '')}
               <span class="p-rom-contact-shadow" aria-hidden="true"></span>
             </div>
-            ${FISHING_WEAPON_KEYS.has(w.key) ? '<span class="p-fish-stamp mono">FISHING</span>' : ''}
+            ${FISHING_WEAPON_KEYS.has(w.key) ? '<span class="p-overprint-stamp is-fishing is-modal-stamp mono" aria-hidden="true">FISHING</span>' : activeRef >= 5 ? '<span class="p-overprint-stamp is-r5 is-modal-stamp mono" aria-hidden="true">R5 MAX</span>' : ''}
             <div class="p-rom-ruler mono" aria-hidden="true">
               <span>0</span><span>10</span><span>20</span><span>30mm</span>
             </div>
@@ -3736,12 +3743,20 @@ function renderArmoryView(container, account) {
                 : '';
             const serial = String(idx + 1).padStart(2, '0');
             const isFishing = FISHING_WEAPON_KEYS.has(w.key);
+            const isR5 = w.owned && Number(w.refinement) >= 5;
             return `
               <article class="p-weapon-card p-wep-specimen p-wep-slip ${w.owned ? '' : 'is-unowned'}" data-rarity="${meta.rarity || 4}" data-p-winspect="${idx}" tabindex="0" role="button" aria-label="Inspect ${esc(meta.name)}">
+                <span class="p-wep-scale-ghost mono" aria-hidden="true">${serial}</span>
+                ${
+                  isFishing
+                    ? '<span class="p-overprint-stamp is-fishing mono" aria-hidden="true">FISHING</span>'
+                    : isR5
+                      ? '<span class="p-overprint-stamp is-r5 mono" aria-hidden="true">R5 MAX</span>'
+                      : ''
+                }
                 <div class="p-wep-spec-top mono">
                   <span class="p-wep-spec-idx">№ ${serial} · ${esc(meta.weaponType || '').toUpperCase()}</span>
                   <div style="display:flex;align-items:center;gap:6px;">
-                    ${isFishing ? '<span class="p-fish-stamp-sm mono">FISHING</span>' : ''}
                     <span class="${Number(meta.rarity) === 5 ? 'p-wep-star-slab' : 'text-gold'}">${meta.rarity || 4}★</span>
                   </div>
                 </div>
